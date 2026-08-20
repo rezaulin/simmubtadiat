@@ -127,11 +127,11 @@ func main() {
 					r.Use(appMiddleware.DenyRoles("wali_santri"))
 					r.Get("/", handlers.GetKalenderKuartal)
 					r.Get("/tahun", handlers.GetTahunAjaran)
-					r.Get("/hijri-semester", handlers.GetHijriSemesterMap)
+					r.Get("/hijri-semester", handlers.GetKalenderSemesterHijri)
 					r.Group(func(r chi.Router) {
 						r.Use(appMiddleware.RequireRoles("pimpinan", "admin"))
 						r.Post("/", handlers.SaveKalenderKuartal)
-						r.Post("/hijri-semester", handlers.SaveHijriSemesterMap)
+						r.Post("/hijri-semester", handlers.SaveKalenderSemesterHijri)
 					})
 
 				})

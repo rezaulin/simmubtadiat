@@ -3,7 +3,6 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
-	"strconv"
 	"github.com/mubtadiaat/app/models"
 )
 
@@ -52,11 +51,13 @@ func GetTahunAjaran(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(res)
 }
 
-// GetHijriSemesterMap mengembalikan mapping bulan Hijri -> semester.
-// Query: ?tahun_hijri=1447 (opsional).
-func GetHijriSemesterMap(w http.ResponseWriter, r *http.Request) {
-	th, _ := strconv.Atoi(r.URL.Query().Get("tahun_hijri"))
-	res, err := models.GetHijriSemesterMap(r.Context(), th)
+// GetKalenderSemesterHijri mengembalikan kalender semester Hijriyah suatu tahun ajaran.
+func GetKalenderSemesterHijri(w http.ResponseWriter, r *http.Request) {
+	tahunAjaran := r.URL.Query().Get("tahun_ajaran")
+	if tahunAjaran == "" {
+		tahunAjaran = models.GetTahunAjaranAktif(r.Context())
+	}
+	res, err := models.GetKalenderSemesterHijri(r.Context(), tahunAjaran)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -65,21 +66,26 @@ func GetHijriSemesterMap(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(res)
 }
 
-// SaveHijriSemesterMap menerima array mapping bulan Hijri -> semester,
-// otomatis backfill baris absensi manual yang cocok.
-func SaveHijriSemesterMap(w http.ResponseWriter, r *http.Request) {
-	var entries []models.HijriSemesterMap
+// SaveKalenderSemesterHijri menerima array kalender semester Hijriyah,
+// sekaligus menyinkronkan kalender_kuartal (kompatibilitas rekap & lock).
+func SaveKalenderSemesterHijri(w http.ResponseWriter, r *http.Request) {
+	var entries []models.KalenderSemesterHijri
 	if err := json.NewDecoder(r.Body).Decode(&entries); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	for _, e := range entries {
-		if e.BulanHijri < 1 || e.BulanHijri > 12 || (e.Semester != 1 && e.Semester != 2) {
-			http.Error(w, "bulan_hijri harus 1-12 dan semester harus 1 atau 2", http.StatusBadRequest)
+		if e.Semester != 1 && e.Semester != 2 {
+			http.Error(w, "semester harus 1 atau 2", http.StatusBadRequest)
+			return
+		}
+		if e.MulaiTanggal < 1 || e.MulaiTanggal > 30 || e.SelesaiTanggal < 1 || e.SelesaiTanggal > 30 ||
+			e.MulaiBulanHijri < 1 || e.MulaiBulanHijri > 12 || e.SelesaiBulanHijri < 1 || e.SelesaiBulanHijri > 12 {
+			http.Error(w, "tanggal Hijriyah tidak valid", http.StatusBadRequest)
 			return
 		}
 	}
-	if err := models.SaveHijriSemesterMap(r.Context(), entries); err != nil {
+	if err := models.SaveKalenderSemesterHijri(r.Context(), entries); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

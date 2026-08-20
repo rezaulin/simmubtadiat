@@ -619,88 +619,184 @@ loadMudirTingkatan();
 })();
 
 
-// --- Kalender Kuartal ---
-// Admin cukup isi tanggal MULAI tiap kuartal + akhir tahun. Akhir kuartal N
-// dihitung otomatis = sehari sebelum mulai kuartal N+1; kuartal terakhir sampai
-// akhir tahun. Disimpan ke kalender_kuartal via POST /api/kalender (array).
-(function initKalenderSettings() {
+// --- Kalender Akademik (Hijriyah) ---
+// Rentang Semester 1 & 2 diinput dalam tanggal Hijriyah (tgl/bulan/tahun).
+// Ekuivalen Masehi dihitung browser (Intl islamic-umalqura, WIB) lalu disimpan
+// agar absensi sesi (input Masehi) bisa lookup semester. Absensi manual bulanan
+// masuk semester berdasarkan kalender ini (backend).
+(function initKalenderHijri() {
   const form = document.getElementById('form-kalender');
   if (!form) return;
 
   const inpTA = document.getElementById('kalender-ta');
-  const k = [1, 2, 3, 4].map((n) => document.getElementById('kalender-k' + n));
-  const inpAkhir = document.getElementById('kalender-akhir');
   const btnLoad = document.getElementById('kalender-load');
   const btnSetActive = document.getElementById('kalender-set-active');
   const spanActive = document.getElementById('kalender-ta-active');
   const preview = document.getElementById('kalender-preview');
 
-  // Tambah/kurangi hari pada tanggal 'YYYY-MM-DD' (zona lokal).
-  function addDays(iso, delta) {
-    const d = new Date(iso + 'T00:00:00');
-    d.setDate(d.getDate() + delta);
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
+  const BULAN = ['Muharram', 'Safar', 'Rabiul Awal', 'Rabiul Akhir', 'Jumadil Awal',
+    'Jumadil Akhir', 'Rajab', "Sya'ban", 'Ramadhan', 'Syawal', "Dzulqa'dah", 'Dzulhijjah'];
+
+  const TRIPLES = ['s1-mulai', 's1-selesai', 's2-mulai', 's2-selesai'];
+  const els = {};
+  TRIPLES.forEach((p) => {
+    els[p] = {
+      tgl: document.getElementById(p + '-tgl'),
+      bln: document.getElementById(p + '-bln'),
+      thn: document.getElementById(p + '-thn'),
+    };
+  });
+
+  function hijriOrdinal(y, m, d) { return y * 360 + m * 30 + d; }
+
+  function readTriple(p) {
+    const t = parseInt(els[p].tgl.value, 10);
+    const b = parseInt(els[p].bln.value, 10);
+    const th = parseInt(els[p].thn.value, 10);
+    return { tgl: t || 0, bln: b || 0, thn: th || 0 };
   }
 
-  // Bangun baris kuartal dari input (hanya kuartal yang tanggal mulainya diisi).
-  // return: { rows } atau { error }.
-  function buildRows() {
-    const ta = inpTA.value.trim();
-    const akhir = inpAkhir.value;
-    const filled = [];
-    for (let i = 0; i < 4; i++) {
-      if (k[i].value) filled.push({ kuartal: i + 1, mulai: k[i].value });
-    }
-    for (let i = 1; i < filled.length; i++) {
-      if (filled[i].mulai <= filled[i - 1].mulai) {
-        return { error: 'Tanggal mulai kuartal harus urut menaik (K1 < K2 < K3 < K4).' };
+  function writeTriple(p, tgl, bln, thn) {
+    els[p].tgl.value = tgl || '';
+    els[p].bln.value = bln || '';
+    els[p].thn.value = thn || '';
+  }
+
+  // --- Konversi Hijri -> Masehi (WIB) via Intl islamic-umalqura ---
+  function jdToGregorian(jd) {
+    const l = jd + 68569;
+    const n = Math.floor((4 * l) / 146097);
+    const l2 = l - Math.floor((146097 * n + 3) / 4);
+    const i = Math.floor((4000 * (l2 + 1)) / 1461001);
+    const l3 = l2 - Math.floor((1461 * i) / 4) + 31;
+    const j = Math.floor((80 * l3) / 2447);
+    const day = l3 - Math.floor((2447 * j) / 80);
+    const l4 = Math.floor(j / 11);
+    const month = j + 2 - 12 * l4;
+    const year = 100 * (n - 49) + i + l4;
+    return { year, month, day };
+  }
+
+  function gregorianToHijri(date) {
+    try {
+      const parts = new Intl.DateTimeFormat('en-US-u-ca-islamic-umalqura', {
+        timeZone: 'Asia/Jakarta', day: 'numeric', month: 'numeric', year: 'numeric',
+      }).formatToParts(date);
+      let d = 0, m = 0, y = 0;
+      parts.forEach((pt) => {
+        if (pt.type === 'day') d = parseInt(pt.value, 10);
+        else if (pt.type === 'month') m = parseInt(pt.value, 10);
+        else if (pt.type === 'year') y = parseInt(pt.value, 10);
+      });
+      return { d, m, y };
+    } catch (e) { return null; }
+  }
+
+  // Hijri (y,m,d) -> 'YYYY-MM-DD' Masehi. Estimasi via kalender tabular, lalu
+  // dikoreksi +-4 hari agar cocok dengan islamic-umalqura zona WIB.
+  function hijriToMasehi(y, m, d) {
+    const jd = d + Math.ceil(29.5 * (m - 1)) + (y - 1) * 354 + Math.floor((3 + 11 * y) / 30) + 1948439;
+    const g = jdToGregorian(jd);
+    for (let delta = -4; delta <= 4; delta++) {
+      const date = new Date(Date.UTC(g.year, g.month - 1, g.day + delta, 12));
+      const h = gregorianToHijri(date);
+      if (h && h.y === y && h.m === m && h.d === d) {
+        const mm = String(date.getUTCMonth() + 1).padStart(2, '0');
+        const dd = String(date.getUTCDate()).padStart(2, '0');
+        return `${date.getUTCFullYear()}-${mm}-${dd}`;
       }
     }
-    if (akhir && filled.length && akhir < filled[filled.length - 1].mulai) {
-      return { error: 'Akhir tahun tidak boleh sebelum tanggal mulai kuartal terakhir.' };
+    return null;
+  }
+
+  function fmtHijri(t) {
+    return `${t.tgl} ${BULAN[t.bln - 1] || '?'} ${t.thn} H`;
+  }
+
+  function buildEntries() {
+    const ta = inpTA.value.trim();
+    const s1a = readTriple('s1-mulai'), s1b = readTriple('s1-selesai');
+    const s2a = readTriple('s2-mulai'), s2b = readTriple('s2-selesai');
+
+    const complete = (t) => t.tgl >= 1 && t.tgl <= 30 && t.bln >= 1 && t.bln <= 12 && t.thn >= 1300 && t.thn <= 1600;
+    const empty = (t) => !t.tgl && !t.bln && !t.thn;
+
+    if (!complete(s1a) || !complete(s1b)) {
+      return { error: 'Lengkapi semua field Mulai & Selesai Semester 1 (tgl, bulan, tahun).' };
     }
-    const rows = filled.map((f, idx) => {
-      let selesai;
-      if (idx < filled.length - 1) selesai = addDays(filled[idx + 1].mulai, -1);
-      else selesai = akhir || f.mulai;
-      return { kuartal: f.kuartal, tahun_ajaran: ta, tgl_mulai: f.mulai, tgl_selesai: selesai };
-    });
-    return { rows };
+    if (hijriOrdinal(s1a.thn, s1a.bln, s1a.tgl) > hijriOrdinal(s1b.thn, s1b.bln, s1b.tgl)) {
+      return { error: 'Semester 1: tanggal mulai harus sebelum/sama dengan tanggal selesai.' };
+    }
+    if ((!empty(s2a) || !empty(s2b)) && (!complete(s2a) || !complete(s2b))) {
+      return { error: 'Semester 2 terisi sebagian. Lengkapi atau kosongkan semua.' };
+    }
+    const hasS2 = complete(s2a) && complete(s2b);
+    if (hasS2) {
+      if (hijriOrdinal(s2a.thn, s2a.bln, s2a.tgl) > hijriOrdinal(s2b.thn, s2b.bln, s2b.tgl)) {
+        return { error: 'Semester 2: tanggal mulai harus sebelum/sama dengan tanggal selesai.' };
+      }
+      if (hijriOrdinal(s2a.thn, s2a.bln, s2a.tgl) <= hijriOrdinal(s1b.thn, s1b.bln, s1b.tgl)) {
+        return { error: 'Semester 2 harus dimulai setelah Semester 1 selesai.' };
+      }
+    }
+
+    const conv = (t) => hijriToMasehi(t.thn, t.bln, t.tgl);
+    const entries = [{
+      tahun_ajaran: ta, semester: 1,
+      mulai_tahun_hijri: s1a.thn, mulai_bulan_hijri: s1a.bln, mulai_tanggal: s1a.tgl,
+      selesai_tahun_hijri: s1b.thn, selesai_bulan_hijri: s1b.bln, selesai_tanggal: s1b.tgl,
+      masehi_mulai: conv(s1a), masehi_selesai: conv(s1b),
+    }];
+    if (hasS2) {
+      entries.push({
+        tahun_ajaran: ta, semester: 2,
+        mulai_tahun_hijri: s2a.thn, mulai_bulan_hijri: s2a.bln, mulai_tanggal: s2a.tgl,
+        selesai_tahun_hijri: s2b.thn, selesai_bulan_hijri: s2b.bln, selesai_tanggal: s2b.tgl,
+        masehi_mulai: conv(s2a), masehi_selesai: conv(s2b),
+      });
+    }
+    for (const e of entries) {
+      if (!e.masehi_mulai || !e.masehi_selesai) {
+        return { error: `Gagal menghitung ekuivalen Masehi Semester ${e.semester}. Periksa kembali tanggal Hijriyah.` };
+      }
+    }
+    return { entries };
   }
 
   function renderPreview() {
-    const b = buildRows();
+    const b = buildEntries();
     if (b.error) { preview.innerHTML = `<span class="text-red-500">${b.error}</span>`; return; }
-    if (!b.rows || !b.rows.length) { preview.textContent = ''; return; }
-    const smt = (q) => (q <= 2 ? '1' : '2');
-    const tipe = (q) => (q % 2 !== 0 ? 'Tamrin' : 'Ujian');
-    preview.innerHTML = b.rows
-      .map((r) => `Kuartal ${r.kuartal} (${tipe(r.kuartal)} Smt ${smt(r.kuartal)}): <b>${r.tgl_mulai}</b> → <b>${r.tgl_selesai}</b>`)
-      .join('<br>');
+    preview.innerHTML = b.entries.map((e) => {
+      const m = e.masehi_mulai ? `<b>${e.masehi_mulai}</b>` : '?';
+      const s = e.masehi_selesai ? `<b>${e.masehi_selesai}</b>` : '?';
+      return `Semester ${e.semester}: ${e.mulai_tanggal} ${BULAN[e.mulai_bulan_hijri - 1]} ${e.mulai_tahun_hijri} H (<b>≈ ${m}</b>) → ${e.selesai_tanggal} ${BULAN[e.selesai_bulan_hijri - 1]} ${e.selesai_tahun_hijri} H (<b>≈ ${s}</b>)`;
+    }).join('<br>');
   }
 
   async function loadKalender() {
     const ta = inpTA.value.trim();
     if (!ta) { alert('Isi Tahun Ajaran dulu.'); return; }
     try {
-      const res = await fetch(`/api/kalender?tahun_ajaran=${encodeURIComponent(ta)}`);
+      const res = await fetch(`/api/kalender/hijri-semester?tahun_ajaran=${encodeURIComponent(ta)}`);
+      if (!res.ok) throw new Error('Gagal memuat kalender');
       const data = (await res.json()) || [];
-      k.forEach((el) => (el.value = ''));
-      inpAkhir.value = '';
-      (Array.isArray(data) ? data : []).forEach((row) => {
-        if (row.kuartal >= 1 && row.kuartal <= 4) k[row.kuartal - 1].value = row.tgl_mulai || '';
-        if (row.kuartal === 4) inpAkhir.value = row.tgl_selesai || '';
+      TRIPLES.forEach((p) => writeTriple(p, '', '', ''));
+      data.forEach((row) => {
+        if (row.semester === 1) {
+          writeTriple('s1-mulai', row.mulai_tanggal, row.mulai_bulan_hijri, row.mulai_tahun_hijri);
+          writeTriple('s1-selesai', row.selesai_tanggal, row.selesai_bulan_hijri, row.selesai_tahun_hijri);
+        } else if (row.semester === 2) {
+          writeTriple('s2-mulai', row.mulai_tanggal, row.mulai_bulan_hijri, row.mulai_tahun_hijri);
+          writeTriple('s2-selesai', row.selesai_tanggal, row.selesai_bulan_hijri, row.selesai_tahun_hijri);
+        }
       });
       renderPreview();
     } catch (e) {
-      alert('Gagal memuat kalender.');
+      alert(e.message);
     }
   }
 
-  [...k, inpAkhir].forEach((el) => el.addEventListener('change', renderPreview));
+  TRIPLES.forEach((p) => ['tgl', 'bln', 'thn'].forEach((k) => els[p][k].addEventListener('change', renderPreview)));
   btnLoad.addEventListener('click', loadKalender);
 
   // Tampilkan tahun ajaran aktif saat ini.
@@ -716,7 +812,6 @@ loadMudirTingkatan();
     return '';
   }
 
-  // Jadikan tahun ajaran yang diketik sebagai tahun aktif global.
   if (btnSetActive) {
     btnSetActive.addEventListener('click', async () => {
       const ta = inpTA.value.trim();
@@ -737,7 +832,7 @@ loadMudirTingkatan();
     });
   }
 
-  // Tahun Hijriyah Aktif
+  // Tahun Hijriyah Aktif (dipakai halaman Absensi Manual).
   const inpTH = document.getElementById('kalender-th');
   const btnSetHijri = document.getElementById('kalender-set-hijri');
   const spanTHActive = document.getElementById('kalender-th-active');
@@ -750,6 +845,8 @@ loadMudirTingkatan();
         const th = d && d.tahun_hijri_aktif ? d.tahun_hijri_aktif : '-';
         if (spanTHActive) spanTHActive.textContent = th;
         if (inpTH && th !== '-') inpTH.value = th;
+        // Prefill tahun Hijri pada form kalender jika masih kosong.
+        TRIPLES.forEach((p) => { if (!els[p].thn.value && th !== '-') els[p].thn.value = th; });
       }
     } catch (_) {}
   }
@@ -774,126 +871,35 @@ loadMudirTingkatan();
     });
   }
 
-  refreshActiveHijri();
-
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const ta = inpTA.value.trim();
     if (!ta) { alert('Isi Tahun Ajaran dulu.'); return; }
-    const b = buildRows();
+    const b = buildEntries();
     if (b.error) { alert(b.error); return; }
-    if (!b.rows.length) { alert('Isi minimal tanggal mulai Kuartal 1.'); return; }
+    if (!confirm(`Simpan kalender akademik ${ta}?\nDaftar hadir akan otomatis masuk semester sesuai rentang ini.`)) return;
     try {
-      const res = await fetch('/api/kalender', {
+      const res = await fetch('/api/kalender/hijri-semester', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(b.rows),
+        body: JSON.stringify(b.entries),
       });
-      if (!res.ok) throw new Error('Gagal menyimpan kalender');
-      alert('Kalender kuartal tersimpan!');
+      if (!res.ok) {
+        const msg = await res.text();
+        throw new Error(msg || 'Gagal menyimpan kalender');
+      }
+      alert('Kalender akademik tersimpan!');
     } catch (err) {
       alert(err.message);
     }
   });
 
-  // Prefill tahun ajaran aktif, tampilkan indikatornya, lalu muat kalendernya.
+  // Prefill tahun ajaran aktif, tampilkan indikator, lalu muat kalendernya.
   (async () => {
+    await refreshActiveHijri();
     const ta = await refreshActiveTA();
     if (ta) { inpTA.value = ta; loadKalender(); }
   })();
 })();
 
-// --- Mapping Bulan Hijriyah -> Semester (Absensi Manual) ---
-// Setiap bulan Hijri (1-12) pada satu tahun Hijri dipetakan ke Semester 1/2.
-// Saat absensi manual disimpan, sistem otomatis menandai semesternya dari
-// mapping ini. Menyimpan mapping juga meng-update baris absensi manual lama.
-(function initHijriSemesterMap() {
-  const grid = document.getElementById('hsm-grid');
-  if (!grid) return;
-
-  const inpTahun = document.getElementById('hsm-tahun');
-  const btnLoad = document.getElementById('hsm-load');
-  const btnSave = document.getElementById('hsm-save');
-  const spanStatus = document.getElementById('hsm-status');
-
-  const BULAN = ['Muharram', 'Safar', 'Rabiul Awal', 'Rabiul Akhir', 'Jumadil Awal',
-    'Jumadil Akhir', 'Rajab', "Sya'ban", 'Ramadhan', 'Syawal', "Dzulqa'dah", 'Dzulhijjah'];
-
-  // Default tahun = tahun Hijri aktif dari settings umum.
-  (async () => {
-    try {
-      const res = await fetch('/api/settings/umum');
-      if (res.ok) {
-        const d = await res.json();
-        if (d && d.tahun_hijri_aktif) inpTahun.value = d.tahun_hijri_aktif;
-      }
-    } catch (_) {}
-  })();
-
-  function renderGrid(mapping) {
-    const sem = {};
-    (mapping || []).forEach((m) => { sem[m.bulan_hijri] = m.semester; });
-    grid.innerHTML = BULAN.map((nama, i) => {
-      const bulan = i + 1;
-      const cur = sem[bulan] || 0;
-      return `<div class="flex items-center gap-2 bg-gray-50 dark:bg-slate-700/50 rounded-xl px-3 py-2">
-        <span class="text-sm font-medium text-gray-700 dark:text-gray-200 flex-1">${bulan}. ${nama}</span>
-        <select id="hsm-b${bulan}" class="glass-input px-2 py-1.5 rounded-lg text-sm w-32">
-          <option value="0"${cur === 0 ? ' selected' : ''}>— Belum —</option>
-          <option value="1"${cur === 1 ? ' selected' : ''}>Semester 1</option>
-          <option value="2"${cur === 2 ? ' selected' : ''}>Semester 2</option>
-        </select>
-      </div>`;
-    }).join('');
-  }
-
-  async function loadMapping() {
-    const th = parseInt(inpTahun.value, 10);
-    if (!th || th < 1300 || th > 1600) { alert('Isi tahun Hijriyah yang valid.'); return; }
-    try {
-      const res = await fetch(`/api/kalender/hijri-semester?tahun_hijri=${th}`);
-      if (!res.ok) throw new Error('Gagal memuat mapping');
-      const data = await res.json();
-      renderGrid(data);
-      const mapped = (data || []).length;
-      spanStatus.textContent = mapped
-        ? `${mapped} bulan sudah ter-mapping untuk tahun ${th}.`
-        : `Belum ada mapping untuk tahun ${th}. Pilih semester tiap bulan lalu Simpan.`;
-    } catch (e) {
-      alert(e.message || 'Gagal memuat mapping.');
-    }
-  }
-
-  btnLoad.addEventListener('click', loadMapping);
-
-  btnSave.addEventListener('click', async () => {
-    const th = parseInt(inpTahun.value, 10);
-    if (!th || th < 1300 || th > 1600) { alert('Isi tahun Hijriyah yang valid.'); return; }
-    const entries = [];
-    let unmapped = 0;
-    for (let b = 1; b <= 12; b++) {
-      const sel = document.getElementById('hsm-b' + b);
-      const s = parseInt(sel ? sel.value : '0', 10);
-      if (s === 1 || s === 2) entries.push({ tahun_hijri: th, bulan_hijri: b, semester: s });
-      else unmapped++;
-    }
-    if (!entries.length) { alert('Pilih semester minimal untuk satu bulan.'); return; }
-    if (!confirm(unmapped ? `Ada ${unmapped} bulan belum di-mapping (dibiarkan tanpa semester). Lanjut simpan?` : 'Simpan mapping ini?')) return;
-    try {
-      const res = await fetch('/api/kalender/hijri-semester', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(entries),
-      });
-      if (!res.ok) throw new Error('Gagal menyimpan mapping');
-      alert('Mapping tersimpan! Baris absensi manual bulan terkait otomatis di-update semesternya.');
-      loadMapping();
-    } catch (e) {
-      alert(e.message);
-    }
-  });
-
-  renderGrid([]);
-})();
-
-console.log('Cache bust 2');
+console.log('Cache bust 3');

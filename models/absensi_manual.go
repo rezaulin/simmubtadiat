@@ -74,8 +74,8 @@ func SaveAbsensiManualBulanan(ctx context.Context, entries []AbsensiManualBulana
 			continue
 		}
 
-		// Resolve semester dari mapping bulan Hijri absolut (0 jika belum ada).
-		sem := SemesterBulanHijri(ctx, e.TahunHijri, e.BulanHijri)
+		// Resolve semester dari kalender semester Hijri tahun ajaran ini (0 = belum/di luar rentang).
+		sem := SemesterDariBulanHijri(ctx, e.TahunAjaran, e.TahunHijri, e.BulanHijri)
 		var semVal interface{}
 		if sem > 0 {
 			semVal = sem
@@ -189,8 +189,8 @@ func SaveAbsensiManualPengajarBulanan(ctx context.Context, entries []AbsensiManu
 			continue
 		}
 
-		// Resolve semester dari mapping bulan Hijri absolut (0 jika belum ada).
-		sem := SemesterBulanHijri(ctx, e.TahunHijri, e.BulanHijri)
+		// Resolve semester dari kalender semester Hijri tahun ajaran ini (0 = belum/di luar rentang).
+		sem := SemesterDariBulanHijri(ctx, e.TahunAjaran, e.TahunHijri, e.BulanHijri)
 		var semVal interface{}
 		if sem > 0 {
 			semVal = sem
