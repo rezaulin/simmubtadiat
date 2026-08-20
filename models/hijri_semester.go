@@ -107,7 +107,34 @@ func SaveKalenderSemesterHijri(ctx context.Context, entries []KalenderSemesterHi
 		}
 	}
 
-	// Sinkronkan kalender_kuartal dari ekuivalen Masehi tiap semester.
+	// Backfill ulang kolom semester baris absensi manual tahun ajaran ini
+	// berdasarkan kalender baru (hari ke-15 bulan Hijri dalam rentang semester).
+	backfillQ := func(table string) error {
+		_, err := tx.Exec(ctx, `
+			UPDATE `+table+` am
+			   SET semester = v.sem
+			  FROM (
+				SELECT am2.id,
+				       MAX(CASE WHEN (ks.mulai_tahun_hijri*360 + ks.mulai_bulan_hijri*30 + ks.mulai_tanggal)
+				                     <= (am2.tahun_hijri*360 + am2.bulan_hijri*30 + 15)
+				                AND  (ks.selesai_tahun_hijri*360 + ks.selesai_bulan_hijri*30 + ks.selesai_tanggal)
+				                     >= (am2.tahun_hijri*360 + am2.bulan_hijri*30 + 15)
+				               THEN ks.semester END) AS sem
+				  FROM `+table+` am2
+				  LEFT JOIN kalender_semester_hijri ks ON ks.tahun_ajaran = am2.tahun_ajaran
+				 GROUP BY am2.id
+			  ) v
+			 WHERE am.id = v.id AND am.semester IS DISTINCT FROM v.sem`)
+		return err
+	}
+	if err := backfillQ("absensi_manual_bulanan"); err != nil {
+		return err
+	}
+	if err := backfillQ("absensi_manual_pengajar_bulanan"); err != nil {
+		return err
+	}
+
+		// Sinkronkan kalender_kuartal dari ekuivalen Masehi tiap semester.
 	// kuartal 1/2 = paruh semester 1; kuartal 3/4 = paruh semester 2.
 	if _, err := tx.Exec(ctx, `
 		INSERT INTO kalender_kuartal (kuartal, tahun_ajaran, tgl_mulai, tgl_selesai)
