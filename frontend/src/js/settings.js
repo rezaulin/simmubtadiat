@@ -803,4 +803,97 @@ loadMudirTingkatan();
   })();
 })();
 
-console.log('Cache bust 1');
+// --- Mapping Bulan Hijriyah -> Semester (Absensi Manual) ---
+// Setiap bulan Hijri (1-12) pada satu tahun Hijri dipetakan ke Semester 1/2.
+// Saat absensi manual disimpan, sistem otomatis menandai semesternya dari
+// mapping ini. Menyimpan mapping juga meng-update baris absensi manual lama.
+(function initHijriSemesterMap() {
+  const grid = document.getElementById('hsm-grid');
+  if (!grid) return;
+
+  const inpTahun = document.getElementById('hsm-tahun');
+  const btnLoad = document.getElementById('hsm-load');
+  const btnSave = document.getElementById('hsm-save');
+  const spanStatus = document.getElementById('hsm-status');
+
+  const BULAN = ['Muharram', 'Safar', 'Rabiul Awal', 'Rabiul Akhir', 'Jumadil Awal',
+    'Jumadil Akhir', 'Rajab', "Sya'ban", 'Ramadhan', 'Syawal', "Dzulqa'dah", 'Dzulhijjah'];
+
+  // Default tahun = tahun Hijri aktif dari settings umum.
+  (async () => {
+    try {
+      const res = await fetch('/api/settings/umum');
+      if (res.ok) {
+        const d = await res.json();
+        if (d && d.tahun_hijri_aktif) inpTahun.value = d.tahun_hijri_aktif;
+      }
+    } catch (_) {}
+  })();
+
+  function renderGrid(mapping) {
+    const sem = {};
+    (mapping || []).forEach((m) => { sem[m.bulan_hijri] = m.semester; });
+    grid.innerHTML = BULAN.map((nama, i) => {
+      const bulan = i + 1;
+      const cur = sem[bulan] || 0;
+      return `<div class="flex items-center gap-2 bg-gray-50 dark:bg-slate-700/50 rounded-xl px-3 py-2">
+        <span class="text-sm font-medium text-gray-700 dark:text-gray-200 flex-1">${bulan}. ${nama}</span>
+        <select id="hsm-b${bulan}" class="glass-input px-2 py-1.5 rounded-lg text-sm w-32">
+          <option value="0"${cur === 0 ? ' selected' : ''}>— Belum —</option>
+          <option value="1"${cur === 1 ? ' selected' : ''}>Semester 1</option>
+          <option value="2"${cur === 2 ? ' selected' : ''}>Semester 2</option>
+        </select>
+      </div>`;
+    }).join('');
+  }
+
+  async function loadMapping() {
+    const th = parseInt(inpTahun.value, 10);
+    if (!th || th < 1300 || th > 1600) { alert('Isi tahun Hijriyah yang valid.'); return; }
+    try {
+      const res = await fetch(`/api/kalender/hijri-semester?tahun_hijri=${th}`);
+      if (!res.ok) throw new Error('Gagal memuat mapping');
+      const data = await res.json();
+      renderGrid(data);
+      const mapped = (data || []).length;
+      spanStatus.textContent = mapped
+        ? `${mapped} bulan sudah ter-mapping untuk tahun ${th}.`
+        : `Belum ada mapping untuk tahun ${th}. Pilih semester tiap bulan lalu Simpan.`;
+    } catch (e) {
+      alert(e.message || 'Gagal memuat mapping.');
+    }
+  }
+
+  btnLoad.addEventListener('click', loadMapping);
+
+  btnSave.addEventListener('click', async () => {
+    const th = parseInt(inpTahun.value, 10);
+    if (!th || th < 1300 || th > 1600) { alert('Isi tahun Hijriyah yang valid.'); return; }
+    const entries = [];
+    let unmapped = 0;
+    for (let b = 1; b <= 12; b++) {
+      const sel = document.getElementById('hsm-b' + b);
+      const s = parseInt(sel ? sel.value : '0', 10);
+      if (s === 1 || s === 2) entries.push({ tahun_hijri: th, bulan_hijri: b, semester: s });
+      else unmapped++;
+    }
+    if (!entries.length) { alert('Pilih semester minimal untuk satu bulan.'); return; }
+    if (!confirm(unmapped ? `Ada ${unmapped} bulan belum di-mapping (dibiarkan tanpa semester). Lanjut simpan?` : 'Simpan mapping ini?')) return;
+    try {
+      const res = await fetch('/api/kalender/hijri-semester', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(entries),
+      });
+      if (!res.ok) throw new Error('Gagal menyimpan mapping');
+      alert('Mapping tersimpan! Baris absensi manual bulan terkait otomatis di-update semesternya.');
+      loadMapping();
+    } catch (e) {
+      alert(e.message);
+    }
+  });
+
+  renderGrid([]);
+})();
+
+console.log('Cache bust 2');

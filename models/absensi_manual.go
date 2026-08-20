@@ -19,6 +19,7 @@ type AbsensiManualBulanan struct {
 	TotalIzin   int    `json:"total_izin"`
 	TotalAlpha  int    `json:"total_alpha"`
 	TotalHadir  int    `json:"total_hadir"`
+	Semester    int    `json:"semester"` // 1/2 dari mapping bulan Hijri; 0 = belum
 }
 
 // GetAbsensiManualBulanan mengambil data absensi manual untuk satu bagian pada
@@ -73,17 +74,25 @@ func SaveAbsensiManualBulanan(ctx context.Context, entries []AbsensiManualBulana
 			continue
 		}
 
+		// Resolve semester dari mapping bulan Hijri absolut (0 jika belum ada).
+		sem := SemesterBulanHijri(ctx, e.TahunHijri, e.BulanHijri)
+		var semVal interface{}
+		if sem > 0 {
+			semVal = sem
+		}
+
 		_, err2 := tx.Exec(ctx, `
-			INSERT INTO absensi_manual_bulanan (santri_id, tahun_hijri, bulan_hijri, tahun_ajaran, total_sakit, total_izin, total_alpha, total_hadir)
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+			INSERT INTO absensi_manual_bulanan (santri_id, tahun_hijri, bulan_hijri, tahun_ajaran, total_sakit, total_izin, total_alpha, total_hadir, semester)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 			ON CONFLICT (santri_id, tahun_hijri, bulan_hijri)
 			DO UPDATE SET total_sakit = EXCLUDED.total_sakit,
 			             total_izin = EXCLUDED.total_izin,
 			             total_alpha = EXCLUDED.total_alpha,
 			             total_hadir = EXCLUDED.total_hadir,
 			             tahun_ajaran = EXCLUDED.tahun_ajaran,
+			             semester = EXCLUDED.semester,
 			             updated_at = CURRENT_TIMESTAMP`,
-			e.SantriID, e.TahunHijri, e.BulanHijri, e.TahunAjaran, e.TotalSakit, e.TotalIzin, e.TotalAlpha, e.TotalHadir)
+			e.SantriID, e.TahunHijri, e.BulanHijri, e.TahunAjaran, e.TotalSakit, e.TotalIzin, e.TotalAlpha, e.TotalHadir, semVal)
 		if err2 != nil {
 			return 0, 0, err2
 		}
@@ -107,6 +116,7 @@ type AbsensiManualPengajarBulanan struct {
 	TotalIzin   int    `json:"total_izin"`
 	TotalAlpha  int    `json:"total_alpha"`
 	TotalHadir  int    `json:"total_hadir"`
+	Semester    int    `json:"semester"` // 1/2 dari mapping bulan Hijri; 0 = belum
 }
 
 // GetAbsensiManualPengajarBulanan mengambil data untuk tahun Hijriyah tertentu.
@@ -166,6 +176,7 @@ func SaveAbsensiManualPengajarBulanan(ctx context.Context, entries []AbsensiManu
 
 	for _, e := range entries {
 		if e.TotalSakit == 0 && e.TotalIzin == 0 && e.TotalAlpha == 0 && e.TotalHadir == 0 {
+			// Hapus record (pengajar full hadir bulan ini).
 			tag, err2 := tx.Exec(ctx,
 				`DELETE FROM absensi_manual_pengajar_bulanan WHERE pengajar_id=$1 AND tahun_hijri=$2 AND bulan_hijri=$3`,
 				e.PengajarID, e.TahunHijri, e.BulanHijri)
@@ -178,17 +189,25 @@ func SaveAbsensiManualPengajarBulanan(ctx context.Context, entries []AbsensiManu
 			continue
 		}
 
+		// Resolve semester dari mapping bulan Hijri absolut (0 jika belum ada).
+		sem := SemesterBulanHijri(ctx, e.TahunHijri, e.BulanHijri)
+		var semVal interface{}
+		if sem > 0 {
+			semVal = sem
+		}
+
 		_, err2 := tx.Exec(ctx, `
-			INSERT INTO absensi_manual_pengajar_bulanan (pengajar_id, tahun_hijri, bulan_hijri, tahun_ajaran, total_sakit, total_izin, total_alpha, total_hadir)
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+			INSERT INTO absensi_manual_pengajar_bulanan (pengajar_id, tahun_hijri, bulan_hijri, tahun_ajaran, total_sakit, total_izin, total_alpha, total_hadir, semester)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 			ON CONFLICT (pengajar_id, tahun_hijri, bulan_hijri)
 			DO UPDATE SET total_sakit = EXCLUDED.total_sakit,
 			             total_izin = EXCLUDED.total_izin,
 			             total_alpha = EXCLUDED.total_alpha,
 			             total_hadir = EXCLUDED.total_hadir,
 			             tahun_ajaran = EXCLUDED.tahun_ajaran,
+			             semester = EXCLUDED.semester,
 			             updated_at = CURRENT_TIMESTAMP`,
-			e.PengajarID, e.TahunHijri, e.BulanHijri, e.TahunAjaran, e.TotalSakit, e.TotalIzin, e.TotalAlpha, e.TotalHadir)
+			e.PengajarID, e.TahunHijri, e.BulanHijri, e.TahunAjaran, e.TotalSakit, e.TotalIzin, e.TotalAlpha, e.TotalHadir, semVal)
 		if err2 != nil {
 			return 0, 0, err2
 		}

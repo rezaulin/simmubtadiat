@@ -363,6 +363,30 @@
         </form>
       </div>
 
+      <!-- Mapping Bulan Hijri -> Semester (Absensi Manual) -->
+      <div class="glass dark:bg-slate-800/80 rounded-3xl p-6 border border-gray-200 dark:border-slate-700 shadow-sm relative overflow-hidden group flex flex-col">
+        <div class="absolute -right-10 -top-10 w-40 h-40 bg-emerald-500/10 rounded-full blur-3xl group-hover:bg-emerald-500/20 transition-colors"></div>
+        <div class="flex items-center gap-4 mb-6 relative z-10">
+          <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center text-white shadow-lg">
+            <i data-lucide="calendar-clock" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <h3 class="text-lg font-bold text-gray-800 dark:text-white">Mapping Bulan Hijriyah → Semester</h3>
+            <p class="text-xs text-gray-500 dark:text-gray-400">Tentukan tiap bulan Hijriyah masuk Semester 1 atau 2. Dipakai agar daftar hadir manual (bulan Hijri) terikat ke semester untuk penilaian.</p>
+          </div>
+        </div>
+        <div class="flex flex-col gap-3 relative z-10">
+          <div class="flex items-center gap-2 flex-wrap">
+            <label class="text-sm font-semibold text-gray-700 dark:text-gray-300">Tahun Hijriyah</label>
+            <input type="number" id="hsm-tahun" min="1300" max="1600" class="glass-input px-3 py-2 rounded-lg text-sm w-28 font-mono font-bold" placeholder="1447">
+            <button type="button" id="hsm-load" class="px-4 py-2 rounded-xl text-sm font-medium bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors whitespace-nowrap">Muat</button>
+          </div>
+          <div id="hsm-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+          <div id="hsm-status" class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed"></div>
+          <div><button type="button" id="hsm-save" class="bg-primary hover:bg-primary-hover text-white px-5 py-2 rounded-xl text-sm font-medium shadow-md transition-all">Simpan Mapping</button></div>
+        </div>
+      </div>
+
     </div>
   </main>
 
