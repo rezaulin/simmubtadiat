@@ -1,0 +1,1 @@
+ALTER TABLE dewan_harian ALTER COLUMN tahun_aktif TYPE VARCHAR(255);

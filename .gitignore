@@ -1,0 +1,41 @@
+# Binari hasil build Go
+*.exe
+main
+tmp_build
+/tmp/
+tmp/
+
+# Arsip upload sekali-pakai
+*.tar.gz
+
+# Output build frontend (dirakit ulang di dalam Docker; tak perlu di repo)
+public/dist/
+
+# Environment / rahasia
+.env
+
+# Database lokal (SQLite sisa percobaan) & dump/log
+*.db
+*.log
+
+# Berkas keluaran/sementara sekali-pakai
+build_err.txt
+leger_result.txt
+output.html
+output*.txt
+
+# Skrip edit massal sekali-pakai
+fix_*.cjs
+fix_*.py
+inject_*.cjs
+update_*.cjs
+append_*.js
+append_*.cjs
+do_append.cjs
+tmp_*.ps1
+
+# OS / editor
+.DS_Store
+Thumbs.db
+tmp_extract/
+tmp_deploy_folder/

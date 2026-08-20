@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="color-scheme" content="light dark">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Cetak Rapot - SIM Mubtadiat</title>
+  
+  <!-- Google Fonts & Lucide -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    // Samakan dengan halaman lain: mode gelap HANYA via toggle manual (.dark),
+    // bukan mengikuti mode gelap OS (default Play CDN = 'media').
+    tailwind.config = { darkMode: 'class' };
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap');
+
+    body {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        background-color: #f3f4f6;
+        color: black;
+    }
+
+    .rapot-sheet {
+        font-family: 'Amiri', serif;
+    }
+
+    @media print {
+        body { margin: 0; padding: 0; background-color: white; }
+        .no-print { display: none !important; }
+        /* Tiap lembar rapot dipisah agar rapi saat cetak (single & bulk) */
+        .rapot-sheet {
+            page-break-after: always;
+            page-break-inside: avoid;
+            break-inside: avoid;
+            margin: 0 auto !important;
+            padding: 0 !important;
+            max-width: 100% !important;
+        }
+        .rapot-sheet:last-child { page-break-after: auto; }
+    }
+
+    .rapot-sheet {
+        max-width: 800px;
+        margin: 0 auto 30px auto;
+        padding: 20px;
+        background-color: white;
+    }
+
+    .header-logo {
+        width: 80px;
+        height: 80px;
+        object-fit: contain;
+    }
+
+    .header-text {
+        text-align: center;
+        flex: 1;
+    }
+
+    .header-text .hdr-1 {
+        font-size: 14px;
+        margin-bottom: 2px;
+    }
+
+    .header-text h1 {
+        font-size: 24px;
+        font-weight: bold;
+        margin-bottom: 2px;
+    }
+
+    .header-text h2 {
+        font-size: 15px;
+        margin-bottom: 2px;
+    }
+
+    .header-text .hdr-tahun {
+        font-size: 13px;
+    }
+
+    /* Data identitas siswa: label Latin, dua kolom kiri-kanan */
+    .student-data {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        font-family: sans-serif;
+        font-size: 14px;
+    }
+
+    .student-data p {
+        margin-bottom: 3px;
+    }
+
+    .student-data .lbl {
+        display: inline-block;
+        min-width: 90px;
+    }
+
+
+    .rapot-sheet table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 8px;
+    }
+
+    .rapot-sheet th, .rapot-sheet td {
+        border: 2px solid black;
+        padding: 4px 6px;
+        text-align: center;
+        font-size: 13px;
+    }
+
+    .rapot-sheet th {
+        font-weight: bold;
+        background-color: #f8f9fa !important;
+        -webkit-print-color-adjust: exact;
+    }
+
+    .td-left {
+        text-align: right; /* Since RTL, right is starting side */
+    }
+
+    .signature-box {
+        margin-top: 16px;
+        display: flex;
+        justify-content: space-between;
+        padding: 0 40px;
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+  </style>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0E7C86">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <script type="module" src="/src/js/xss.js"></script>
+
+  <script>
+    (function() {
+      try {
+        var savedRole = localStorage.getItem('user_role');
+        if (savedRole) {
+          // CANONICAL menuAccess — MUST stay set-equal to MENU_ACCESS in
+          // frontend/src/js/xss.js for every role (see design.md Property 2).
+                    var menuAccess = {
+            pimpinan: ['/index.html', '/santri.html', '/perpindahan.html', '/kelas.html', '/penilaian.html', '/absensi-manual.html', '/rapot.html', '/pengajar.html', '/dewan-harian.html', '/arsip.html', '/alumni.html', '/rekap.html', '/catatan.html', '/settings.html', '/pengajar-purna.html'],
+            admin: ['/index.html', '/santri.html', '/pengajar.html', '/pengajar-purna.html', '/alumni.html', '/dewan-harian.html'],
+            mufatish: ['/index.html', '/santri.html', '/kelas.html', '/penilaian.html', '/absensi-manual.html', '/rapot.html', '/pengajar.html', '/dewan-harian.html', '/arsip.html', '/rekap.html', '/catatan.html'],
+            mustahiq: ['/index.html', '/santri.html', '/perpindahan.html', '/penilaian.html', '/rapot.html', '/rekap.html', '/catatan.html', '/pengajar.html', '/dewan-harian.html'],
+            muroqib: ['/index.html', '/santri.html', '/absensi-manual.html', '/catatan.html', '/dewan-harian.html', '/pengajar.html'],
+            tim_rapot: ['/index.html', '/penilaian.html', '/rapot.html', '/rekap.html'],
+            keamanan: ['/index.html', '/santri.html', '/arsip.html', '/alumni.html', '/catatan.html'],
+            wali_santri: ['/index.html', '/rapot.html']
+          };
+          var savedRoles = localStorage.getItem('user_roles');
+          var allowed = [];
+          if (savedRoles) {
+            try {
+              var parsedRoles = JSON.parse(savedRoles);
+              for (var j = 0; j < parsedRoles.length; j++) {
+                var r = parsedRoles[j];
+                if (menuAccess[r]) {
+                  for (var k = 0; k < menuAccess[r].length; k++) {
+                    if (allowed.indexOf(menuAccess[r][k]) === -1) allowed.push(menuAccess[r][k]);
+                  }
+                }
+              }
+            } catch(e) {}
+          }
+          if (allowed.length === 0) allowed = menuAccess[savedRole] || [];
+          var css = '';
+          var allLinks = ['/index.html', '/santri.html', '/perpindahan.html', '/kelas.html', '/penilaian.html', '/absensi-manual.html', '/rapot.html', '/pengajar.html', '/dewan-harian.html', '/arsip.html', '/alumni.html', '/rekap.html', '/catatan.html', '/settings.html', '/pengajar-purna.html'];
+
+          for (var i = 0; i < allLinks.length; i++) {
+            if (allowed.indexOf(allLinks[i]) === -1) {
+              css += 'aside nav a[href="' + allLinks[i] + '"] { display: none !important; }\n';
+            }
+          }
+          if (css) {
+            var style = document.createElement('style');
+            style.textContent = css;
+            document.head.appendChild(style);
+          }
+        }
+      } catch(e) {}
+    })();
+  </script>
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 transition-colors duration-300">
+
+  <!-- ==================== SIDEBAR (drawer on mobile, fixed on desktop) ==================== -->
+  <aside id="app-sidebar" class="flex flex-col w-64 fixed inset-y-0 left-0 bg-white dark:bg-slate-800 border-r border-gray-100 dark:border-slate-700/60 z-[70] transition-transform duration-300 transform -translate-x-full md:translate-x-0 shadow-[4px_0_24px_rgba(0,0,0,0.02)] print:hidden">
+    <!-- Close button (Mobile only) -->
+    <button id="btn-close-sidebar" class="tap-target md:hidden absolute top-4 right-4 p-2 bg-gray-50 dark:bg-slate-700 rounded-xl text-gray-500 hover:text-gray-700" aria-label="Tutup menu">
+      <i data-lucide="x" class="w-5 h-5"></i>
+    </button>
+    <!-- Logo Area -->
+    <div class="h-20 flex items-center px-6 border-b border-gray-100 dark:border-slate-700/60">
+      <div class="flex items-center gap-3 cursor-pointer" onclick="window.location.href='/index.html'">
+        <div class="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-md shadow-primary/20 ring-1 ring-gray-100 dark:ring-slate-700 overflow-hidden shrink-0">
+          <img src="/logo.jpg" alt="Logo Madrasah Hidayatul Mubtadiat" class="w-full h-full object-contain p-0.5">
+        </div>
+        <div class="leading-tight">
+          <span class="block font-bold text-gray-800 dark:text-white tracking-tight text-base">Mubtadiat</span>
+          <span class="block text-[11px] text-gray-400 dark:text-gray-500 font-medium">Manajemen Sistem</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Nav Links -->
+    <nav class="flex-1 overflow-y-auto p-4 flex flex-col gap-1 custom-scrollbar">
+      <!-- UTAMA -->
+      <p class="text-[10px] font-bold text-gray-400 dark:text-gray-500 mb-2 mt-2 px-3 tracking-widest uppercase">Utama</p>
+      <a href="/index.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+        <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+        Dashboard
+      </a>
+      <a href="/santri.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+        <i data-lucide="users" class="w-5 h-5"></i>
+        Data Santri
+      </a>
+      <a href="/perpindahan.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+        <i data-lucide="arrow-left-right" class="w-5 h-5"></i>
+        Perubahan Status
+      </a>
+      <a href="/kelas.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+        <i data-lucide="school" class="w-5 h-5"></i>
+        Data Kelas
+      </a>
+
+      <!-- AKADEMIK -->
+      <p class="text-[10px] font-bold text-gray-400 dark:text-gray-500 mb-2 mt-4 px-3 tracking-widest uppercase">Akademik</p>
+      <a href="/penilaian.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+        <i data-lucide="file-check-2" class="w-5 h-5"></i>
+        Penilaian
+      </a>
+      
+      <a href="/absensi-manual.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+        <i data-lucide="calendar-check" class="w-5 h-5"></i>
+        Absensi Manual
+      </a>
+      <a href="/rapot.html" class="bg-indigo-50/80 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400 font-semibold flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors">
+        <i data-lucide="book-open-check" class="w-5 h-5"></i>
+        Raport
+      </a>
+
+      <!-- DATABASE & ARSIP -->
+      <p class="text-[10px] font-bold text-gray-400 dark:text-gray-500 mb-2 mt-4 px-3 tracking-widest uppercase">Database & Arsip</p>
+      <a href="/pengajar.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+        <i data-lucide="graduation-cap" class="w-5 h-5"></i>
+        Pengajar
+      </a>
+      <a href="/dewan-harian.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+        <i data-lucide="briefcase" class="w-5 h-5"></i>
+        Dewan Harian
+      </a>
+      <a href="/arsip.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+        <i data-lucide="archive" class="w-5 h-5"></i>
+        Arsip & Keluar
+      </a>
+      <a href="/alumni.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+        <i data-lucide="medal" class="w-5 h-5"></i>
+        Alumni
+      </a>
+      <a href="/pengajar-purna.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+        <i data-lucide="history" class="w-5 h-5"></i>
+        Pengajar Purna
+      </a>
+
+      <!-- LAINNYA -->
+      <p class="text-[10px] font-bold text-gray-400 dark:text-gray-500 mb-2 mt-4 px-3 tracking-widest uppercase">Lainnya</p>
+      <a href="/rekap.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+        <i data-lucide="table" class="w-5 h-5"></i>
+        Rekap
+      </a>
+        <a href="/catatan.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+          <i data-lucide="shield-alert" class="w-5 h-5"></i>
+          Pelanggaran &amp; Prestasi
+        </a>
+      <a href="/settings.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+        <i data-lucide="settings" class="w-5 h-5"></i>
+        Pengaturan
+      </a>
+    </nav>
+    
+    <!-- User Profile / Logout -->
+    <div class="p-4 border-t border-gray-100 dark:border-slate-700/60 bg-gray-50/50 dark:bg-slate-800/50">
+      <button id="logout-btn-desktop" class="w-full flex items-center gap-3 px-3 py-2.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-colors text-left font-medium">
+        <i data-lucide="log-out" class="w-5 h-5"></i>
+        Keluar
+      </button>
+    </div>
+  </aside>
+
+  <!-- ==================== SIDEBAR BACKDROP (mobile only) ==================== -->
+  <div id="sidebar-backdrop" class="hidden md:hidden fixed inset-0 bg-gray-900/50 dark:bg-black/60 backdrop-blur-sm z-[65] print:hidden"></div>
+
+  <!-- ==================== MAIN CONTENT ==================== -->
+  <main class="md:ml-64 min-h-screen pb-24 md:pb-8">
+    
+    <!-- MOBILE TOP BAR -->
+    <header class="md:hidden h-16 bg-white/80 backdrop-blur-md dark:bg-slate-800/80 border-b border-gray-100 dark:border-slate-700 flex items-center justify-between px-4 sticky top-0 z-40 print:hidden">
+      <button id="btn-open-sidebar" class="tap-target p-2 -ml-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors" aria-label="Buka menu">
+        <i data-lucide="menu" class="w-6 h-6 text-gray-700 dark:text-gray-200"></i>
+      </button>
+      <button id="theme-toggle-mobile" class="tap-target p-2 -mr-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors" aria-label="Ganti tema">
+        <i data-lucide="moon" class="w-5 h-5 text-gray-700 dark:text-gray-200"></i>
+      </button>
+    </header>
+
+    <div class="p-4 md:p-8">
+      <!-- CONTROLS (NO PRINT) -->
+      <div class="no-print bg-white dark:bg-slate-800 p-4 md:p-6 mb-6 shadow-sm border border-gray-100 dark:border-slate-700/60 rounded-2xl" dir="ltr">
+    <div class="max-w-5xl mx-auto flex flex-col gap-4" style="font-family: sans-serif;">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <h1 class="text-xl md:text-2xl font-bold text-gray-800 break-words min-w-0">Cetak Rapot</h1>
+        <a href="/index.html" class="bg-gray-600 text-white px-5 py-2 rounded font-bold hover:bg-gray-700 shrink-0">Kembali</a>
+      </div>
+
+      <!-- Cascade Filter: Tingkatan -> Kelas -> Bagian -->
+        <div class="flex flex-col sm:flex-row flex-wrap gap-4 mb-4 items-end">
+          <!-- Tahun Ajaran -->
+          <div class="flex flex-col gap-1 w-full sm:w-auto">
+            <label class="text-xs font-semibold text-gray-500">Tahun Ajaran</label>
+            <select id="filter-tahun-ajaran" class="border p-2 rounded w-full sm:w-48 font-mono font-bold text-amber-700">
+              <!-- Diisi via JS -->
+            </select>
+          </div>
+          <!-- Tingkatan -->
+          <div class="flex flex-col gap-1 w-full sm:w-auto">
+            <label class="text-xs font-semibold text-gray-500">Tingkatan</label>
+            <select id="filter-tingkatan" class="border p-2 rounded w-full sm:w-48">
+            <option value="">Memuat...</option>
+          </select>
+        </div>
+        <div class="flex flex-col w-full sm:w-auto">
+          <label class="text-xs font-medium text-gray-500 mb-1">Kelas</label>
+          <select id="filter-kelas" class="border p-2 rounded w-full sm:w-48" disabled>
+            <option value="">-- Pilih Kelas --</option>
+          </select>
+        </div>
+        <div class="flex flex-col w-full sm:w-auto">
+          <label class="text-xs font-medium text-gray-500 mb-1">Bagian</label>
+          <select id="filter-bagian" class="border p-2 rounded w-full sm:w-48" disabled>
+            <option value="">-- Pilih Bagian --</option>
+          </select>
+        </div>
+        <div class="flex flex-col w-full sm:w-auto">
+          <label class="text-xs font-medium text-gray-500 mb-1">Semester</label>
+          <select id="filter-semester" class="border p-2 rounded w-full sm:w-56">
+            <option value="1">Semester 1 (الأول)</option>
+            <option value="2">Semester 2 (الثاني)</option>
+            <option value="1,2">Semester 1 &amp; 2 (Keduanya)</option>
+          </select>
+        </div>
+        <div class="flex flex-col w-full sm:w-auto">
+          <label class="text-xs font-medium text-gray-500 mb-1">Ukuran Kertas</label>
+          <select id="kertas-selector" class="border p-2 rounded w-full sm:w-28" onchange="updatePageSize()">
+            <option value="A4">A4</option>
+            <option value="215.9mm 330.2mm">F4</option>
+          </select>
+        </div>
+        <div class="flex flex-col w-full sm:w-auto">
+          <label class="text-xs font-medium text-transparent mb-1 select-none hidden sm:block">.</label>
+          <button id="btn-load" class="w-full sm:w-auto shrink-0 bg-teal-600 text-white px-6 py-2 rounded font-bold hover:bg-teal-700">Tampilkan Santri</button>
+        </div>
+      </div>
+
+      <!-- Daftar santri + tombol cetak bulk -->
+      <div id="santri-panel" class="hidden border-t pt-4">
+        <div class="flex justify-between items-center mb-3">
+          <span id="santri-count" class="text-sm text-gray-600"></span>
+          <button id="btn-print-bulk" class="bg-green-600 text-white px-6 py-2 rounded font-bold hover:bg-green-700">Cetak Semua (Bulk)</button>
+        </div>
+        <div id="santri-list" class="border rounded divide-y max-h-80 overflow-y-auto"></div>
+        <p id="santri-empty" class="hidden text-red-500 text-sm py-4 text-center">Tidak ada santri di bagian ini.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- PRINT AREA: diisi dinamis oleh rapot.js (single = 1 lembar, bulk = banyak lembar).
+       Lembar rapot berlebar tetap (800px) → pada Viewport_Mobile digulir horizontal
+       di dalam wadahnya, bukan menggeser seluruh halaman (Req 5.1). print:overflow-visible
+       memastikan pagination cetak tidak terpotong. -->
+  <div id="print-area" class="overflow-x-auto print:overflow-visible"></div>
+
+  <!-- TEMPLATE satu lembar rapot (disembunyikan, di-clone oleh JS) -->
+  <template id="rapot-template">
+    <div class="rapot-sheet" dir="rtl">
+      <!-- HEADER (4 baris Arab sesuai raport asli) -->
+      <div class="flex items-center border-b-4 border-black pb-4 mb-4">
+          <div class="header-logo"></div>
+          <div class="header-text">
+              <p class="hdr-1">كشف الدرجات الدراسية</p>
+              <h1 data-field="semester-title">فصل الدراسية الأولى</h1>
+              <h2 data-field="madrasah-line">المدرسة العالية للبنات هداية المبتدئات ليربيا كديري</h2>
+              <p class="hdr-tahun">سنة : <span data-field="tahun-ajaran">١٤٤٦ - ١٤٤٧ هـ / ٢٠٠٥ - ٢٠٠٦ م</span></p>
+          </div>
+          <img src="/public/logo.jpg" alt="Logo" class="header-logo" onerror="this.src='https://via.placeholder.com/80'">
+      </div>
+
+      <!-- STUDENT DATA (label Latin sesuai contoh, bukan Arab) -->
+      <div class="student-data" dir="ltr">
+          <div class="student-col">
+              <p><span class="lbl">Nama</span>: <strong data-field="nama">....................</strong></p>
+              <p><span class="lbl">No. Stambuk</span>: <strong data-field="stambuk">....................</strong></p>
+              <p><span class="lbl">Kelas</span>: <strong data-field="kelas">....................</strong></p>
+          </div>
+          <div class="student-col">
+              <p><span class="lbl">No. Tamrin</span>: <strong data-field="tamrin">....................</strong></p>
+              <p><span class="lbl">Bagian</span>: <strong data-field="bagian">....................</strong></p>
+          </div>
+      </div>
+
+      <!-- GRADES TABLE -->
+      <table>
+          <thead>
+              <tr>
+                  <th rowspan="2" style="width: 50px;">الرقم</th>
+                  <th rowspan="2">الكتب الدراسية</th>
+                  <th rowspan="2">الفنون</th>
+                  <th colspan="2">أرقام الدرجات الخاصة والعامة</th>
+              </tr>
+              <tr>
+                  <th style="width: 80px;">الخاصة</th>
+                  <th style="width: 80px;">العامة</th>
+              </tr>
+          </thead>
+          <tbody data-field="tbody"></tbody>
+          <tfoot>
+              <tr>
+                  <th colspan="3" style="text-align: right;">جملة أرقام الدرجات الدراسية</th>
+                  <th data-field="total-khos">0</th>
+                  <th data-field="total-am">0</th>
+              </tr>
+          </tfoot>
+      </table>
+
+      <!-- AL-BAYAN (البيان) — hanya tampil di semester 2 -->
+      <div data-field="bayan-box" class="mt-4" style="display: none;">
+          <table style="width: 100%; margin-top: 0;">
+              <tr>
+                  <th style="width: 150px;">البيان</th>
+                  <td data-field="bayan-value" style="text-align: center; font-weight: bold;">-</td>
+              </tr>
+          </table>
+      </div>
+
+      <!-- ABSENCE -->
+      <div class="mt-6">
+          <table style="width: 300px; margin-top: 0;">
+              <tr>
+                  <th colspan="3">أيام التأخر</th>
+              </tr>
+              <tr>
+                  <td>بإذن</td>
+                  <td data-field="absen-izin">0</td>
+                  <td>يوم</td>
+              </tr>
+              <tr>
+                  <td>بغير إذن</td>
+                  <td data-field="absen-alfa">0</td>
+                  <td>يوم</td>
+              </tr>
+          </table>
+      </div>
+
+
+      <!-- SIGNATURES -->
+      <!-- Posisi tetap (dir=ltr): المدير di KIRI, المدرس di KANAN. -->
+      <!-- Semester 1: hanya المدرس. Semester 2: المدير + المدرس. Diatur oleh rapot.js -->
+      <div class="signature-box" dir="ltr">
+          <div class="text-center" data-field="sig-mudir" style="display: none;">
+              <p>المدير</p>
+              <img data-field="sig-mudir-ttd" src="" alt="" style="display:none; max-height:48px; margin:2px auto 0;">
+              <div data-field="sig-mudir-space" style="height:36px;"></div>
+              <p>(<span data-field="sig-mudir-nama">.........................</span>)</p>
+          </div>
+          <div class="text-center">
+              <p>المدرس</p>
+              <div style="height:36px;"></div>
+              <p>(<span data-field="sig-mudarris-nama">.........................</span>)</p>
+          </div>
+      </div>
+    </div>
+  </template>
+
+    </div>
+  </main>
+
+          <!-- ==================== MOBILE BOTTOM NAV + FAB ==================== -->
+  <!-- CANONICAL Bottom_Nav block — replicate verbatim across covered pages. -->
+  <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl dark:bg-slate-900/90 border-t border-gray-100 dark:border-slate-800 z-50 px-2 py-2 pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.02)]">
+    <div class="flex justify-between items-center relative h-14 w-full">
+      
+      <a href="/index.html" data-nav class="w-1/5 flex flex-col items-center gap-1 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+        <i data-lucide="home" class="w-5 h-5"></i>
+        <span class="text-[10px] font-bold">Beranda</span>
+      </a>
+      
+      <a href="/santri.html" data-nav class="w-1/5 flex flex-col items-center gap-1 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+        <i data-lucide="users" class="w-5 h-5"></i>
+        <span class="text-[10px] font-semibold">Santri</span>
+      </a>
+
+      <!-- Spacer khusus FAB agar tidak overlap -->
+      <div class="w-1/5 h-full pointer-events-none"></div>
+
+      <!-- FLOATING ACTION BUTTON (FAB) -->
+      <div class="absolute left-1/2 -translate-x-1/2 -top-6">
+        <button id="btn-mobile-search" class="tap-target w-[52px] h-[52px] bg-gradient-to-tr from-primary to-hero-to rounded-full flex items-center justify-center text-white shadow-[0_8px_20px_rgba(14,124,134,0.3)] active:scale-95 transition-transform border-[3px] border-white dark:border-slate-900" aria-label="Cari">
+          <i data-lucide="search" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <a href="/absensi-manual.html" data-nav class="w-1/5 flex flex-col items-center gap-1 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+        <i data-lucide="clipboard-check" class="w-5 h-5"></i>
+        <span class="text-[10px] font-semibold">Absen</span>
+      </a>
+
+      <a href="/penilaian.html" data-nav class="w-1/5 flex flex-col items-center gap-1 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+        <i data-lucide="file-check-2" class="w-5 h-5"></i>
+        <span class="text-[10px] font-semibold">Nilai</span>
+      </a>
+      
+    </div>
+  </nav>
+
+  <script src="/src/js/rapot.js" type="module"></script>
+
+  <script>
+    // Initialize Lucide Icons
+    if (typeof lucide !== 'undefined') {
+      lucide.createIcons();
+    }
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(err => {
+          console.log('SW registration failed: ', err);
+        });
+      });
+    }
+  </script>
+  <style id="page-style">
+    @media print { @page { size: A4 portrait; margin: 10mm; } }
+  </style>
+  <script>
+    function updatePageSize() {
+      const size = document.getElementById('kertas-selector').value;
+      document.getElementById('page-style').textContent = `@media print { @page { size: ${size} portrait; margin: 10mm; } }`;
+    }
+  </script>
+</body>
+</html>

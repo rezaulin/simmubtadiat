@@ -1,0 +1,43 @@
+services:
+  app:
+    build: .
+    restart: always
+    # Hanya diekspos ke localhost; publik diakses lewat nginx (reverse proxy + SSL).
+    ports:
+      - "127.0.0.1:8080:8080"
+    environment:
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=${DB_USER:-mubtadiaat}
+      - DB_PASS=${DB_PASS:-mubtadiaat_secret}
+      - DB_NAME=${DB_NAME:-mubtadiaat_db}
+      - JWT_SECRET=${JWT_SECRET:-supersecretkey}
+      # Seed akun pimpinan awal (dipakai migrate-runner saat start bila belum ada admin).
+      - SEED_ADMIN_USERNAME=${SEED_ADMIN_USERNAME:-admin}
+      - SEED_ADMIN_PASSWORD=${SEED_ADMIN_PASSWORD:-}
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      # Upload (foto santri) persist meski image di-rebuild.
+      - uploads:/app/public/dist/uploads
+
+  db:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=${DB_USER:-mubtadiaat}
+      - POSTGRES_PASSWORD=${DB_PASS:-mubtadiaat_secret}
+      - POSTGRES_DB=${DB_NAME:-mubtadiaat_db}
+    # Tidak diekspos ke host/publik — hanya jaringan internal compose (aman).
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-mubtadiaat} -d ${DB_NAME:-mubtadiaat_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
+  uploads:

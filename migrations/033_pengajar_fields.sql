@@ -1,0 +1,5 @@
+-- 033_pengajar_fields.sql
+ALTER TABLE pengajar ADD COLUMN IF NOT EXISTS ttl_tempat VARCHAR(255);
+ALTER TABLE pengajar ADD COLUMN IF NOT EXISTS ttl_tanggal DATE;
+ALTER TABLE pengajar ADD COLUMN IF NOT EXISTS nama_wali VARCHAR(255);
+ALTER TABLE pengajar ADD COLUMN IF NOT EXISTS tahun_mengajar VARCHAR(20);

@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="id" data-palette="a">
+<head>
+<meta charset="UTF-8" />
+  <meta name="color-scheme" content="light dark">
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Preview Dashboard Baru - SIM Mubtadiat</title>
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; font-family:'Segoe UI',system-ui,sans-serif; }
+
+  :root {
+    --primary:#2B5BDB; --primary-hover:#1e45b0; --hero-from:#4f46e5; --hero-to:#3b82f6;
+    --app-bg:#F8F9FA; --sidebar-bg:#fff; --card-bg:#fff; --card-border:#eef0f3;
+    --text-muted:#94a3b8; --active-bg:rgba(43,91,219,.08); --gold:#fbbf24; --primary-soft:rgba(43,91,219,.10);
+  }
+  [data-palette="a"]{ --primary:#0E7C86; --primary-hover:#0F6870; --hero-from:#0F6E77; --hero-to:#12A2A8;
+    --app-bg:#F5F7F5; --sidebar-bg:#fff; --card-bg:#fff; --card-border:#e6ebe9; --active-bg:rgba(14,124,134,.10);
+    --gold:#E0A93B; --primary-soft:rgba(14,124,134,.12); }
+  [data-palette="b"]{ --primary:#3E4C8A; --primary-hover:#2E3A6E; --hero-from:#3A4A7A; --hero-to:#5566B0;
+    --app-bg:#F3F5FA; --card-border:#e7eaf2; --active-bg:rgba(62,76,138,.10); --gold:#E0A93B; --primary-soft:rgba(62,76,138,.12); }
+  [data-palette="c"]{ --primary:#4B7B6E; --primary-hover:#3C6357; --hero-from:#3C6357; --hero-to:#6A9C8A;
+    --app-bg:#F5F3EC; --sidebar-bg:#FBFAF5; --card-border:#eae5d8; --active-bg:rgba(75,123,110,.12); --gold:#C97B5A; --primary-soft:rgba(75,123,110,.12); }
+
+  body{ background:var(--app-bg); color:#1f2937; transition:background .3s; }
+
+  .switcher{ position:sticky; top:0; z-index:50; display:flex; gap:8px; align-items:center; padding:12px 20px;
+    background:rgba(255,255,255,.9); backdrop-filter:blur(8px); border-bottom:1px solid #e5e7eb; flex-wrap:wrap; }
+  .switcher b{ font-size:14px; margin-right:6px; }
+  .sw-btn{ padding:7px 13px; border-radius:10px; border:1px solid #d1d5db; background:#fff; cursor:pointer;
+    font-size:13px; font-weight:600; display:flex; align-items:center; gap:7px; }
+  .sw-btn.active{ border-color:var(--primary); box-shadow:0 0 0 3px var(--active-bg); }
+  .dot{ width:13px; height:13px; border-radius:50%; }
+
+  .app{ display:flex; min-height:calc(100vh - 55px); }
+  .sidebar{ width:250px; background:var(--sidebar-bg); border-right:1px solid var(--card-border); padding:16px; flex-shrink:0; }
+  .brand{ display:flex; align-items:center; gap:10px; padding:8px 6px 18px; border-bottom:1px solid var(--card-border); margin-bottom:14px; }
+  .brand .logo{ width:40px;height:40px;border-radius:12px;background:var(--primary);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800; }
+  .brand .t1{ font-weight:800; font-size:15px; } .brand .t2{ font-size:11px; color:var(--text-muted); }
+  .nav-sec{ font-size:10px; letter-spacing:.12em; color:var(--text-muted); font-weight:700; margin:14px 6px 6px; }
+  .nav-a{ display:flex; align-items:center; gap:12px; padding:10px 12px; border-radius:12px; color:#64748b; font-size:14px; font-weight:500; text-decoration:none; margin-bottom:2px; cursor:pointer; }
+  .nav-a:hover{ background:#f1f5f9; color:#334155; }
+  .nav-a.active{ background:var(--active-bg); color:var(--primary); font-weight:700; }
+  .nav-a i{ width:18px; height:18px; } .nav-a.logout{ color:#ef4444; margin-top:8px; }
+
+  .main{ flex:1; padding:24px; }
+
+  /* Hero */
+  .hero{ position:relative; border-radius:24px; padding:26px 30px; color:#fff; overflow:hidden;
+    background:linear-gradient(120deg,var(--hero-from),var(--hero-to)); display:flex; justify-content:space-between; align-items:flex-start; }
+  .hero::after{ content:""; position:absolute; right:-40px; top:-40px; width:220px; height:220px; border-radius:50%;
+    background:rgba(255,255,255,.08); }
+  .hero::before{ content:""; position:absolute; right:80px; bottom:-60px; width:160px; height:160px; border-radius:50%;
+    background:rgba(255,255,255,.06); }
+  .hero .greet{ font-size:14px; opacity:.92; } .hero h1{ font-size:28px; font-weight:800; margin:4px 0 10px; }
+  .badge-role{ display:inline-block; background:rgba(255,255,255,.2); padding:4px 12px; border-radius:20px; font-size:11px; font-weight:700; letter-spacing:.05em; }
+  .hero-meta{ display:flex; gap:12px; margin-top:18px; flex-wrap:wrap; }
+  .meta-box{ background:rgba(255,255,255,.15); border-radius:14px; padding:9px 15px; min-width:140px; }
+  .meta-box .l{ font-size:10px; opacity:.8; letter-spacing:.08em; } .meta-box .v{ font-size:13px; font-weight:700; margin-top:2px; }
+  .hero-actions{ display:flex; gap:10px; position:relative; z-index:1; }
+  .circ{ width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700; }
+
+  /* Stat tiles */
+  .grid-stats{ display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-top:22px; }
+  .tile{ background:var(--card-bg); border:1px solid var(--card-border); border-radius:18px; padding:18px; position:relative; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,.04); }
+  .tile .bar{ position:absolute; left:0; top:0; bottom:0; width:4px; }
+  .tile .row1{ display:flex; justify-content:space-between; align-items:center; }
+  .tile .ic{ width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#fff; }
+  .tile .trend{ font-size:11px; font-weight:700; padding:3px 8px; border-radius:20px; }
+  .tile .lbl{ font-size:13px; color:#64748b; margin-top:12px; }
+  .tile .num{ font-size:26px; font-weight:800; margin-top:1px; }
+
+  /* Two-column content */
+  .content{ display:grid; grid-template-columns:2fr 1fr; gap:18px; margin-top:20px; align-items:start; }
+  .col{ display:flex; flex-direction:column; gap:18px; }
+  .panel{ background:var(--card-bg); border:1px solid var(--card-border); border-radius:20px; padding:20px; box-shadow:0 1px 3px rgba(0,0,0,.04); }
+  .panel h3{ font-size:15px; font-weight:800; display:flex; align-items:center; gap:8px; }
+  .panel .sub{ font-size:12px; color:var(--text-muted); margin-top:2px; margin-bottom:16px; }
+  .panel h3 .hi{ color:var(--primary); }
+
+  /* Bar chart (per tingkatan) */
+  .barrow{ display:flex; align-items:center; gap:12px; margin-bottom:14px; }
+  .barrow .name{ width:120px; font-size:13px; color:#475569; font-weight:600; }
+  .barrow .track{ flex:1; background:#eef2f1; border-radius:8px; height:16px; overflow:hidden; }
+  .barrow .fill{ height:100%; border-radius:8px; background:linear-gradient(90deg,var(--primary),var(--hero-to)); }
+  .barrow .val{ width:34px; text-align:right; font-size:13px; font-weight:700; color:#334155; }
+
+  /* Donut status */
+  .donut-wrap{ display:flex; align-items:center; gap:22px; }
+  .donut{ width:140px; height:140px; border-radius:50%; flex-shrink:0; position:relative;
+    background:conic-gradient(var(--primary) 0 62%, var(--gold) 62% 78%, #64748b 78% 90%, #ef4444 90% 100%); }
+  .donut::after{ content:""; position:absolute; inset:22px; border-radius:50%; background:var(--card-bg); }
+  .donut .center{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:1; }
+  .donut .center .n{ font-size:24px; font-weight:800; } .donut .center .t{ font-size:11px; color:var(--text-muted); }
+  .legend{ flex:1; } .legend .li{ display:flex; align-items:center; gap:10px; font-size:13px; margin-bottom:10px; }
+  .legend .sw{ width:12px; height:12px; border-radius:4px; } .legend .li .c{ margin-left:auto; font-weight:700; }
+
+  /* Quick actions compact */
+  .qa{ display:grid; grid-template-columns:repeat(2,1fr); gap:12px; }
+  .qa a{ display:flex; align-items:center; gap:12px; padding:14px; border-radius:14px; border:1px solid var(--card-border);
+    text-decoration:none; color:#334155; font-weight:600; font-size:14px; cursor:pointer; }
+  .qa a:hover{ border-color:var(--primary); background:var(--primary-soft); }
+  .qa a .ic{ width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;color:#fff; }
+
+  /* Agenda list */
+  .agenda .item{ display:flex; gap:12px; padding:11px 0; border-bottom:1px dashed var(--card-border); }
+  .agenda .item:last-child{ border-bottom:0; }
+  .agenda .date{ width:46px; text-align:center; background:var(--primary-soft); color:var(--primary); border-radius:10px; padding:6px 0; flex-shrink:0; }
+  .agenda .date .d{ font-size:17px; font-weight:800; line-height:1; } .agenda .date .m{ font-size:10px; font-weight:700; text-transform:uppercase; }
+  .agenda .info .tt{ font-size:14px; font-weight:600; } .agenda .info .ds{ font-size:12px; color:var(--text-muted); margin-top:2px; }
+
+  .note{ max-width:1200px; margin:8px auto 0; padding:0 20px 30px; color:#64748b; font-size:13px; }
+</style>
+</head>
+<body>
+  <div class="switcher">
+    <b>Palet:</b>
+    <button class="sw-btn" data-set="current"><span class="dot" style="background:#2B5BDB"></span>Biru lama</button>
+    <button class="sw-btn active" data-set="a"><span class="dot" style="background:#0E7C86"></span>A · Teal Tenang</button>
+    <button class="sw-btn" data-set="b"><span class="dot" style="background:#3E4C8A"></span>B · Indigo</button>
+    <button class="sw-btn" data-set="c"><span class="dot" style="background:#4B7B6E"></span>C · Sage</button>
+  </div>
+
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand"><div class="logo">M</div><div><div class="t1">Mubtadiat</div><div class="t2">Manajemen Sistem</div></div></div>
+      <div class="nav-sec">UTAMA</div>
+      <a class="nav-a active"><i data-lucide="layout-dashboard"></i> Dashboard</a>
+      <a class="nav-a"><i data-lucide="users"></i> Data Santri</a>
+      <a class="nav-a"><i data-lucide="arrow-left-right"></i> Perubahan Status</a>
+      <a class="nav-a"><i data-lucide="school"></i> Data Kelas</a>
+      <div class="nav-sec">AKADEMIK</div>
+      <a class="nav-a"><i data-lucide="file-check-2"></i> Penilaian</a>
+      <a class="nav-a"><i data-lucide="clipboard-list"></i> Absensi</a>
+      <a class="nav-a"><i data-lucide="book-open-check"></i> Raport</a>
+      <div class="nav-sec">DATABASE & ARSIP</div>
+      <a class="nav-a"><i data-lucide="graduation-cap"></i> Pengajar</a>
+      <a class="nav-a"><i data-lucide="briefcase"></i> Dewan Harian</a>
+      <a class="nav-a"><i data-lucide="archive"></i> Arsip & Keluar</a>
+      <a class="nav-a"><i data-lucide="medal"></i> Alumni</a>
+      <a class="nav-a logout"><i data-lucide="log-out"></i> Keluar</a>
+    </aside>
+
+    <main class="main">
+      <!-- Hero -->
+      <div class="hero">
+        <div>
+          <div class="greet">Assalamu'alaikum 👋</div>
+          <h1>Administrator Utama</h1>
+          <span class="badge-role">PIMPINAN</span>
+          <div class="hero-meta">
+            <div class="meta-box"><div class="l">TANGGAL</div><div class="v">Sabtu, 18 Jul 2026</div></div>
+            <div class="meta-box"><div class="l">WAKTU</div><div class="v">23.04 WIB</div></div>
+            <div class="meta-box"><div class="l">HIJRIAH</div><div class="v">4 Safar 1448 H</div></div>
+          </div>
+        </div>
+        <div class="hero-actions"><div class="circ"><i data-lucide="moon"></i></div><div class="circ">AU</div></div>
+      </div>
+
+      <!-- Stat tiles -->
+      <div class="grid-stats">
+        <div class="tile"><div class="bar" style="background:var(--primary)"></div>
+          <div class="row1"><div class="ic" style="background:var(--primary)"><i data-lucide="users"></i></div>
+          <span class="trend" style="background:#dcfce7;color:#16a34a">+2</span></div>
+          <div class="lbl">Santri Aktif</div><div class="num">128</div></div>
+        <div class="tile"><div class="bar" style="background:#8b5cf6"></div>
+          <div class="row1"><div class="ic" style="background:#8b5cf6"><i data-lucide="hand-heart"></i></div>
+          <span class="trend" style="background:#ede9fe;color:#7c3aed">Khidmah</span></div>
+          <div class="lbl">Santri Pengabdian</div><div class="num">6</div></div>
+        <div class="tile"><div class="bar" style="background:var(--gold)"></div>
+          <div class="row1"><div class="ic" style="background:var(--gold)"><i data-lucide="school"></i></div>
+          <span class="trend" style="background:#fef3c7;color:#b45309">Aktif</span></div>
+          <div class="lbl">Bagian / Kelas</div><div class="num">9</div></div>
+        <div class="tile"><div class="bar" style="background:#f43f5e"></div>
+          <div class="row1"><div class="ic" style="background:#f43f5e"><i data-lucide="medal"></i></div>
+          <span class="trend" style="background:#ffe4e6;color:#e11d48">Total</span></div>
+          <div class="lbl">Alumni</div><div class="num">54</div></div>
+      </div>
+
+      <!-- Two-column content -->
+      <div class="content">
+        <!-- LEFT -->
+        <div class="col">
+          <div class="panel">
+            <h3><i data-lucide="bar-chart-3" style="color:var(--primary)"></i> Distribusi Santri per Tingkatan</h3>
+            <div class="sub">Jumlah santri aktif di tiap tingkatan (dihitung dari Data Santri)</div>
+            <div class="barrow"><div class="name">Ula (Ibtidaiyah)</div><div class="track"><div class="fill" style="width:85%"></div></div><div class="val">44</div></div>
+            <div class="barrow"><div class="name">Wustho (Tsanawi)</div><div class="track"><div class="fill" style="width:70%"></div></div><div class="val">36</div></div>
+            <div class="barrow"><div class="name">Ulya (Aliyah)</div><div class="track"><div class="fill" style="width:56%"></div></div><div class="val">29</div></div>
+            <div class="barrow"><div class="name">Takhassus</div><div class="track"><div class="fill" style="width:36%"></div></div><div class="val">19</div></div>
+          </div>
+
+          <div class="panel">
+            <h3><i data-lucide="pie-chart" style="color:var(--primary)"></i> Komposisi Status Santri</h3>
+            <div class="sub">Aktif · Pengabdian · Boyong/Keluar · Alumni</div>
+            <div class="donut-wrap">
+              <div class="donut"><div class="center"><div class="n">188</div><div class="t">Total</div></div></div>
+              <div class="legend">
+                <div class="li"><span class="sw" style="background:var(--primary)"></span> Aktif <span class="c">128</span></div>
+                <div class="li"><span class="sw" style="background:var(--gold)"></span> Pengabdian <span class="c">6</span></div>
+                <div class="li"><span class="sw" style="background:#64748b"></span> Boyong / Keluar <span class="c">-</span></div>
+                <div class="li"><span class="sw" style="background:#ef4444"></span> Alumni <span class="c">54</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT -->
+        <div class="col">
+          <div class="panel">
+            <h3><i data-lucide="zap" style="color:var(--primary)"></i> Akses Cepat</h3>
+            <div class="sub">Aksi yang paling sering dipakai</div>
+            <div class="qa">
+              <a><div class="ic" style="background:var(--primary)"><i data-lucide="search"></i></div> Cari</a>
+              <a><div class="ic" style="background:#10b981"><i data-lucide="file-check-2"></i></div> Input Nilai</a>
+              <a><div class="ic" style="background:var(--gold)"><i data-lucide="clipboard-list"></i></div> Absensi</a>
+              <a><div class="ic" style="background:var(--primary)"><i data-lucide="book-open-check"></i></div> Raport</a>
+            </div>
+          </div>
+
+          <div class="panel agenda">
+            <h3><i data-lucide="calendar-days" style="color:var(--primary)"></i> Agenda Kuartal</h3>
+            <div class="sub">Dari Kalender Kuartal aktif</div>
+            <div class="item"><div class="date"><div class="d">20</div><div class="m">Jul</div></div>
+              <div class="info"><div class="tt">Awal Kuartal 1</div><div class="ds">Mulai penilaian kuartal berjalan</div></div></div>
+            <div class="item"><div class="date"><div class="d">02</div><div class="m">Agt</div></div>
+              <div class="info"><div class="tt">Batas Input Nilai</div><div class="ds">Deadline unggah nilai khos</div></div></div>
+            <div class="item"><div class="date"><div class="d">17</div><div class="m">Agt</div></div>
+              <div class="info"><div class="tt">Libur Nasional</div><div class="ds">HUT Kemerdekaan RI</div></div></div>
+          </div>
+
+          <div class="panel">
+            <h3><i data-lucide="graduation-cap" style="color:var(--primary)"></i> Ringkasan Pengajar</h3>
+            <div class="sub">Tenaga pendidik aktif</div>
+            <div style="display:flex; align-items:center; gap:14px;">
+              <div style="width:52px;height:52px;border-radius:14px;background:var(--primary-soft);color:var(--primary);display:flex;align-items:center;justify-content:center"><i data-lucide="users-round"></i></div>
+              <div><div style="font-size:26px;font-weight:800">17</div><div style="font-size:13px;color:#64748b">Pengajar terdaftar</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <p class="note">Preview mockup — angka contoh. Semua widget di sini bisa diisi data nyata dari endpoint yang sudah ada (Data Santri, Pengabdian, Alumni, Pengajar, Kalender) tanpa ubah backend besar. Ganti palet di atas untuk cek warna pada layout baru ini.</p>
+
+  <script>
+    const root=document.documentElement, btns=document.querySelectorAll('.sw-btn');
+    btns.forEach(b=>b.addEventListener('click',()=>{ btns.forEach(x=>x.classList.remove('active')); b.classList.add('active');
+      const s=b.dataset.set; if(s==='current') root.removeAttribute('data-palette'); else root.setAttribute('data-palette',s); }));
+    if(window.lucide) lucide.createIcons();
+  </script>
+</body>
+</html>

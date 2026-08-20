@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+  <meta name="color-scheme" content="light dark">
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Preview Ponsel (Varian A) - SIM Mubtadiat</title>
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+  *{ box-sizing:border-box; margin:0; padding:0; font-family:'Segoe UI',system-ui,sans-serif; }
+  :root{
+    --primary:#0E7C86; --primary-2:#12A2A8; --primary-hover:#0F6870;
+    --app-bg:#F5F7F5; --card:#fff; --border:#e6ebe9; --muted:#8a9691; --gold:#E0A93B; --soft:rgba(14,124,134,.10);
+  }
+  body{ background:#e9edec; padding:24px 16px 50px; color:#1f2937; }
+  .head{ text-align:center; margin-bottom:16px; }
+  .head h1{ font-size:20px; font-weight:800; } .head p{ color:#64748b; font-size:13px; margin-top:4px; }
+
+  .rolebar{ display:flex; gap:8px; justify-content:center; margin-bottom:22px; }
+  .rb{ padding:9px 16px; border-radius:12px; border:1px solid #d1d5db; background:#fff; cursor:pointer; font-weight:700; font-size:13px; }
+  .rb.active{ border-color:var(--primary); background:var(--soft); color:var(--primary-hover); box-shadow:0 0 0 3px rgba(14,124,134,.12); }
+
+  .stage{ display:flex; justify-content:center; }
+
+  .phone{ width:344px; height:730px; background:#0f172a; border-radius:44px; padding:12px; box-shadow:0 30px 60px rgba(0,0,0,.25); position:relative; }
+  .notch{ position:absolute; top:12px; left:50%; transform:translateX(-50%); width:130px; height:26px; background:#0f172a; border-radius:0 0 16px 16px; z-index:20; }
+  .screen{ width:100%; height:100%; background:var(--app-bg); border-radius:33px; overflow:hidden; position:relative; }
+  .scroll{ position:absolute; inset:0 0 62px 0; overflow-y:auto; } .scroll::-webkit-scrollbar{ display:none; }
+
+  .statusbar{ height:30px; display:flex; align-items:center; justify-content:space-between; padding:6px 22px 0; font-size:12px; font-weight:700; color:#fff; }
+  .topbar{ display:flex; align-items:center; justify-content:space-between; padding:6px 18px 8px; color:#fff; }
+  .topbar .ic{ width:34px;height:34px;border-radius:11px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center; }
+  .topbar .title{ font-weight:700; font-size:15px; }
+
+  .hero{ background:linear-gradient(135deg,var(--primary),var(--primary-2)); color:#fff; padding:0 18px 44px; position:relative; overflow:hidden; }
+  .hero::after{ content:""; position:absolute; right:-30px; top:-20px; width:150px;height:150px;border-radius:50%;background:rgba(255,255,255,.08); }
+  .hero .greet{ font-size:13px; opacity:.9; } .hero .name{ font-size:21px; font-weight:800; margin-top:2px; }
+  .hero .role{ display:inline-block; margin-top:8px; background:rgba(255,255,255,.2); padding:3px 11px; border-radius:20px; font-size:10px; font-weight:700; letter-spacing:.05em; }
+  .hero .dateline{ font-size:12px; opacity:.92; margin-top:12px; display:flex; gap:6px; align-items:center; }
+
+  .summary{ margin:-32px 16px 0; background:var(--card); border:1px solid var(--border); border-radius:20px; padding:15px; display:flex; box-shadow:0 8px 24px rgba(0,0,0,.06); position:relative; z-index:5; }
+  .summary .cell{ flex:1; text-align:center; } .summary .cell + .cell{ border-left:1px solid var(--border); }
+  .summary .n{ font-size:20px; font-weight:800; } .summary .t{ font-size:11px; color:var(--muted); margin-top:2px; }
+  .summary .n.tealc{ color:var(--primary); } .summary .n.goldc{ color:var(--gold); }
+
+  .sec{ padding:18px 16px 0; }
+  .sec .h{ display:flex; align-items:center; justify-content:space-between; margin-bottom:11px; }
+  .sec .h .tt{ font-size:15px; font-weight:800; display:flex; align-items:center; gap:7px; }
+  .sec .h .tt i{ width:17px;height:17px;color:var(--primary); }
+  .sec .h .more{ font-size:12px; color:var(--primary); font-weight:600; }
+  .panel{ background:var(--card); border:1px solid var(--border); border-radius:18px; padding:14px; }
+
+  /* Jadwal hari ini card */
+  .jcard{ display:flex; align-items:center; gap:12px; background:var(--card); border:1px solid var(--border); border-radius:16px; padding:13px; margin-bottom:10px; cursor:pointer; transition:.15s; }
+  .jcard:active{ transform:scale(.98); }
+  .jcard:hover{ border-color:var(--primary); box-shadow:0 4px 14px rgba(14,124,134,.12); }
+  .jcard .time{ width:52px; text-align:center; flex-shrink:0; }
+  .jcard .time .jm{ font-size:14px; font-weight:800; color:var(--primary); line-height:1.1; }
+  .jcard .time .js{ font-size:10px; color:var(--muted); }
+  .jcard .body{ flex:1; border-left:1px solid var(--border); padding-left:12px; }
+  .jcard .mp{ font-size:14px; font-weight:700; }
+  .jcard .bg{ font-size:12px; color:var(--muted); margin-top:1px; display:flex; align-items:center; gap:5px; }
+  .jcard .go{ width:36px;height:36px;border-radius:11px;background:var(--soft);color:var(--primary);display:flex;align-items:center;justify-content:center;flex-shrink:0; }
+  .jhint{ font-size:11px; color:var(--muted); margin:2px 2px 12px; display:flex; align-items:center; gap:5px; }
+
+  .empty{ text-align:center; padding:22px 10px; color:var(--muted); font-size:13px; }
+  .empty i{ width:30px;height:30px; opacity:.5; margin-bottom:8px; }
+
+  /* week strip (agenda only) */
+  .week{ display:flex; justify-content:space-between; }
+  .day{ flex:1; text-align:center; }
+  .day .dn{ font-size:10px; color:var(--muted); font-weight:700; }
+  .day .dd{ margin:6px auto 0; width:34px;height:34px;border-radius:12px;display:flex;align-items:center;justify-content:center; font-size:14px; font-weight:700; color:#334155; }
+  .day.today .dd{ background:var(--primary); color:#fff; }
+  .day .dot{ width:5px;height:5px;border-radius:50%;background:var(--gold); margin:4px auto 0; }
+  .day.today .dot{ background:#fff; } .day .dot.none{ background:transparent; }
+
+  .ag{ display:flex; gap:12px; padding:10px 0; border-bottom:1px dashed var(--border); }
+  .ag:last-child{ border-bottom:0; padding-bottom:0; }
+  .ag .dt{ width:42px;text-align:center;background:var(--soft);color:var(--primary);border-radius:11px;padding:5px 0;flex-shrink:0; }
+  .ag .dt .d{ font-size:16px;font-weight:800;line-height:1; } .ag .dt .m{ font-size:9px;font-weight:700;text-transform:uppercase; }
+  .ag .tt{ font-size:13px;font-weight:600; } .ag .ds{ font-size:11px;color:var(--muted);margin-top:1px; }
+
+  .qrow{ display:flex; gap:10px; overflow-x:auto; padding-bottom:4px; } .qrow::-webkit-scrollbar{ display:none; }
+  .q{ flex:0 0 auto; width:66px; text-align:center; }
+  .q .ic{ width:52px;height:52px;border-radius:17px;display:flex;align-items:center;justify-content:center;color:#fff;margin:0 auto 6px; }
+  .q .t{ font-size:11px;color:#475569;font-weight:600; }
+
+  .bnav{ position:absolute; left:0; right:0; bottom:0; height:62px; background:#fff; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-around; padding:0 14px; }
+  .bnav a{ display:flex; flex-direction:column; align-items:center; gap:3px; color:#94a3b8; font-size:10px; font-weight:600; } .bnav a.on{ color:var(--primary); }
+  .bnav a i{ width:20px;height:20px; }
+  .fab{ width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--primary-2)); display:flex;align-items:center;justify-content:center;color:#fff; margin-top:-24px; box-shadow:0 8px 18px rgba(14,124,134,.4); border:3px solid #fff; }
+
+  .toast{ position:absolute; left:16px; right:16px; bottom:74px; background:#0f172a; color:#fff; padding:12px 16px; border-radius:14px; font-size:13px; display:flex; align-items:center; gap:10px; opacity:0; transform:translateY(10px); transition:.25s; pointer-events:none; z-index:30; }
+  .toast.show{ opacity:1; transform:translateY(0); }
+  .toast i{ width:18px;height:18px;color:var(--primary-2); }
+</style>
+</head>
+<body>
+  <div class="head">
+    <h1>Preview Ponsel · Varian A · Teal Tenang</h1>
+    <p>Lihat perbedaan dashboard per peran. Ketuk kartu "Jadwal Hari Ini" untuk simulasi buka Input Absensi.</p>
+  </div>
+
+  <div class="rolebar">
+    <button class="rb" data-role="pimpinan">👑 Pimpinan / Admin</button>
+    <button class="rb active" data-role="guru">🧑‍🏫 Mustahiq / Munawwib</button>
+  </div>
+
+  <div class="stage">
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="screen">
+        <div class="scroll">
+          <!-- HERO -->
+          <div class="hero">
+            <div class="statusbar"><span>07.05</span><span>◵ ▤ ▮▮▮</span></div>
+            <div class="topbar"><div class="ic"><i data-lucide="menu"></i></div><div class="title">Beranda</div><div class="ic"><i data-lucide="bell"></i></div></div>
+            <div style="padding:0 4px;">
+              <div class="greet">Assalamu'alaikum 👋</div>
+              <div class="name" id="hero-name">Ust. Ahmad</div>
+              <span class="role" id="hero-role">MUSTAHIQ</span>
+              <div class="dateline"><i data-lucide="calendar" style="width:14px;height:14px"></i> Jumat, 18 Jul 2026 · 4 Safar 1448 H</div>
+            </div>
+          </div>
+
+          <!-- ringkasan (pimpinan saja) -->
+          <div class="summary" id="summary" style="display:none">
+            <div class="cell"><div class="n tealc">128</div><div class="t">Santri</div></div>
+            <div class="cell"><div class="n goldc">6</div><div class="t">Khidmah</div></div>
+            <div class="cell"><div class="n">54</div><div class="t">Alumni</div></div>
+          </div>
+
+          <!-- ===== VIEW GURU (mustahiq/munawwib) ===== -->
+          <div id="view-guru">
+            <div class="sec" style="padding-top:16px">
+              <div class="h"><div class="tt"><i data-lucide="clipboard-list"></i> Jadwal Hari Ini</div><div class="more">Jumat</div></div>
+              <div class="jhint"><i data-lucide="hand-pointer" style="width:13px;height:13px"></i> Ketuk kelas untuk langsung input absensi</div>
+
+              <div class="jcard" data-bagian="Ula A"><div class="time"><div class="jm">07.00</div><div class="js">08.30</div></div>
+                <div class="body"><div class="mp">Nahwu</div><div class="bg"><i data-lucide="school" style="width:13px;height:13px"></i> Ula A · Kelas 1</div></div>
+                <div class="go"><i data-lucide="chevron-right"></i></div></div>
+
+              <div class="jcard" data-bagian="Ula B"><div class="time"><div class="jm">08.30</div><div class="js">10.00</div></div>
+                <div class="body"><div class="mp">Shorof</div><div class="bg"><i data-lucide="school" style="width:13px;height:13px"></i> Ula B · Kelas 1</div></div>
+                <div class="go"><i data-lucide="chevron-right"></i></div></div>
+
+              <div class="jcard" data-bagian="Wustho A"><div class="time"><div class="jm">10.15</div><div class="js">11.45</div></div>
+                <div class="body"><div class="mp">Fiqih</div><div class="bg"><i data-lucide="school" style="width:13px;height:13px"></i> Wustho A · Kelas 2</div></div>
+                <div class="go"><i data-lucide="chevron-right"></i></div></div>
+            </div>
+          </div>
+
+          <!-- ===== KALENDER & AGENDA (semua peran) ===== -->
+          <div class="sec">
+            <div class="h"><div class="tt"><i data-lucide="calendar-days"></i> Kalender & Agenda</div><div class="more">Juli</div></div>
+            <div class="panel">
+              <div style="font-size:12px;font-weight:700;color:#334155;margin-bottom:10px;">Minggu ini</div>
+              <div class="week">
+                <div class="day"><div class="dn">S</div><div class="dd">14</div><div class="dot none"></div></div>
+                <div class="day"><div class="dn">S</div><div class="dd">15</div><div class="dot none"></div></div>
+                <div class="day"><div class="dn">R</div><div class="dd">16</div><div class="dot none"></div></div>
+                <div class="day"><div class="dn">K</div><div class="dd">17</div><div class="dot none"></div></div>
+                <div class="day today"><div class="dn">J</div><div class="dd">18</div><div class="dot"></div></div>
+                <div class="day"><div class="dn">S</div><div class="dd">19</div><div class="dot none"></div></div>
+                <div class="day"><div class="dn">A</div><div class="dd">20</div><div class="dot"></div></div>
+              </div>
+            </div>
+            <div class="panel" style="margin-top:12px;">
+              <div class="ag"><div class="dt"><div class="d">18</div><div class="m">Jul</div></div>
+                <div><div class="tt">Batas Input Nilai Kuartal 1</div><div class="ds">Hari ini · agenda akademik</div></div></div>
+              <div class="ag"><div class="dt"><div class="d">20</div><div class="m">Jul</div></div>
+                <div><div class="tt">Mulai Kuartal 2</div><div class="ds">Kalender kuartal</div></div></div>
+            </div>
+          </div>
+
+          <!-- ===== VIEW PIMPINAN extra (akses cepat) ===== -->
+          <div id="view-pimpinan" style="display:none">
+            <div class="sec">
+              <div class="h"><div class="tt"><i data-lucide="zap"></i> Akses Cepat</div></div>
+              <div class="qrow">
+                <div class="q"><div class="ic" style="background:var(--primary)"><i data-lucide="search"></i></div><div class="t">Cari</div></div>
+                <div class="q"><div class="ic" style="background:#10b981"><i data-lucide="file-check-2"></i></div><div class="t">Nilai</div></div>
+                <div class="q"><div class="ic" style="background:var(--gold)"><i data-lucide="clipboard-list"></i></div><div class="t">Absen</div></div>
+                <div class="q"><div class="ic" style="background:var(--primary)"><i data-lucide="book-open-check"></i></div><div class="t">Raport</div></div>
+                <div class="q"><div class="ic" style="background:#8b5cf6"><i data-lucide="hand-heart"></i></div><div class="t">Pengabdian</div></div>
+              </div>
+            </div>
+          </div>
+
+          <div style="height:20px"></div>
+        </div>
+
+        <div class="toast" id="toast"><i data-lucide="arrow-right-circle"></i><span id="toast-msg"></span></div>
+
+        <div class="bnav">
+          <a class="on"><i data-lucide="home"></i>Beranda</a>
+          <a><i data-lucide="users"></i>Santri</a>
+          <div class="fab"><i data-lucide="search"></i></div>
+          <a><i data-lucide="file-check-2"></i>Nilai</a>
+          <a><i data-lucide="clipboard-list"></i>Absen</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const rbs=document.querySelectorAll('.rb');
+    const heroName=document.getElementById('hero-name'), heroRole=document.getElementById('hero-role');
+    const summary=document.getElementById('summary'), vGuru=document.getElementById('view-guru'), vPim=document.getElementById('view-pimpinan');
+
+    function setRole(role){
+      rbs.forEach(x=>x.classList.toggle('active', x.dataset.role===role));
+      if(role==='pimpinan'){
+        heroName.textContent='Administrator Utama'; heroRole.textContent='PIMPINAN';
+        summary.style.display='flex'; vGuru.style.display='none'; vPim.style.display='block';
+      } else {
+        heroName.textContent='Ust. Ahmad'; heroRole.textContent='MUSTAHIQ';
+        summary.style.display='none'; vGuru.style.display='block'; vPim.style.display='none';
+      }
+    }
+    rbs.forEach(b=>b.addEventListener('click',()=>setRole(b.dataset.role)));
+
+    // Simulasi klik jadwal -> buka input absensi
+    const toast=document.getElementById('toast'), toastMsg=document.getElementById('toast-msg');
+    let toastT;
+    document.addEventListener('click', e=>{
+      const card=e.target.closest('.jcard'); if(!card) return;
+      toastMsg.textContent='Membuka Input Absensi — ' + card.dataset.bagian;
+      toast.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>toast.classList.remove('show'),1800);
+    });
+
+    if(window.lucide) lucide.createIcons();
+    setRole('guru');
+  </script>
+</body>
+</html>

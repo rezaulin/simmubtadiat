@@ -1,0 +1,33 @@
+# Daftar migrasi yang skemanya SUDAH tercakup di db/baseline.sql (schema-only).
+# Saat deploy fresh, migrasi di daftar ini ditandai "selesai" tanpa dijalankan.
+#
+# PENTING: migrasi yang MENYISIPKAN DATA SEED / REFERENSI sengaja TIDAK
+# dicantumkan di sini, karena baseline hanya berisi skema (tanpa data).
+# Dengan begitu migrasi seed tetap dijalankan setelah baseline agar datanya terisi.
+# Migrasi seed yang dikecualikan: 013 (provinsi) & 014 (kabupaten/kecamatan).
+# Keduanya idempoten (DDL IF NOT EXISTS + INSERT ... ON CONFLICT DO NOTHING).
+001_init.sql
+002_master.sql
+003_pengajar.sql
+004_nilai.sql
+005_absensi.sql
+006_alumni.sql
+007_jadwal.sql
+008_activity_log.sql
+009_fix_mustahiq_mufatish.sql
+010_fix_penilaian.sql
+011_refactor_kurikulum_kelas.sql
+012_rename_role_admin.sql
+012_tahun_ajaran_konsisten.sql
+015_mudir_tingkatan.sql
+016_pengajar_nama_arab.sql
+017_add_pengajar_absensi.sql
+018_add_pengajar_id_to_absensi.sql
+019_add_admin_role.sql
+020_pengabdian_khidmah.sql
+021_agenda.sql
+022_absensi_pertemuan.sql
+023_penilaian_lock.sql
+024_nomor_stambuk_urut.sql
+025_catatan_santri.sql
+026_mudir_tanda_tangan.sql

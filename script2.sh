@@ -1,0 +1,1 @@
+sudo docker exec simmubtadiat-db-1 psql -U mubtadiaat -d mubtadiaat_db -c "SELECT mk.pengajar_id, mk.kelas_id, mk.tingkatan_id, t.nama as tingkatan FROM mufatish_kelas mk LEFT JOIN tingkatan t ON mk.tingkatan_id = t.id WHERE mk.pengajar_id = 141;"

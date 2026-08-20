@@ -1,0 +1,1 @@
+sudo docker exec simmubtadiat-db-1 psql -U mubtadiaat -d mubtadiaat_db -c "SELECT p.id, p.nama, mb.bagian_id, b.kelas_id, b.tingkatan_id, t.nama as tingkatan FROM pengajar p LEFT JOIN mustahiq_bagian mb ON mb.pengajar_id = p.id LEFT JOIN bagian b ON mb.bagian_id = b.id LEFT JOIN tingkatan t ON b.tingkatan_id = t.id WHERE p.nama ILIKE '%mafahim%';"

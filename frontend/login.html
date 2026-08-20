@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="color-scheme" content="light dark">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Login - SIM Mubtadiat</title>
+  <link rel="stylesheet" href="./style.css">
+  
+  <!-- Custom background gradient for login -->
+  <style>
+    .bg-mesh {
+      background-color: var(--color-light-bg);
+      background-image: 
+        radial-gradient(at 40% 20%, hsla(167, 85%, 39%, 0.15) 0px, transparent 50%),
+        radial-gradient(at 80% 0%, hsla(224, 73%, 51%, 0.15) 0px, transparent 50%),
+        radial-gradient(at 0% 50%, hsla(43, 96%, 56%, 0.15) 0px, transparent 50%);
+      background-attachment: fixed;
+    }
+    
+    .dark .bg-mesh {
+      background-color: var(--color-dark-bg);
+      background-image: 
+        radial-gradient(at 40% 20%, hsla(167, 85%, 39%, 0.2) 0px, transparent 50%),
+        radial-gradient(at 80% 0%, hsla(224, 73%, 51%, 0.2) 0px, transparent 50%),
+        radial-gradient(at 0% 50%, hsla(43, 96%, 56%, 0.2) 0px, transparent 50%);
+    }
+  </style>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0E7C86">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <script type="module" src="/src/js/xss.js"></script>
+
+  <script>
+    (function() {
+      try {
+        var savedRole = localStorage.getItem('user_role');
+        if (savedRole) {
+                    var menuAccess = {
+            pimpinan: ['/index.html', '/santri.html', '/perpindahan.html', '/kelas.html', '/penilaian.html', '/absensi-manual.html', '/rapot.html', '/pengajar.html', '/dewan-harian.html', '/arsip.html', '/alumni.html', '/rekap.html', '/catatan.html', '/settings.html', '/pengajar-purna.html'],
+            admin: ['/index.html', '/santri.html', '/pengajar.html', '/pengajar-purna.html', '/alumni.html', '/dewan-harian.html'],
+            mufatish: ['/index.html', '/santri.html', '/kelas.html', '/penilaian.html', '/absensi-manual.html', '/rapot.html', '/pengajar.html', '/dewan-harian.html', '/arsip.html', '/rekap.html', '/catatan.html'],
+            mustahiq: ['/index.html', '/santri.html', '/perpindahan.html', '/penilaian.html', '/rapot.html', '/rekap.html', '/catatan.html', '/pengajar.html', '/dewan-harian.html'],
+            muroqib: ['/index.html', '/santri.html', '/absensi-manual.html', '/catatan.html', '/dewan-harian.html', '/pengajar.html'],
+            tim_rapot: ['/index.html', '/penilaian.html', '/rapot.html', '/rekap.html'],
+            keamanan: ['/index.html', '/santri.html', '/arsip.html', '/alumni.html', '/catatan.html'],
+            wali_santri: ['/index.html', '/rapot.html']
+          };
+          var savedRoles = localStorage.getItem('user_roles');
+          var allowed = [];
+          if (savedRoles) {
+            try {
+              var parsedRoles = JSON.parse(savedRoles);
+              for (var j = 0; j < parsedRoles.length; j++) {
+                var r = parsedRoles[j];
+                if (menuAccess[r]) {
+                  for (var k = 0; k < menuAccess[r].length; k++) {
+                    if (allowed.indexOf(menuAccess[r][k]) === -1) allowed.push(menuAccess[r][k]);
+                  }
+                }
+              }
+            } catch(e) {}
+          }
+          if (allowed.length === 0) allowed = menuAccess[savedRole] || [];
+          var css = '';
+          var allLinks = ['/index.html', '/santri.html', '/perpindahan.html', '/kelas.html', '/penilaian.html', '/rapot.html', '/pengajar.html', '/dewan-harian.html', '/arsip.html', '/alumni.html', '/settings.html', '/rekap.html', '/pengajar-purna.html'];
+          
+          for (var i = 0; i < allLinks.length; i++) {
+            if (allowed.indexOf(allLinks[i]) === -1) {
+              css += 'aside nav a[href="' + allLinks[i] + '"], nav.md\\:hidden a[href="' + allLinks[i] + '"] { display: none !important; }\n';
+            }
+          }
+          if (css) {
+            var style = document.createElement('style');
+            style.textContent = css;
+            document.head.appendChild(style);
+          }
+        }
+      } catch(e) {}
+    })();
+  </script>
+</head>
+<body class="bg-mesh min-h-screen flex items-center justify-center p-4">
+
+  <!-- Toggle Dark Mode Button -->
+  <button id="theme-toggle" class="tap-target absolute top-4 right-4 p-2 rounded-full glass hover:scale-105 transition-transform" aria-label="Ganti tema">
+    <svg id="theme-icon-dark" class="w-6 h-6 hidden text-accent-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+    <svg id="theme-icon-light" class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+  </button>
+
+  <div class="glass rounded-3xl w-full max-w-md p-8 md:p-10 flex flex-col gap-6 relative overflow-hidden">
+    
+    <!-- Decorative element -->
+    <div class="absolute -top-10 -right-10 w-32 h-32 bg-primary/10 dark:bg-accent-emerald/20 rounded-full blur-2xl"></div>
+    
+    <div class="text-center z-10">
+      <div class="mx-auto mb-4 w-24 h-24 rounded-2xl bg-white shadow-lg ring-1 ring-gray-100 dark:ring-slate-700 flex items-center justify-center overflow-hidden">
+        <img src="/logo.jpg" alt="Logo Madrasah Hidayatul Mubtadiat" class="w-full h-full object-contain p-1.5">
+      </div>
+      <h1 class="text-2xl md:text-3xl font-bold mb-2 text-gradient break-words">Mubtadiat Manajemen Sistem</h1>
+      <p class="text-sm text-gray-500 dark:text-gray-400">Sistem Informasi Madrasah Diniyyah</p>
+    </div>
+
+    <form id="login-form" class="flex flex-col gap-5 z-10">
+      <div class="flex flex-col gap-1">
+        <label for="username" class="text-sm font-semibold ml-1">Username / NIK</label>
+        <input type="text" id="username" name="username" placeholder="Masukkan NIK atau username" required
+          class="glass-input px-4 py-3 rounded-xl w-full text-sm">
+      </div>
+      
+      <div class="flex flex-col gap-1">
+        <label for="password" class="text-sm font-semibold ml-1">Password</label>
+        <div class="relative">
+          <input type="password" id="password" name="password" placeholder="••••••••" required
+            class="glass-input px-4 py-3 pr-11 rounded-xl w-full text-sm">
+          <button type="button" id="toggle-password" aria-label="Tampilkan/sembunyikan sandi"
+            class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+            <!-- Ikon mata (password tersembunyi) -->
+            <svg id="icon-eye" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+            <!-- Ikon mata dicoret (password terlihat) -->
+            <svg id="icon-eye-off" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Error message container -->
+      <div id="error-msg" class="hidden text-sm text-red-500 font-medium text-center bg-red-100 dark:bg-red-900/30 p-2 rounded-lg"></div>
+
+      <button type="submit" class="mt-2 bg-primary hover:bg-primary-hover dark:bg-accent-emerald dark:hover:bg-emerald-600 text-white font-medium py-3 rounded-xl transition-all shadow-lg hover:shadow-xl active:scale-95">
+        Masuk Aplikasi
+      </button>
+    </form>
+    
+    <div class="text-center z-10 mt-2">
+      <p class="text-xs text-gray-400">© 2026 Madrasah Hidayatul Mubtadiat. All rights reserved.</p>
+    </div>
+  </div>
+
+  <script type="module">
+    // Theme toggler
+    const themeToggleBtn = document.getElementById('theme-toggle');
+    const darkIcon = document.getElementById('theme-icon-dark');
+    const lightIcon = document.getElementById('theme-icon-light');
+    
+    // Check local storage or system preference
+    if (localStorage.theme === 'dark') {
+      document.documentElement.classList.add('dark');
+      darkIcon.classList.remove('hidden');
+      lightIcon.classList.add('hidden');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+
+    themeToggleBtn.addEventListener('click', () => {
+      document.documentElement.classList.toggle('dark');
+      if (document.documentElement.classList.contains('dark')) {
+        localStorage.theme = 'dark';
+        darkIcon.classList.remove('hidden');
+        lightIcon.classList.add('hidden');
+      } else {
+        localStorage.theme = 'light';
+        darkIcon.classList.add('hidden');
+        lightIcon.classList.remove('hidden');
+      }
+    });
+
+    // Toggle tampil/sembunyi password.
+    const togglePwd = document.getElementById('toggle-password');
+    const pwdInput = document.getElementById('password');
+    const iconEye = document.getElementById('icon-eye');
+    const iconEyeOff = document.getElementById('icon-eye-off');
+    if (togglePwd && pwdInput) {
+      togglePwd.addEventListener('click', () => {
+        const show = pwdInput.type === 'password';
+        pwdInput.type = show ? 'text' : 'password';
+        iconEye.classList.toggle('hidden', show);
+        iconEyeOff.classList.toggle('hidden', !show);
+      });
+    }
+
+    // Login Form logic
+    const form = document.getElementById('login-form');
+    const errorMsg = document.getElementById('error-msg');
+    const btn = form.querySelector('button[type="submit"]');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const username = form.username.value;
+      const password = form.password.value;
+      
+      // Reset error
+      errorMsg.classList.add('hidden');
+      errorMsg.textContent = '';
+      btn.textContent = 'Memverifikasi...';
+      btn.disabled = true;
+      btn.classList.add('opacity-70');
+
+      try {
+        let response = await fetch('/api/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ username, password })
+        });
+
+        // Fallback: jika login standar gagal, coba login sebagai Wali Santri via NIK.
+        // Ini menangani wali santri yang login pertama kali (akun dibuat on-the-fly,
+        // username=NIK, password awal=NIK).
+        if (!response.ok) {
+          const waliResponse = await fetch('/api/login-wali', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ nik: username })
+          });
+
+          if (waliResponse.ok) {
+            response = waliResponse;
+          } else {
+            const text = await response.text();
+            throw new Error(text || 'Login gagal');
+          }
+        }
+
+        const data = await response.json();
+
+        if (data.is_password_changed === false) {
+          // If the user is logging in with NIK for the first time or password not changed
+          localStorage.setItem('user_role', data.role);
+          localStorage.setItem('user_roles', JSON.stringify(data.roles || [data.role]));
+          window.location.href = '/change-password.html';
+        } else {
+          // Success
+          localStorage.setItem('user_role', data.role);
+          localStorage.setItem('user_roles', JSON.stringify(data.roles || [data.role]));
+          btn.textContent = 'Berhasil!';
+          btn.classList.add('bg-accent-emerald');
+          
+          setTimeout(() => {
+            window.location.href = '/'; // Go to dashboard
+          }, 500);
+        }
+
+      } catch (err) {
+        errorMsg.textContent = err.message;
+        errorMsg.classList.remove('hidden');
+        
+        btn.textContent = 'Masuk Aplikasi';
+        btn.disabled = false;
+        btn.classList.remove('opacity-70');
+      }
+    });
+  </script>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(err => {
+          console.log('SW registration failed: ', err);
+        });
+      });
+    }
+  </script>
+</body>
+</html>

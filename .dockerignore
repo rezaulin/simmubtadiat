@@ -1,0 +1,46 @@
+# Dependencies & build artifacts (dibangun ulang di dalam Docker)
+frontend/node_modules
+frontend/dist
+node_modules
+public/dist
+public/uploads
+
+# Binari & artefak lokal
+*.exe
+/main
+tmp/
+tmp_*
+
+# Database / data lokal (JANGAN ikut ke image)
+*.db
+clean_test.sql
+
+# Rahasia (prod .env dibuat oleh deploy.sh)
+.env
+.env.local
+
+# VCS, editor, tooling
+.git
+.gitignore
+.vscode
+.kiro
+.idea
+
+# Skrip sekali-pakai (tidak dibutuhkan runtime)
+fix_*.cjs
+fix_*.py
+fix_*.js
+append_*.js
+append_*.cjs
+do_append.cjs
+build_err.txt
+dummy.png
+*.log
+
+# Meta Docker/deploy (tidak perlu masuk image)
+Dockerfile
+docker-compose.yml
+.dockerignore
+deploy.sh
+PANDUAN_DEPLOY.md
+docs

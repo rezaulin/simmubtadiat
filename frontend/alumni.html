@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="color-scheme" content="light dark">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Data Alumni - SIM Mubtadiat</title>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <link rel="stylesheet" href="./style.css">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0E7C86">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <script type="module" src="/src/js/xss.js"></script>
+
+  <script>
+    (function() {
+      try {
+        var savedRole = localStorage.getItem('user_role');
+        if (savedRole) {
+          // CANONICAL menuAccess — MUST stay set-equal to MENU_ACCESS in
+          // frontend/src/js/xss.js for every role (see design.md Property 2).
+                    var menuAccess = {
+            pimpinan: ['/index.html', '/santri.html', '/perpindahan.html', '/kelas.html', '/penilaian.html', '/absensi-manual.html', '/rapot.html', '/pengajar.html', '/dewan-harian.html', '/arsip.html', '/alumni.html', '/rekap.html', '/catatan.html', '/settings.html', '/pengajar-purna.html'],
+            admin: ['/index.html', '/santri.html', '/pengajar.html', '/pengajar-purna.html', '/alumni.html', '/dewan-harian.html'],
+            mufatish: ['/index.html', '/santri.html', '/kelas.html', '/penilaian.html', '/absensi-manual.html', '/rapot.html', '/pengajar.html', '/dewan-harian.html', '/arsip.html', '/rekap.html', '/catatan.html'],
+            mustahiq: ['/index.html', '/santri.html', '/perpindahan.html', '/penilaian.html', '/rapot.html', '/rekap.html', '/catatan.html', '/pengajar.html', '/dewan-harian.html'],
+            muroqib: ['/index.html', '/santri.html', '/absensi-manual.html', '/catatan.html', '/dewan-harian.html', '/pengajar.html'],
+            tim_rapot: ['/index.html', '/penilaian.html', '/rapot.html', '/rekap.html'],
+            keamanan: ['/index.html', '/santri.html', '/arsip.html', '/alumni.html', '/catatan.html'],
+            wali_santri: ['/index.html', '/rapot.html']
+          };
+          var savedRoles = localStorage.getItem('user_roles');
+          var allowed = [];
+          if (savedRoles) {
+            try {
+              var parsedRoles = JSON.parse(savedRoles);
+              for (var j = 0; j < parsedRoles.length; j++) {
+                var r = parsedRoles[j];
+                if (menuAccess[r]) {
+                  for (var k = 0; k < menuAccess[r].length; k++) {
+                    if (allowed.indexOf(menuAccess[r][k]) === -1) allowed.push(menuAccess[r][k]);
+                  }
+                }
+              }
+            } catch(e) {}
+          }
+          if (allowed.length === 0) allowed = menuAccess[savedRole] || [];
+          var css = '';
+          var allLinks = ['/index.html', '/santri.html', '/perpindahan.html', '/kelas.html', '/penilaian.html', '/absensi-manual.html', '/rapot.html', '/pengajar.html', '/dewan-harian.html', '/arsip.html', '/alumni.html', '/rekap.html', '/catatan.html', '/settings.html', '/pengajar-purna.html'];
+          
+          for (var i = 0; i < allLinks.length; i++) {
+            if (allowed.indexOf(allLinks[i]) === -1) {
+              css += 'aside nav a[href="' + allLinks[i] + '"] { display: none !important; }\n';
+            }
+          }
+          if (css) {
+            var style = document.createElement('style');
+            style.textContent = css;
+            document.head.appendChild(style);
+          }
+        }
+      } catch(e) {}
+    })();
+  </script>
+</head>
+<body class="bg-gray-50 dark:bg-slate-900 transition-colors duration-300">
+
+  <!-- ==================== DESKTOP SIDEBAR ==================== -->
+  <!-- Sidebar / Navigation -->
+    <aside id="app-sidebar" class="flex flex-col w-64 fixed inset-y-0 left-0 bg-white dark:bg-slate-800 border-r border-gray-100 dark:border-slate-700/60 z-[70] transition-transform duration-300 transform -translate-x-full md:translate-x-0 shadow-[4px_0_24px_rgba(0,0,0,0.02)] print:hidden">
+    <!-- Close button (Mobile only) -->
+    <button id="btn-close-sidebar" class="tap-target md:hidden absolute top-4 right-4 p-2 bg-gray-50 dark:bg-slate-700 rounded-xl text-gray-500 hover:text-gray-700" aria-label="Tutup menu">
+      <i data-lucide="x" class="w-5 h-5"></i>
+    </button>
+      <!-- Logo Area -->
+      <div class="h-20 flex items-center px-6 border-b border-gray-100 dark:border-slate-700/60">
+        <div class="flex items-center gap-3 cursor-pointer" onclick="window.location.href='/index.html'">
+          <div class="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-md shadow-primary/20 ring-1 ring-gray-100 dark:ring-slate-700 overflow-hidden shrink-0">
+            <img src="/logo.jpg" alt="Logo Madrasah Hidayatul Mubtadiat" class="w-full h-full object-contain p-0.5">
+          </div>
+          <div class="leading-tight">
+            <span class="block font-bold text-gray-800 dark:text-white tracking-tight text-base">Mubtadiat</span>
+            <span class="block text-[11px] text-gray-400 dark:text-gray-500 font-medium">Manajemen Sistem</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Nav Links -->
+      <nav class="flex-1 overflow-y-auto p-4 flex flex-col gap-1 custom-scrollbar">
+        <!-- UTAMA -->
+        <p class="text-[10px] font-bold text-gray-400 dark:text-gray-500 mb-2 mt-2 px-3 tracking-widest uppercase">Utama</p>
+        <a href="/index.html" class="bg-indigo-50/80 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400 font-semibold flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors">
+          <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+          Dashboard
+        </a>
+        <a href="/santri.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+          <i data-lucide="users" class="w-5 h-5"></i>
+          Data Santri
+        </a>
+        <a href="/perpindahan.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+          <i data-lucide="arrow-left-right" class="w-5 h-5"></i>
+          Perubahan Status
+        </a>
+        <a href="/kelas.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+          <i data-lucide="school" class="w-5 h-5"></i>
+          Data Kelas
+        </a>
+
+        <!-- AKADEMIK -->
+        <p class="text-[10px] font-bold text-gray-400 dark:text-gray-500 mb-2 mt-4 px-3 tracking-widest uppercase">Akademik</p>
+        <a href="/penilaian.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+          <i data-lucide="file-check-2" class="w-5 h-5"></i>
+          Penilaian
+        </a>
+        
+        <a href="/absensi-manual.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+          <i data-lucide="calendar-check" class="w-5 h-5"></i>
+          Absensi Manual
+        </a>
+        <a href="/rapot.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+          <i data-lucide="book-open-check" class="w-5 h-5"></i>
+          Raport
+        </a>
+
+        <!-- DATABASE & ARSIP -->
+        <p class="text-[10px] font-bold text-gray-400 dark:text-gray-500 mb-2 mt-4 px-3 tracking-widest uppercase">Database & Arsip</p>
+        <a href="/pengajar.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+          <i data-lucide="graduation-cap" class="w-5 h-5"></i>
+          Pengajar
+        </a>
+        <a href="/dewan-harian.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+          <i data-lucide="briefcase" class="w-5 h-5"></i>
+          Dewan Harian
+        </a>
+        <a href="/arsip.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+          <i data-lucide="archive" class="w-5 h-5"></i>
+          Arsip & Keluar
+        </a>
+        <a href="/alumni.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+          <i data-lucide="medal" class="w-5 h-5"></i>
+          Alumni
+        </a>
+        <a href="/pengajar-purna.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+          <i data-lucide="history" class="w-5 h-5"></i>
+          Pengajar Purna
+        </a>
+
+        <!-- LAINNYA -->
+        <p class="text-[10px] font-bold text-gray-400 dark:text-gray-500 mb-2 mt-4 px-3 tracking-widest uppercase">Lainnya</p>
+        <a href="/rekap.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+          <i data-lucide="table" class="w-5 h-5"></i>
+          Rekap
+        </a>
+        <a href="/catatan.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+          <i data-lucide="shield-alert" class="w-5 h-5"></i>
+          Pelanggaran &amp; Prestasi
+        </a>
+        <a href="/settings.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+          <i data-lucide="settings" class="w-5 h-5"></i>
+          Pengaturan
+        </a>
+      </nav>
+      
+      <!-- User Profile / Logout -->
+      <div class="p-4 border-t border-gray-100 dark:border-slate-700/60 bg-gray-50/50 dark:bg-slate-800/50">
+        <button id="logout-btn-desktop" class="w-full flex items-center gap-3 px-3 py-2.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-colors text-left font-medium">
+          <i data-lucide="log-out" class="w-5 h-5"></i>
+          Keluar
+        </button>
+      </div>
+    </aside>
+
+  <!-- ==================== MAIN CONTENT ==================== -->
+
+  <!-- ==================== SIDEBAR BACKDROP (mobile only) ==================== -->
+  <div id="sidebar-backdrop" class="hidden md:hidden fixed inset-0 bg-gray-900/50 dark:bg-black/60 backdrop-blur-sm z-[65]"></div>
+
+
+  <main class="md:ml-64 min-h-screen pb-24 md:pb-8 flex flex-col">
+    
+    <!-- MOBILE TOP BAR -->
+    <header class="md:hidden h-16 bg-white/80 backdrop-blur-md dark:bg-slate-800/80 border-b border-gray-100 dark:border-slate-700 flex items-center justify-between px-4 sticky top-0 z-40">
+      <button id="btn-open-sidebar" class="tap-target p-2 -ml-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors" aria-label="Buka menu">
+        <i data-lucide="menu" class="w-6 h-6 text-gray-700 dark:text-gray-200"></i>
+      </button>
+      <button id="theme-toggle-mobile" class="tap-target p-2 -mr-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors" aria-label="Ganti tema">
+        <i data-lucide="moon" class="w-5 h-5 text-gray-700 dark:text-gray-200"></i>
+      </button>
+    </header>
+
+    <!-- CONTENT HEADER -->
+    <div class="px-6 py-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div>
+        <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Data Alumni</h2>
+        <p class="text-sm text-gray-500 dark:text-gray-400">Kelola master data histori kelulusan santri dan mutasi keluar.</p>
+      </div>
+      
+      <div class="flex items-center gap-3">
+        <div class="relative flex-1 md:w-64">
+          <svg class="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+          <input type="text" id="search-input" placeholder="Cari NIK / Nama..." class="glass-input w-full pl-10 pr-4 py-2 rounded-xl text-sm bg-white dark:bg-slate-800">
+        </div>
+        
+        <button id="btn-tambah" class="hidden flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover dark:bg-accent-emerald dark:hover:bg-emerald-600 text-white px-4 py-2 rounded-xl font-medium text-sm transition-all shadow-md">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+          <span class="hidden md:inline">Proses Keluar</span>
+        </button>
+        <button id="btn-tambah-alumni" class="hidden flex items-center justify-center gap-2 bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-xl font-medium text-sm transition-all shadow-md">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
+          <span class="hidden md:inline">Tambah Alumni</span>
+        </button>
+        <button id="btn-import-alumni" class="hidden flex items-center justify-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-xl font-medium text-sm transition-all shadow-md">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"></path></svg>
+          <span class="hidden md:inline">Import Excel</span>
+        </button>
+        <a href="/api/alumni/template" id="btn-template-alumni" class="hidden flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-xl font-medium text-sm transition-all">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path></svg>
+          <span class="hidden md:inline">Template</span>
+        </a>
+        <input type="file" id="input-import-file" accept=".xlsx,.xls" class="hidden">
+        </button>
+      </div>
+    </div>
+
+    <!-- ==================== TAB BAR (Pengabdian / Alumni) ==================== -->
+    <div class="px-6 mb-2">
+      <div class="flex gap-1 border-b border-gray-200 dark:border-slate-700">
+        <button id="tab-pengabdian" type="button" class="tap-target px-4 py-3 -mb-px text-sm font-semibold border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 transition-colors">
+          Pengabdian
+        </button>
+        <button id="tab-alumni" type="button" class="tap-target px-4 py-3 -mb-px text-sm font-semibold border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 transition-colors">
+          Alumni
+        </button>
+      </div>
+    </div>
+
+    <!-- ==================== TAB CONTENT: PENGABDIAN ==================== -->
+    <!-- Kontainer daftar santri pengabdian. Isi & modal "Selesai Khidmah" ditambahkan pada task 10.2. -->
+    <div id="content-pengabdian" class="hidden px-6 pb-6 flex-1">
+      <div class="glass dark:bg-slate-800/80 rounded-2xl border border-gray-200 dark:border-slate-700 overflow-hidden shadow-sm flex flex-col">
+        <div id="pengabdian-list" class="p-6 text-center text-gray-400">
+          Memuat data pengabdian...
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== TAB CONTENT: ALUMNI ==================== -->
+    <div id="content-alumni" class="flex-1 flex flex-col">
+
+      <!-- FILTER WILAYAH -->
+      <div class="px-6 mb-2 flex flex-wrap items-center gap-3">
+        <div class="flex flex-col gap-1">
+          <label class="text-xs font-semibold text-gray-500 dark:text-gray-400">Filter Provinsi</label>
+          <select id="filter-provinsi" class="glass-input px-3 py-2 rounded-lg text-sm bg-white dark:bg-slate-800 min-w-[180px]">
+            <option value="">-- Semua Provinsi --</option>
+          </select>
+        </div>
+        <div class="flex flex-col gap-1">
+          <label class="text-xs font-semibold text-gray-500 dark:text-gray-400">Filter Kabupaten/Kota</label>
+          <select id="filter-kabupaten" disabled class="glass-input px-3 py-2 rounded-lg text-sm bg-white dark:bg-slate-800 min-w-[180px] disabled:opacity-50">
+            <option value="">-- Semua Kabupaten --</option>
+          </select>
+        </div>
+        <div class="flex flex-col gap-1">
+          <label class="text-xs font-semibold text-gray-500 dark:text-gray-400">Tahun Masuk</label>
+          <input type="text" id="filter-tahun-masuk" placeholder="Mis: 2021" class="glass-input px-3 py-2 rounded-lg text-sm bg-white dark:bg-slate-800 w-28">
+        </div>
+        <div class="flex flex-col gap-1">
+          <label class="text-xs font-semibold text-gray-500 dark:text-gray-400">Tahun Keluar</label>
+          <input type="text" id="filter-tahun-keluar" placeholder="Mis: 2024" class="glass-input px-3 py-2 rounded-lg text-sm bg-white dark:bg-slate-800 w-28">
+        </div>
+        <button id="btn-reset-filter" class="mt-5 text-xs text-primary dark:text-accent-emerald hover:underline">Reset filter</button>
+      </div>
+
+      <!-- TABLE AREA -->
+      <div class="px-6 pb-6 flex-1">
+        <div class="glass dark:bg-slate-800/80 rounded-2xl border border-gray-200 dark:border-slate-700 overflow-hidden shadow-sm flex flex-col">
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm text-gray-600 dark:text-gray-300 table-responsive">
+              <thead class="bg-gray-50/50 dark:bg-slate-900/50 text-gray-500 dark:text-gray-400 uppercase font-semibold text-xs border-b border-gray-200 dark:border-slate-700">
+                <tr>
+                  <th class="px-6 py-4">Nama Lengkap</th>
+                  <th class="px-6 py-4">Kamar</th>
+                  <th class="px-6 py-4">Asal Daerah</th>
+                  <th class="px-6 py-4">Status Keluar</th>
+                  <th class="px-6 py-4">Tingkatan Akhir</th>
+                  <th class="px-6 py-4 text-right">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="table-body" class="divide-y divide-gray-100 dark:divide-slate-700/50">
+                <!-- Loading Skeleton -->
+                <tr>
+                  <td colspan="6" class="px-6 py-8 text-center text-gray-400">Memuat data alumni...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+          <!-- ==================== MOBILE BOTTOM NAV + FAB ==================== -->
+  <!-- CANONICAL Bottom_Nav block — replicate verbatim across covered pages. -->
+  <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl dark:bg-slate-900/90 border-t border-gray-100 dark:border-slate-800 z-50 px-2 py-2 pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.02)]">
+    <div class="flex justify-between items-center relative h-14 w-full">
+      
+      <a href="/index.html" data-nav class="w-1/5 flex flex-col items-center gap-1 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+        <i data-lucide="home" class="w-5 h-5"></i>
+        <span class="text-[10px] font-bold">Beranda</span>
+      </a>
+      
+      <a href="/santri.html" data-nav class="w-1/5 flex flex-col items-center gap-1 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+        <i data-lucide="users" class="w-5 h-5"></i>
+        <span class="text-[10px] font-semibold">Santri</span>
+      </a>
+
+      <!-- Spacer khusus FAB agar tidak overlap -->
+      <div class="w-1/5 h-full pointer-events-none"></div>
+
+      <!-- FLOATING ACTION BUTTON (FAB) -->
+      <div class="absolute left-1/2 -translate-x-1/2 -top-6">
+        <button id="btn-mobile-search" class="tap-target w-[52px] h-[52px] bg-gradient-to-tr from-primary to-hero-to rounded-full flex items-center justify-center text-white shadow-[0_8px_20px_rgba(14,124,134,0.3)] active:scale-95 transition-transform border-[3px] border-white dark:border-slate-900" aria-label="Cari">
+          <i data-lucide="search" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <a href="/absensi-manual.html" data-nav class="w-1/5 flex flex-col items-center gap-1 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+        <i data-lucide="clipboard-check" class="w-5 h-5"></i>
+        <span class="text-[10px] font-semibold">Absen</span>
+      </a>
+
+      <a href="/penilaian.html" data-nav class="w-1/5 flex flex-col items-center gap-1 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+        <i data-lucide="file-check-2" class="w-5 h-5"></i>
+        <span class="text-[10px] font-semibold">Nilai</span>
+      </a>
+      
+    </div>
+  </nav>
+
+  <!-- ==================== MODAL TAMBAH SANTRI ==================== -->
+  <div id="modal-santri" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-gray-900/40 dark:bg-black/60 backdrop-blur-sm" id="modal-overlay"></div>
+    
+    <div class="glass dark:bg-slate-800 rounded-3xl w-full max-w-lg z-10 overflow-hidden shadow-2xl scale-95 opacity-0 transition-all duration-300" id="modal-content">
+      <div class="px-6 py-4 border-b border-gray-200 dark:border-slate-700 flex justify-between items-center">
+        <h3 class="text-lg font-bold dark:text-white">Proses Santri Keluar</h3>
+        <button id="modal-close" class="tap-target text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" aria-label="Tutup">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+      
+      <div class="p-6">
+        <form id="form-alumni" class="flex flex-col gap-4">
+          
+          <div class="flex flex-col gap-1">
+            <label class="text-xs font-semibold text-gray-500 dark:text-gray-400">Nama Santri</label>
+            <input type="text" id="input-santri-nama" list="santri-datalist" autocomplete="off" required class="glass-input px-3 py-2 rounded-lg text-sm w-full" placeholder="Ketik nama santri...">
+            <datalist id="santri-datalist"></datalist>
+            <input type="hidden" name="santri_id" id="santri-id-hidden">
+          </div>
+
+
+          <!-- Pilihan alur untuk santri Kelas 3 Aliyah (Kelas_Akhir). Hidden secara
+               default; ditampilkan oleh alumni.js saat santri terpilih Kelas_Akhir. -->
+          <div id="kelas-akhir-choice" class="hidden flex flex-col gap-2 rounded-xl bg-indigo-50/60 dark:bg-slate-700/40 border border-indigo-100 dark:border-slate-600 p-3">
+            <p class="text-xs font-semibold text-gray-600 dark:text-gray-300">Santri Kelas 3 Aliyah — pilih alur kelulusan:</p>
+            <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200 cursor-pointer">
+              <input type="radio" name="pengabdian_choice" value="alumni" checked class="text-primary">
+              Langsung Alumni (Lulus) — Tidak Khidmah
+            </label>
+            <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200 cursor-pointer">
+              <input type="radio" name="pengabdian_choice" value="khidmah" class="text-primary">
+              Khidmah dulu (Pengabdian)
+            </label>
+          </div>
+
+          <!-- Alasan tidak khidmah (muncul saat memilih "Langsung Alumni" untuk Kelas_Akhir) -->
+          <div id="group-alasan-tidak-khidmah" class="hidden flex flex-col gap-1">
+            <label class="text-xs font-semibold text-gray-500 dark:text-gray-400">Alasan Tidak Khidmah</label>
+            <input type="text" name="keterangan_alumni" id="input-keterangan-alumni" class="glass-input px-3 py-2 rounded-lg text-sm w-full" placeholder="Misal: Menikah, Membantu Ortu, dll">
+          </div>
+
+          <div id="group-status-keluar" class="flex flex-col gap-1">
+            <label class="text-xs font-semibold text-gray-500 dark:text-gray-400">Status Keluar</label>
+            <select name="status_akhir" id="select-status-akhir" required class="glass-input px-3 py-2 rounded-lg text-sm w-full">
+              <option value="lulus">Lulus (Alumni)</option>
+              <option value="boyong">Boyong</option>
+              <option value="keluar">Dikeluarkan / Pindah</option>
+            </select>
+          </div>
+          
+          <div id="group-tanggal-keluar" class="flex flex-col gap-1">
+            <label class="text-xs font-semibold text-gray-500 dark:text-gray-400">Tanggal Keluar</label>
+            <input type="date" name="tanggal_keluar" id="input-tanggal-keluar" required class="glass-input px-3 py-2 rounded-lg text-sm w-full">
+          </div>
+
+          <!-- Field khidmah (muncul saat memilih "Khidmah dulu"). Submit ke
+               POST /api/pengabdian/mulai (bukan proses-keluar). -->
+          <div id="khidmah-fields" class="hidden flex flex-col gap-4">
+            <div class="flex flex-col gap-1">
+              <label class="text-xs font-semibold text-gray-500 dark:text-gray-400">Tempat Khidmah</label>
+              <input type="text" name="khidmah_tempat" id="input-khidmah-tempat" class="glass-input px-3 py-2 rounded-lg text-sm w-full" placeholder="Nama instansi/pesantren">
+            </div>
+            <div class="flex flex-col gap-1">
+              <label class="text-xs font-semibold text-gray-500 dark:text-gray-400">Tanggal Mulai Khidmah</label>
+              <input type="date" name="khidmah_mulai" id="input-khidmah-mulai" class="glass-input px-3 py-2 rounded-lg text-sm w-full">
+            </div>
+          </div>
+          
+          <div id="group-alasan" class="flex flex-col gap-1">
+            <label class="text-xs font-semibold text-gray-500 dark:text-gray-400">Alasan</label>
+            <textarea name="alasan" rows="2" class="glass-input px-3 py-2 rounded-lg text-sm w-full" placeholder="Alasan keluar/boyong (opsional)"></textarea>
+          </div>
+
+          <div id="modal-error" class="hidden text-sm text-red-500 bg-red-50 dark:bg-red-900/30 p-2 rounded-lg mt-2"></div>
+          
+          <div class="flex justify-end gap-3 mt-4">
+            <button type="button" id="btn-cancel" class="px-4 py-2 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">Batal</button>
+            <button type="submit" class="bg-primary hover:bg-primary-hover dark:bg-accent-emerald dark:hover:bg-emerald-600 text-white px-5 py-2 rounded-xl text-sm font-medium transition-all shadow-md">Proses Keluar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL TAMBAH ALUMNI MANUAL ==================== -->
+  <div id="modal-tambah-alumni" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-gray-900/40 dark:bg-black/60 backdrop-blur-sm" id="modal-tambah-alumni-overlay"></div>
+    <div class="glass dark:bg-slate-800 rounded-3xl w-full max-w-lg z-10 overflow-hidden shadow-2xl scale-95 opacity-0 transition-all duration-300 max-h-[90vh] overflow-y-auto" id="modal-tambah-alumni-content">
+      <div class="px-6 py-4 border-b border-gray-200 dark:border-slate-700 flex justify-between items-center sticky top-0 bg-white dark:bg-slate-800 z-10">
+        <h3 class="text-lg font-bold dark:text-white">Tambah Data Alumni</h3>
+        <button id="modal-tambah-alumni-close" class="tap-target text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" aria-label="Tutup">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+      <div class="p-6">
+        <form id="form-tambah-alumni" class="flex flex-col gap-3">
+          <div class="flex gap-3">
+            <div class="flex-1 flex flex-col gap-1">
+              <label class="text-xs font-semibold text-gray-500">Nama <span class="text-red-500">*</span></label>
+              <input type="text" name="nama" required class="glass-input px-3 py-2 rounded-lg text-sm w-full">
+            </div>
+          </div>
+          <div class="flex gap-3">
+            <div class="flex-1 flex flex-col gap-1">
+              <label class="text-xs font-semibold text-gray-500">Stambuk <span class="text-red-500">*</span></label>
+              <input type="text" name="stambuk" required class="glass-input px-3 py-2 rounded-lg text-sm w-full">
+            </div>
+            <div class="flex-1 flex flex-col gap-1">
+              <label class="text-xs font-semibold text-gray-500">NISN</label>
+              <input type="text" name="nisn" class="glass-input px-3 py-2 rounded-lg text-sm w-full">
+            </div>
+          </div>
+          <div class="flex gap-3">
+            <div class="flex-1 flex flex-col gap-1">
+              <label class="text-xs font-semibold text-gray-500">TTL</label>
+              <input type="text" name="ttl" class="glass-input px-3 py-2 rounded-lg text-sm w-full" placeholder="Kediri, 21 Juli 2000">
+            </div>
+            <div class="flex-1 flex flex-col gap-1">
+              <label class="text-xs font-semibold text-gray-500">Wali</label>
+              <input type="text" name="wali" class="glass-input px-3 py-2 rounded-lg text-sm w-full">
+            </div>
+          </div>
+          <div class="flex gap-3">
+            <div class="flex-1 flex flex-col gap-1">
+              <label class="text-xs font-semibold text-gray-500">Alamat</label>
+              <input type="text" name="alamat" class="glass-input px-3 py-2 rounded-lg text-sm w-full">
+            </div>
+            <div class="flex-1 flex flex-col gap-1">
+              <label class="text-xs font-semibold text-gray-500">No HP WS</label>
+              <input type="text" name="no_hp" class="glass-input px-3 py-2 rounded-lg text-sm w-full">
+            </div>
+          </div>
+          <div class="flex gap-3">
+            <div class="flex-1 flex flex-col gap-1">
+              <label class="text-xs font-semibold text-gray-500">Kamar</label>
+              <input type="text" name="kamar" class="glass-input px-3 py-2 rounded-lg text-sm w-full" placeholder="Nama / Nomor Kamar">
+            </div>
+          </div>
+          <div class="flex gap-3">
+            <div class="flex-1 flex flex-col gap-1">
+              <label class="text-xs font-semibold text-gray-500">Khidmah</label>
+              <select name="khidmah" class="glass-input px-3 py-2 rounded-lg text-sm w-full">
+                <option value="tidak_khidmah">Tidak Khidmah</option>
+                <option value="selesai">Khidmah (Selesai)</option>
+              </select>
+            </div>
+            <div class="flex-1 flex flex-col gap-1">
+              <label class="text-xs font-semibold text-gray-500">Tempat Khidmah</label>
+              <input type="text" name="tempat_khidmah" class="glass-input px-3 py-2 rounded-lg text-sm w-full" placeholder="Ustadzah, Kebersihan, dll">
+            </div>
+          </div>
+          <div class="flex gap-3">
+            <div class="flex-1 flex flex-col gap-1">
+              <label class="text-xs font-semibold text-gray-500">Pengambilan Ijazah</label>
+              <select name="status_ijazah" class="glass-input px-3 py-2 rounded-lg text-sm w-full">
+                <option value="belum">Belum</option>
+                <option value="sudah">Sudah</option>
+                <option value="tidak">Tidak</option>
+              </select>
+            </div>
+            <div class="flex-1 flex flex-col gap-1">
+              <label class="text-xs font-semibold text-gray-500">Keterangan</label>
+              <input type="text" name="keterangan" class="glass-input px-3 py-2 rounded-lg text-sm w-full" placeholder="Menikah, Tidak Lulus UBK, dll">
+            </div>
+          </div>
+          <div class="flex gap-3">
+            <div class="flex-1 flex flex-col gap-1">
+              <label class="text-xs font-semibold text-gray-500">Tahun Masuk</label>
+              <input type="text" name="tahun_masuk" class="glass-input px-3 py-2 rounded-lg text-sm w-full" placeholder="2020">
+            </div>
+            <div class="flex-1 flex flex-col gap-1">
+              <label class="text-xs font-semibold text-gray-500">Tahun Keluar</label>
+              <input type="text" name="tahun_keluar" class="glass-input px-3 py-2 rounded-lg text-sm w-full" placeholder="2025">
+            </div>
+          </div>
+          <div id="modal-tambah-alumni-error" class="hidden text-sm text-red-500 bg-red-50 dark:bg-red-900/30 p-2 rounded-lg"></div>
+          <div class="flex justify-end gap-3 mt-2">
+            <button type="button" id="modal-tambah-alumni-cancel" class="px-4 py-2 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700">Batal</button>
+            <button type="submit" class="bg-indigo-500 hover:bg-indigo-600 text-white px-5 py-2 rounded-xl text-sm font-medium shadow-md">Simpan Alumni</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL DETAIL ALUMNI ==================== -->
+  <div id="modal-detail" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-gray-900/40 dark:bg-black/60 backdrop-blur-sm" id="modal-detail-overlay"></div>
+    
+    <div class="glass dark:bg-slate-800 rounded-3xl w-full max-w-lg z-10 overflow-hidden shadow-2xl scale-95 opacity-0 transition-all duration-300 max-h-[90vh] overflow-y-auto" id="modal-detail-content">
+      <div class="px-6 py-4 border-b border-gray-200 dark:border-slate-700 flex justify-between items-center sticky top-0 bg-white dark:bg-slate-800 z-10">
+        <h3 class="text-lg font-bold dark:text-white">Detail Alumni</h3>
+        <button id="modal-detail-close" class="tap-target text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" aria-label="Tutup">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+      
+      <div class="p-6">
+        <!-- Info Header -->
+        <div class="mb-6">
+          <h4 id="detail-nama" class="font-bold text-lg dark:text-white">Nama Alumni</h4>
+          <p id="detail-stambuk" class="text-sm text-gray-500">Stambuk: -</p>
+          <div class="flex gap-2 mt-2 flex-wrap">
+            <span id="detail-status" class="inline-block px-2.5 py-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 rounded-full text-xs font-semibold">LULUS</span>
+            <span id="detail-khidmah-badge" class="inline-block px-2.5 py-1 rounded-full text-xs font-semibold"></span>
+          </div>
+        </div>
+
+        <!-- Info Grid (read-only computed) -->
+        <div class="grid grid-cols-2 gap-3 mb-4 text-sm">
+          <div>
+            <span class="text-xs font-semibold text-gray-400 uppercase">Asal Daerah</span>
+            <p id="detail-asal" class="text-gray-800 dark:text-gray-200 font-medium">-</p>
+          </div>
+          <div>
+            <span class="text-xs font-semibold text-gray-400 uppercase">Tingkatan Akhir</span>
+            <p id="detail-tingkatan" class="text-gray-800 dark:text-gray-200 font-medium">-</p>
+          </div>
+        </div>
+
+        <!-- Editable Form -->
+        
+        <div class="mt-6 flex justify-end">
+          <button type="button" class="btn-tutup-detail px-5 py-2 rounded-xl text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-slate-700 dark:text-gray-300 dark:hover:bg-slate-600 transition-colors">Tutup</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL EDIT ALUMNI ==================== -->
+  <div id="modal-edit" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-gray-900/40 dark:bg-black/60 backdrop-blur-sm" id="modal-edit-overlay"></div>
+    
+    <div class="glass dark:bg-slate-800 rounded-3xl w-full max-w-lg z-10 overflow-hidden shadow-2xl scale-95 opacity-0 transition-all duration-300 max-h-[90vh] overflow-y-auto" id="modal-edit-content">
+      <div class="px-6 py-4 border-b border-gray-200 dark:border-slate-700 flex justify-between items-center sticky top-0 bg-white dark:bg-slate-800 z-10">
+        <h3 class="text-lg font-bold dark:text-white">Edit Alumni</h3>
+        <button id="modal-edit-close" type="button" class="tap-target text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" aria-label="Tutup">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+      
+      <div class="p-6">
+        <!-- Edit Form -->
+        <form id="form-update-alumni" class="flex flex-col gap-4 border-t border-gray-200 dark:border-slate-700 pt-4">
+          <input type="hidden" id="detail-id" name="santri_id">
+
+          <p class="text-xs font-bold text-gray-400 uppercase tracking-wide">Biodata</p>
+
+          <div class="flex flex-col gap-1">
+            <label class="text-xs font-semibold text-gray-500 dark:text-gray-400">Nama Lengkap</label>
+            <input type="text" id="edit-alumni-nama" name="nama" class="glass-input px-3 py-2 rounded-lg text-sm w-full" placeholder="Nama alumni">
+          </div>
+
+          <div class="flex flex-col gap-1">
+            <label class="text-xs font-semibold text-gray-500 dark:text-gray-400">Tempat, Tanggal Lahir</label>
+            <div class="flex gap-2">
+              <input type="text" id="edit-alumni-ttl-tempat" name="ttl_tempat" class="glass-input px-3 py-2 rounded-lg text-sm w-1/2" placeholder="Kota kelahiran">
+              <input type="date" id="edit-alumni-ttl-tanggal" name="ttl_tanggal" class="glass-input px-3 py-2 rounded-lg text-sm w-1/2">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div class="flex flex-col gap-1">
+              <label class="text-xs font-semibold text-gray-500 dark:text-gray-400">Nama Wali</label>
+              <input type="text" id="edit-alumni-wali" name="nama_wali" class="glass-input px-3 py-2 rounded-lg text-sm w-full">
+            </div>
+            <div class="flex flex-col gap-1">
+              <label class="text-xs font-semibold text-gray-500 dark:text-gray-400">No HP Wali</label>
+              <input type="text" id="edit-alumni-nohp" name="no_hp_wali" class="glass-input px-3 py-2 rounded-lg text-sm w-full">
+            </div>
+          </div>
+
+          <div class="flex flex-col gap-1">
+            <label class="text-xs font-semibold text-gray-500 dark:text-gray-400">Alamat</label>
+            <input type="text" id="edit-alumni-alamat" name="alamat" class="glass-input px-3 py-2 rounded-lg text-sm w-full">
+          </div>
+
+          <div class="grid grid-cols-3 gap-3">
+            <div class="flex flex-col gap-1">
+              <label class="text-xs font-semibold text-gray-500 dark:text-gray-400">Kamar</label>
+              <input type="text" id="edit-alumni-kamar" name="kamar" class="glass-input px-3 py-2 rounded-lg text-sm w-full">
+            </div>
+            <div class="flex flex-col gap-1">
+              <label class="text-xs font-semibold text-gray-500 dark:text-gray-400">Tahun Masuk</label>
+              <input type="text" id="edit-alumni-tahun-masuk" name="tahun_masuk" class="glass-input px-3 py-2 rounded-lg text-sm w-full" placeholder="2020">
+            </div>
+            <div class="flex flex-col gap-1">
+              <label class="text-xs font-semibold text-gray-500 dark:text-gray-400">Tahun Keluar</label>
+              <input type="text" id="edit-alumni-tahun-keluar" name="tahun_keluar" class="glass-input px-3 py-2 rounded-lg text-sm w-full" placeholder="2026">
+            </div>
+          </div>
+
+          <div class="flex flex-col gap-1">
+            <label class="text-xs font-semibold text-gray-500 dark:text-gray-400">Tempat Khidmah</label>
+            <input type="text" id="edit-alumni-tempat-khidmah" name="tempat_khidmah" class="glass-input px-3 py-2 rounded-lg text-sm w-full" placeholder="Nama pondok/lembaga khidmah">
+          </div>
+
+          <p class="text-xs font-bold text-gray-400 uppercase tracking-wide border-t border-gray-100 dark:border-slate-700 pt-3">Status & Ijazah</p>
+
+          <div class="flex flex-col gap-1">
+            <label class="text-xs font-semibold text-gray-500 dark:text-gray-400">Status Khidmah</label>
+            <select id="input-status-khidmah" name="khidmah" class="glass-input px-3 py-2 rounded-lg text-sm w-full">
+              <option value="belum">Belum</option>
+              <option value="tidak_khidmah">Tidak Khidmah</option>
+              <option value="sedang">Sedang Khidmah</option>
+              <option value="selesai">Selesai Khidmah</option>
+            </select>
+          </div>
+
+          <div class="flex flex-col gap-1">
+            <label class="text-xs font-semibold text-gray-500 dark:text-gray-400">Keterangan Alumni</label>
+            <input type="text" name="keterangan" id="input-keterangan" class="glass-input px-3 py-2 rounded-lg text-sm w-full" placeholder="Menikah, Membantu Ortu, dll">
+          </div>
+
+          <div class="flex flex-col gap-1">
+            <label class="text-xs font-semibold text-gray-500 dark:text-gray-400">Status Pengambilan Ijazah</label>
+            <select id="input-ijazah-status" name="status_ijazah" class="glass-input px-3 py-2 rounded-lg text-sm w-full">
+              <option value="belum">Belum</option>
+              <option value="sudah">Sudah</option>
+              <option value="tidak">Tidak (Tidak Diambil)</option>
+            </select>
+          </div>
+          
+          <div class="flex flex-col gap-1" id="group-alasan-ijazah">
+            <label class="text-xs font-semibold text-gray-500 dark:text-gray-400">Alasan Belum Diambil</label>
+            <input type="text" name="alasan_ijazah_belum_diambil" id="input-alasan-ijazah" class="glass-input px-3 py-2 rounded-lg text-sm w-full" placeholder="Alasan jika ijazah belum diambil/tidak diambil">
+          </div>
+          
+          <div class="flex flex-col gap-1">
+            <label class="text-xs font-semibold text-gray-500 dark:text-gray-400">Nomor Ijazah</label>
+            <input type="text" name="no_ijazah" id="input-ijazah" class="glass-input px-3 py-2 rounded-lg text-sm w-full" placeholder="No. Ijazah (jika sudah terbit)">
+          </div>
+
+          <div id="modal-detail-error" class="hidden text-sm text-red-500 bg-red-50 dark:bg-red-900/30 p-2 rounded-lg mt-2"></div>
+          
+          <div class="flex justify-end gap-3 mt-2">
+            <button type="submit" class="bg-primary hover:bg-primary-hover dark:bg-accent-emerald dark:hover:bg-emerald-600 text-white px-5 py-2 rounded-xl text-sm font-medium transition-all shadow-md">Simpan Perubahan</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL SELESAI KHIDMAH ==================== -->
+  <!-- Konfirmasi "Selesai Khidmah → Alumni": input tanggal selesai (default hari ini). -->
+  <div id="modal-selesai" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-gray-900/40 dark:bg-black/60 backdrop-blur-sm" id="modal-selesai-overlay"></div>
+
+    <div class="glass dark:bg-slate-800 rounded-3xl w-full max-w-md z-10 overflow-hidden shadow-2xl scale-95 opacity-0 transition-all duration-300" id="modal-selesai-content">
+      <div class="px-6 py-4 border-b border-gray-200 dark:border-slate-700 flex justify-between items-center">
+        <h3 class="text-lg font-bold dark:text-white">Selesai Khidmah</h3>
+        <button id="modal-selesai-close" class="tap-target text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" aria-label="Tutup">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+
+      <div class="p-6">
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+          Santri <span id="selesai-nama" class="font-semibold text-gray-700 dark:text-gray-200"></span> akan diluluskan menjadi alumni. Tentukan tanggal selesai khidmah.
+        </p>
+        <form id="form-selesai" class="flex flex-col gap-4">
+          <input type="hidden" id="selesai-santri-id" name="santri_id">
+
+          <div class="flex flex-col gap-1">
+            <label class="text-xs font-semibold text-gray-500 dark:text-gray-400">Tanggal Selesai Khidmah</label>
+            <input type="date" name="khidmah_selesai" id="input-khidmah-selesai" required class="glass-input px-3 py-2 rounded-lg text-sm w-full">
+          </div>
+
+          <div id="modal-selesai-error" class="hidden text-sm text-red-500 bg-red-50 dark:bg-red-900/30 p-2 rounded-lg mt-2"></div>
+
+          <div class="flex justify-end gap-3 mt-4">
+            <button type="button" id="btn-selesai-cancel" class="px-4 py-2 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">Batal</button>
+            <button type="submit" class="bg-primary hover:bg-primary-hover dark:bg-accent-emerald dark:hover:bg-emerald-600 text-white px-5 py-2 rounded-xl text-sm font-medium transition-all shadow-md">Selesai Khidmah → Alumni</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Load JS Logic -->
+  <script type="module" src="./src/js/alumni.js"></script>
+
+
+  <script>
+    // Initialize Lucide Icons
+    if (typeof lucide !== 'undefined') {
+      lucide.createIcons();
+    }
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(err => {
+          console.log('SW registration failed: ', err);
+        });
+      });
+    }
+  </script>
+</body>
+</html>

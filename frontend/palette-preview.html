@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+  <meta name="color-scheme" content="light dark">
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Preview Palet Warna - SIM Mubtadiat</title>
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+
+  /* ===== PALET (default: biru sekarang) ===== */
+  :root {
+    --primary:      #2B5BDB;
+    --primary-hover:#1e45b0;
+    --hero-from:    #4f46e5;
+    --hero-to:      #3b82f6;
+    --app-bg:       #F8F9FA;
+    --sidebar-bg:   #ffffff;
+    --card-bg:      #ffffff;
+    --card-border:  #eef0f3;
+    --text-main:    #1f2937;
+    --text-muted:   #94a3b8;
+    --active-bg:    rgba(43,91,219,0.08);
+    --gold:         #fbbf24;
+  }
+  [data-palette="a"] { /* Teal Tenang */
+    --primary:#0E7C86; --primary-hover:#0F6870;
+    --hero-from:#0F6E77; --hero-to:#12A2A8;
+    --app-bg:#F5F7F5; --sidebar-bg:#ffffff; --card-bg:#ffffff; --card-border:#e6ebe9;
+    --active-bg:rgba(14,124,134,0.10); --gold:#E0A93B;
+  }
+  [data-palette="b"] { /* Indigo Lembut */
+    --primary:#3E4C8A; --primary-hover:#2E3A6E;
+    --hero-from:#3A4A7A; --hero-to:#5566B0;
+    --app-bg:#F3F5FA; --sidebar-bg:#ffffff; --card-bg:#ffffff; --card-border:#e7eaf2;
+    --active-bg:rgba(62,76,138,0.10); --gold:#E0A93B;
+  }
+  [data-palette="c"] { /* Sage & Sand */
+    --primary:#4B7B6E; --primary-hover:#3C6357;
+    --hero-from:#3C6357; --hero-to:#6A9C8A;
+    --app-bg:#F5F3EC; --sidebar-bg:#FBFAF5; --card-bg:#FFFFFF; --card-border:#eae5d8;
+    --active-bg:rgba(75,123,110,0.12); --gold:#C97B5A;
+  }
+
+  body { background: var(--app-bg); color: var(--text-main); transition: background .3s; }
+
+  /* Switcher bar */
+  .switcher { position: sticky; top: 0; z-index: 50; display: flex; gap: 8px; align-items: center;
+    padding: 12px 20px; background: rgba(255,255,255,.85); backdrop-filter: blur(8px);
+    border-bottom: 1px solid #e5e7eb; flex-wrap: wrap; }
+  .switcher b { margin-right: 6px; font-size: 14px; }
+  .sw-btn { padding: 8px 14px; border-radius: 10px; border: 1px solid #d1d5db; background:#fff;
+    cursor: pointer; font-size: 13px; font-weight: 600; display:flex; align-items:center; gap:8px; }
+  .sw-btn:hover { border-color: #9ca3af; }
+  .sw-btn.active { border-color: var(--primary); box-shadow: 0 0 0 3px var(--active-bg); }
+  .dot { width: 14px; height: 14px; border-radius: 50%; }
+
+  .app { display: flex; min-height: calc(100vh - 55px); }
+
+  /* Sidebar */
+  .sidebar { width: 250px; background: var(--sidebar-bg); border-right: 1px solid var(--card-border);
+    padding: 16px; flex-shrink: 0; }
+  .brand { display:flex; align-items:center; gap:10px; padding: 8px 6px 18px; border-bottom:1px solid var(--card-border); margin-bottom:14px; }
+  .brand .logo { width:40px;height:40px;border-radius:12px;background:var(--primary);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800; }
+  .brand .t1 { font-weight: 800; font-size: 15px; }
+  .brand .t2 { font-size: 11px; color: var(--text-muted); }
+  .nav-sec { font-size: 10px; letter-spacing: .12em; color: var(--text-muted); font-weight:700; margin: 14px 6px 6px; }
+  .nav-a { display:flex; align-items:center; gap:12px; padding:10px 12px; border-radius:12px;
+    color:#64748b; font-size:14px; font-weight:500; text-decoration:none; margin-bottom:2px; }
+  .nav-a:hover { background:#f1f5f9; color:#334155; }
+  .nav-a.active { background: var(--active-bg); color: var(--primary); font-weight:700; }
+  .nav-a i { width:18px;height:18px; }
+  .nav-a.logout { color:#ef4444; margin-top:8px; }
+
+  /* Main */
+  .main { flex:1; padding: 24px; }
+
+  /* Hero */
+  .hero { border-radius: 24px; padding: 28px 32px; color:#fff;
+    background: linear-gradient(120deg, var(--hero-from), var(--hero-to));
+    display:flex; justify-content:space-between; align-items:flex-start; }
+  .hero .greet { font-size: 14px; opacity:.92; }
+  .hero h1 { font-size: 30px; font-weight: 800; margin: 4px 0 10px; }
+  .badge-role { display:inline-block; background: rgba(255,255,255,.2); padding:4px 12px; border-radius:20px; font-size:11px; font-weight:700; letter-spacing:.05em; }
+  .hero-meta { display:flex; gap:12px; margin-top:18px; flex-wrap:wrap; }
+  .meta-box { background: rgba(255,255,255,.15); border-radius:14px; padding:10px 16px; min-width:150px; }
+  .meta-box .l { font-size:10px; opacity:.8; letter-spacing:.08em; }
+  .meta-box .v { font-size:14px; font-weight:700; margin-top:2px; }
+  .hero-actions { display:flex; gap:10px; }
+  .circ { width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700; }
+
+  /* Stat cards */
+  .grid4 { display:grid; grid-template-columns: repeat(4,1fr); gap:18px; margin-top:22px; }
+  .card { background: var(--card-bg); border:1px solid var(--card-border); border-radius:20px; padding:20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.04); }
+  .ic { width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;color:#fff;margin-bottom:14px; }
+  .card .lbl { font-size:13px; color:#64748b; }
+  .card .num { font-size:26px; font-weight:800; margin-top:2px; }
+
+  .sec-title { font-size:18px; font-weight:800; margin:26px 0 14px; }
+  .qa { display:grid; grid-template-columns: repeat(4,1fr); gap:18px; }
+  .qa .card { display:flex; flex-direction:column; align-items:center; gap:12px; padding:24px; }
+  .qa .ic { margin-bottom:0; width:52px;height:52px;border-radius:16px; }
+  .qa .lbl { font-weight:600; color:#475569; }
+
+  .note { max-width:1100px; margin: 8px auto 0; padding: 0 20px 30px; color:#64748b; font-size:13px; }
+</style>
+</head>
+<body>
+  <div class="switcher">
+    <b>Coba palet:</b>
+    <button class="sw-btn active" data-set="current"><span class="dot" style="background:#2B5BDB"></span>Sekarang (Biru)</button>
+    <button class="sw-btn" data-set="a"><span class="dot" style="background:#0E7C86"></span>A · Teal Tenang</button>
+    <button class="sw-btn" data-set="b"><span class="dot" style="background:#3E4C8A"></span>B · Indigo Lembut</button>
+    <button class="sw-btn" data-set="c"><span class="dot" style="background:#4B7B6E"></span>C · Sage & Sand</button>
+  </div>
+
+  <div class="app">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="logo">M</div>
+        <div><div class="t1">Mubtadiat</div><div class="t2">Manajemen Sistem</div></div>
+      </div>
+      <div class="nav-sec">UTAMA</div>
+      <a class="nav-a active"><i data-lucide="layout-dashboard"></i> Dashboard</a>
+      <a class="nav-a"><i data-lucide="users"></i> Data Santri</a>
+      <a class="nav-a"><i data-lucide="arrow-left-right"></i> Perubahan Status</a>
+      <a class="nav-a"><i data-lucide="school"></i> Data Kelas</a>
+      <div class="nav-sec">AKADEMIK</div>
+      <a class="nav-a"><i data-lucide="file-check-2"></i> Penilaian</a>
+      <a class="nav-a"><i data-lucide="clipboard-list"></i> Absensi</a>
+      <a class="nav-a"><i data-lucide="book-open-check"></i> Raport</a>
+      <div class="nav-sec">DATABASE & ARSIP</div>
+      <a class="nav-a"><i data-lucide="graduation-cap"></i> Pengajar</a>
+      <a class="nav-a"><i data-lucide="briefcase"></i> Dewan Harian</a>
+      <a class="nav-a"><i data-lucide="archive"></i> Arsip & Keluar</a>
+      <a class="nav-a"><i data-lucide="medal"></i> Alumni</a>
+      <a class="nav-a logout"><i data-lucide="log-out"></i> Keluar</a>
+    </aside>
+
+    <!-- Main -->
+    <main class="main">
+      <div class="hero">
+        <div>
+          <div class="greet">Assalamu'alaikum 👋</div>
+          <h1>Administrator Utama</h1>
+          <span class="badge-role">PIMPINAN</span>
+          <div class="hero-meta">
+            <div class="meta-box"><div class="l">TANGGAL</div><div class="v">Sabtu, 18 Jul 2026</div></div>
+            <div class="meta-box"><div class="l">WAKTU</div><div class="v">23.04 WIB</div></div>
+            <div class="meta-box"><div class="l">HIJRIAH</div><div class="v">4 Safar 1448 H</div></div>
+          </div>
+        </div>
+        <div class="hero-actions">
+          <div class="circ"><i data-lucide="moon"></i></div>
+          <div class="circ">AU</div>
+        </div>
+      </div>
+
+      <div class="grid4">
+        <div class="card"><div class="ic" style="background:#10b981"><i data-lucide="users"></i></div><div class="lbl">Total Santri</div><div class="num">1</div></div>
+        <div class="card"><div class="ic" style="background:var(--primary)"><i data-lucide="school"></i></div><div class="lbl">Bagian Aktif</div><div class="num">1</div></div>
+        <div class="card"><div class="ic" style="background:var(--gold)"><i data-lucide="file-text"></i></div><div class="lbl">Input Nilai</div><div class="num">85%</div></div>
+        <div class="card"><div class="ic" style="background:#f43f5e"><i data-lucide="medal"></i></div><div class="lbl">Alumni</div><div class="num">0</div></div>
+      </div>
+
+      <div class="sec-title">Akses Cepat</div>
+      <div class="qa">
+        <div class="card"><div class="ic" style="background:var(--primary)"><i data-lucide="search"></i></div><div class="lbl">Cari</div></div>
+        <div class="card"><div class="ic" style="background:#10b981"><i data-lucide="file-text"></i></div><div class="lbl">Nilai</div></div>
+        <div class="card"><div class="ic" style="background:var(--gold)"><i data-lucide="clipboard-list"></i></div><div class="lbl">Absen</div></div>
+        <div class="card"><div class="ic" style="background:var(--primary)"><i data-lucide="book-open-check"></i></div><div class="lbl">Raport</div></div>
+      </div>
+    </main>
+  </div>
+
+  <p class="note">Preview ini hanya untuk membandingkan warna — bukan aplikasi asli. Klik tombol palet di atas untuk melihat perbedaannya pada layout & menu yang sama.</p>
+
+  <script>
+    const root = document.documentElement;
+    const btns = document.querySelectorAll('.sw-btn');
+    btns.forEach(b => b.addEventListener('click', () => {
+      btns.forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      const set = b.dataset.set;
+      if (set === 'current') root.removeAttribute('data-palette');
+      else root.setAttribute('data-palette', set);
+    }));
+    if (window.lucide) lucide.createIcons();
+  </script>
+</body>
+</html>

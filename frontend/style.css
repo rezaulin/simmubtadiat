@@ -1,0 +1,288 @@
+@import "tailwindcss";
+
+@theme {
+  /* Tema "Teal Tenang" — token warna terpusat (Req 1.1, 1.2, 1.3) */
+  --color-primary: #0E7C86;         /* Req 1.1 */
+  --color-primary-hover: #0F6870;   /* Req 1.1 */
+
+  /* Hero gradient tokens (Req 1.2) */
+  --color-hero-from: #0F6E77;       /* Req 1.2 (hero gradient start) */
+  --color-hero-to: #12A2A8;         /* Req 1.2 (hero gradient end) */
+
+  --color-accent-emerald: #10b981;
+  --color-accent-gold: #E0A93B;     /* Req 1.3 */
+
+  /* Token Mode_Gelap dipertahankan (Req 1.7) */
+  --color-dark-bg: #0f172a; /* slate-900 */
+  --color-dark-surface: #1e293b; /* slate-800 */
+  --color-light-bg: #F5F7F5;        /* Req 1.3 */
+
+  --font-inter: 'Inter', sans-serif;
+
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --radius-3xl: 2rem;
+}
+
+@layer base {
+  /* Kunci layar ala aplikasi: cegah geser horizontal (halaman "goyang" di HP
+     bila ada elemen sedikit lebih lebar dari viewport) dan hilangkan efek
+     pantul horizontal. Scroll vertikal tetap normal. Kontainer tabel lebar
+     yang punya overflow-x sendiri tidak terpengaruh. */
+  html {
+    overflow-x: hidden;
+  }
+  body {
+    /* clip (bukan hidden): memotong lebar berlebih TANPA menjadikan body wadah-scroll,
+       sehingga position: sticky (mis. header atas mobile) tetap berfungsi. */
+    overflow-x: clip;
+    width: 100%;
+    max-width: 100%;
+    overscroll-behavior-x: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    font-family: var(--font-inter);
+    background-color: var(--color-light-bg);
+    color: #1f2937; /* gray-800 */
+    transition: background-color 0.3s, color 0.3s;
+  }
+
+  .dark body {
+    background-color: var(--color-dark-bg);
+    color: #f8fafc; /* slate-50 */
+  }
+}
+
+@layer utilities {
+  /* Hero gradient: latar gradient teal untuk Header_Hero. Merujuk token
+     @theme dengan nilai fallback agar tetap tampil bila token tak tersedia
+     saat render (degradasi anggun). (Req 1.2, 1.7) */
+  .hero-gradient {
+    background-image: linear-gradient(
+      135deg,
+      var(--color-hero-from, #0F6E77),
+      var(--color-hero-to, #12A2A8)
+    );
+  }
+
+  /* Kartu terpusat: setiap kartu pada seluruh halaman dirender dengan border
+     selebar 1px. Warna border merujuk token dengan fallback agar degradasi
+     anggun bila token tak tersedia. (Req 1.4, 1.7) */
+  .card {
+    border-width: 1px;
+    border-style: solid;
+    border-color: var(--color-card-border, rgba(226, 232, 240, 1));
+  }
+  .dark .card {
+    border-color: var(--color-card-border-dark, rgba(255, 255, 255, 0.1));
+  }
+
+  /* Light Mode Glassmorphism */
+  .glass {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  }
+
+  /* Dark Mode Glassmorphism */
+  .dark .glass {
+    background: rgba(30, 41, 59, 0.6); /* slate-800 with opacity */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+  }
+  
+  /* Input Glass (for forms) */
+  .glass-input {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(226, 232, 240, 1);
+    transition: all 0.2s;
+  }
+  .glass-input:focus {
+    border-color: var(--color-primary, #0E7C86);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(14, 124, 134, 0.2);
+  }
+
+  .dark .glass-input {
+    background: rgba(15, 23, 42, 0.6); /* slate-900 */
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: white;
+  }
+  .dark .glass-input:focus {
+    border-color: var(--color-accent-emerald);
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+  }
+  
+  /* Gradient text */
+  .text-gradient {
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-image: linear-gradient(to right, var(--color-accent-emerald), var(--color-primary));
+  }
+  .dark .text-gradient {
+    background-image: linear-gradient(to right, var(--color-accent-gold), var(--color-accent-emerald));
+  }
+
+  /* Safe-area bottom padding for Bottom_Nav so it clears device system UI
+     (home indicator). Falls back to 0 when the device has no safe area, so it
+     degrades gracefully. Requires <meta name="viewport" content="...
+     viewport-fit=cover"> to take effect. (Requirement 3.5) */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  /* Touch target: guarantees an interactive element is at least 44x44px on
+     Viewport_Mobile (< md, 768px) so it is comfortably tappable. On desktop it
+     imposes no minimum. Use inline-flex centering so icon-only buttons stay
+     centered. (Requirement 6.1) */
+  @media (max-width: 767px) {
+    .tap-target {
+      min-width: 44px;
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    /* .tap-target memaksa display:inline-flex di mobile; tanpa ini, elemen yang
+       juga ber-kelas `hidden` (mis. toggle dark mode khusus desktop
+       `tap-target hidden md:flex`) tetap tampil di HP -> tombol tampak dobel.
+       Selector 2-kelas ini spesifisitasnya lebih tinggi, jadi `hidden` menang. */
+    .tap-target.hidden {
+      display: none;
+    }
+
+    /* Mobile responsive card layout for tables (.table-responsive) */
+    .table-responsive,
+    .table-responsive tbody, 
+    .table-responsive tr, 
+    .table-responsive td {
+      display: block;
+      width: 100%;
+    }
+    .table-responsive thead {
+      display: none;
+    }
+    .table-responsive tr {
+      margin-bottom: 1rem;
+      border-radius: 0.75rem;
+      border: 1px solid var(--color-card-border, rgba(226, 232, 240, 1));
+      background-color: white;
+      box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    }
+    .dark .table-responsive tr {
+      border-color: rgba(255, 255, 255, 0.1);
+      background-color: transparent;
+    }
+    .table-responsive td {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      text-align: right;
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid rgba(226, 232, 240, 0.5);
+      gap: 1rem;
+    }
+    .dark .table-responsive td {
+      border-bottom-color: rgba(255, 255, 255, 0.05);
+    }
+    .table-responsive td:last-child {
+      border-bottom: 0;
+    }
+    .table-responsive td::before {
+      content: attr(data-label);
+      flex-shrink: 0;
+      text-align: left;
+      font-weight: 600;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      color: #6b7280;
+    }
+    .dark .table-responsive td::before {
+      color: #9ca3af;
+    }
+    /* For cell content wrappers */
+    .table-responsive td > div:not(.text-xs) {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: flex-end;
+    }
+  }
+
+  /* Scroll shadow: visual indicator that a horizontally scrollable container
+     (e.g. a wide table) has content beyond the visible edges. Uses layered
+     background gradients with local + scroll-position-tracking backgrounds so
+     the edge fades appear only when there is more content to scroll toward.
+     (Requirement 5.4) */
+  .scroll-shadow {
+    background:
+      linear-gradient(to right, var(--color-light-bg) 30%, rgba(248, 249, 250, 0)) left center,
+      linear-gradient(to left, var(--color-light-bg) 30%, rgba(248, 249, 250, 0)) right center,
+      radial-gradient(farthest-side at 0 50%, rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0)) left center,
+      radial-gradient(farthest-side at 100% 50%, rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0)) right center;
+    background-repeat: no-repeat;
+    background-size: 40px 100%, 40px 100%, 14px 100%, 14px 100%;
+    background-attachment: local, local, scroll, scroll;
+  }
+
+  .dark .scroll-shadow {
+    background:
+      linear-gradient(to right, var(--color-dark-surface) 30%, rgba(30, 41, 59, 0)) left center,
+      linear-gradient(to left, var(--color-dark-surface) 30%, rgba(30, 41, 59, 0)) right center,
+      radial-gradient(farthest-side at 0 50%, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0)) left center,
+      radial-gradient(farthest-side at 100% 50%, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0)) right center;
+    background-repeat: no-repeat;
+    background-size: 40px 100%, 40px 100%, 14px 100%, 14px 100%;
+    background-attachment: local, local, scroll, scroll;
+  }
+
+  /* Focused-field scroll margin: reserves space above a focused input/select/
+     textarea so it clears sticky bars and the virtual keyboard when centered
+     by the focusin handler in xss.js. (Requirement 7.3) */
+  input,
+  select,
+  textarea {
+    scroll-margin: 6rem;
+  }
+
+  /* Role guard: hide sidebar/mobile nav until role UI is resolved to prevent
+     disallowed (e.g. admin) menu items flashing on reload. applyRoleUI() adds
+     the .role-ready class once the correct items are computed. */
+  aside nav:not(.role-ready),
+  nav.md\:hidden:not(.role-ready) {
+    opacity: 0;
+  }
+  aside nav.role-ready,
+  nav.md\:hidden.role-ready {
+    opacity: 1;
+    transition: opacity 0.15s ease;
+  }
+
+  /* Print Styles */
+  @media print {
+    aside, nav, header, #search-modal, .no-print {
+      display: none !important;
+    }
+    main {
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+    body {
+      background: white !important;
+      color: black !important;
+    }
+  }
+}
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* #dash-mobile-summary memakai -mt-12 untuk menumpang tepi bawah hero saat berisi
+   kartu ringkasan (peran admin). Bila kosong (mis. peran guru/mustahiq), margin
+   negatif itu menarik konten berikutnya (heading "Jadwal Hari Ini") naik hingga
+   tertimpa hero. Nol-kan margin negatifnya saat elemen kosong. */
+#dash-mobile-summary:empty {
+  margin-top: 0 !important;
+}

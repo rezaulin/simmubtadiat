@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="color-scheme" content="light dark">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Data Kelas - SIM Mubtadiat</title>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <link rel="stylesheet" href="./style.css">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0E7C86">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <script type="module" src="/src/js/xss.js"></script>
+
+  <script>
+    (function() {
+      try {
+        var savedRole = localStorage.getItem('user_role');
+        if (savedRole) {
+          // CANONICAL menuAccess — MUST stay set-equal to MENU_ACCESS in
+          // frontend/src/js/xss.js for every role (see design.md Property 2).
+                    var menuAccess = {
+            pimpinan: ['/index.html', '/santri.html', '/perpindahan.html', '/kelas.html', '/penilaian.html', '/absensi-manual.html', '/rapot.html', '/pengajar.html', '/dewan-harian.html', '/arsip.html', '/alumni.html', '/rekap.html', '/catatan.html', '/settings.html', '/pengajar-purna.html'],
+            admin: ['/index.html', '/santri.html', '/pengajar.html', '/pengajar-purna.html', '/alumni.html', '/dewan-harian.html'],
+            mufatish: ['/index.html', '/santri.html', '/kelas.html', '/penilaian.html', '/absensi-manual.html', '/rapot.html', '/pengajar.html', '/dewan-harian.html', '/arsip.html', '/rekap.html', '/catatan.html'],
+            mustahiq: ['/index.html', '/santri.html', '/perpindahan.html', '/penilaian.html', '/rapot.html', '/rekap.html', '/catatan.html', '/pengajar.html', '/dewan-harian.html'],
+            muroqib: ['/index.html', '/santri.html', '/absensi-manual.html', '/catatan.html', '/dewan-harian.html', '/pengajar.html'],
+            tim_rapot: ['/index.html', '/penilaian.html', '/rapot.html', '/rekap.html'],
+            keamanan: ['/index.html', '/santri.html', '/arsip.html', '/alumni.html', '/catatan.html'],
+            wali_santri: ['/index.html', '/rapot.html']
+          };
+          var savedRoles = localStorage.getItem('user_roles');
+          var allowed = [];
+          if (savedRoles) {
+            try {
+              var parsedRoles = JSON.parse(savedRoles);
+              for (var j = 0; j < parsedRoles.length; j++) {
+                var r = parsedRoles[j];
+                if (menuAccess[r]) {
+                  for (var k = 0; k < menuAccess[r].length; k++) {
+                    if (allowed.indexOf(menuAccess[r][k]) === -1) allowed.push(menuAccess[r][k]);
+                  }
+                }
+              }
+            } catch(e) {}
+          }
+          if (allowed.length === 0) allowed = menuAccess[savedRole] || [];
+          var css = '';
+          var allLinks = ['/index.html', '/santri.html', '/perpindahan.html', '/kelas.html', '/penilaian.html', '/absensi-manual.html', '/rapot.html', '/pengajar.html', '/dewan-harian.html', '/arsip.html', '/alumni.html', '/rekap.html', '/catatan.html', '/settings.html', '/pengajar-purna.html'];
+          
+          for (var i = 0; i < allLinks.length; i++) {
+            if (allowed.indexOf(allLinks[i]) === -1) {
+              css += 'aside nav a[href="' + allLinks[i] + '"] { display: none !important; }\n';
+            }
+          }
+          if (css) {
+            var style = document.createElement('style');
+            style.textContent = css;
+            document.head.appendChild(style);
+          }
+        }
+      } catch(e) {}
+    })();
+  </script>
+</head>
+<body class="bg-gray-50 dark:bg-slate-900 transition-colors duration-300">
+
+  <!-- ==================== DESKTOP SIDEBAR ==================== -->
+  <!-- Sidebar / Navigation -->
+    <aside id="app-sidebar" class="flex flex-col w-64 fixed inset-y-0 left-0 bg-white dark:bg-slate-800 border-r border-gray-100 dark:border-slate-700/60 z-[70] transition-transform duration-300 transform -translate-x-full md:translate-x-0 shadow-[4px_0_24px_rgba(0,0,0,0.02)] print:hidden">
+    <!-- Close button (Mobile only) -->
+    <button id="btn-close-sidebar" class="tap-target md:hidden absolute top-4 right-4 p-2 bg-gray-50 dark:bg-slate-700 rounded-xl text-gray-500 hover:text-gray-700" aria-label="Tutup menu">
+      <i data-lucide="x" class="w-5 h-5"></i>
+    </button>
+      <!-- Logo Area -->
+      <div class="h-20 flex items-center px-6 border-b border-gray-100 dark:border-slate-700/60">
+        <div class="flex items-center gap-3 cursor-pointer" onclick="window.location.href='/index.html'">
+          <div class="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-md shadow-primary/20 ring-1 ring-gray-100 dark:ring-slate-700 overflow-hidden shrink-0">
+            <img src="/logo.jpg" alt="Logo Madrasah Hidayatul Mubtadiat" class="w-full h-full object-contain p-0.5">
+          </div>
+          <div class="leading-tight">
+            <span class="block font-bold text-gray-800 dark:text-white tracking-tight text-base">Mubtadiat</span>
+            <span class="block text-[11px] text-gray-400 dark:text-gray-500 font-medium">Manajemen Sistem</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Nav Links -->
+      <nav class="flex-1 overflow-y-auto p-4 flex flex-col gap-1 custom-scrollbar">
+        <!-- UTAMA -->
+        <p class="text-[10px] font-bold text-gray-400 dark:text-gray-500 mb-2 mt-2 px-3 tracking-widest uppercase">Utama</p>
+        <a href="/index.html" class="bg-indigo-50/80 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400 font-semibold flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors">
+          <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+          Dashboard
+        </a>
+        <a href="/santri.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+          <i data-lucide="users" class="w-5 h-5"></i>
+          Data Santri
+        </a>
+        <a href="/perpindahan.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+          <i data-lucide="arrow-left-right" class="w-5 h-5"></i>
+          Perubahan Status
+        </a>
+        <a href="/kelas.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+          <i data-lucide="school" class="w-5 h-5"></i>
+          Data Kelas
+        </a>
+
+        <!-- AKADEMIK -->
+        <p class="text-[10px] font-bold text-gray-400 dark:text-gray-500 mb-2 mt-4 px-3 tracking-widest uppercase">Akademik</p>
+        <a href="/penilaian.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+          <i data-lucide="file-check-2" class="w-5 h-5"></i>
+          Penilaian
+        </a>
+        
+        <a href="/absensi-manual.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+          <i data-lucide="calendar-check" class="w-5 h-5"></i>
+          Absensi Manual
+        </a>
+        <a href="/rapot.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+          <i data-lucide="book-open-check" class="w-5 h-5"></i>
+          Raport
+        </a>
+
+        <!-- DATABASE & ARSIP -->
+        <p class="text-[10px] font-bold text-gray-400 dark:text-gray-500 mb-2 mt-4 px-3 tracking-widest uppercase">Database & Arsip</p>
+        <a href="/pengajar.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+          <i data-lucide="graduation-cap" class="w-5 h-5"></i>
+          Pengajar
+        </a>
+        <a href="/dewan-harian.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+          <i data-lucide="briefcase" class="w-5 h-5"></i>
+          Dewan Harian
+        </a>
+        <a href="/arsip.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+          <i data-lucide="archive" class="w-5 h-5"></i>
+          Arsip & Keluar
+        </a>
+        <a href="/alumni.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+          <i data-lucide="medal" class="w-5 h-5"></i>
+          Alumni
+        </a>
+        <a href="/pengajar-purna.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+          <i data-lucide="history" class="w-5 h-5"></i>
+          Pengajar Purna
+        </a>
+
+        <!-- LAINNYA -->
+        <p class="text-[10px] font-bold text-gray-400 dark:text-gray-500 mb-2 mt-4 px-3 tracking-widest uppercase">Lainnya</p>
+        <a href="/rekap.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+          <i data-lucide="table" class="w-5 h-5"></i>
+          Rekap
+        </a>
+        <a href="/catatan.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+          <i data-lucide="shield-alert" class="w-5 h-5"></i>
+          Pelanggaran &amp; Prestasi
+        </a>
+        <a href="/settings.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+          <i data-lucide="settings" class="w-5 h-5"></i>
+          Pengaturan
+        </a>
+      </nav>
+      
+      <!-- User Profile / Logout -->
+      <div class="p-4 border-t border-gray-100 dark:border-slate-700/60 bg-gray-50/50 dark:bg-slate-800/50">
+        <button id="logout-btn-desktop" class="w-full flex items-center gap-3 px-3 py-2.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-colors text-left font-medium">
+          <i data-lucide="log-out" class="w-5 h-5"></i>
+          Keluar
+        </button>
+      </div>
+    </aside>
+
+  <!-- ==================== MAIN CONTENT ==================== -->
+
+  <!-- ==================== SIDEBAR BACKDROP (mobile only) ==================== -->
+  <div id="sidebar-backdrop" class="hidden md:hidden fixed inset-0 bg-gray-900/50 dark:bg-black/60 backdrop-blur-sm z-[65]"></div>
+
+
+  <main class="md:ml-64 min-h-screen pb-24 md:pb-8 flex flex-col">
+    <!-- MOBILE TOP BAR -->
+    <header class="md:hidden h-16 bg-white/80 backdrop-blur-md dark:bg-slate-800/80 border-b border-gray-100 dark:border-slate-700 flex items-center justify-between px-4 sticky top-0 z-40">
+      <button id="btn-open-sidebar" class="tap-target p-2 -ml-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors" aria-label="Buka menu">
+        <i data-lucide="menu" class="w-6 h-6 text-gray-700 dark:text-gray-200"></i>
+      </button>
+      <button id="theme-toggle-mobile" class="tap-target p-2 -mr-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors" aria-label="Ganti tema">
+        <i data-lucide="moon" class="w-5 h-5 text-gray-700 dark:text-gray-200"></i>
+      </button>
+    </header>
+
+
+    <!-- CONTENT HEADER -->
+    <div class="px-6 py-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div>
+        <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Kelola Kelas & Kurikulum</h2>
+        <p class="text-sm text-gray-500 dark:text-gray-400">Atur mata pelajaran per kelas, serta jadwal untuk tiap ruang kelas.</p>
+      </div>
+      
+      <div class="flex items-center gap-3">
+        <button id="btn-susun-stambuk" class="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl font-medium text-sm transition-all shadow-md">
+          <i data-lucide="hash" class="w-4 h-4"></i>
+          <span>Tata Ulang No. Stambuk</span>
+        </button>
+        <button id="btn-tambah" class="hidden flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-xl font-medium text-sm transition-all shadow-md">
+          <span>Buat Ruang Baru (Bagian)</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="px-6 mb-4 flex gap-4 border-b border-gray-200 dark:border-slate-700">
+      <button id="tab-bagian" class="pb-2 text-sm font-semibold border-b-2 border-primary text-primary dark:border-accent-emerald dark:text-accent-emerald transition-colors">Ruang Kelas Fisik (Bagian)</button>
+      <button id="tab-kurikulum" class="pb-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 transition-colors">Kurikulum per Ruang Kelas</button>
+      <button id="tab-setup" class="pb-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 transition-colors">Setup Master Data</button>
+    </div>
+
+    <!-- CONTENT AREA -->
+    <div class="px-6 pb-6 flex-1">
+      
+      <!-- TAB: DAFTAR BAGIAN (Ruang Kelas Fisik) -->
+      <div id="content-bagian">
+        <div class="mb-6 flex flex-col md:flex-row gap-4">
+          <div class="flex-1">
+            <label class="text-xs font-semibold text-gray-500 dark:text-gray-400 block mb-1">Filter Tingkatan</label>
+            <select id="filter-tingkatan-ruang" class="glass-input text-sm rounded-xl px-4 py-2.5 border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 w-full md:w-64">
+              <option value="">Semua Tingkatan</option>
+            </select>
+          </div>
+          <div class="flex-1">
+            <label class="text-xs font-semibold text-gray-500 dark:text-gray-400 block mb-1">Filter Kelas</label>
+            <select id="filter-kelas-ruang" class="glass-input text-sm rounded-xl px-4 py-2.5 border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 w-full md:w-64">
+              <option value="">Semua Kelas</option>
+            </select>
+          </div>
+        </div>
+        
+        <div id="grid-kelas" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div class="glass dark:bg-slate-800/80 rounded-3xl p-6 border border-gray-200 dark:border-slate-700 animate-pulse">
+             <div class="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
+             <div class="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
+             <div class="h-4 bg-gray-200 rounded w-2/3"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: KURIKULUM PER BAGIAN (Mata Pelajaran) -->
+      <div id="content-kurikulum" class="hidden">
+        <div class="glass dark:bg-slate-800/80 rounded-2xl border border-gray-200 dark:border-slate-700 p-6 mb-6">
+          <h3 class="text-lg font-bold mb-4 dark:text-white">Pilih Kelas</h3>
+          <div class="flex flex-col sm:flex-row gap-3">
+            <select id="sel-kuri-tingkatan" class="glass-input px-3 py-2 rounded-lg text-sm flex-1 dark:bg-slate-700">
+              <option value="">-- Pilih Tingkatan --</option>
+            </select>
+            <select id="sel-kuri-kelas" class="glass-input px-3 py-2 rounded-lg text-sm flex-1 dark:bg-slate-700">
+              <option value="">-- Pilih Kelas --</option>
+            </select>
+            <button id="btn-load-kurikulum" class="bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-xl text-sm font-medium shadow-sm transition-all w-full sm:w-auto whitespace-nowrap">Lihat Kurikulum</button>
+          </div>
+        </div>
+
+        <div id="kurikulum-panel" class="hidden glass dark:bg-slate-800/80 rounded-2xl border border-gray-200 dark:border-slate-700 p-6">
+          <h3 class="text-lg font-bold mb-4 dark:text-white" id="title-kurikulum">Mata Pelajaran</h3>
+          
+          <form id="form-kelola-mapel" class="flex flex-col sm:flex-row sm:items-end gap-3 mb-6">
+            <input type="hidden" id="mapel-id" name="id">
+            <div class="flex-1 flex flex-col gap-1">
+              <label class="text-xs font-semibold text-gray-500 dark:text-gray-400">Nama Fann (Mata Pelajaran)</label>
+              <input type="text" name="nama_mapel" placeholder="Contoh: Nahwu, Fiqih..." required class="glass-input px-3 py-2 rounded-lg text-sm w-full">
+            </div>
+            <div class="flex-1 flex flex-col gap-1">
+              <label class="text-xs font-semibold text-gray-500 dark:text-gray-400">Nama Kitab</label>
+              <input type="text" name="nama_kitab" placeholder="Contoh: Al-Jurumiyah..." class="glass-input px-3 py-2 rounded-lg text-sm w-full">
+            </div>
+            <div class="w-full sm:w-24 flex flex-col gap-1">
+              <label class="text-xs font-semibold text-gray-500 dark:text-gray-400">Urutan</label>
+              <input type="number" name="urutan" value="1" required class="glass-input px-3 py-2 rounded-lg text-sm w-full text-center">
+            </div>
+            <div class="w-full sm:w-64 flex flex-col gap-1">
+              <label class="text-xs font-semibold text-gray-500 dark:text-gray-400">Kwartal Aktif</label>
+              <div class="flex items-center gap-3 h-[38px] px-2">
+                <label class="flex items-center gap-1 text-sm"><input type="checkbox" name="kuartal_1" value="1" checked class="rounded border-gray-300 text-primary"> K1</label>
+                <label class="flex items-center gap-1 text-sm"><input type="checkbox" name="kuartal_2" value="2" checked class="rounded border-gray-300 text-primary"> K2</label>
+                <label class="flex items-center gap-1 text-sm"><input type="checkbox" name="kuartal_3" value="3" checked class="rounded border-gray-300 text-primary"> K3</label>
+                <label class="flex items-center gap-1 text-sm"><input type="checkbox" name="kuartal_4" value="4" checked class="rounded border-gray-300 text-primary"> K4</label>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 w-full sm:w-auto">
+              <button type="button" id="btn-batal-mapel" class="hidden bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-xl text-sm font-medium h-[38px]">Batal</button>
+              <button type="submit" id="btn-submit-mapel" class="bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-xl text-sm font-medium h-[38px] w-full sm:w-auto">Tambah</button>
+            </div>
+          </form>
+
+          <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm text-gray-600 dark:text-gray-300">
+            <thead class="bg-gray-50 text-gray-500 uppercase font-semibold text-xs border-b">
+              <tr>
+                <th class="px-4 py-3 text-center">Urutan</th>
+                <th class="px-4 py-3">Nama Fann</th>
+                <th class="px-4 py-3">Nama Kitab</th>
+                <th class="px-4 py-3 text-center">Semester</th>
+                <th class="px-4 py-3 text-center">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="table-kelola-mapel" class="divide-y divide-gray-100">
+              <!-- rows -->
+            </tbody>
+          </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: SETUP MASTER -->
+      <div id="content-setup" class="hidden grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="glass dark:bg-slate-800/80 rounded-2xl border border-gray-200 dark:border-slate-700 p-6">
+           <h3 class="text-lg font-bold mb-4 dark:text-white">Unit Pendidikan (Tingkatan)</h3>
+           <form id="form-tingkatan" class="flex flex-col gap-3">
+             <input type="text" name="nama" placeholder="Contoh: Tsanawiyyah" required class="glass-input px-3 py-2 rounded-lg text-sm w-full">
+             <input type="number" name="urutan" placeholder="Urutan (ex: 2)" required class="glass-input px-3 py-2 rounded-lg text-sm w-full">
+             <button type="submit" class="bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-xl text-sm font-medium">Simpan Tingkatan</button>
+           </form>
+           <ul id="list-tingkatan" class="mt-4 space-y-2 text-sm dark:text-gray-300"></ul>
+        </div>
+        
+        <div class="glass dark:bg-slate-800/80 rounded-2xl border border-gray-200 dark:border-slate-700 p-6">
+           <h3 class="text-lg font-bold mb-4 dark:text-white">Jenjang Kelas</h3>
+           <form id="form-kelas-master" class="flex flex-col gap-3">
+             <input type="text" name="nama" placeholder="Contoh: Kelas 1" required class="glass-input px-3 py-2 rounded-lg text-sm w-full">
+             <button type="submit" class="bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-xl text-sm font-medium">Simpan Kelas</button>
+           </form>
+           <ul id="list-kelas" class="mt-4 space-y-2 text-sm dark:text-gray-300"></ul>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ==================== MODAL BUAT RUANG KELAS FISIK (BAGIAN) ==================== -->
+  <div id="modal-kelas" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-gray-900/40 backdrop-blur-sm" id="modal-overlay"></div>
+    <div class="glass dark:bg-slate-800 rounded-3xl w-full max-w-sm z-10 overflow-hidden shadow-2xl scale-95 opacity-0 transition-all duration-300" id="modal-content">
+      <div class="px-6 py-4 border-b flex justify-between items-center">
+        <h3 class="text-lg font-bold">Buat Ruang Kelas Fisik</h3>
+        <button id="modal-close" class="tap-target text-gray-400 hover:text-gray-600" aria-label="Tutup"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+      </div>
+      <div class="p-6">
+        <form id="form-kelas" class="flex flex-col gap-4">
+          <div class="flex flex-col gap-1">
+            <label class="text-xs font-semibold text-gray-500">Tingkatan</label>
+            <select name="tingkatan_id" id="sel-tingkatan" required class="glass-input px-3 py-2.5 rounded-lg text-sm w-full">
+              <option value="">-- Pilih Tingkatan --</option>
+            </select>
+          </div>
+          <div class="flex flex-col gap-1">
+            <label class="text-xs font-semibold text-gray-500">Kelas</label>
+            <select name="kelas_id" id="sel-kelas" required class="glass-input px-3 py-2.5 rounded-lg text-sm w-full">
+              <option value="">-- Pilih Kelas --</option>
+            </select>
+          </div>
+          <div class="flex flex-col gap-1">
+            <label class="text-xs font-semibold text-gray-500">Nama Ruang (Contoh: A1, Putra 1)</label>
+            <input type="text" name="nama" required class="glass-input px-3 py-2 rounded-lg text-sm w-full">
+          </div>
+          <div id="modal-error" class="hidden text-sm text-red-500 bg-red-50 p-2 rounded-lg mt-2"></div>
+          <div class="flex justify-end gap-3 mt-4">
+            <button type="button" id="btn-cancel" class="px-4 py-2 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100">Batal</button>
+            <button type="submit" class="bg-primary hover:bg-primary-hover text-white px-5 py-2 rounded-xl text-sm font-medium">Buat</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== PANEL KELOLA RUANG (BAGIAN) FULL SCREEN ==================== -->
+  <div id="modal-kelola-bagian" class="hidden fixed inset-0 md:left-64 z-[60] flex flex-col bg-gray-50 dark:bg-slate-900 transition-transform translate-y-full duration-300">
+    <div class="px-6 py-4 border-b border-gray-200 dark:border-slate-700 flex justify-between items-center bg-white dark:bg-slate-800 shadow-sm">
+      <div>
+        <h3 class="text-xl font-bold dark:text-white flex items-center gap-2">
+          <button id="modal-kelola-close" class="tap-target text-gray-400 hover:text-gray-800 p-1 mr-2 rounded-lg hover:bg-gray-100 transition-colors" aria-label="Tutup">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+          </button>
+          <span id="kelola-title">Kelola Ruang A1</span>
+        </h3>
+        <p class="text-xs text-gray-500 dark:text-gray-400 ml-11" id="kelola-subtitle">Manajemen Santri dan Jadwal</p>
+      </div>
+    </div>
+    
+    <!-- KELOLA TABS -->
+    <div class="px-6 pt-4 flex gap-6 border-b border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+      <button id="tab-kelola-santri" class="pb-3 text-sm font-semibold border-b-2 border-primary text-primary transition-colors">Daftar Santri</button>
+      <button id="tab-kelola-jadwal" class="pb-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors">Jadwal Pelajaran & Guru</button>
+    </div>
+
+    <div class="p-6 overflow-y-auto flex-1 custom-scrollbar">
+      <!-- TAB KELOLA SANTRI -->
+      <div id="content-kelola-santri" class="max-w-6xl mx-auto flex flex-col gap-4">
+
+        <!-- Header Info + Aksi -->
+        <div class="glass dark:bg-slate-800 rounded-2xl p-4 border border-gray-200 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <p class="text-xs text-gray-500 dark:text-gray-400">Santri di ruangan ini</p>
+            <p class="text-lg font-bold text-gray-800 dark:text-white"><span id="count-santri-ruangan">0</span> santri</p>
+          </div>
+          <div class="flex gap-2">
+            <button id="btn-open-assign" class="flex items-center gap-2 bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-xl text-sm font-medium shadow-md">
+              <i data-lucide="user-plus" class="w-4 h-4"></i>
+              Tambah Santri ke Ruangan
+            </button>
+          </div>
+        </div>
+
+        <!-- Tabel Daftar Santri di Ruangan (full width) -->
+        <div class="glass dark:bg-slate-800 rounded-2xl p-0 border border-gray-200 dark:border-slate-700 overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm text-gray-600 dark:text-gray-300 table-responsive">
+              <thead class="bg-gray-50 dark:bg-slate-900/50 text-gray-500 dark:text-gray-400 uppercase text-xs border-b border-gray-200 dark:border-slate-700">
+                <tr>
+                  <th class="px-4 py-3 w-14 text-center">No</th>
+                  <th class="px-4 py-3">Nama Santri</th>
+                  <th class="px-4 py-3 w-40">Stambuk</th>
+                  <th class="px-4 py-3 w-28 text-center">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="table-kelola-santri" class="divide-y divide-gray-100 dark:divide-slate-700/50">
+                <tr><td colspan="4" class="px-4 py-8 text-center text-gray-400">Memuat data...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ==================== MODAL ASSIGN SANTRI ==================== -->
+      <div id="modal-assign" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-gray-900/40 dark:bg-black/60 backdrop-blur-sm" id="modal-assign-overlay"></div>
+        <div class="glass dark:bg-slate-800 rounded-3xl w-full max-w-3xl z-10 overflow-hidden shadow-2xl scale-95 opacity-0 transition-all duration-300 flex flex-col max-h-[90vh]" id="modal-assign-content">
+          <div class="px-6 py-4 border-b border-gray-200 dark:border-slate-700 flex justify-between items-center">
+            <h3 class="text-lg font-bold dark:text-white">Tambah Santri ke Ruangan</h3>
+            <button id="modal-assign-close" class="tap-target text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" aria-label="Tutup">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+          </div>
+          <div class="p-6 overflow-y-auto flex-1 flex flex-col gap-4">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Pilih santri yang berstatus <b>"Belum Dikelas"</b>. Bisa pilih banyak sekaligus.</p>
+
+            <div class="relative">
+              <i data-lucide="search" class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+              <input type="text" id="search-assign-santri" autocomplete="off" placeholder="Cari nama atau nomor stambuk..."
+                class="glass-input w-full pl-9 pr-3 py-2 rounded-lg text-sm bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 focus:ring-primary focus:border-primary">
+            </div>
+
+            <div class="border border-gray-200 dark:border-slate-600 rounded-lg overflow-hidden">
+              <div class="bg-gray-50 dark:bg-slate-900/50 px-4 py-2 border-b border-gray-200 dark:border-slate-600 flex items-center justify-between">
+                <label class="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-200 cursor-pointer select-none">
+                  <input type="checkbox" id="chk-assign-all" class="rounded border-gray-300 text-primary focus:ring-primary w-4 h-4 cursor-pointer">
+                  Pilih Semua
+                </label>
+                <span id="count-assign-santri" class="text-xs text-gray-400"></span>
+              </div>
+              <div id="list-assign-santri" class="max-h-[400px] overflow-y-auto custom-scrollbar p-3 bg-white dark:bg-slate-700">
+                <p class="text-sm text-center text-gray-400 py-4">Memuat daftar santri...</p>
+              </div>
+            </div>
+          </div>
+          <div class="px-6 py-3 border-t border-gray-200 dark:border-slate-700 flex justify-end gap-2 bg-gray-50/50 dark:bg-slate-800/50">
+            <button id="modal-assign-cancel" class="px-4 py-2 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700">Batal</button>
+            <button id="btn-assign-santri" class="bg-primary hover:bg-primary-hover text-white px-5 py-2 rounded-xl text-sm font-medium shadow-md">Masukkan Santri Terpilih</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB KELOLA JADWAL -->
+      <div id="content-kelola-jadwal" class="hidden max-w-5xl mx-auto">
+        <div class="glass dark:bg-slate-800 rounded-2xl p-6 border border-gray-200 mb-6">
+          <form id="form-kelola-jadwal" class="grid grid-cols-1 md:grid-cols-6 gap-3 items-end">
+            <div class="flex flex-col gap-1 md:col-span-1">
+              <label class="text-xs font-semibold text-gray-500">Mata Pelajaran</label>
+              <select name="mapel_id" id="sel-jadwal-mapel" required class="glass-input px-3 py-2 rounded-lg text-sm w-full">
+                <option value="">-- Pilih Mapel --</option>
+              </select>
+            </div>
+            <div class="flex flex-col gap-1 md:col-span-1">
+              <label class="text-xs font-semibold text-gray-500">Hari</label>
+              <select name="hari" required class="glass-input px-3 py-2 rounded-lg text-sm w-full">
+                <option value="Senin">Senin</option>
+                <option value="Selasa">Selasa</option>
+                <option value="Rabu">Rabu</option>
+                <option value="Kamis">Kamis</option>
+                <option value="Jumat">Jumat</option>
+                <option value="Sabtu">Sabtu</option>
+                <option value="Ahad">Ahad</option>
+              </select>
+            </div>
+            <div class="flex flex-col gap-1 md:col-span-2">
+              <label class="text-xs font-semibold text-gray-500">Jam (Mulai - Selesai)</label>
+              <div class="flex items-center gap-2">
+                <input type="time" lang="en-GB" name="jam_mulai" required class="glass-input px-2 py-2 rounded-lg text-sm w-full">
+                <span>-</span>
+                <input type="time" lang="en-GB" name="jam_selesai" required class="glass-input px-2 py-2 rounded-lg text-sm w-full">
+              </div>
+            </div>
+            <div class="flex flex-col gap-1 md:col-span-1">
+              <label class="text-xs font-semibold text-gray-500">Pengajar (Guru)</label>
+              <select name="pengajar_id" id="sel-jadwal-pengajar" class="glass-input px-3 py-2 rounded-lg text-sm w-full">
+                <option value="">-- Pilih Guru --</option>
+              </select>
+            </div>
+            <button type="submit" class="bg-primary text-white px-4 py-2 rounded-xl text-sm font-medium shadow-sm transition-all h-[38px] md:col-span-1">
+              Buat Jadwal
+            </button>
+          </form>
+        </div>
+        
+        <div class="border border-gray-200 rounded-xl overflow-hidden glass">
+          <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm text-gray-600 table-responsive">
+            <thead class="bg-gray-50 text-gray-500 uppercase font-semibold text-xs border-b">
+              <tr>
+                <th class="px-4 py-3">Hari</th>
+                <th class="px-4 py-3">Waktu</th>
+                <th class="px-4 py-3">Mata Pelajaran</th>
+                <th class="px-4 py-3">Pengajar</th>
+                <th class="px-4 py-3 w-20 text-center">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="table-kelola-jadwal" class="divide-y divide-gray-100">
+              <tr><td colspan="5" class="px-4 py-8 text-center text-gray-400">Belum ada jadwal untuk ruang ini.</td></tr>
+            </tbody>
+          </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MOBILE BOTTOM NAV + FAB ==================== -->
+  <!-- CANONICAL Bottom_Nav block — replicate verbatim across covered pages. -->
+  <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl dark:bg-slate-900/90 border-t border-gray-100 dark:border-slate-800 z-50 px-2 py-2 pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.02)]">
+    <div class="flex justify-between items-center relative h-14 w-full">
+      
+      <a href="/index.html" data-nav class="w-1/5 flex flex-col items-center gap-1 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+        <i data-lucide="home" class="w-5 h-5"></i>
+        <span class="text-[10px] font-bold">Beranda</span>
+      </a>
+      
+      <a href="/santri.html" data-nav class="w-1/5 flex flex-col items-center gap-1 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+        <i data-lucide="users" class="w-5 h-5"></i>
+        <span class="text-[10px] font-semibold">Santri</span>
+      </a>
+
+      <!-- Spacer khusus FAB agar tidak overlap -->
+      <div class="w-1/5 h-full pointer-events-none"></div>
+
+      <!-- FLOATING ACTION BUTTON (FAB) -->
+      <div class="absolute left-1/2 -translate-x-1/2 -top-6">
+        <button id="btn-mobile-search" class="tap-target w-[52px] h-[52px] bg-gradient-to-tr from-primary to-hero-to rounded-full flex items-center justify-center text-white shadow-[0_8px_20px_rgba(14,124,134,0.3)] active:scale-95 transition-transform border-[3px] border-white dark:border-slate-900" aria-label="Cari">
+          <i data-lucide="search" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <a href="/absensi-manual.html" data-nav class="w-1/5 flex flex-col items-center gap-1 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+        <i data-lucide="clipboard-check" class="w-5 h-5"></i>
+        <span class="text-[10px] font-semibold">Absen</span>
+      </a>
+
+      <a href="/penilaian.html" data-nav class="w-1/5 flex flex-col items-center gap-1 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+        <i data-lucide="file-check-2" class="w-5 h-5"></i>
+        <span class="text-[10px] font-semibold">Nilai</span>
+      </a>
+      
+    </div>
+  </nav>
+
+  <script type="module" src="./src/js/kelas.js"></script>
+
+  <script>
+    // Initialize Lucide Icons
+    if (typeof lucide !== 'undefined') {
+      lucide.createIcons();
+    }
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(err => {
+          console.log('SW registration failed: ', err);
+        });
+      });
+    }
+  </script>
+</body>
+</html>
