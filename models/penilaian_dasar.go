@@ -132,9 +132,9 @@ func GenerateNilaiKhos(ctx context.Context, santriID int, semester int, tahunAja
 	}
 	defer tx.Rollback(ctx)
 
-	// 1.5 Cleanup khos duplikat: hapus baris khos milik mapel kelas lama yang
-	// punya kembaran bernama sama di kelas sekarang DAN santri sudah punya nilai
-	// di kembaran tersebut. nilai_kuartal (sumber data) tidak disentuh.
+	// 1.5 Cleanup khos: hapus semua baris khos milik mapel kelas lama jika santri
+	// sudah punya nilai kuartal di kelas SEKARANG. nilai_kuartal (sumber data)
+	// tidak disentuh — tetap tersimpan sebagai arsip.
 	_, err = tx.Exec(ctx,
 		`DELETE FROM nilai_khos nk
 		 WHERE nk.santri_id = $1 AND nk.tahun_ajaran = $2
@@ -145,11 +145,10 @@ func GenerateNilaiKhos(ctx context.Context, santriID int, semester int, tahunAja
 		       WHERE m.id = nk.mapel_id
 		         AND NOT (m.kelas_id = b.kelas_id AND m.tingkatan_id = b.tingkatan_id)
 		         AND EXISTS (
-		             SELECT 1 FROM mata_pelajaran m2
-		             JOIN nilai_kuartal nk2 ON nk2.mapel_id = m2.id
-		                          AND nk2.santri_id = $1 AND nk2.tahun_ajaran = $2
-		             WHERE m2.kelas_id = b.kelas_id AND m2.tingkatan_id = b.tingkatan_id
-		               AND m2.nama_mapel = m.nama_mapel
+		             SELECT 1 FROM nilai_kuartal nk4
+		             JOIN mata_pelajaran m4 ON m4.id = nk4.mapel_id
+		             WHERE nk4.santri_id = $1 AND nk4.tahun_ajaran = $2
+		               AND m4.kelas_id = b.kelas_id AND m4.tingkatan_id = b.tingkatan_id
 		         )
 		   )`, santriID, tahunAjaran)
 	if err != nil {
@@ -175,20 +174,20 @@ func GenerateNilaiKhos(ctx context.Context, santriID int, semester int, tahunAja
 		 JOIN bagian b ON b.id = s.bagian_id
 		 LEFT JOIN nilai_kuartal nk ON m.id = nk.mapel_id AND nk.santri_id = $3 AND nk.tahun_ajaran = $4
 		 WHERE ((m.kelas_id = b.kelas_id AND m.tingkatan_id = b.tingkatan_id)
-		        OR EXISTS (SELECT 1 FROM nilai_kuartal nk2
-		                   WHERE nk2.mapel_id = m.id AND nk2.santri_id = $3 AND nk2.tahun_ajaran = $4))
-		       AND NOT (
-		           -- Dedupe: mapel kelas lama disembunyikan jika santri SUDAH punya nilai
-		           -- di mapel bernama sama pada kelas SEKARANG (input dobel).
-		           NOT (m.kelas_id = b.kelas_id AND m.tingkatan_id = b.tingkatan_id)
-		           AND EXISTS (
-		               SELECT 1 FROM mata_pelajaran m2
-		               JOIN nilai_kuartal nk3 ON nk3.mapel_id = m2.id
-		                            AND nk3.santri_id = $3 AND nk3.tahun_ajaran = $4
-		               WHERE m2.kelas_id = b.kelas_id AND m2.tingkatan_id = b.tingkatan_id
-		                 AND m2.nama_mapel = m.nama_mapel
-		           )
-		       )
+		        OR (
+		            -- Mapel kelas lama hanya dihitung jika santri BELUM punya nilai
+		            -- apapun di kelas SEKARANG (mis. AINI). Begitu ada nilai di kelas
+		            -- sekarang, SEMUA mapel kelas lama diabaikan — nilai kuartal kelas
+		            -- lama tetap tersimpan sebagai arsip, tapi tidak dihitung.
+		            NOT EXISTS (
+		                SELECT 1 FROM nilai_kuartal nk4
+		                JOIN mata_pelajaran m4 ON m4.id = nk4.mapel_id
+		                WHERE nk4.santri_id = $3 AND nk4.tahun_ajaran = $4
+		                  AND m4.kelas_id = b.kelas_id AND m4.tingkatan_id = b.tingkatan_id
+		            )
+		            AND EXISTS (SELECT 1 FROM nilai_kuartal nk2
+		                        WHERE nk2.mapel_id = m.id AND nk2.santri_id = $3 AND nk2.tahun_ajaran = $4)
+		        ))
 		       AND (m.aktif_kuartal @> to_jsonb($1::int) OR m.aktif_kuartal @> to_jsonb($2::int))
 		 GROUP BY m.id`, q1, q2, santriID, tahunAjaran)
 
@@ -358,7 +357,7 @@ func BulkInputNilaiBayan(ctx context.Context, inputs []NilaiBayanInput, tahunAja
 		if input.HasilAkhir < 5 || input.HasilAkhir > 9 {
 			return fmt.Errorf("nilai al-bayan %d untuk santri id %d tidak valid. Harus antara 5 dan 9", input.HasilAkhir, input.SantriID)
 		}
-		
+
 		// Konversi Label. Skala Al-Bayan 5-9: tidak ada Mumtaz,
 		// nilai tertinggi = 9 (الجيد الأول / Jayyid Awal).
 		var label string

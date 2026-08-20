@@ -190,12 +190,12 @@ func GetRaportSantri(ctx context.Context, santriID int, semester int, tahunAjara
 	// 3. Dapatkan Daftar Nilai per Mapel: Khos (خاصة) siswi + 'Am (عامة) kelas.
 	//    Mapel terikat ke KELAS + TINGKATAN bagian santri (lihat migrasi 011).
 	//    nama_mapel = fann, nama_kitab = kitab.
-	
+
 	q1, q2 := 1, 2
 	if semester == 2 {
 		q1, q2 = 3, 4
 	}
-	
+
 	rows, err := config.DB.Query(ctx,
 		`SELECT m.nama_mapel, COALESCE(m.nama_kitab, ''), m.kategori, nk.nilai_akhir, na.nilai_am
 		 FROM mata_pelajaran m
@@ -204,20 +204,19 @@ func GetRaportSantri(ctx context.Context, santriID int, semester int, tahunAjara
 		 LEFT JOIN nilai_khos nk ON m.id = nk.mapel_id AND nk.santri_id = $1 AND nk.semester = $2 AND nk.tahun_ajaran = $3
 		 LEFT JOIN nilai_am na ON m.id = na.mapel_id AND na.bagian_id = s.bagian_id AND na.semester = $2 AND na.tahun_ajaran = $3
 		 WHERE ((m.kelas_id = b.kelas_id AND m.tingkatan_id = b.tingkatan_id)
-		        OR EXISTS (SELECT 1 FROM nilai_kuartal nk2
-		                   WHERE nk2.mapel_id = m.id AND nk2.santri_id = $1 AND nk2.tahun_ajaran = $3))
-		       AND NOT (
-		           -- Dedupe: mapel kelas lama disembunyikan jika santri SUDAH punya nilai
-		           -- di mapel bernama sama pada kelas SEKARANG (input dobel).
-		           NOT (m.kelas_id = b.kelas_id AND m.tingkatan_id = b.tingkatan_id)
-		           AND EXISTS (
-		               SELECT 1 FROM mata_pelajaran m2
-		               JOIN nilai_kuartal nk3 ON nk3.mapel_id = m2.id
-		                            AND nk3.santri_id = $1 AND nk3.tahun_ajaran = $3
-		               WHERE m2.kelas_id = b.kelas_id AND m2.tingkatan_id = b.tingkatan_id
-		                 AND m2.nama_mapel = m.nama_mapel
-		           )
-		       )
+		        OR (
+		            -- Mapel kelas lama hanya muncul jika santri BELUM punya nilai apapun
+		            -- di kelas SEKARANG. Begitu ada nilai di kelas sekarang, mapel kelas
+		            -- lama diabaikan (arsip tetap tersimpan di nilai_kuartal).
+		            NOT EXISTS (
+		                SELECT 1 FROM nilai_kuartal nk4
+		                JOIN mata_pelajaran m4 ON m4.id = nk4.mapel_id
+		                WHERE nk4.santri_id = $1 AND nk4.tahun_ajaran = $3
+		                  AND m4.kelas_id = b.kelas_id AND m4.tingkatan_id = b.tingkatan_id
+		            )
+		            AND EXISTS (SELECT 1 FROM nilai_kuartal nk2
+		                        WHERE nk2.mapel_id = m.id AND nk2.santri_id = $1 AND nk2.tahun_ajaran = $3)
+		        ))
 		       AND (m.aktif_kuartal @> to_jsonb($4::int) OR m.aktif_kuartal @> to_jsonb($5::int))
 		 ORDER BY m.urutan ASC, m.id ASC`, santriID, semester, tahunAjaran, q1, q2)
 
