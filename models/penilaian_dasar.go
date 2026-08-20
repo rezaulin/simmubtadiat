@@ -238,12 +238,13 @@ func GenerateNilaiKhos(ctx context.Context, santriID int, semester int, tahunAja
 	izinHari := PertemuanKeHari(totalIzin)
 	alphaHari := PertemuanKeHari(totalAlpha)
 
-	// Sumber 2: absensi_manual_bulanan (langsung hari, per tahun ajaran).
+	// Sumber 2: absensi_manual_bulanan (langsung hari), difilter per semester —
+	// bulan Hijri yang sudah di-mapping hanya membebani semester tersebut.
 	var manualIzin, manualAlpha int
 	_ = tx.QueryRow(ctx,
 		`SELECT COALESCE(SUM(total_izin), 0), COALESCE(SUM(total_alpha), 0)
 		 FROM absensi_manual_bulanan
-		 WHERE santri_id = $1 AND tahun_ajaran = $2`, santriID, tahunAjaran).Scan(&manualIzin, &manualAlpha)
+		 WHERE santri_id = $1 AND tahun_ajaran = $2 AND semester = $3`, santriID, tahunAjaran, semester).Scan(&manualIzin, &manualAlpha)
 
 	// Gabungkan: data ustadz (konversi hari) + data manual (sudah hari).
 	izinHari += manualIzin

@@ -238,12 +238,15 @@ func GetRaportSantri(ctx context.Context, santriID int, semester int, tahunAjara
 		 JOIN kalender_kuartal kk ON ra.kuartal_id = kk.id
 		 WHERE ra.santri_id = $1 AND kk.kuartal IN ($2, $3) AND kk.tahun_ajaran = $4`, santriID, q1, q2, tahunAjaran).Scan(&totalIzin, &totalAlpha)
 
-	// Gabungkan data dari absensi_manual_bulanan (satuan hari per tahun ajaran)
+	// Gabungkan data dari absensi_manual_bulanan. Difilter per semester: bulan
+	// Hijri yang sudah di-mapping (kolom semester) hanya masuk ke raport semester
+	// tersebut. Baris tanpa mapping (semester NULL) tidak dihitung di sini —
+	// akan terisi otomatis (backfill) saat kalender akademik disimpan.
 	var manualIzin, manualAlpha int
 	_ = config.DB.QueryRow(ctx,
 		`SELECT COALESCE(SUM(total_izin), 0), COALESCE(SUM(total_alpha), 0)
 		 FROM absensi_manual_bulanan
-		 WHERE santri_id = $1 AND tahun_ajaran = $2`, santriID, tahunAjaran).Scan(&manualIzin, &manualAlpha)
+		 WHERE santri_id = $1 AND tahun_ajaran = $2 AND semester = $3`, santriID, tahunAjaran, semester).Scan(&manualIzin, &manualAlpha)
 
 	// Satuan tersimpan = PERTEMUAN → tampilkan dalam HARI (ceil ½) per semester + absensi manual.
 	// Sakit sengaja tidak dilaporkan di raport (hanya izin & alpha).
