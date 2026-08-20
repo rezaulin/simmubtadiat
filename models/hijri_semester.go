@@ -108,17 +108,19 @@ func SaveKalenderSemesterHijri(ctx context.Context, entries []KalenderSemesterHi
 	}
 
 	// Backfill ulang kolom semester baris absensi manual tahun ajaran ini
-	// berdasarkan kalender baru (hari ke-15 bulan Hijri dalam rentang semester).
+	// berdasarkan kalender baru. Suatu bulan masuk semester jika bulan itu
+	// OVERLAP dengan rentang semester (bukan heuristik hari ke-15, supaya bulan
+	// yang semesternya mulai di tengah bulan — mis. mulai tgl 17 — tetap ikut).
 	backfillQ := func(table string) error {
 		_, err := tx.Exec(ctx, `
 			UPDATE `+table+` am
 			   SET semester = v.sem
 			  FROM (
 				SELECT am2.id,
-				       MAX(CASE WHEN (ks.mulai_tahun_hijri*360 + ks.mulai_bulan_hijri*30 + ks.mulai_tanggal)
-				                     <= (am2.tahun_hijri*360 + am2.bulan_hijri*30 + 15)
-				                AND  (ks.selesai_tahun_hijri*360 + ks.selesai_bulan_hijri*30 + ks.selesai_tanggal)
-				                     >= (am2.tahun_hijri*360 + am2.bulan_hijri*30 + 15)
+				       MAX(CASE WHEN (am2.tahun_hijri*360 + am2.bulan_hijri*30 + 1)
+				                     <= (ks.selesai_tahun_hijri*360 + ks.selesai_bulan_hijri*30 + ks.selesai_tanggal)
+				                AND  (am2.tahun_hijri*360 + am2.bulan_hijri*30 + 30)
+				                     >= (ks.mulai_tahun_hijri*360 + ks.mulai_bulan_hijri*30 + ks.mulai_tanggal)
 				               THEN ks.semester END) AS sem
 				  FROM `+table+` am2
 				  LEFT JOIN kalender_semester_hijri ks ON ks.tahun_ajaran = am2.tahun_ajaran
@@ -168,10 +170,13 @@ func SemesterDariBulanHijri(ctx context.Context, tahunAjaran string, tahunHijri,
 	if err != nil {
 		return 0
 	}
-	tengah := hijriOrdinal(tahunHijri, bulanHijri, 15)
+	bulanMulai := hijriOrdinal(tahunHijri, bulanHijri, 1)
+	bulanAkhir := hijriOrdinal(tahunHijri, bulanHijri, 30)
 	for _, k := range kals {
-		if tengah >= hijriOrdinal(k.MulaiTahunHijri, k.MulaiBulanHijri, k.MulaiTanggal) &&
-			tengah <= hijriOrdinal(k.SelesaiTahunHijri, k.SelesaiBulanHijri, k.SelesaiTanggal) {
+		semMulai := hijriOrdinal(k.MulaiTahunHijri, k.MulaiBulanHijri, k.MulaiTanggal)
+		semAkhir := hijriOrdinal(k.SelesaiTahunHijri, k.SelesaiBulanHijri, k.SelesaiTanggal)
+		// Overlap: bulan berpotongan dengan rentang semester.
+		if bulanMulai <= semAkhir && bulanAkhir >= semMulai {
 			return k.Semester
 		}
 	}
