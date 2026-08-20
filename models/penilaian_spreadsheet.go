@@ -176,16 +176,33 @@ func GetPenilaianSpreadsheet(ctx context.Context, bagianID int, tahunAjaran stri
 		nilaiBayan[strconv.Itoa(santriID)] = entry
 	}
 
-	// 7. Fetch absensi totals: combine rekap_absensi (pertemuan→hari) + absensi_manual_bulanan (hari)
-	absensi := map[string]map[string]int{}
+	// 7. Fetch absensi totals, DIPECAH PER SEMESTER:
+	//    - rekap_absensi: kuartal 1/2 -> semester 1, kuartal 3/4 -> semester 2 (satuan pertemuan -> hari)
+	//    - absensi_manual_bulanan: kolom semester (terisi otomatis dari kalender akademik)
+	//    - absensi_bayan: agregat tahunan untuk koreksi Al-Bayan (by design tahunan).
+	absensi := map[string]map[string]map[string]int{
+		"1": {},
+		"2": {},
+	}
+	absensiBayan := map[string]map[string]int{}
 
-	// 7a. rekap_absensi (satuan pertemuan, grouped by santri via kalender_kuartal for tahun_ajaran)
+	addTo := func(dst map[string]map[string]int, key string, izin, alpha int) {
+		if _, ok := dst[key]; !ok {
+			dst[key] = map[string]int{"izin": 0, "alpha": 0}
+		}
+		dst[key]["izin"] += izin
+		dst[key]["alpha"] += alpha
+	}
+
+	// 7a. rekap_absensi per semester (satuan pertemuan -> konversi hari).
 	rowsRekap, err := config.DB.Query(ctx,
-		`SELECT ra.santri_id, COALESCE(SUM(ra.total_izin), 0), COALESCE(SUM(ra.total_alpha), 0)
+		`SELECT ra.santri_id,
+		        CASE WHEN kk.kuartal IN (1, 2) THEN 1 ELSE 2 END AS sem,
+		        COALESCE(SUM(ra.total_izin), 0), COALESCE(SUM(ra.total_alpha), 0)
 		 FROM rekap_absensi ra
 		 JOIN kalender_kuartal kk ON ra.kuartal_id = kk.id
 		 WHERE ra.santri_id = ANY($1) AND kk.tahun_ajaran = $2
-		 GROUP BY ra.santri_id`,
+		 GROUP BY ra.santri_id, sem`,
 		santriIDs, tahunAjaran)
 	if err != nil {
 		return nil, fmt.Errorf("gagal mendapatkan rekap absensi: %v", err)
@@ -193,23 +210,25 @@ func GetPenilaianSpreadsheet(ctx context.Context, bagianID int, tahunAjaran stri
 	defer rowsRekap.Close()
 
 	for rowsRekap.Next() {
-		var santriID, totalIzin, totalAlpha int
-		if err := rowsRekap.Scan(&santriID, &totalIzin, &totalAlpha); err != nil {
+		var santriID, sem, totalIzin, totalAlpha int
+		if err := rowsRekap.Scan(&santriID, &sem, &totalIzin, &totalAlpha); err != nil {
 			return nil, err
 		}
 		key := strconv.Itoa(santriID)
-		absensi[key] = map[string]int{
-			"izin":  PertemuanKeHari(totalIzin),
-			"alpha": PertemuanKeHari(totalAlpha),
-		}
+		izinHari := PertemuanKeHari(totalIzin)
+		alphaHari := PertemuanKeHari(totalAlpha)
+		addTo(absensi[strconv.Itoa(sem)], key, izinHari, alphaHari)
+		addTo(absensiBayan, key, izinHari, alphaHari)
 	}
 
-	// 7b. absensi_manual_bulanan (already in hari)
+	// 7b. absensi_manual_bulanan per semester (sudah dalam hari).
+	//     Baris dengan semester NULL (belum ter-mapping kalender) tidak dihitung
+	//     di section semester; tetap masuk agregat tahunan Al-Bayan.
 	rowsManual, err := config.DB.Query(ctx,
-		`SELECT santri_id, COALESCE(SUM(total_izin), 0), COALESCE(SUM(total_alpha), 0)
+		`SELECT santri_id, COALESCE(semester, 0), COALESCE(SUM(total_izin), 0), COALESCE(SUM(total_alpha), 0)
 		 FROM absensi_manual_bulanan
 		 WHERE santri_id = ANY($1) AND tahun_ajaran = $2
-		 GROUP BY santri_id`,
+		 GROUP BY santri_id, semester`,
 		santriIDs, tahunAjaran)
 	if err != nil {
 		return nil, fmt.Errorf("gagal mendapatkan absensi manual: %v", err)
@@ -217,24 +236,24 @@ func GetPenilaianSpreadsheet(ctx context.Context, bagianID int, tahunAjaran stri
 	defer rowsManual.Close()
 
 	for rowsManual.Next() {
-		var santriID, manualIzin, manualAlpha int
-		if err := rowsManual.Scan(&santriID, &manualIzin, &manualAlpha); err != nil {
+		var santriID, sem, manualIzin, manualAlpha int
+		if err := rowsManual.Scan(&santriID, &sem, &manualIzin, &manualAlpha); err != nil {
 			return nil, err
 		}
 		key := strconv.Itoa(santriID)
-		if _, ok := absensi[key]; !ok {
-			absensi[key] = map[string]int{"izin": 0, "alpha": 0}
+		if sem == 1 || sem == 2 {
+			addTo(absensi[strconv.Itoa(sem)], key, manualIzin, manualAlpha)
 		}
-		absensi[key]["izin"] += manualIzin
-		absensi[key]["alpha"] += manualAlpha
+		addTo(absensiBayan, key, manualIzin, manualAlpha)
 	}
 
-	return map[string]interface{}{
-		"mapels":        mapels,
-		"santri":        santriList,
-		"nilai_kuartal": nilaiKuartal,
-		"nilai_khos":    nilaiKhos,
-		"nilai_bayan":   nilaiBayan,
-		"absensi":       absensi,
+		return map[string]interface{}{
+		"mapels":         mapels,
+		"santri":         santriList,
+		"nilai_kuartal":  nilaiKuartal,
+		"nilai_khos":     nilaiKhos,
+		"nilai_bayan":    nilaiBayan,
+		"absensi":        absensi,
+		"absensi_bayan":  absensiBayan,
 	}, nil
 }

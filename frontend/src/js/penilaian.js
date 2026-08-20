@@ -127,7 +127,7 @@ function renderSpreadsheet() {
     return;
   }
 
-  const { mapels, santri, nilai_kuartal, nilai_khos, nilai_bayan, absensi } = currentData;
+  const { mapels, santri, nilai_kuartal, nilai_khos, nilai_bayan, absensi, absensi_bayan } = currentData;
   if (santri.length === 0) {
     container.innerHTML = '<p class="text-center text-gray-400 py-4">Tidak ada santri di bagian ini.</p>';
     return;
@@ -147,15 +147,15 @@ function renderSpreadsheet() {
   // Section 2: Ujian Smt Ganjil (K2)
   html += renderSection('UJIAN SEMESTER GANJIL', mapels, santri, nilai_kuartal['2'], 2, canEdit);
   // Section 3: Raport Semester 1 (Nilai Khos)
-  html += renderRaportSection('NILAI RAPORT SEMESTER 1', mapels, santri, nilai_khos['1'], absensi, 1, canEdit);
+  html += renderRaportSection('NILAI RAPORT SEMESTER 1', mapels, santri, nilai_khos['1'], absensi['1'], 1, canEdit);
   // Section 4: Tamrin K3
   html += renderSection('TAMRIN KUARTAL 3', mapels, santri, nilai_kuartal['3'], 3, canEdit);
   // Section 5: Ujian Smt Genap (K4)
   html += renderSection('UJIAN SEMESTER GENAP', mapels, santri, nilai_kuartal['4'], 4, canEdit);
   // Section 6: Raport Semester 2
-  html += renderRaportSection('NILAI RAPORT SEMESTER 2', mapels, santri, nilai_khos['2'], absensi, 2, canEdit);
+  html += renderRaportSection('NILAI RAPORT SEMESTER 2', mapels, santri, nilai_khos['2'], absensi['2'], 2, canEdit);
   // Section 7: Al-Bayan
-  html += renderBayanSection(santri, nilai_khos, nilai_bayan, absensi, mapels.length, canEdit);
+  html += renderBayanSection(santri, nilai_khos, nilai_bayan, absensi_bayan, mapels.length, canEdit);
 
   // Save button
   if (canEdit) {
