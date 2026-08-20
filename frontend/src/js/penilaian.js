@@ -423,12 +423,9 @@ function renderBayanSection(santri, nilaiKhos, nilaiBayan, absensiMap, totalMape
   html += '<div class="overflow-x-auto border border-emerald-200 dark:border-emerald-800 rounded-xl mb-4"><table class="border-collapse text-xs w-full">';
   html += '<thead class="bg-emerald-50 dark:bg-emerald-900/20"><tr>';
   html += '<th class="px-2 py-2 border">No</th><th class="px-2 py-2 border text-left min-w-[120px]">Nama</th>';
-  html += '<th class="px-2 py-2 border text-center">Total Izin</th>';
-  html += '<th class="px-2 py-2 border text-center">Total Alpha</th>';
   html += '<th class="px-2 py-2 border text-center">Al-Bayan Asli</th>';
-  html += '<th class="px-2 py-2 border text-center">Keterangan Asli</th>';
-  html += '<th class="px-2 py-2 border text-center bg-emerald-100 dark:bg-emerald-800/30">Hasil Akhir</th>';
-  html += '<th class="px-2 py-2 border text-center bg-emerald-100 dark:bg-emerald-800/30">Keterangan</th>';
+  html += '<th class="px-2 py-2 border text-center min-w-[160px]">Keterangan</th>';
+  html += '<th class="px-2 py-2 border text-center bg-emerald-100 dark:bg-emerald-800/30">Al-Bayan Akhir</th>';
   html += '</tr></thead><tbody>';
 
   santri.forEach((s, idx) => {
@@ -454,26 +451,34 @@ function renderBayanSection(santri, nilaiKhos, nilaiBayan, absensiMap, totalMape
     let hasilAkhir = bayanAsli !== '-' ? Math.max(5, Math.min(9, bayanAsli + koreksi)) : '-';
 
     // Override from DB if exists
-    if (bayan.hasil_akhir != null) hasilAkhir = bayan.hasil_akhir;
+    let overridden = false;
+    if (bayan.hasil_akhir != null) { hasilAkhir = bayan.hasil_akhir; overridden = true; }
 
-    const labelAsli = bayanAsli !== '-' ? (bayanLabels[bayanAsli] || '-') : '-';
-    const labelAkhir = hasilAkhir !== '-' ? (bayanLabels[hasilAkhir] || '-') : '-';
+    // Keterangan: alasan pengurangan (izin >= 15 hari / alpha >= 5 hari).
+    let ketKoreksi;
+    if (overridden) {
+      ketKoreksi = 'Override manual';
+    } else if (koreksi < 0) {
+      const sebab = [];
+      if (ab.izin >= 15) sebab.push(`izin ${ab.izin} hari`);
+      if (ab.alpha >= 5) sebab.push(`alpha ${ab.alpha} hari`);
+      ketKoreksi = `Dikurangi ${-koreksi} (${sebab.join(' + ')})`;
+    } else {
+      ketKoreksi = 'Tidak ada pengurangan';
+    }
 
     html += `<tr>`;
     html += `<td class="px-2 py-1 border text-center">${idx + 1}</td>`;
     html += `<td class="px-2 py-1 border font-medium">${s.nama}</td>`;
-    html += `<td class="px-2 py-1 border text-center">${ab.izin}</td>`;
-    html += `<td class="px-2 py-1 border text-center">${ab.alpha}</td>`;
     html += `<td class="px-2 py-1 border text-center font-bold">${bayanAsli}</td>`;
-    html += `<td class="px-2 py-1 border text-center">${labelAsli}</td>`;
+    html += `<td class="px-2 py-1 border text-center ${koreksi < 0 && !overridden ? 'text-red-600 dark:text-red-400' : 'text-gray-400'}">${ketKoreksi}</td>`;
     
+    const labelAkhir = hasilAkhir !== '-' ? (bayanLabels[hasilAkhir] || '') : '';
     if (!canEdit) {
-      html += `<td class="px-0 py-0 border text-center bg-gray-50 dark:bg-slate-800"><input type="text" disabled value="${hasilAkhir !== '-' ? hasilAkhir : ''}" class="w-full text-center text-xs py-2 bg-transparent border-0 outline-none text-gray-600 dark:text-gray-300 font-bold" title="Hanya mustahiq yang dapat mengedit"></td>`;
+      html += `<td class="px-0 py-0 border text-center bg-gray-50 dark:bg-slate-800"><input type="text" disabled value="${hasilAkhir !== '-' ? hasilAkhir : ''}" class="w-full text-center text-xs py-2 bg-transparent border-0 outline-none text-gray-600 dark:text-gray-300 font-bold" title="${labelAkhir || 'Hanya mustahiq yang dapat mengedit'}"></td>`;
     } else {
-      html += `<td class="px-0 py-0 border text-center bg-emerald-50 dark:bg-emerald-900/20"><input type="number" min="5" max="9" data-bayan="${s.id}" value="${hasilAkhir !== '-' ? hasilAkhir : ''}" class="w-full text-center text-xs py-1 bg-transparent border-0 focus:bg-emerald-100 dark:focus:bg-emerald-900/40 text-emerald-800 dark:text-emerald-200 outline-none font-bold"></td>`;
+      html += `<td class="px-0 py-0 border text-center bg-emerald-50 dark:bg-emerald-900/20"><input type="number" min="5" max="9" data-bayan="${s.id}" value="${hasilAkhir !== '-' ? hasilAkhir : ''}" class="w-full text-center text-xs py-1 bg-transparent border-0 focus:bg-emerald-100 dark:focus:bg-emerald-900/40 text-emerald-800 dark:text-emerald-200 outline-none font-bold" title="${labelAkhir}"></td>`;
     }
-    
-    html += `<td class="px-2 py-1 border font-bold text-center text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/10" data-bayan-ket="${s.id}">${labelAkhir}</td>`;
     html += '</tr>';
   });
   html += '</tbody></table></div>';
