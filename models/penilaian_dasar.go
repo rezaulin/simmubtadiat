@@ -132,6 +132,30 @@ func GenerateNilaiKhos(ctx context.Context, santriID int, semester int, tahunAja
 	}
 	defer tx.Rollback(ctx)
 
+	// 1.5 Cleanup khos duplikat: hapus baris khos milik mapel kelas lama yang
+	// punya kembaran bernama sama di kelas sekarang DAN santri sudah punya nilai
+	// di kembaran tersebut. nilai_kuartal (sumber data) tidak disentuh.
+	_, err = tx.Exec(ctx,
+		`DELETE FROM nilai_khos nk
+		 WHERE nk.santri_id = $1 AND nk.tahun_ajaran = $2
+		   AND EXISTS (
+		       SELECT 1 FROM mata_pelajaran m
+		       JOIN santri s ON s.id = $1
+		       JOIN bagian b ON b.id = s.bagian_id
+		       WHERE m.id = nk.mapel_id
+		         AND NOT (m.kelas_id = b.kelas_id AND m.tingkatan_id = b.tingkatan_id)
+		         AND EXISTS (
+		             SELECT 1 FROM mata_pelajaran m2
+		             JOIN nilai_kuartal nk2 ON nk2.mapel_id = m2.id
+		                          AND nk2.santri_id = $1 AND nk2.tahun_ajaran = $2
+		             WHERE m2.kelas_id = b.kelas_id AND m2.tingkatan_id = b.tingkatan_id
+		               AND m2.nama_mapel = m.nama_mapel
+		         )
+		   )`, santriID, tahunAjaran)
+	if err != nil {
+		return err
+	}
+
 	// 2. Calculate raw Khos for each mapel. Sumber mapel = mapel kelas/tingkatan
 	//    bagian santri SEKARANG, DITAMBAH mapel di kelas lama tempat santri ini
 	//    punya nilai kuartal pada tahun ajaran ini (nilai tetap di kelas lama,
@@ -153,6 +177,18 @@ func GenerateNilaiKhos(ctx context.Context, santriID int, semester int, tahunAja
 		 WHERE ((m.kelas_id = b.kelas_id AND m.tingkatan_id = b.tingkatan_id)
 		        OR EXISTS (SELECT 1 FROM nilai_kuartal nk2
 		                   WHERE nk2.mapel_id = m.id AND nk2.santri_id = $3 AND nk2.tahun_ajaran = $4))
+		       AND NOT (
+		           -- Dedupe: mapel kelas lama disembunyikan jika santri SUDAH punya nilai
+		           -- di mapel bernama sama pada kelas SEKARANG (input dobel).
+		           NOT (m.kelas_id = b.kelas_id AND m.tingkatan_id = b.tingkatan_id)
+		           AND EXISTS (
+		               SELECT 1 FROM mata_pelajaran m2
+		               JOIN nilai_kuartal nk3 ON nk3.mapel_id = m2.id
+		                            AND nk3.santri_id = $3 AND nk3.tahun_ajaran = $4
+		               WHERE m2.kelas_id = b.kelas_id AND m2.tingkatan_id = b.tingkatan_id
+		                 AND m2.nama_mapel = m.nama_mapel
+		           )
+		       )
 		       AND (m.aktif_kuartal @> to_jsonb($1::int) OR m.aktif_kuartal @> to_jsonb($2::int))
 		 GROUP BY m.id`, q1, q2, santriID, tahunAjaran)
 

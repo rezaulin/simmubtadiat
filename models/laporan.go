@@ -206,6 +206,18 @@ func GetRaportSantri(ctx context.Context, santriID int, semester int, tahunAjara
 		 WHERE ((m.kelas_id = b.kelas_id AND m.tingkatan_id = b.tingkatan_id)
 		        OR EXISTS (SELECT 1 FROM nilai_kuartal nk2
 		                   WHERE nk2.mapel_id = m.id AND nk2.santri_id = $1 AND nk2.tahun_ajaran = $3))
+		       AND NOT (
+		           -- Dedupe: mapel kelas lama disembunyikan jika santri SUDAH punya nilai
+		           -- di mapel bernama sama pada kelas SEKARANG (input dobel).
+		           NOT (m.kelas_id = b.kelas_id AND m.tingkatan_id = b.tingkatan_id)
+		           AND EXISTS (
+		               SELECT 1 FROM mata_pelajaran m2
+		               JOIN nilai_kuartal nk3 ON nk3.mapel_id = m2.id
+		                            AND nk3.santri_id = $1 AND nk3.tahun_ajaran = $3
+		               WHERE m2.kelas_id = b.kelas_id AND m2.tingkatan_id = b.tingkatan_id
+		                 AND m2.nama_mapel = m.nama_mapel
+		           )
+		       )
 		       AND (m.aktif_kuartal @> to_jsonb($4::int) OR m.aktif_kuartal @> to_jsonb($5::int))
 		 ORDER BY m.urutan ASC, m.id ASC`, santriID, semester, tahunAjaran, q1, q2)
 
