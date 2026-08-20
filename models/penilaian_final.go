@@ -184,15 +184,14 @@ func GenerateAlBayan(ctx context.Context, santriID int, tahunAjaran string) erro
 	finalScore := math.Floor(rataRata+0.5) + float64(koreksi)
 	if finalScore < 5 {
 		finalScore = 5
-	} else if finalScore > 10 {
-		finalScore = 10
+	} else if finalScore > 9 {
+		finalScore = 9
 	}
 
-	// Konversi Label
+	// Konversi Label. Skala Al-Bayan 5-9: tidak ada Mumtaz,
+	// nilai tertinggi = 9 (الجيد الأول / Jayyid Awal).
 	var label string
 	switch finalScore {
-	case 10:
-		label = "الممتاز"
 	case 9:
 		label = "الجيد الأول"
 	case 8:

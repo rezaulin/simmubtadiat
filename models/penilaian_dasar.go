@@ -314,15 +314,14 @@ func BulkInputNilaiBayan(ctx context.Context, inputs []NilaiBayanInput, tahunAja
 	defer tx.Rollback(ctx)
 
 	for _, input := range inputs {
-		if input.HasilAkhir < 5 || input.HasilAkhir > 10 {
-			return fmt.Errorf("nilai al-bayan %d untuk santri id %d tidak valid. Harus antara 5 dan 10", input.HasilAkhir, input.SantriID)
+		if input.HasilAkhir < 5 || input.HasilAkhir > 9 {
+			return fmt.Errorf("nilai al-bayan %d untuk santri id %d tidak valid. Harus antara 5 dan 9", input.HasilAkhir, input.SantriID)
 		}
 		
-		// Konversi Label
+		// Konversi Label. Skala Al-Bayan 5-9: tidak ada Mumtaz,
+		// nilai tertinggi = 9 (الجيد الأول / Jayyid Awal).
 		var label string
 		switch input.HasilAkhir {
-		case 10:
-			label = "الممتاز"
 		case 9:
 			label = "الجيد الأول"
 		case 8:
