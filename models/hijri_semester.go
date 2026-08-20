@@ -138,9 +138,9 @@ func SaveKalenderSemesterHijri(ctx context.Context, entries []KalenderSemesterHi
 	// kuartal 1/2 = paruh semester 1; kuartal 3/4 = paruh semester 2.
 	if _, err := tx.Exec(ctx, `
 		INSERT INTO kalender_kuartal (kuartal, tahun_ajaran, tgl_mulai, tgl_selesai)
-		SELECT k.kuartal, k.tahun_ajaran,
-		       k.mulai + (idx - 1) * span,
-		       CASE WHEN idx = 1 THEN k.mulai + span - 1 ELSE k.selesai END
+		SELECT k.kuartal, base.tahun_ajaran,
+		       base.mulai + (k.idx - 1) * base.span,
+		       CASE WHEN k.idx = 1 THEN base.mulai + base.span - 1 ELSE base.selesai END
 		  FROM (
 			SELECT semester, tahun_ajaran,
 			       masehi_mulai::DATE AS mulai, masehi_selesai::DATE AS selesai,
