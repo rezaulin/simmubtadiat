@@ -203,7 +203,9 @@ func GetRaportSantri(ctx context.Context, santriID int, semester int, tahunAjara
 		 JOIN bagian b ON s.bagian_id = b.id
 		 LEFT JOIN nilai_khos nk ON m.id = nk.mapel_id AND nk.santri_id = $1 AND nk.semester = $2 AND nk.tahun_ajaran = $3
 		 LEFT JOIN nilai_am na ON m.id = na.mapel_id AND na.bagian_id = s.bagian_id AND na.semester = $2 AND na.tahun_ajaran = $3
-		 WHERE m.kelas_id = b.kelas_id AND m.tingkatan_id = b.tingkatan_id
+		 WHERE ((m.kelas_id = b.kelas_id AND m.tingkatan_id = b.tingkatan_id)
+		        OR EXISTS (SELECT 1 FROM nilai_kuartal nk2
+		                   WHERE nk2.mapel_id = m.id AND nk2.santri_id = $1 AND nk2.tahun_ajaran = $3))
 		       AND (m.aktif_kuartal @> to_jsonb($4::int) OR m.aktif_kuartal @> to_jsonb($5::int))
 		 ORDER BY m.urutan ASC, m.id ASC`, santriID, semester, tahunAjaran, q1, q2)
 

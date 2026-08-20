@@ -132,7 +132,10 @@ func GenerateNilaiKhos(ctx context.Context, santriID int, semester int, tahunAja
 	}
 	defer tx.Rollback(ctx)
 
-	// 2. Calculate raw Khos for each mapel (mapel terikat langsung ke bagian santri).
+	// 2. Calculate raw Khos for each mapel. Sumber mapel = mapel kelas/tingkatan
+	//    bagian santri SEKARANG, DITAMBAH mapel di kelas lama tempat santri ini
+	//    punya nilai kuartal pada tahun ajaran ini (nilai tetap di kelas lama,
+	//    tidak di-relink — sesuai keputusan operasional).
 	//    aktif_kuartal adalah JSONB array, contoh [1,2,3,4] atau [3].
 	//    Mapel relevan untuk semester ini jika aktif_kuartal mengandung
 	//    setidaknya satu kwartal dari semester.
@@ -147,7 +150,9 @@ func GenerateNilaiKhos(ctx context.Context, santriID int, semester int, tahunAja
 		 JOIN santri s ON s.id = $3
 		 JOIN bagian b ON b.id = s.bagian_id
 		 LEFT JOIN nilai_kuartal nk ON m.id = nk.mapel_id AND nk.santri_id = $3 AND nk.tahun_ajaran = $4
-		 WHERE m.kelas_id = b.kelas_id AND m.tingkatan_id = b.tingkatan_id
+		 WHERE ((m.kelas_id = b.kelas_id AND m.tingkatan_id = b.tingkatan_id)
+		        OR EXISTS (SELECT 1 FROM nilai_kuartal nk2
+		                   WHERE nk2.mapel_id = m.id AND nk2.santri_id = $3 AND nk2.tahun_ajaran = $4))
 		       AND (m.aktif_kuartal @> to_jsonb($1::int) OR m.aktif_kuartal @> to_jsonb($2::int))
 		 GROUP BY m.id`, q1, q2, santriID, tahunAjaran)
 
