@@ -19,11 +19,56 @@ function tahunHijriPair() {
   } catch (_) { return [1447, 1448]; }
 }
 
-// Dropdown bulan berisi 24 bulan: seluruh tahun Hijri pertama lalu kedua.
+// Rentang kalender akademik (Hijri) tahun ajaran aktif.
+let kalenderRange = null;
+
+function hijriOrd(y, m, d) { return y * 360 + m * 30 + d; }
+
+// Muat rentang Semester 1 & 2 dari kalender akademik tahun ajaran aktif.
+async function loadKalenderRange() {
+  try {
+    if (!activeTahunAjaran) return;
+    const res = await fetch(`/api/kalender/hijri-semester?tahun_ajaran=${encodeURIComponent(activeTahunAjaran)}`);
+    if (!res.ok) return;
+    const rows = await res.json();
+    if (!Array.isArray(rows) || rows.length === 0) return;
+    let mulai = null, selesai = null;
+    rows.forEach(r => {
+      const m = { thn: r.mulai_tahun_hijri, bln: r.mulai_bulan_hijri, tgl: r.mulai_tanggal };
+      const s = { thn: r.selesai_tahun_hijri, bln: r.selesai_bulan_hijri, tgl: r.selesai_tanggal };
+      if (!mulai || hijriOrd(m.thn, m.bln, m.tgl) < hijriOrd(mulai.thn, mulai.bln, mulai.tgl)) mulai = m;
+      if (!selesai || hijriOrd(s.thn, s.bln, s.tgl) > hijriOrd(selesai.thn, selesai.bln, selesai.tgl)) selesai = s;
+    });
+    if (mulai && selesai) kalenderRange = { mulai, selesai };
+  } catch (_) {}
+}
+
+// Dropdown bulan hanya berisi bulan dalam rentang kalender akademik
+// (mis. 17 Syawal 1447 -> 4 Sya'ban 1448). Jika kalender belum diset,
+// fallback ke seluruh 2 tahun Hijri aktif.
 // Value option = "tahun:bulan" sehingga tidak perlu gonta-ganti tahun.
 function populateBulanDropdown(sel) {
-  const [t1, t2] = tahunHijriPair();
   let html = '<option value="">-- Pilih Bulan --</option>';
+  if (kalenderRange) {
+    let y = kalenderRange.mulai.thn;
+    let m = kalenderRange.mulai.bln;
+    const endOrd = kalenderRange.selesai.thn * 12 + kalenderRange.selesai.bln;
+    let curGroup = null;
+    while (y * 12 + m <= endOrd) {
+      if (curGroup !== y) {
+        if (curGroup !== null) html += '</optgroup>';
+        html += `<optgroup label="Tahun ${y} H">`;
+        curGroup = y;
+      }
+      html += `<option value="${y}:${m}">${BULAN_HIJRI[m - 1]} ${y} H</option>`;
+      m++;
+      if (m > 12) { m = 1; y++; }
+    }
+    if (curGroup !== null) html += '</optgroup>';
+    sel.innerHTML = html;
+    return;
+  }
+  const [t1, t2] = tahunHijriPair();
   [t1, t2].forEach(th => {
     html += `<optgroup label="Tahun ${th} H">`;
     BULAN_HIJRI.forEach((nama, idx) => {
@@ -464,7 +509,8 @@ btnSavePengajar?.addEventListener('click', async () => {
 
 // === INIT ===
 checkAuth().then(() => {
-  loadSettings().then(() => {
+  loadSettings().then(async () => {
+    await loadKalenderRange();
     loadFilters();
     initPengajarDropdowns();
   });
