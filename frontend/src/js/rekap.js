@@ -148,8 +148,10 @@ async function loadFilters() {
     setTahunDropdown(selTahunSiswa);
     setTahunDropdown(selTahunPengajar);
     
-    selTahunHijriSiswa.value = tahunHijriAktif || '';
-    selTahunHijriPengajar.value = tahunHijriAktif || '';
+    // tahun_hijri_aktif bisa berupa pasangan "1447/1448"; prefill hanya jika angka tunggal.
+    const prefHijri = /^\d+$/.test(String(tahunHijriAktif || '')) ? tahunHijriAktif : '';
+    selTahunHijriSiswa.value = prefHijri;
+    selTahunHijriPengajar.value = prefHijri;
 
   } catch (err) {
     console.error(err);

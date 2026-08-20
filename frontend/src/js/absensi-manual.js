@@ -7,6 +7,47 @@ const BULAN_HIJRI = [
   'Ramadhan', 'Syawwal', 'Dzulqa\'dah', 'Dzulhijjah'
 ];
 
+// Tahun Hijri aktif mendukung pasangan "1447/1448" (satu tahun ajaran = 2 tahun Hijri).
+function tahunHijriPair() {
+  const parts = String(activeTahunHijri || '').split('/').map(s => parseInt(s, 10)).filter(n => !isNaN(n));
+  if (parts.length >= 2) return [parts[0], parts[1]];
+  if (parts.length === 1) return [parts[0], parts[0] + 1];
+  try {
+    const h = new Intl.DateTimeFormat('en-US-u-ca-islamic-umalqura', { year: 'numeric' }).format(new Date());
+    const y = parseInt(h, 10) || 1447;
+    return [y, y + 1];
+  } catch (_) { return [1447, 1448]; }
+}
+
+// Dropdown bulan berisi 24 bulan: seluruh tahun Hijri pertama lalu kedua.
+// Value option = "tahun:bulan" sehingga tidak perlu gonta-ganti tahun.
+function populateBulanDropdown(sel) {
+  const [t1, t2] = tahunHijriPair();
+  let html = '<option value="">-- Pilih Bulan --</option>';
+  [t1, t2].forEach(th => {
+    html += `<optgroup label="Tahun ${th} H">`;
+    BULAN_HIJRI.forEach((nama, idx) => {
+      html += `<option value="${th}:${idx + 1}">${nama} ${th} H</option>`;
+    });
+    html += '</optgroup>';
+  });
+  sel.innerHTML = html;
+}
+
+// Parse pilihan dropdown { tahun, bulan }.
+function parseBulanSel(sel) {
+  const v = sel.value || '';
+  const [t, b] = v.split(':');
+  return { tahun: parseInt(t, 10) || 0, bulan: parseInt(b, 10) || 0 };
+}
+
+// Label tampilan, mis. "Rajab 1448 H".
+function selBulanLabel(sel) {
+  const p = parseBulanSel(sel);
+  if (!p.bulan) return '';
+  return `${BULAN_HIJRI[p.bulan - 1]} ${p.tahun} H`;
+}
+
 // === TABS ===
 const tabSantri = document.getElementById('tab-santri');
 const tabPengajar = document.getElementById('tab-pengajar');
@@ -108,11 +149,8 @@ async function loadFilters() {
     selTingkatan.innerHTML += `<option value="${t.id}">${t.nama}</option>`;
   });
 
-  // Populate bulan Hijri dropdown
-  BULAN_HIJRI.forEach((nama, idx) => {
-    selBulanHijri.innerHTML += `<option value="${idx + 1}">${nama}</option>`;
-    selBulanHijriP.innerHTML += `<option value="${idx + 1}">${nama}</option>`;
-  });
+  // Populate bulan Hijri dropdown (24 bulan: 2 tahun Hijri aktif).
+  populateBulanDropdown(selBulanHijri);
 
   const selBagianP = document.getElementById('sel-bagian-p');
   if (selBagianP && selBagianP.parentElement) {
@@ -166,8 +204,9 @@ btnLoadGrid?.addEventListener('click', loadGridSantri);
 
 async function loadGridSantri() {
   const bagianId = selBagian.value;
-  const tahunHijri = activeTahunHijri;
-  const bulanHijri = selBulanHijri.value;
+  const pilihan = parseBulanSel(selBulanHijri);
+  const tahunHijri = pilihan.tahun;
+  const bulanHijri = pilihan.bulan;
   if (!bagianId || !tahunHijri || !bulanHijri) {
     alert('Pilih bagian dan bulan');
     return;
@@ -208,8 +247,7 @@ function renderGridSantri(canEdit = false) {
     return;
   }
 
-  const bulanNama = BULAN_HIJRI[parseInt(selBulanHijri.value) - 1] || '';
-  let html = `<p class="text-sm font-medium text-gray-600 dark:text-gray-300 mb-3">Bulan: <span class="font-bold">${bulanNama} ${activeTahunHijri} H</span></p>`;
+  let html = `<p class="text-sm font-medium text-gray-600 dark:text-gray-300 mb-3">Bulan: <span class="font-bold">${selBulanLabel(selBulanHijri)}</span></p>`;
   html += '<table class="border-collapse text-sm w-full"><thead><tr>';
   html += '<th class="px-3 py-2 border text-left">Nama Santri</th>';
   html += '<th class="px-3 py-2 border text-center w-20">Sakit</th>';
@@ -246,8 +284,9 @@ function renderGridSantri(canEdit = false) {
 }
 
 btnSaveSantri?.addEventListener('click', async () => {
-  const tahunHijri = parseInt(activeTahunHijri);
-  const bulanHijri = parseInt(selBulanHijri.value);
+  const pilihanS = parseBulanSel(selBulanHijri);
+  const tahunHijri = pilihanS.tahun;
+  const bulanHijri = pilihanS.bulan;
   const tahunAjaran = activeTahunAjaran;
   const entries = [];
 
@@ -298,9 +337,7 @@ let pengajarData = {};
 
 // Populate bulan dropdown pengajar
 function initPengajarDropdowns() {
-  BULAN_HIJRI.forEach((nama, idx) => {
-    selBulanHijriP.innerHTML += `<option value="${idx + 1}">${nama}</option>`;
-  });
+  populateBulanDropdown(selBulanHijriP);
 }
 
 btnLoadGridP?.addEventListener('click', loadGridPengajar);
@@ -308,8 +345,9 @@ btnLoadGridP?.addEventListener('click', loadGridPengajar);
 async function loadGridPengajar() {
   const tingkatanId = selTingkatanP.value;
   const kelasId = selKelasP.value;
-  const tahunHijri = activeTahunHijri;
-  const bulanHijri = selBulanHijriP.value;
+  const pilihanP = parseBulanSel(selBulanHijriP);
+  const tahunHijri = pilihanP.tahun;
+  const bulanHijri = pilihanP.bulan;
   if (!tingkatanId || !kelasId || !tahunHijri || !bulanHijri) {
     alert('Pilih Tingkatan, Kelas, dan Bulan Hijriyah');
     return;
@@ -346,8 +384,7 @@ function renderGridPengajar(canEdit = false) {
     return;
   }
 
-  const bulanNama = BULAN_HIJRI[parseInt(selBulanHijriP.value) - 1] || '';
-  let html = `<p class="text-sm font-medium text-gray-600 dark:text-gray-300 mb-3">Bulan: <span class="font-bold">${bulanNama} ${activeTahunHijri} H</span></p>`;
+  let html = `<p class="text-sm font-medium text-gray-600 dark:text-gray-300 mb-3">Bulan: <span class="font-bold">${selBulanLabel(selBulanHijriP)}</span></p>`;
   html += '<table class="border-collapse text-sm w-full"><thead><tr>';
   html += '<th class="px-3 py-2 border text-left">Nama Pengajar</th>';
   html += '<th class="px-3 py-2 border text-center w-20">Sakit</th>';
@@ -384,8 +421,9 @@ function renderGridPengajar(canEdit = false) {
 }
 
 btnSavePengajar?.addEventListener('click', async () => {
-  const tahunHijri = parseInt(activeTahunHijri);
-  const bulanHijri = parseInt(selBulanHijriP.value);
+  const pilihanP2 = parseBulanSel(selBulanHijriP);
+  const tahunHijri = pilihanP2.tahun;
+  const bulanHijri = pilihanP2.bulan;
   const tahunAjaran = activeTahunAjaran;
   const entries = [];
 

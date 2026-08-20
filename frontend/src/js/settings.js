@@ -842,11 +842,17 @@ loadMudirTingkatan();
       const res = await fetch('/api/settings/umum');
       if (res.ok) {
         const d = await res.json();
-        const th = d && d.tahun_hijri_aktif ? d.tahun_hijri_aktif : '-';
-        if (spanTHActive) spanTHActive.textContent = th;
-        if (inpTH && th !== '-') inpTH.value = th;
+        const thRaw = d && d.tahun_hijri_aktif ? d.tahun_hijri_aktif : '-';
+        if (spanTHActive) spanTHActive.textContent = thRaw;
+        if (inpTH && thRaw !== '-') inpTH.value = thRaw;
         // Prefill tahun Hijri pada form kalender jika masih kosong.
-        TRIPLES.forEach((p) => { if (!els[p].thn.value && th !== '-') els[p].thn.value = th; });
+        // tahun_hijri_aktif bisa pasangan "1447/1448"; ambil tahun kedua (berjalan)
+        // agar prefill berupa satu angka tahun Hijri yang valid.
+        if (thRaw !== '-') {
+          const hijriNums = String(thRaw).split('/').map(s => parseInt(s, 10)).filter(n => !isNaN(n));
+          const prefYear = hijriNums.length >= 2 ? hijriNums[1] : (hijriNums[0] || null);
+          if (prefYear) TRIPLES.forEach((p) => { if (!els[p].thn.value) els[p].thn.value = String(prefYear); });
+        }
       }
     } catch (_) {}
   }
