@@ -215,20 +215,23 @@ function renderTable(pengajarArray) {
     const roles = (p.user_roles || '').split(',');
     
     if (roles.includes('mustahiq')) {
-      badgeHtml += `<span class="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 text-[10px] uppercase font-bold px-2 py-0.5 rounded ml-2">Mustahiq</span>`;
+      badgeHtml += `<span class="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 text-[10px] uppercase font-bold px-2 py-0.5 rounded">Mustahiq</span>`;
     }
     if (roles.includes('mufatish')) {
-      badgeHtml += `<span class="bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 text-[10px] uppercase font-bold px-2 py-0.5 rounded ml-2">Mufattish</span>`;
+      badgeHtml += `<span class="bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 text-[10px] uppercase font-bold px-2 py-0.5 rounded">Mufattish</span>`;
     }
     if (p.status === 'munawwib') {
-      badgeHtml += `<span class="bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 text-[10px] uppercase font-bold px-2 py-0.5 rounded ml-2">Munawwib</span>`;
+      badgeHtml += `<span class="bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 text-[10px] uppercase font-bold px-2 py-0.5 rounded">Munawwib</span>`;
     }
 
     const tr = document.createElement('tr');
     tr.className = 'hover:bg-gray-50/50 dark:hover:bg-slate-800/50 transition-colors';
     tr.innerHTML = `
-      <td data-label="Nama Lengkap" class="px-6 py-4 whitespace-nowrap font-medium text-gray-900 dark:text-white">
-        ${nama} ${badgeHtml}
+      <td data-label="Nama Lengkap" class="px-6 py-4 font-medium text-gray-900 dark:text-white">
+        <div class="flex flex-col md:flex-row md:items-center gap-1 md:gap-2">
+          <span class="whitespace-nowrap">${nama}</span>
+          ${badgeHtml ? `<span class="flex flex-wrap gap-1">${badgeHtml}</span>` : ''}
+        </div>
       </td>
       <td data-label="Nomor HP" class="px-6 py-4 text-gray-700 dark:text-gray-300">
         ${noHp}
