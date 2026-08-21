@@ -187,9 +187,27 @@ function renderSpreadsheet() {
 
   // Recalculate Jml & Rata² pada baris section (Tamrin/Ujian) secara live saat
   // pengguna mengubah nilai, tanpa perlu menyimpan dulu.
+  // Sekaligus: clamp ke batas max kategori mapel (10 umum / 8 Quran-Akhlaq) —
+  // nilai yang melewati batas langsung dikembalikan + flash merah; backend tetap
+  // jadi benteng kedua (BulkInputNilaiKuartal menolak di luar rentang).
   container.querySelectorAll('input[data-k]').forEach(inp => {
-    inp.addEventListener('input', () => recalcSectionRow(inp.dataset.k, inp.dataset.s));
+    inp.addEventListener('input', () => {
+      clampNilaiInput(inp);
+      recalcSectionRow(inp.dataset.k, inp.dataset.s);
+      refreshRendahMarks();
+    });
   });
+
+  // Clamp khos override (4-9) & bayan (5-9) + refresh tanda nilai rendah live.
+  container.querySelectorAll('input[data-khos-sem], input[data-bayan]').forEach(inp => {
+    inp.addEventListener('input', () => {
+      clampNilaiInput(inp);
+      refreshRendahMarks();
+    });
+  });
+
+  // Penanda awal: nilai < 5 yang tersimpan langsung merah saat tabel dirender.
+  refreshRendahMarks();
 }
 
 // Hitung ulang Jml & Rata² untuk satu santri pada satu section (kuartal).
@@ -283,8 +301,8 @@ function renderSection(title, mapels, santri, nilaiMap, kuartal, canEdit) {
   html += '</tr></thead><tbody>';
 
   santri.forEach((s, idx) => {
-    html += `<tr><td class="px-2 py-1 border text-center sticky left-0 bg-white dark:bg-slate-800 z-10">${idx + 1}</td>`;
-    html += `<td class="px-2 py-1 border font-medium sticky left-[30px] bg-white dark:bg-slate-800 z-10 truncate max-w-[140px]">${s.nama}</td>`;
+    html += `<tr data-mark-row><td class="px-2 py-1 border text-center sticky left-0 bg-white dark:bg-slate-800 z-10">${idx + 1}</td>`;
+    html += `<td data-nama class="px-2 py-1 border font-medium sticky left-[30px] bg-white dark:bg-slate-800 z-10 truncate max-w-[140px]">${s.nama}</td>`;
     html += `<td class="px-2 py-1 border text-center text-gray-500">${s.stambuk}</td>`;
     let sum = 0, count = 0;
     mapels.forEach(m => {
@@ -306,7 +324,7 @@ function renderSection(title, mapels, santri, nilaiMap, kuartal, canEdit) {
       } else if (!canEdit) {
         html += `<td class="px-0 py-0 border text-center bg-gray-50 dark:bg-slate-800"><input type="text" disabled value="${val}" class="w-full text-center text-xs py-1 bg-transparent border-0 outline-none text-gray-600 dark:text-gray-300"></td>`;
       } else {
-        html += `<td class="px-0 py-0 border text-center"><input type="number" step="0.5" min="0" max="10" data-k="${kuartal}" data-s="${s.id}" data-m="${m.id}"${excl ? ' data-excl="1"' : ''} value="${val}" class="w-full text-center text-xs py-1 bg-transparent border-0 focus:bg-yellow-50 dark:focus:bg-slate-700 outline-none"></td>`;
+        html += `<td class="px-0 py-0 border text-center"><input type="number" step="0.5" min="0" max="${maxNilaiKuartalMapel(m)}" data-k="${kuartal}" data-s="${s.id}" data-m="${m.id}"${excl ? ' data-excl="1"' : ''} value="${val}" class="w-full text-center text-xs py-1 bg-transparent border-0 focus:bg-yellow-50 dark:focus:bg-slate-700 outline-none"></td>`;
       }
     });
     const sumStr = count > 0 ? fmtNum(sum) : '-';
@@ -325,6 +343,47 @@ function renderSection(title, mapels, santri, nilaiMap, kuartal, canEdit) {
 function fmtNum(n) {
   const r = Math.round(n * 10) / 10;
   return Number.isInteger(r) ? String(r) : r.toFixed(1);
+}
+
+// Batas atas nilai kuartal per kategori mapel (sinkron dengan backend
+// maxNilaiKuartal di models/penilaian_dasar.go): Quran & Akhlaq = 8, lainnya 10.
+function maxNilaiKuartalMapel(m) {
+  const kat = (m.kategori || '').toLowerCase();
+  if (kat === 'al_quran' || kat === 'akhlaq' || kat === 'akhlaq_perilaku') return 8;
+  return 10;
+}
+
+// Nilai di bawah ambang ini ditandai merah (angka + latar sel, dan nama siswi
+// pada barisnya). Ambang 5 → yang kena nilai 4 dan 4.5. Begitu nilai dinaikkan
+// ke >= 5, penanda dilepas otomatis (live, tanpa perlu simpan).
+const NILAI_RENDAH_AMBANG = 5;
+
+function clampNilaiInput(inp) {
+  const v = parseFloat(inp.value);
+  if (isNaN(v) || inp.value === '') return;
+  const lo = inp.min !== '' ? parseFloat(inp.min) : -Infinity;
+  const hi = inp.max !== '' ? parseFloat(inp.max) : Infinity;
+  if (v > hi || v < lo) {
+    inp.value = String(v > hi ? hi : lo);
+    inp.classList.add('flash-batas');
+    setTimeout(() => inp.classList.remove('flash-batas'), 600);
+  }
+}
+
+// Tandai sel nilai < ambang dengan .nilai-rendah; nama siswi di baris yang sama
+// diberi .nama-rendah selama masih ada nilai rendah di baris tersebut.
+function refreshRendahMarks() {
+  container.querySelectorAll('tr[data-mark-row]').forEach(tr => {
+    let anyLow = false;
+    tr.querySelectorAll('input[data-k], input[data-khos-sem], input[data-nilai-display]').forEach(inp => {
+      const v = parseFloat(inp.value);
+      const low = !isNaN(v) && v < NILAI_RENDAH_AMBANG;
+      inp.classList.toggle('nilai-rendah', low);
+      if (low) anyLow = true;
+    });
+    const namaTd = tr.querySelector('td[data-nama]');
+    if (namaTd) namaTd.classList.toggle('nama-rendah', anyLow);
+  });
 }
 
 function renderRaportSection(title, mapels, santri, khosMap, absensiMap, semester, canEdit) {
@@ -347,8 +406,8 @@ function renderRaportSection(title, mapels, santri, khosMap, absensiMap, semeste
   mapels.forEach(m => { mapelStats[m.id] = { sum: 0, count: 0 }; });
 
   santri.forEach((s, idx) => {
-    html += `<tr><td class="px-2 py-1 border text-center sticky left-0 bg-white dark:bg-slate-800 z-10">${idx + 1}</td>`;
-    html += `<td class="px-2 py-1 border font-medium sticky left-[30px] bg-white dark:bg-slate-800 z-10 truncate max-w-[140px]">${s.nama}</td>`;
+    html += `<tr data-mark-row><td class="px-2 py-1 border text-center sticky left-0 bg-white dark:bg-slate-800 z-10">${idx + 1}</td>`;
+    html += `<td data-nama class="px-2 py-1 border font-medium sticky left-[30px] bg-white dark:bg-slate-800 z-10 truncate max-w-[140px]">${s.nama}</td>`;
     let jumlah = 0, count = 0;
     mapels.forEach(m => {
       const key = `${s.id}_${m.id}`;
@@ -371,9 +430,9 @@ function renderRaportSection(title, mapels, santri, khosMap, absensiMap, semeste
       if (isDisabled) {
         html += `<td class="px-0 py-0 border border-indigo-200 dark:border-indigo-800 text-center bg-gray-100 dark:bg-slate-800"><input type="text" disabled value="-" class="w-full text-center text-xs font-semibold text-gray-400 py-1 bg-transparent border-0 outline-none"></td>`;
       } else if (!canEdit) {
-        html += `<td class="px-0 py-0 border border-indigo-200 dark:border-indigo-800 text-center bg-gray-50 dark:bg-slate-800"><input type="text" disabled value="${valDisplay}" class="w-full text-center text-xs font-semibold text-gray-600 dark:text-gray-300 py-1 bg-transparent border-0 outline-none"></td>`;
+        html += `<td class="px-0 py-0 border border-indigo-200 dark:border-indigo-800 text-center bg-gray-50 dark:bg-slate-800"><input type="text" disabled data-nilai-display value="${valDisplay}" class="w-full text-center text-xs font-semibold text-gray-600 dark:text-gray-300 py-1 bg-transparent border-0 outline-none"></td>`;
       } else {
-        html += `<td class="px-0 py-0 border border-indigo-200 dark:border-indigo-800 text-center"><input type="number" step="0.5" min="4" max="9" data-khos-sem="${semester}" data-s="${s.id}" data-m="${m.id}" value="${valDisplay}" class="w-full text-center text-xs font-semibold text-indigo-700 dark:text-indigo-400 py-1 bg-transparent border-0 focus:bg-indigo-50 dark:focus:bg-indigo-900/50 outline-none"></td>`;
+        html += `<td class="px-0 py-0 border border-indigo-200 dark:border-indigo-800 text-center"><input type="number" step="0.5" min="4" max="9" data-khos-sem="${semester}" data-s="${s.id}" data-m="${m.id}" data-nilai-display value="${valDisplay}" class="w-full text-center text-xs font-semibold text-indigo-700 dark:text-indigo-400 py-1 bg-transparent border-0 focus:bg-indigo-50 dark:focus:bg-indigo-900/50 outline-none"></td>`;
       }
     });
     const sumStr = count > 0 ? (Number.isInteger(jumlah) ? String(jumlah) : String(Math.round(jumlah * 10) / 10)) : '-';
@@ -467,9 +526,9 @@ function renderBayanSection(santri, nilaiKhos, nilaiBayan, absensiMap, totalMape
       ketKoreksi = 'Tidak ada pengurangan';
     }
 
-    html += `<tr>`;
+    html += `<tr data-mark-row>`;
     html += `<td class="px-2 py-1 border text-center">${idx + 1}</td>`;
-    html += `<td class="px-2 py-1 border font-medium">${s.nama}</td>`;
+    html += `<td data-nama class="px-2 py-1 border font-medium">${s.nama}</td>`;
     html += `<td class="px-2 py-1 border text-center font-bold">${bayanAsli}</td>`;
     html += `<td class="px-2 py-1 border text-center ${koreksi < 0 && !overridden ? 'text-red-600 dark:text-red-400' : 'text-gray-400'}">${ketKoreksi}</td>`;
     
@@ -477,7 +536,7 @@ function renderBayanSection(santri, nilaiKhos, nilaiBayan, absensiMap, totalMape
     if (!canEdit) {
       html += `<td class="px-0 py-0 border text-center bg-gray-50 dark:bg-slate-800"><input type="text" disabled value="${hasilAkhir !== '-' ? hasilAkhir : ''}" class="w-full text-center text-xs py-2 bg-transparent border-0 outline-none text-gray-600 dark:text-gray-300 font-bold" title="${labelAkhir || 'Hanya mustahiq yang dapat mengedit'}"></td>`;
     } else {
-      html += `<td class="px-0 py-0 border text-center bg-emerald-50 dark:bg-emerald-900/20"><input type="number" min="5" max="9" data-bayan="${s.id}" value="${hasilAkhir !== '-' ? hasilAkhir : ''}" class="w-full text-center text-xs py-1 bg-transparent border-0 focus:bg-emerald-100 dark:focus:bg-emerald-900/40 text-emerald-800 dark:text-emerald-200 outline-none font-bold" title="${labelAkhir}"></td>`;
+      html += `<td class="px-0 py-0 border text-center bg-emerald-50 dark:bg-emerald-900/20"><input type="number" min="5" max="9" data-bayan="${s.id}" data-nilai-display value="${hasilAkhir !== '-' ? hasilAkhir : ''}" class="w-full text-center text-xs py-1 bg-transparent border-0 focus:bg-emerald-100 dark:focus:bg-emerald-900/40 text-emerald-800 dark:text-emerald-200 outline-none font-bold" title="${labelAkhir}"></td>`;
     }
     html += '</tr>';
   });
