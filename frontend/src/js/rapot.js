@@ -452,11 +452,11 @@ function isExcludedRow(row) {
 
     tbody.innerHTML += `
       <tr>
-        <td>${toArabicDigits(idx + 1)}</td>
-        <td class="td-left">${row.nama_kitab}</td>
-        <td class="td-left">${row.mapel}</td>
-        <td style="font-weight:bold">${fmtNilai(khos)}</td>
-        <td style="font-weight:bold">${fmtNilaiAm(am)}</td>
+        <td class="td-num">${toArabicDigits(idx + 1)}</td>
+        <td class="td-left td-arab">${row.nama_kitab}</td>
+        <td class="td-left td-arab">${row.mapel}</td>
+        <td class="td-num">${fmtNilai(khos)}</td>
+        <td class="td-num">${fmtNilaiAm(am)}</td>
       </tr>
     `;
   });
