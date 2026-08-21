@@ -308,6 +308,16 @@
   color: #f87171 !important;
 }
 
+/* Nama siswi dalam zona PERHATIAN: absensinya sudah >= 75% ambang potongan
+   (belum memotong, tapi hampir). Merah = sudah memotong (.nama-rendah). */
+.nama-warning {
+  color: #d97706 !important;
+  font-weight: 600 !important;
+}
+.dark .nama-warning {
+  color: #fbbf24 !important;
+}
+
 /* Flash sesaat saat input kuartal melewati batas maksimal (di-clamp balik). */
 .flash-batas {
   background-color: #fee2e2 !important;

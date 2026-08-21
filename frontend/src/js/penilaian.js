@@ -358,6 +358,39 @@ function maxNilaiKuartalMapel(m) {
 // ke >= 5, penanda dilepas otomatis (live, tanpa perlu simpan).
 const NILAI_RENDAH_AMBANG = 5;
 
+// Threshold absensi yang memotong nilai (sinkron dengan backend
+// GenerateNilaiKhos / GenerateAlBayan):
+//   per semester : izin ≥ 20 atau alpha ≥ 6 → Akhlaq −1 (independen, bisa −2)
+//   per tahun    : izin ≥ 15 atau alpha ≥ 5 → Al-Bayan −1
+// Zona PERHATIAN (amber): absensi sudah ≥ 75% ambang — "hampir kena potongan".
+const ABSENSI_AMBANG = {
+  semester: { izin: 20, alpha: 6 },
+  tahunan: { izin: 15, alpha: 5 },
+};
+
+function alasanAbsensi(ab, ambang, target) {
+  const warnIzin = Math.ceil(ambang.izin * 0.75);
+  const warnAlpha = Math.ceil(ambang.alpha * 0.75);
+  const red = [], warn = [];
+  if ((ab.izin || 0) >= ambang.izin) red.push(`Izin ${ab.izin} hari (≥${ambang.izin}) → ${target} −1`);
+  else if ((ab.izin || 0) >= warnIzin) warn.push(`Izin ${ab.izin} hari — ${ambang.izin - ab.izin} hari lagi memotong ${target}`);
+  if ((ab.alpha || 0) >= ambang.alpha) red.push(`Alpha ${ab.alpha} hari (≥${ambang.alpha}) → ${target} −1`);
+  else if ((ab.alpha || 0) >= warnAlpha) warn.push(`Alpha ${ab.alpha} hari — ${ambang.alpha - ab.alpha} hari lagi memotong ${target}`);
+  return { red, warn };
+}
+
+function markNamaDariAlasan(alasan) {
+  let cls = '', title = '', level = '';
+  if (alasan.red.length) {
+    cls = 'nama-rendah'; level = 'red';
+    title = alasan.red.join(' + ') + (alasan.warn.length ? ' | ' + alasan.warn.join(', ') : '');
+  } else if (alasan.warn.length) {
+    cls = 'nama-warning'; level = 'warn';
+    title = 'PERHATIAN: ' + alasan.warn.join(', ');
+  }
+  return { cls, title, level };
+}
+
 function clampNilaiInput(inp) {
   const v = parseFloat(inp.value);
   if (isNaN(v) || inp.value === '') return;
@@ -382,7 +415,17 @@ function refreshRendahMarks() {
       if (low) anyLow = true;
     });
     const namaTd = tr.querySelector('td[data-nama]');
-    if (namaTd) namaTd.classList.toggle('nama-rendah', anyLow);
+    if (namaTd) {
+      // Merah dipertahankan baik karena nilai rendah maupun absensi merah.
+      const absensiMerah = namaTd.dataset.absensi === 'red';
+      namaTd.classList.toggle('nama-rendah', anyLow || absensiMerah);
+      // Tooltip gabungan: alasan absensi + info nilai < 5 (jika ada).
+      const parts = [];
+      if (namaTd.dataset.absensiTitle) parts.push(namaTd.dataset.absensiTitle);
+      if (anyLow) parts.push('memiliki nilai di bawah 5');
+      if (parts.length) namaTd.setAttribute('title', parts.join(' • '));
+      else namaTd.removeAttribute('title');
+    }
   });
 }
 
@@ -406,8 +449,13 @@ function renderRaportSection(title, mapels, santri, khosMap, absensiMap, semeste
   mapels.forEach(m => { mapelStats[m.id] = { sum: 0, count: 0 }; });
 
   santri.forEach((s, idx) => {
+    // Nama merah jika absensi semester ini sudah memotong Akhlaq, amber jika
+    // hampir (≥75% ambang). Tooltip menjelaskan alasannya.
+    const ab = absensiMap?.[String(s.id)] || { izin: 0, alpha: 0 };
+    const alasan = alasanAbsensi(ab, ABSENSI_AMBANG.semester, `Akhlaq Smt ${semester}`);
+    const mark = markNamaDariAlasan(alasan);
     html += `<tr data-mark-row><td class="px-2 py-1 border text-center sticky left-0 bg-white dark:bg-slate-800 z-10">${idx + 1}</td>`;
-    html += `<td data-nama class="px-2 py-1 border font-medium sticky left-[30px] bg-white dark:bg-slate-800 z-10 truncate max-w-[140px]">${s.nama}</td>`;
+    html += `<td data-nama data-absensi="${mark.level}" data-absensi-title="${mark.title}"${mark.title ? ` title="${mark.title}"` : ''} class="px-2 py-1 border font-medium sticky left-[30px] bg-white dark:bg-slate-800 z-10 truncate max-w-[140px] ${mark.cls}">${s.nama}</td>`;
     let jumlah = 0, count = 0;
     mapels.forEach(m => {
       const key = `${s.id}_${m.id}`;
@@ -436,7 +484,6 @@ function renderRaportSection(title, mapels, santri, khosMap, absensiMap, semeste
       }
     });
     const sumStr = count > 0 ? (Number.isInteger(jumlah) ? String(jumlah) : String(Math.round(jumlah * 10) / 10)) : '-';
-    const ab = absensiMap?.[String(s.id)] || { izin: 0, alpha: 0 };
     html += `<td class="px-1 py-1 border text-center font-bold bg-blue-50 dark:bg-blue-900/20">${sumStr}</td>`;
     html += `<td class="px-1 py-1 border text-center bg-yellow-50 dark:bg-yellow-900/20">${ab.izin || 0}</td>`;
     html += `<td class="px-1 py-1 border text-center bg-red-50 dark:bg-red-900/20">${ab.alpha || 0}</td>`;
@@ -526,9 +573,11 @@ function renderBayanSection(santri, nilaiKhos, nilaiBayan, absensiMap, totalMape
       ketKoreksi = 'Tidak ada pengurangan';
     }
 
+    const alasanTh = alasanAbsensi(ab, ABSENSI_AMBANG.tahunan, 'Al-Bayan');
+    const markTh = markNamaDariAlasan(alasanTh);
     html += `<tr data-mark-row>`;
     html += `<td class="px-2 py-1 border text-center">${idx + 1}</td>`;
-    html += `<td data-nama class="px-2 py-1 border font-medium">${s.nama}</td>`;
+    html += `<td data-nama data-absensi="${markTh.level}" data-absensi-title="${markTh.title}"${markTh.title ? ` title="${markTh.title}"` : ''} class="px-2 py-1 border font-medium ${markTh.cls}">${s.nama}</td>`;
     html += `<td class="px-2 py-1 border text-center font-bold">${bayanAsli}</td>`;
     html += `<td class="px-2 py-1 border text-center ${koreksi < 0 && !overridden ? 'text-red-600 dark:text-red-400' : 'text-gray-400'}">${ketKoreksi}</td>`;
     
