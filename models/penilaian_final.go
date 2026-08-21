@@ -214,7 +214,7 @@ func GenerateAlBayan(ctx context.Context, santriID int, tahunAjaran string) erro
 	_, err = tx.Exec(ctx,
 		`INSERT INTO nilai_bayan (santri_id, bagian_id, tahun_ajaran, kategori_id, label_arab, nilai_angka, nilai_label)
 		 VALUES ($1, $2, $3, $4, $5, $4, $5)
-		 ON CONFLICT (santri_id, bagian_id, tahun_ajaran)
+		 ON CONFLICT (santri_id, tahun_ajaran)
 		 DO UPDATE SET kategori_id = EXCLUDED.kategori_id, label_arab = EXCLUDED.label_arab,
 		               nilai_angka = EXCLUDED.nilai_angka, nilai_label = EXCLUDED.nilai_label,
 		               updated_at = CURRENT_TIMESTAMP`,

@@ -415,6 +415,12 @@ func main() {
 					r.Get("/dashboard/stats", handlers.GetDashboardStats)
 				})
 
+				// Data Health (watchdog internal penilaian, khusus pimpinan/admin)
+				r.Group(func(r chi.Router) {
+					r.Use(appMiddleware.RequireRoles("pimpinan", "admin"))
+					r.Get("/data-health", handlers.GetDataHealth)
+				})
+
 				r.Route("/laporan", func(r chi.Router) {
 					// Semua role yang valid bisa akses rapot (difilter di handler khusus wali santri)
 					r.Get("/raport/{santri_id}", handlers.GetRaport)

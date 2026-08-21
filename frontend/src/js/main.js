@@ -917,6 +917,48 @@ async function loadPengabdian(target) {
   }
 }
 
+// Widget Kesehatan Data Penilaian (khusus pimpinan/admin). Memanggil
+// /api/data-health: jika ada anomali (nilai kelas lama nyasar, santri aktif
+// belum punya Al-Bayan, absensi manual belum ter-mapping semester, nilai
+// kuartal dobel lintas kelas), tampilkan banner peringatan. Jika bersih,
+// widget tidak menampilkan apa pun (silent watchdog).
+async function loadDataHealth(target) {
+  const el = resolveWidgetTarget(target, 'dash-data-health');
+  if (!el) return;
+  try {
+    const res = await fetchWithTimeout('/api/data-health', DEFAULT_TIMEOUT_MS);
+    if (!res.ok) { el.innerHTML = ''; return; }
+    const report = (await res.json()) || {};
+    if (!report.ada_masalah) {
+      el.innerHTML = `<div class="mb-2 px-1 flex items-center gap-2 text-xs text-emerald-600 dark:text-emerald-400">
+        <span class="inline-block w-2 h-2 rounded-full bg-emerald-500"></span>
+        Kesehatan data penilaian TA ${escapeHTML(report.tahun_ajaran || '')}: tidak ada anomali</div>`;
+      return;
+    }
+    const cards = (report.issues || []).map((it) => {
+      const isBahaya = it.level === 'bahaya';
+      const border = isBahaya ? 'border-red-300 dark:border-red-800' : 'border-amber-300 dark:border-amber-800';
+      const badgeBg = isBahaya ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300';
+      const icon = isBahaya ? 'alert-triangle' : 'info';
+      const nama = (it.nama && it.nama.length) ? `<div class="mt-1 text-gray-600 dark:text-gray-300">Santri: ${it.nama.map(escapeHTML).join(', ')}${it.jumlah > it.nama.length ? ` (+${it.jumlah - it.nama.length} lainnya)` : ''}</div>` : '';
+      return `<div class="border ${border} rounded-xl p-3 mb-3 bg-white dark:bg-slate-800">
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${badgeBg}">${isBahaya ? 'BUTUH TINDAKAN' : 'PERHATIAN'}</span>
+          <span class="font-semibold text-sm text-gray-800 dark:text-gray-200">${escapeHTML(it.judul)} (${escapeHTML(String(it.jumlah))})</span>
+        </div>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">${escapeHTML(it.deskripsi)}</p>
+        ${nama}
+      </div>`;
+    }).join('');
+    el.innerHTML = `<div class="mt-4 mb-2 px-1 flex items-center gap-2">
+      <h3 class="text-sm font-bold text-red-700 dark:text-red-400">⚠️ Kesehatan Data Penilaian (TA ${escapeHTML(report.tahun_ajaran || '')})</h3>
+    </div>${cards}`;
+    refreshIcons();
+  } catch (err) {
+    el.innerHTML = '';
+  }
+}
+
 // Muat jumlah pengajar dari `/api/pengajar` (array) dan render "Ringkasan Pengajar".
 // Loading → fetch (10 dtk) → render; gagal/timeout → error + "Muat ulang"
 // (Req 7.5, 7.7). (Requirements 7.5, 7.7)
@@ -1109,6 +1151,9 @@ function initRoleAwareDashboard(role) {
     loadPengabdian();
     loadPengajar();
     loadSantriCharts();
+    if (roles.includes('pimpinan') || roles.includes('admin')) {
+      loadDataHealth();
+    }
   } else {
     hide(metrics);
     hide(chartsCol);
