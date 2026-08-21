@@ -97,13 +97,15 @@ func GlobalSearch(ctx context.Context, query string, roles []string, pengajarID 
 		}
 	}
 
-		// 2. Search Alumni (santri berstatus lulus/boyong/keluar â€” termasuk hasil import).
+		// 2. Search Alumni/arsip — SEMUA santri non-aktif & non-pengabdian
+	//    (lulus, boyong, keluar, cuti, dst.), selaras dengan logika arsip
+	//    (GetArsipSantri: status != 'aktif').
 	if canSearchAlumni {
 		rowsAlumni, err := config.DB.Query(ctx,
 			`SELECT s.id, s.nama, s.stambuk, s.status
 			 FROM santri s
 			 WHERE (s.nama ILIKE $1 OR s.stambuk ILIKE $1 OR s.nik ILIKE $1)
-			   AND s.status IN ('lulus','boyong','keluar')
+			   AND s.status NOT IN ('aktif','pengabdian')
 			 LIMIT 10`, searchTerm)
 
 		if err == nil {
@@ -153,6 +155,38 @@ func GlobalSearch(ctx context.Context, query string, roles []string, pengajarID 
 					Nama:      nama,
 					Detail:    detail,
 					DataUtama: map[string]interface{}{"no_hp": noHP, "status": status},
+				})
+			}
+		}
+	}
+
+	// 3.5 Search Pengajar Purna (arsip pengajar yang sudah purna tugas)
+	rowsPurna, err := config.DB.Query(ctx,
+		`SELECT id, nama, status, tahun_keluar
+		 FROM pengajar_purna
+		 WHERE is_active IS NOT FALSE AND (nama ILIKE $1 OR no_hp ILIKE $1)
+		 LIMIT 10`, searchTerm)
+
+	if err == nil {
+		defer rowsPurna.Close()
+		for rowsPurna.Next() {
+			var id int
+			var nama string
+			var status, tahunKeluar *string
+			if err := rowsPurna.Scan(&id, &nama, &status, &tahunKeluar); err == nil {
+				detail := "Pengajar purna"
+				if tahunKeluar != nil && *tahunKeluar != "" {
+					detail += " • keluar " + *tahunKeluar
+				}
+				if status != nil && *status != "" {
+					detail += " • " + *status
+				}
+				results = append(results, SearchResult{
+					Tipe:      "pengajar_purna",
+					ID:        id,
+					Nama:      nama,
+					Detail:    detail,
+					DataUtama: map[string]interface{}{"status": status, "tahun_keluar": tahunKeluar},
 				})
 			}
 		}

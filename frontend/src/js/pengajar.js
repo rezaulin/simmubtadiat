@@ -227,16 +227,16 @@ function renderTable(pengajarArray) {
     const tr = document.createElement('tr');
     tr.className = 'hover:bg-gray-50/50 dark:hover:bg-slate-800/50 transition-colors';
     tr.innerHTML = `
-      <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900 dark:text-white">
+      <td data-label="Nama Lengkap" class="px-6 py-4 whitespace-nowrap font-medium text-gray-900 dark:text-white">
         ${nama} ${badgeHtml}
       </td>
-      <td class="px-6 py-4 text-gray-700 dark:text-gray-300">
+      <td data-label="Nomor HP" class="px-6 py-4 text-gray-700 dark:text-gray-300">
         ${noHp}
       </td>
-      <td class="px-6 py-4 text-gray-700 dark:text-gray-300">
+      <td data-label="Alamat" class="px-6 py-4 text-gray-700 dark:text-gray-300">
         ${alamat}
       </td>
-      <td class="px-6 py-4 text-right">
+      <td data-label="Aksi" class="px-6 py-4 text-right">
         <button onclick="openDetailPengajar(${p.id}, '${nama}')" class="text-blue-500 hover:underline text-sm font-medium mr-3">Info</button>
         ${window.isAdminRole(userRole) ? `
           <button onclick="editPengajar(${p.id})" class="text-primary dark:text-accent-emerald hover:underline text-sm font-medium mr-3">Edit</button>

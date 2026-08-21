@@ -101,9 +101,11 @@ async function checkAuth() {
       btnTemplate?.classList.remove('hidden');
     }
 
-    // Muat wilayah untuk filter + modal, lalu data.
+    // Muat wilayah untuk filter + modal, lalu data, lalu deep-link #id dari
+    // pencarian global (membuka modal detail otomatis).
     await loadProvinsiOptions();
-    loadData();
+    await loadData();
+    openDetailFromHash();
   } catch (err) {
     console.error('Auth check failed:', err);
   }
@@ -215,10 +217,10 @@ function renderTable(list) {
     const tMengajar = escapeHtml(p.tahun_mengajar || '-');
     const tKeluar = escapeHtml(p.tahun_keluar || '-');
 
-    const aksi = canWrite
-      ? `<button class="btn-edit text-emerald-500 hover:underline text-sm font-medium" data-idx="${idx}">Edit</button>
+    const aksi = `<button class="btn-detail text-blue-500 hover:underline text-sm font-medium" data-idx="${idx}">Detail</button>` + (canWrite
+      ? ` <button class="btn-edit text-emerald-500 hover:underline text-sm font-medium ml-3" data-idx="${idx}">Edit</button>
          <button class="btn-hapus text-red-500 hover:underline text-sm font-medium ml-3" data-idx="${idx}">Hapus</button>`
-      : '<span class="text-xs text-gray-400">-</span>';
+      : '');
 
     const tr = document.createElement('tr');
     tr.className = 'hover:bg-gray-50/50 dark:hover:bg-slate-800/50 transition-colors';
@@ -233,13 +235,79 @@ function renderTable(list) {
     tableBody.appendChild(tr);
   });
 
-  // Wire tombol Edit & Hapus.
+  // Wire tombol Detail, Edit & Hapus.
+  tableBody.querySelectorAll('.btn-detail').forEach(btn => {
+    btn.addEventListener('click', () => openDetailModal(currentData[parseInt(btn.dataset.idx, 10)]));
+  });
   tableBody.querySelectorAll('.btn-edit').forEach(btn => {
     btn.addEventListener('click', () => openEditModal(currentData[parseInt(btn.dataset.idx, 10)]));
   });
   tableBody.querySelectorAll('.btn-hapus').forEach(btn => {
     btn.addEventListener('click', () => hapusData(currentData[parseInt(btn.dataset.idx, 10)]));
   });
+}
+
+// ==================== MODAL DETAIL (read-only) ====================
+// Modal detail disuntikkan sekali (tidak di markup) agar pimpinan — yang
+// tidak punya tombol Edit/Hapus — tetap bisa melihat data lengkap.
+function ensureDetailModal() {
+  let m = document.getElementById('modal-detail-purna');
+  if (m) return m;
+  document.body.insertAdjacentHTML('beforeend', `
+    <div id="modal-detail-purna" class="hidden fixed inset-0 z-[70] flex items-center justify-center p-4">
+      <div class="absolute inset-0 bg-gray-900/50 dark:bg-black/60 backdrop-blur-sm" id="modal-detail-purna-overlay"></div>
+      <div class="relative bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-lg z-10 max-h-[90vh] overflow-y-auto p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-bold text-gray-800 dark:text-white">Detail Pengajar Purna</h3>
+          <button id="modal-detail-purna-close" class="tap-target text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1" aria-label="Tutup">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+        <div id="modal-detail-purna-body" class="space-y-3"></div>
+      </div>
+    </div>`);
+  m = document.getElementById('modal-detail-purna');
+  document.getElementById('modal-detail-purna-overlay').addEventListener('click', closeDetailModal);
+  document.getElementById('modal-detail-purna-close').addEventListener('click', closeDetailModal);
+  return m;
+}
+
+function closeDetailModal() {
+  const m = document.getElementById('modal-detail-purna');
+  if (m) m.classList.add('hidden');
+}
+
+function openDetailModal(p) {
+  if (!p) return;
+  const m = ensureDetailModal();
+  const rows = [
+    ['Nama Lengkap', p.nama],
+    ['Status', p.status],
+    ['Tempat, Tanggal Lahir', p.ttl],
+    ['Nama Wali', p.nama_wali],
+    ['Nomor HP/WA', p.no_hp],
+    ['Asal Daerah', p.asal_daerah],
+    ['Alamat', p.alamat],
+    ['Tahun Mengajar (Masuk)', p.tahun_mengajar],
+    ['Tahun Keluar', p.tahun_keluar],
+  ];
+  const html = rows.map(([label, val]) => `
+    <div class="grid grid-cols-[140px_1fr] gap-2 text-sm border-b border-gray-100 dark:border-slate-700 pb-2 last:border-0">
+      <span class="text-gray-500 dark:text-gray-400 font-medium">${escapeHtml(label)}</span>
+      <span class="text-gray-800 dark:text-gray-200">${escapeHtml(val != null && val !== '' ? String(val) : '-')}</span>
+    </div>`).join('');
+  document.getElementById('modal-detail-purna-body').innerHTML = html;
+  m.classList.remove('hidden');
+}
+window.openDetailPurna = openDetailModal;
+
+// Deep-link dari pencarian global: /pengajar-purna.html#<id> langsung membuka
+// detail data pengajar purna tersebut.
+function openDetailFromHash() {
+  const id = parseInt(window.location.hash.replace('#', ''), 10);
+  if (!id || !currentData || !currentData.length) return;
+  const item = currentData.find(p => p.id === id);
+  if (item) openDetailModal(item);
 }
 
 // ==================== FILTER WIRING ====================

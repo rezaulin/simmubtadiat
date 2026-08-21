@@ -153,13 +153,13 @@ function renderRows(list) {
     const btnRiwayat = `<button data-riwayat="${c.santri_id}" data-nama="${c.santri_nama}" class="px-3 py-1 bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-200 rounded-lg text-xs font-semibold transition-colors">Riwayat</button>`;
     tableBody.innerHTML += `
       <tr class="hover:bg-gray-50/50 dark:hover:bg-slate-700/30 transition-colors">
-        <td class="px-6 py-4">
+        <td data-label="Santri" class="px-6 py-4">
           <div class="font-semibold text-gray-800 dark:text-gray-200">${c.santri_nama || '-'}</div>
           ${bagian}
         </td>
-        <td class="px-6 py-4 text-center font-bold text-red-600 dark:text-red-400">${c.total_pelanggaran || 0}</td>
-        <td class="px-6 py-4 text-center font-bold text-green-600 dark:text-green-400">${c.total_prestasi || 0}</td>
-        <td class="px-6 py-4 text-right">
+        <td data-label="Total Pelanggaran" class="px-6 py-4 text-center font-bold text-red-600 dark:text-red-400">${c.total_pelanggaran || 0}</td>
+        <td data-label="Total Prestasi" class="px-6 py-4 text-center font-bold text-green-600 dark:text-green-400">${c.total_prestasi || 0}</td>
+        <td data-label="Aksi" class="px-6 py-4 text-right">
           <div class="flex justify-end gap-2">
             ${btnRiwayat}
           </div>

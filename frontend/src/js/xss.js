@@ -165,13 +165,13 @@ const BOTTOM_NAV = {
     { href: '/alumni.html', icon: 'graduation-cap', label: 'Alumni' },
     { href: '/catatan.html', icon: 'alert-triangle', label: 'Pelanggaran' }
   ],
+  // Muroqib cukup 3 menu inti (keputusan owner 2026-08): Santri, Absen,
+  // Pelanggaran — menu lain tetap bisa diakses via sidebar atas. FAB search
+  // tetap di tengah (spacer disisipkan otomatis oleh renderBottomNav).
   muroqib: [
-    { href: '/index.html', icon: 'home', label: 'Beranda' },
     { href: '/santri.html', icon: 'users', label: 'Santri' },
     { href: '/absensi-manual.html', icon: 'clipboard-check', label: 'Absen' },
-    { href: '/catatan.html', icon: 'alert-triangle', label: 'Pelanggaran' },
-    { href: '/dewan-harian.html', icon: 'user-check', label: 'Dewan Harian' },
-    { href: '/pengajar.html', icon: 'book-open', label: 'Pengajar' }
+    { href: '/catatan.html', icon: 'alert-triangle', label: 'Pelanggaran' }
   ],
   mustahiq: [
     { href: '/index.html', icon: 'home', label: 'Beranda' },
@@ -283,6 +283,14 @@ function searchBadgeFor(item) {
       label: 'ALUMNI',
       href: `/profil-santri.html?id=${item.id}`,
       subtext: `Stambuk: ${item.detail || '-'}`
+    };
+  }
+  if (item.tipe === 'pengajar_purna') {
+    return {
+      color: 'bg-slate-200 text-slate-700',
+      label: 'PENGAJAR PURNA',
+      href: `/pengajar-purna.html#${item.id}`,
+      subtext: item.detail || '-'
     };
   }
   if (item.tipe === 'dewan_harian') {
