@@ -221,20 +221,9 @@
             <!-- Injected via JS -->
         </select>
         <input type="number" id="filter-tahun-hijri-siswa" class="glass-input px-4 py-2 rounded-xl text-sm w-full sm:w-auto" placeholder="Tahun (cth: 1447)">
-        <select id="filter-bulan-hijri-siswa" class="glass-input px-4 py-2 rounded-xl text-sm w-full sm:w-auto">
+        <!-- Filter bulan disembunyikan: grid rekap baru menampilkan semua bulan TA -->
+        <select id="filter-bulan-hijri-siswa" class="hidden glass-input px-4 py-2 rounded-xl text-sm w-full sm:w-auto">
             <option value="0">-- Semua Bulan --</option>
-            <option value="1">Muharram</option>
-            <option value="2">Safar</option>
-            <option value="3">Rabi'ul Awal</option>
-            <option value="4">Rabi'ul Akhir</option>
-            <option value="5">Jumadil Awal</option>
-            <option value="6">Jumadil Akhir</option>
-            <option value="7">Rajab</option>
-            <option value="8">Sya'ban</option>
-            <option value="9">Ramadhan</option>
-            <option value="10">Syawal</option>
-            <option value="11">Dzulqa'dah</option>
-            <option value="12">Dzulhijjah</option>
         </select>
         <button id="btn-load-siswa" class="bg-primary hover:bg-primary-hover text-white px-6 py-2 rounded-xl text-sm font-medium transition-colors whitespace-nowrap shadow-sm">
             Tampilkan Data

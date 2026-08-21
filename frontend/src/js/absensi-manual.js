@@ -236,92 +236,140 @@ selKelasP?.addEventListener('change', () => {
     .forEach(b => { selBagianP.innerHTML += `<option value="${b.id}">${b.nama_bagian}</option>`; });
 });
 
-// === GRID SANTRI ===
+// === GRID SANTRI (mode baru: semua bulan TA tampil, input per santri) ===
 const btnLoadGrid = document.getElementById('btn-load-grid');
 const gridContainer = document.getElementById('grid-santri-container');
 const gridEl = document.getElementById('grid-santri');
 const btnSaveSantri = document.getElementById('btn-save-santri');
 
 let santriList = [];
-let santriData = {}; // key: santriId -> { s, i, a }
+let santriGridData = {}; // key: santriId -> { "tahun:bulan": { s, i, a } }
+let bulanListTA = [];    // [{ tahun, bulan, label }] seluruh bulan dalam kalender TA
+let currentSantriIdx = 0;
+let currentBagianId = null;
+
+// Susun daftar bulan TA dari kalender akademik (fallback: pasangan tahun Hijri).
+function buildBulanListTA() {
+  const list = [];
+  if (kalenderRange) {
+    let y = kalenderRange.mulai.thn, m = kalenderRange.mulai.bln;
+    const end = kalenderRange.selesai.thn * 12 + kalenderRange.selesai.bln;
+    while (y * 12 + m <= end) {
+      list.push({ tahun: y, bulan: m, label: `${BULAN_HIJRI[m - 1]} ${y} H` });
+      m++; if (m > 12) { m = 1; y++; }
+    }
+  } else {
+    const [t1, t2] = tahunHijriPair();
+    [t1, t2].forEach(th => BULAN_HIJRI.forEach((nama, idx) => {
+      list.push({ tahun: th, bulan: idx + 1, label: `${nama} ${th} H` });
+    }));
+  }
+  return list;
+}
 
 btnLoadGrid?.addEventListener('click', loadGridSantri);
 
 async function loadGridSantri() {
   const bagianId = selBagian.value;
-  const pilihan = parseBulanSel(selBulanHijri);
-  const tahunHijri = pilihan.tahun;
-  const bulanHijri = pilihan.bulan;
-  if (!bagianId || !tahunHijri || !bulanHijri) {
-    alert('Pilih bagian dan bulan');
-    return;
-  }
+  if (!bagianId) { alert('Pilih bagian terlebih dahulu'); return; }
+
+  bulanListTA = buildBulanListTA();
+  if (bulanListTA.length === 0) { alert('Kalender akademik belum diset (Settings).'); return; }
 
   // Load santri di bagian
   const resSantri = await fetch(`/api/santri/by-bagian/${bagianId}`);
   const santriJson = await resSantri.json();
   santriList = (Array.isArray(santriJson) ? santriJson : []).sort((a, b) => (a.nama || '').localeCompare(b.nama || ''));
 
-  // Load existing data
-  const resData = await fetch(`/api/absensi-manual/santri?bagian_id=${bagianId}&tahun_hijri=${tahunHijri}`);
-  const existingJson = await resData.json();
-  const existing = Array.isArray(existingJson) ? existingJson : [];
+  // Load existing data — 1 TA mencakup 2 tahun Hijri, ambil keduanya lalu gabung.
+  const tahunSet = [...new Set(bulanListTA.map(b => b.tahun))];
+  const existing = [];
+  for (const th of tahunSet) {
+    try {
+      const resData = await fetch(`/api/absensi-manual/santri?bagian_id=${bagianId}&tahun_hijri=${th}`);
+      const arr = await resData.json();
+      if (Array.isArray(arr)) existing.push(...arr);
+    } catch (_) {}
+  }
 
-  // Map existing data per santri for the selected bulan
-  santriData = {};
-  existing.filter(e => e.bulan_hijri == bulanHijri).forEach(e => {
-    santriData[e.santri_id] = { s: e.total_sakit, i: e.total_izin, a: e.total_alpha, h: e.total_hadir };
+  santriGridData = {};
+  existing.forEach(e => {
+    const key = `${e.santri_id}`;
+    if (!santriGridData[key]) santriGridData[key] = {};
+    santriGridData[key][`${e.tahun_hijri}:${e.bulan_hijri}`] = {
+      s: e.total_sakit || 0, i: e.total_izin || 0, a: e.total_alpha || 0
+    };
   });
+
+  currentSantriIdx = 0;
+  currentBagianId = bagianId;
 
   const activeBagian = cachedBagian.find(b => b.id == bagianId);
   const canEdit = activeBagian ? activeBagian.can_edit_absensi : false;
 
   renderGridSantri(canEdit);
   gridContainer.classList.remove('hidden');
-
-  if (canEdit) {
-    btnSaveSantri?.classList.remove('hidden');
-  } else {
-    btnSaveSantri?.classList.add('hidden');
-  }
+  btnSaveSantri?.classList.toggle('hidden', !canEdit || santriList.length === 0);
 }
 
+// Navigasi santri (◀ ▶)
+function moveSantri(delta) {
+  if (!santriList.length) return;
+  currentSantriIdx = (currentSantriIdx + delta + santriList.length) % santriList.length;
+  const activeBagian = cachedBagian.find(b => b.id == currentBagianId);
+  renderGridSantri(activeBagian ? activeBagian.can_edit_absensi : false);
+}
+window.moveSantri = moveSantri;
+
+// Render grid: seluruh bulan TA ke bawah × 3 kolom (S/I/T) untuk 1 santri.
+// Hadir (H) dihapus dari input & rekap sesuai keputusan owner 2026-08.
 function renderGridSantri(canEdit = false) {
-  if (santriList.length === 0) {
+  if (!santriList.length) {
     gridEl.innerHTML = '<p class="text-gray-400 text-center py-4">Tidak ada santri di bagian ini.</p>';
     return;
   }
 
-  let html = `<p class="text-sm font-medium text-gray-600 dark:text-gray-300 mb-3">Bulan: <span class="font-bold">${selBulanLabel(selBulanHijri)}</span></p>`;
+  const s = santriList[currentSantriIdx];
+  const data = santriGridData[String(s.id)] || {};
+
+  let html = '';
+  html += '<div class="mb-3 flex items-center justify-between gap-2 flex-wrap">';
+  html += '<div class="flex items-center gap-2">';
+  html += `<button onclick="moveSantri(-1)" class="tap-target px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-200 text-sm font-bold hover:bg-gray-200 dark:hover:bg-slate-600" aria-label="Santri sebelumnya">◀</button>`;
+  html += `<span class="text-sm font-bold text-gray-800 dark:text-white whitespace-nowrap">${String(currentSantriIdx + 1).padStart(2, '0')}. ${s.nama}</span>`;
+  html += `<button onclick="moveSantri(1)" class="tap-target px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-200 text-sm font-bold hover:bg-gray-200 dark:hover:bg-slate-600" aria-label="Santri berikutnya">▶</button>`;
+  html += '</div>';
+  html += `<span class="text-xs text-gray-400">${currentSantriIdx + 1}/${santriList.length}</span>`;
+  html += '</div>';
+
   html += '<table class="border-collapse text-sm w-full"><thead><tr>';
-  html += '<th class="px-3 py-2 border text-left">Nama Santri</th>';
-  html += '<th class="px-3 py-2 border text-center w-20">Sakit</th>';
-  html += '<th class="px-3 py-2 border text-center w-20">Izin</th>';
-  html += '<th class="px-3 py-2 border text-center w-20">Alpha</th>';
-  html += '<th class="px-3 py-2 border text-center w-20 text-green-600">Hadir</th>';
+  html += '<th class="px-2 py-2 border text-center w-10">#</th>';
+  html += '<th class="px-3 py-2 border text-left">BULAN</th>';
+  html += '<th class="px-3 py-2 border text-center w-16">S</th>';
+  html += '<th class="px-3 py-2 border text-center w-16">I</th>';
+  html += '<th class="px-3 py-2 border text-center w-16">T</th>';
   html += '</tr></thead><tbody>';
 
-  santriList.forEach(s => {
-    const d = santriData[s.id] || { s: 0, i: 0, a: 0, h: 0 };
+  bulanListTA.forEach((b, idx) => {
+    const key = `${b.tahun}:${b.bulan}`;
+    const d = data[key] || { s: 0, i: 0, a: 0 };
+    html += '<tr>';
+    html += `<td class="px-2 py-1.5 border text-center text-gray-400 text-xs">${String(idx + 1).padStart(2, '0')}</td>`;
+    html += `<td class="px-3 py-1.5 border font-medium">${b.label}</td>`;
     if (canEdit) {
-      html += `<tr>
-        <td class="px-3 py-2 border font-medium">${s.nama}</td>
-        <td class="px-1 py-1 border text-center"><input type="number" min="0" data-sid="${s.id}" data-type="s" value="${d.s}" class="w-16 text-center glass-input rounded px-2 py-1 text-sm"></td>
-        <td class="px-1 py-1 border text-center"><input type="number" min="0" data-sid="${s.id}" data-type="i" value="${d.i}" class="w-16 text-center glass-input rounded px-2 py-1 text-sm"></td>
-        <td class="px-1 py-1 border text-center"><input type="number" min="0" data-sid="${s.id}" data-type="a" value="${d.a}" class="w-16 text-center glass-input rounded px-2 py-1 text-sm"></td>
-        <td class="px-1 py-1 border text-center"><input type="number" min="0" data-sid="${s.id}" data-type="h" value="${d.h}" class="w-16 text-center glass-input rounded px-2 py-1 text-sm font-bold text-green-700"></td>
-      </tr>`;
+      html += `<td class="px-1 py-1 border text-center"><input type="number" min="0" data-bulan="${key}" data-type="s" value="${d.s}" class="w-12 text-center glass-input rounded px-1 py-1 text-sm"></td>`;
+      html += `<td class="px-1 py-1 border text-center"><input type="number" min="0" data-bulan="${key}" data-type="i" value="${d.i}" class="w-12 text-center glass-input rounded px-1 py-1 text-sm"></td>`;
+      html += `<td class="px-1 py-1 border text-center"><input type="number" min="0" data-bulan="${key}" data-type="a" value="${d.a}" class="w-12 text-center glass-input rounded px-1 py-1 text-sm"></td>`;
     } else {
-      html += `<tr>
-        <td class="px-3 py-2 border font-medium">${s.nama}</td>
-        <td class="px-3 py-2 border text-center">${d.s}</td>
-        <td class="px-3 py-2 border text-center">${d.i}</td>
-        <td class="px-3 py-2 border text-center">${d.a}</td>
-        <td class="px-3 py-2 border text-center font-bold text-green-700">${d.h}</td>
-      </tr>`;
+      html += `<td class="px-3 py-1.5 border text-center">${d.s || '-'}</td>`;
+      html += `<td class="px-3 py-1.5 border text-center">${d.i || '-'}</td>`;
+      html += `<td class="px-3 py-1.5 border text-center text-red-600 dark:text-red-400 font-semibold">${d.a || '-'}</td>`;
     }
+    html += '</tr>';
   });
   html += '</tbody></table>';
+
+  html += '<p class="text-xs text-gray-400 mt-2">S = Sakit &nbsp;•&nbsp; I = Izin &nbsp;•&nbsp; T = Alpha (tanpa keterangan)</p>';
   if (!canEdit) {
     html += '<p class="text-xs text-red-500 mt-2 italic">* Anda tidak memiliki akses untuk mengedit absensi kelas ini.</p>';
   }
@@ -329,26 +377,23 @@ function renderGridSantri(canEdit = false) {
 }
 
 btnSaveSantri?.addEventListener('click', async () => {
-  const pilihanS = parseBulanSel(selBulanHijri);
-  const tahunHijri = pilihanS.tahun;
-  const bulanHijri = pilihanS.bulan;
+  if (!santriList.length) return;
   const tahunAjaran = activeTahunAjaran;
   const entries = [];
 
-  gridEl.querySelectorAll('input[data-sid]').forEach(inp => {
-    const sid = parseInt(inp.dataset.sid);
+  gridEl.querySelectorAll('input[data-bulan]').forEach(inp => {
+    const [th, bl] = inp.dataset.bulan.split(':').map(Number);
     const type = inp.dataset.type;
     const val = parseInt(inp.value) || 0;
 
-    let entry = entries.find(e => e.santri_id === sid);
+    let entry = entries.find(e => e.tahun_hijri === th && e.bulan_hijri === bl);
     if (!entry) {
-      entry = { santri_id: sid, tahun_hijri: tahunHijri, bulan_hijri: bulanHijri, tahun_ajaran: tahunAjaran, total_sakit: 0, total_izin: 0, total_alpha: 0, total_hadir: 0 };
+      entry = { santri_id: santriList[currentSantriIdx].id, tahun_hijri: th, bulan_hijri: bl, tahun_ajaran: tahunAjaran, total_sakit: 0, total_izin: 0, total_alpha: 0, total_hadir: 0 };
       entries.push(entry);
     }
     if (type === 's') entry.total_sakit = val;
     if (type === 'i') entry.total_izin = val;
     if (type === 'a') entry.total_alpha = val;
-    if (type === 'h') entry.total_hadir = val;
   });
 
   btnSaveSantri.disabled = true;
@@ -362,11 +407,13 @@ btnSaveSantri?.addEventListener('click', async () => {
     if (!res.ok) throw new Error(await res.text());
     const result = await res.json();
     alert(`Tersimpan! ${result.saved} disimpan, ${result.deleted} dihapus.`);
+    // Lanjut otomatis ke santri berikutnya (loop kembali ke awal di akhir).
+    if (santriList.length > 1) moveSantri(1);
   } catch (err) {
     alert('Error: ' + err.message);
   } finally {
     btnSaveSantri.disabled = false;
-    btnSaveSantri.textContent = 'Simpan Absensi Santri';
+    btnSaveSantri.textContent = 'Simpan & Lanjut ▶';
   }
 });
 
@@ -378,87 +425,122 @@ const gridElP = document.getElementById('grid-pengajar');
 const btnSavePengajar = document.getElementById('btn-save-pengajar');
 
 let pengajarList = [];
-let pengajarData = {};
+// (pengajarData lama dihapus — pakai pengajarGridData)
 
 // Populate bulan dropdown pengajar
 function initPengajarDropdowns() {
   populateBulanDropdown(selBulanHijriP);
 }
 
+let pengajarGridData = {}; // key: pengajarId -> { "tahun:bulan": { s, i, a } }
+let bulanListTAP = [];
+let currentPengajarIdx = 0;
+let currentTingkatanP = null, currentKelasP = null;
+
 btnLoadGridP?.addEventListener('click', loadGridPengajar);
 
 async function loadGridPengajar() {
   const tingkatanId = selTingkatanP.value;
   const kelasId = selKelasP.value;
-  const pilihanP = parseBulanSel(selBulanHijriP);
-  const tahunHijri = pilihanP.tahun;
-  const bulanHijri = pilihanP.bulan;
-  if (!tingkatanId || !kelasId || !tahunHijri || !bulanHijri) {
-    alert('Pilih Tingkatan, Kelas, dan Bulan Hijriyah');
+  if (!tingkatanId || !kelasId) {
+    alert('Pilih Tingkatan dan Kelas');
     return;
   }
+
+  bulanListTAP = buildBulanListTA();
+  if (bulanListTAP.length === 0) { alert('Kalender akademik belum diset (Settings).'); return; }
 
   const resP = await fetch(`/api/pengajar?tingkatan_id=${tingkatanId}&kelas_id=${kelasId}`);
   const pJson = await resP.json();
   pengajarList = (Array.isArray(pJson) ? pJson : []).sort((a, b) => (a.nama || '').localeCompare(b.nama || ''));
 
-  const resData = await fetch(`/api/absensi-manual/pengajar?tingkatan_id=${tingkatanId}&kelas_id=${kelasId}&tahun_hijri=${tahunHijri}`);
-  const existingJson = await resData.json();
-  const existing = Array.isArray(existingJson) ? existingJson : [];
+  // Load existing data — semua tahun Hijri dalam rentang TA.
+  const tahunSet = [...new Set(bulanListTAP.map(b => b.tahun))];
+  const existing = [];
+  for (const th of tahunSet) {
+    try {
+      const resData = await fetch(`/api/absensi-manual/pengajar?tingkatan_id=${tingkatanId}&kelas_id=${kelasId}&tahun_hijri=${th}`);
+      const arr = await resData.json();
+      if (Array.isArray(arr)) existing.push(...arr);
+    } catch (_) {}
+  }
 
-  pengajarData = {};
-  existing.filter(e => e.bulan_hijri == bulanHijri).forEach(e => {
-    pengajarData[e.pengajar_id] = { s: e.total_sakit, i: e.total_izin, a: e.total_alpha, h: e.total_hadir };
+  pengajarGridData = {};
+  existing.forEach(e => {
+    const key = `${e.pengajar_id}`;
+    if (!pengajarGridData[key]) pengajarGridData[key] = {};
+    pengajarGridData[key][`${e.tahun_hijri}:${e.bulan_hijri}`] = {
+      s: e.total_sakit || 0, i: e.total_izin || 0, a: e.total_alpha || 0
+    };
   });
+
+  currentPengajarIdx = 0;
+  currentTingkatanP = tingkatanId;
+  currentKelasP = kelasId;
 
   const canEdit = cachedBagian.some(b => b.tingkatan_id == tingkatanId && b.kelas_id == kelasId && b.can_edit_absensi);
 
   renderGridPengajar(canEdit);
   gridContainerP.classList.remove('hidden');
-
-  if (canEdit) {
-    btnSavePengajar?.classList.remove('hidden');
-  } else {
-    btnSavePengajar?.classList.add('hidden');
-  }
+  btnSavePengajar?.classList.toggle('hidden', !canEdit || pengajarList.length === 0);
 }
 
+function movePengajar(delta) {
+  if (!pengajarList.length) return;
+  currentPengajarIdx = (currentPengajarIdx + delta + pengajarList.length) % pengajarList.length;
+  const canEdit = cachedBagian.some(b => b.tingkatan_id == currentTingkatanP && b.kelas_id == currentKelasP && b.can_edit_absensi);
+  renderGridPengajar(canEdit);
+}
+window.movePengajar = movePengajar;
+
+// Render grid pengajar: seluruh bulan TA × S/I/T untuk 1 pengajar.
 function renderGridPengajar(canEdit = false) {
-  if (pengajarList.length === 0) {
+  if (!pengajarList.length) {
     gridElP.innerHTML = '<p class="text-gray-400 text-center py-4">Tidak ada pengajar.</p>';
     return;
   }
 
-  let html = `<p class="text-sm font-medium text-gray-600 dark:text-gray-300 mb-3">Bulan: <span class="font-bold">${selBulanLabel(selBulanHijriP)}</span></p>`;
+  const p = pengajarList[currentPengajarIdx];
+  const data = pengajarGridData[String(p.id)] || {};
+
+  let html = '';
+  html += '<div class="mb-3 flex items-center justify-between gap-2 flex-wrap">';
+  html += '<div class="flex items-center gap-2">';
+  html += `<button onclick="movePengajar(-1)" class="tap-target px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-200 text-sm font-bold hover:bg-gray-200 dark:hover:bg-slate-600" aria-label="Pengajar sebelumnya">◀</button>`;
+  html += `<span class="text-sm font-bold text-gray-800 dark:text-white whitespace-nowrap">${String(currentPengajarIdx + 1).padStart(2, '0')}. ${p.nama}</span>`;
+  html += `<button onclick="movePengajar(1)" class="tap-target px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-200 text-sm font-bold hover:bg-gray-200 dark:hover:bg-slate-600" aria-label="Pengajar berikutnya">▶</button>`;
+  html += '</div>';
+  html += `<span class="text-xs text-gray-400">${currentPengajarIdx + 1}/${pengajarList.length}</span>`;
+  html += '</div>';
+
   html += '<table class="border-collapse text-sm w-full"><thead><tr>';
-  html += '<th class="px-3 py-2 border text-left">Nama Pengajar</th>';
-  html += '<th class="px-3 py-2 border text-center w-20">Sakit</th>';
-  html += '<th class="px-3 py-2 border text-center w-20">Izin</th>';
-  html += '<th class="px-3 py-2 border text-center w-20">Alpha</th>';
-  html += '<th class="px-3 py-2 border text-center w-20 text-green-600">Hadir</th>';
+  html += '<th class="px-2 py-2 border text-center w-10">#</th>';
+  html += '<th class="px-3 py-2 border text-left">BULAN</th>';
+  html += '<th class="px-3 py-2 border text-center w-16">S</th>';
+  html += '<th class="px-3 py-2 border text-center w-16">I</th>';
+  html += '<th class="px-3 py-2 border text-center w-16">T</th>';
   html += '</tr></thead><tbody>';
 
-  pengajarList.forEach(p => {
-    const d = pengajarData[p.id] || { s: 0, i: 0, a: 0, h: 0 };
+  bulanListTAP.forEach((b, idx) => {
+    const key = `${b.tahun}:${b.bulan}`;
+    const d = data[key] || { s: 0, i: 0, a: 0 };
+    html += '<tr>';
+    html += `<td class="px-2 py-1.5 border text-center text-gray-400 text-xs">${String(idx + 1).padStart(2, '0')}</td>`;
+    html += `<td class="px-3 py-1.5 border font-medium">${b.label}</td>`;
     if (canEdit) {
-      html += `<tr>
-        <td class="px-3 py-2 border font-medium">${p.nama}</td>
-        <td class="px-1 py-1 border text-center"><input type="number" min="0" data-pid="${p.id}" data-type="s" value="${d.s}" class="w-16 text-center glass-input rounded px-2 py-1 text-sm"></td>
-        <td class="px-1 py-1 border text-center"><input type="number" min="0" data-pid="${p.id}" data-type="i" value="${d.i}" class="w-16 text-center glass-input rounded px-2 py-1 text-sm"></td>
-        <td class="px-1 py-1 border text-center"><input type="number" min="0" data-pid="${p.id}" data-type="a" value="${d.a}" class="w-16 text-center glass-input rounded px-2 py-1 text-sm"></td>
-        <td class="px-1 py-1 border text-center"><input type="number" min="0" data-pid="${p.id}" data-type="h" value="${d.h}" class="w-16 text-center glass-input rounded px-2 py-1 text-sm font-bold text-green-700"></td>
-      </tr>`;
+      html += `<td class="px-1 py-1 border text-center"><input type="number" min="0" data-bulan="${key}" data-type="s" value="${d.s}" class="w-12 text-center glass-input rounded px-1 py-1 text-sm"></td>`;
+      html += `<td class="px-1 py-1 border text-center"><input type="number" min="0" data-bulan="${key}" data-type="i" value="${d.i}" class="w-12 text-center glass-input rounded px-1 py-1 text-sm"></td>`;
+      html += `<td class="px-1 py-1 border text-center"><input type="number" min="0" data-bulan="${key}" data-type="a" value="${d.a}" class="w-12 text-center glass-input rounded px-1 py-1 text-sm"></td>`;
     } else {
-      html += `<tr>
-        <td class="px-3 py-2 border font-medium">${p.nama}</td>
-        <td class="px-3 py-2 border text-center">${d.s}</td>
-        <td class="px-3 py-2 border text-center">${d.i}</td>
-        <td class="px-3 py-2 border text-center">${d.a}</td>
-        <td class="px-3 py-2 border text-center font-bold text-green-700">${d.h}</td>
-      </tr>`;
+      html += `<td class="px-3 py-1.5 border text-center">${d.s || '-'}</td>`;
+      html += `<td class="px-3 py-1.5 border text-center">${d.i || '-'}</td>`;
+      html += `<td class="px-3 py-1.5 border text-center text-red-600 dark:text-red-400 font-semibold">${d.a || '-'}</td>`;
     }
+    html += '</tr>';
   });
   html += '</tbody></table>';
+
+  html += '<p class="text-xs text-gray-400 mt-2">S = Sakit &nbsp;•&nbsp; I = Izin &nbsp;•&nbsp; T = Alpha (tanpa keterangan)</p>';
   if (!canEdit) {
     html += '<p class="text-xs text-red-500 mt-2 italic">* Anda tidak memiliki akses untuk mengedit absensi kelas ini.</p>';
   }
@@ -466,26 +548,23 @@ function renderGridPengajar(canEdit = false) {
 }
 
 btnSavePengajar?.addEventListener('click', async () => {
-  const pilihanP2 = parseBulanSel(selBulanHijriP);
-  const tahunHijri = pilihanP2.tahun;
-  const bulanHijri = pilihanP2.bulan;
+  if (!pengajarList.length) return;
   const tahunAjaran = activeTahunAjaran;
   const entries = [];
 
-  gridElP.querySelectorAll('input[data-pid]').forEach(inp => {
-    const pid = parseInt(inp.dataset.pid);
+  gridElP.querySelectorAll('input[data-bulan]').forEach(inp => {
+    const [th, bl] = inp.dataset.bulan.split(':').map(Number);
     const type = inp.dataset.type;
     const val = parseInt(inp.value) || 0;
 
-    let entry = entries.find(e => e.pengajar_id === pid);
+    let entry = entries.find(e => e.tahun_hijri === th && e.bulan_hijri === bl);
     if (!entry) {
-      entry = { pengajar_id: pid, tahun_hijri: tahunHijri, bulan_hijri: bulanHijri, tahun_ajaran: tahunAjaran, total_sakit: 0, total_izin: 0, total_alpha: 0, total_hadir: 0 };
+      entry = { pengajar_id: pengajarList[currentPengajarIdx].id, tahun_hijri: th, bulan_hijri: bl, tahun_ajaran: tahunAjaran, total_sakit: 0, total_izin: 0, total_alpha: 0, total_hadir: 0 };
       entries.push(entry);
     }
     if (type === 's') entry.total_sakit = val;
     if (type === 'i') entry.total_izin = val;
     if (type === 'a') entry.total_alpha = val;
-    if (type === 'h') entry.total_hadir = val;
   });
 
   btnSavePengajar.disabled = true;
@@ -499,11 +578,12 @@ btnSavePengajar?.addEventListener('click', async () => {
     if (!res.ok) throw new Error(await res.text());
     const result = await res.json();
     alert(`Tersimpan! ${result.saved} disimpan, ${result.deleted} dihapus.`);
+    if (pengajarList.length > 1) movePengajar(1);
   } catch (err) {
     alert('Error: ' + err.message);
   } finally {
     btnSavePengajar.disabled = false;
-    btnSavePengajar.textContent = 'Simpan Absensi Pengajar';
+    btnSavePengajar.textContent = 'Simpan & Lanjut ▶';
   }
 });
 
