@@ -46,11 +46,11 @@
     font-family: var(--font-inter);
     background-color: var(--color-light-bg);
     /* Latar seluruh halaman: ornamen Islami yang sama dengan hero,
-       dilapisi overlay terang agar kartu & konten tetap terbaca. */
+       dilapisi overlay tipis agar pattern tembus tapi konten tetap terbaca. */
     background-image:
       linear-gradient(135deg,
-        rgba(241, 245, 249, 0.92),
-        rgba(241, 245, 249, 0.8)),
+        rgba(241, 245, 249, 0.62),
+        rgba(241, 245, 249, 0.42)),
       url('/hero-pattern.jpg');
     background-size: cover;
     background-position: center;
@@ -63,8 +63,8 @@
     background-color: var(--color-dark-bg);
     background-image:
       linear-gradient(135deg,
-        rgba(15, 23, 42, 0.94),
-        rgba(15, 23, 42, 0.85)),
+        rgba(15, 23, 42, 0.82),
+        rgba(15, 23, 42, 0.68)),
       url('/hero-pattern.jpg');
     color: #f8fafc; /* slate-50 */
   }
