@@ -1126,29 +1126,64 @@ const DASH_MENU = {
   '/settings.html':       { label: 'Pengaturan',      icon: 'settings-2',       grad: 'from-gray-400 via-gray-500 to-slate-600',         glow: 'shadow-gray-500/25' },
 };
 
+// Menu utama = 6 menu inti yang paling sering dipakai (fixed, keputusan owner
+// 2026-08). Tetap difilter sesuai MENU_ACCESS role. Jika menu utama yang
+// diizinkan < 3, tab disembunyikan dan langsung tampil semua menu.
+const MAIN_MENU_LINKS = [
+  '/santri.html', '/penilaian.html', '/absensi-manual.html',
+  '/rapot.html', '/catatan.html', '/rekap.html',
+];
+
+function menuTileHtml(l) {
+  const m = DASH_MENU[l];
+  return `
+    <a href="${l}" class="group flex flex-col items-center gap-2.5 rounded-2xl p-2 pt-3 transition-all active:scale-95 hover:bg-gray-50 dark:hover:bg-slate-700/30">
+      <div class="relative flex h-14 w-14 items-center justify-center rounded-[1.15rem] bg-gradient-to-br ${m.grad} text-white shadow-lg ${m.glow} ring-1 ring-inset ring-white/25 transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:scale-105">
+        <span class="pointer-events-none absolute inset-x-1 top-0.5 h-[45%] rounded-t-[1rem] bg-gradient-to-b from-white/30 to-transparent"></span>
+        <i data-lucide="${m.icon}" class="relative h-7 w-7" style="stroke-width:2.25"></i>
+      </div>
+      <span class="max-w-[78px] text-center text-[11px] font-semibold leading-tight tracking-tight text-gray-700 dark:text-gray-200">${escapeHTML(m.label)}</span>
+    </a>`;
+}
+
 function renderMenuGrid(roles, target) {
   const el = target || document.getElementById('dash-menu-grid');
   if (!el) return;
   const allowed = computeAllowedLinks(roles);
-  // Urutan tetap: sesuai urutan DASH_MENU di atas; Beranda tidak ikut.
-  const links = Object.keys(DASH_MENU).filter(l => allowed.includes(l));
-  if (links.length === 0) { el.innerHTML = ''; return; }
-  const tiles = links.map(l => {
-    const m = DASH_MENU[l];
-    return `
-      <a href="${l}" class="group flex flex-col items-center gap-2.5 rounded-2xl p-2 pt-3 transition-all active:scale-95 hover:bg-gray-50 dark:hover:bg-slate-700/30">
-        <div class="relative flex h-14 w-14 items-center justify-center rounded-[1.15rem] bg-gradient-to-br ${m.grad} text-white shadow-lg ${m.glow} ring-1 ring-inset ring-white/25 transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:scale-105">
-          <span class="pointer-events-none absolute inset-x-1 top-0.5 h-[45%] rounded-t-[1rem] bg-gradient-to-b from-white/30 to-transparent"></span>
-          <i data-lucide="${m.icon}" class="relative h-7 w-7" style="stroke-width:2.25"></i>
+  const allLinks = Object.keys(DASH_MENU).filter(l => allowed.includes(l));
+  if (allLinks.length === 0) { el.innerHTML = ''; return; }
+
+  const mainLinks = MAIN_MENU_LINKS.filter(l => allLinks.includes(l));
+  const useTabs = mainLinks.length >= 3 && mainLinks.length < allLinks.length;
+
+  let currentTab = 'utama';
+
+  function draw() {
+    const links = (!useTabs || currentTab === 'utama') ? mainLinks : allLinks;
+    const tiles = links.map(menuTileHtml).join('');
+    const tabsHtml = useTabs ? `
+      <div class="mb-4 flex items-center justify-between gap-3">
+        <div class="flex items-center gap-1 rounded-xl bg-gray-100 p-1 dark:bg-slate-900/60">
+          <button id="tab-menu-utama" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${currentTab === 'utama' ? 'bg-white text-teal-700 shadow dark:bg-slate-700 dark:text-teal-300' : 'text-gray-500 dark:text-gray-400'}">Menu Utama</button>
+          <button id="tab-menu-semua" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${currentTab === 'semua' ? 'bg-white text-teal-700 shadow dark:bg-slate-700 dark:text-teal-300' : 'text-gray-500 dark:text-gray-400'}">Semua Menu</button>
         </div>
-        <span class="max-w-[78px] text-center text-[11px] font-semibold leading-tight tracking-tight text-gray-700 dark:text-gray-200">${escapeHTML(m.label)}</span>
-      </a>`;
-  }).join('');
-  el.innerHTML = `
-    <div class="rounded-3xl border border-gray-100 bg-white/80 p-4 shadow-sm backdrop-blur dark:border-slate-700/60 dark:bg-slate-800/50 md:p-5">
-      <div class="grid grid-cols-4 gap-y-5 gap-x-2 sm:grid-cols-5 lg:grid-cols-7">${tiles}</div>
-    </div>`;
-  refreshIcons();
+        <span class="hidden text-[11px] text-gray-400 dark:text-gray-500 md:block">${links.length} menu</span>
+      </div>` : '';
+    el.innerHTML = `
+      <div class="rounded-3xl border border-gray-100 bg-white/80 p-4 shadow-sm backdrop-blur dark:border-slate-700/60 dark:bg-slate-800/50 md:p-5">
+        ${tabsHtml}
+        <div class="grid grid-cols-4 gap-y-5 gap-x-2 sm:grid-cols-5 lg:grid-cols-7">${tiles}</div>
+      </div>`;
+    if (useTabs) {
+      const tU = document.getElementById('tab-menu-utama');
+      const tS = document.getElementById('tab-menu-semua');
+      if (tU) tU.addEventListener('click', () => { currentTab = 'utama'; draw(); });
+      if (tS) tS.addEventListener('click', () => { currentTab = 'semua'; draw(); });
+    }
+    refreshIcons();
+  }
+
+  draw();
 }
 
 // ==================== WIRING ROLE-AWARE DASHBOARD ====================

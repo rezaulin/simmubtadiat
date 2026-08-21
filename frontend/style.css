@@ -67,6 +67,15 @@
     );
   }
 
+  /* Lapisan pola geometris Islami di atas hero (Arabesque lattice).
+     SVG 8-point star pattern dibuat inline (data URI) — tajam di semua
+     resolusi tanpa file gambar, dan opacity rendah agar tetap elegan. */
+  .hero-pattern {
+    background-color: transparent;
+    background-image: url("data:image/svg+xml,%3Csvg width='56' height='56' viewBox='0 0 56 56' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23ffffff' stroke-opacity='0.14' stroke-width='1'%3E%3Cpath d='M28 4 L34 16 L48 12 L40 24 L52 28 L40 32 L48 44 L34 40 L28 52 L22 40 L8 44 L16 32 L4 28 L16 24 L8 12 L22 16 Z'/%3E%3Ccircle cx='28' cy='28' r='10'/%3E%3Cpath d='M0 0 L8 8 M56 0 L48 8 M0 56 L8 48 M56 56 L48 48'/%3E%3C/g%3E%3C/svg%3E");
+    background-size: 56px 56px;
+  }
+
   /* Kartu terpusat: setiap kartu pada seluruh halaman dirender dengan border
      selebar 1px. Warna border merujuk token dengan fallback agar degradasi
      anggun bila token tak tersedia. (Req 1.4, 1.7) */
