@@ -691,7 +691,7 @@ document.addEventListener('DOMContentLoaded', () => {
     bar.className = 'fixed top-0 left-0 right-0 z-[70] hidden print:hidden px-2 pt-2';
     bar.innerHTML =
       '<div class="mx-auto max-w-3xl flex items-center gap-3 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl shadow-xl shadow-black/10 px-3 py-2">' +
-        '<img src="/icon-192-v5.png" alt="" class="w-10 h-10 rounded-xl bg-white object-contain shrink-0 ring-1 ring-gray-100 dark:ring-slate-700">' +
+        '<img src="/icon-192-v6.png" alt="" class="w-10 h-10 rounded-xl bg-white object-contain shrink-0 ring-1 ring-gray-100 dark:ring-slate-700">' +
         '<div class="min-w-0 flex-1">' +
           '<p class="text-sm font-bold text-gray-800 dark:text-white leading-tight truncate">Pasang SIM Mubtadiat</p>' +
           '<p class="text-xs text-gray-500 dark:text-gray-400 leading-tight truncate">Buka langsung dari layar utama, lebih cepat.</p>' +
