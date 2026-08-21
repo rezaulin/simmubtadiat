@@ -178,7 +178,7 @@ function renderTable(dewanArray) {
         ${person.alamat}
       </td>
       <td data-label="Riwayat Jabatan & Aksi" colspan="2" class="px-6 py-3 align-top">
-        ${jabatansHtml}
+        <div class="flex flex-col w-full text-left" style="align-items:flex-start">${jabatansHtml}</div>
       </td>
     `;
     tableBody.appendChild(tr);
