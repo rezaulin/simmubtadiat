@@ -1227,12 +1227,6 @@ function initRoleAwareDashboard(role) {
   hide(jadwal);
   renderMenuGrid(roles);
 
-  // Watchdog kesehatan data penilaian tetap ada untuk pimpinan/admin
-  // (ini notifikasi, bukan statistik).
-  if (hasAdmin && (roles.includes('pimpinan') || roles.includes('admin'))) {
-    loadDataHealth();
-  }
-
   if (!hasAdmin && !hasGuru) {
     if (region) {
       region.innerHTML = `
