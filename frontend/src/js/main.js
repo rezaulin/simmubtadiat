@@ -400,7 +400,7 @@ function renderHero(nama, role, opts) {
           <span id="user-role-badge" class="inline-flex items-center mt-3 px-3.5 py-1.5 bg-white/15 backdrop-blur-md border border-white/20 rounded-full text-xs font-bold tracking-widest shadow-sm">${displayRole}</span>
         </div>
         <div class="flex items-center gap-2 shrink-0">
-          <div id="user-avatar" class="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-white border border-white/25 shadow-lg shrink-0 overflow-hidden"><img src="/logo.jpg" alt="Logo Madrasah" class="w-full h-full object-cover"></div>
+          <div id="user-avatar" class="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-white/15 border border-white/25 backdrop-blur-md shadow-lg shrink-0 overflow-hidden"><img src="/logo.png" alt="Logo Madrasah" class="w-full h-full object-contain p-0.5"></div>
         </div>
       </div>
       <div class="grid grid-cols-3 gap-2 md:gap-3 mt-6">
@@ -1257,7 +1257,7 @@ async function checkAuth() {
       // Avatar: logo madrasah (bukan inisial nama)
       const avatar = document.getElementById('user-avatar');
       if (avatar && !avatar.querySelector('img')) {
-        avatar.innerHTML = '<img src="/logo.jpg" alt="Logo Madrasah" class="w-full h-full object-cover">';
+        avatar.innerHTML = '<img src="/logo.png" alt="Logo Madrasah" class="w-full h-full object-contain p-0.5">';
       }
 
       const roles = data.roles || [data.role];
