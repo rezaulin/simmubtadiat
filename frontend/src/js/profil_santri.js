@@ -396,15 +396,67 @@ function populateRiwayat(riwayatArr) {
   riwayatArr.forEach(taData => {
     const isLatest = riwayatArr.indexOf(taData) === 0;
     
-    // Aggregate absensi
+    // Aggregate absensi per bulan Hijri (grid S/I/T seperti halaman Absensi/Rekap).
+    const NAMA_BULAN_HIJRI = ['Muharram', 'Safar', 'Rabiul Awal', 'Rabiul Akhir',
+      'Jumadil Awal', 'Jumadil Akhir', 'Rajab', "Sya'ban", 'Ramadhan',
+      'Syawwal', "Dzulqa'dah", 'Dzulhijjah'];
     let totS = 0, totI = 0, totA = 0;
-    if (Array.isArray(taData.absensi)) {
-       taData.absensi.forEach(a => {
-           totS += a.s || 0;
-           totI += a.i || 0;
-           totA += a.t || 0;
-       });
+    const absensiMapBulan = {}; // "tahun:bulan" -> {s,i,t}
+    (Array.isArray(taData.absensi) ? taData.absensi : []).forEach(a => {
+       totS += a.s || 0;
+       totI += a.i || 0;
+       totA += a.t || 0;
+       absensiMapBulan[`${a.tahun_hijri || 0}:${a.bulan_angka || 0}`] = { s: a.s || 0, i: a.i || 0, t: a.t || 0 };
+    });
+    // Susun daftar bulan lengkap: seluruh bulan pada tahun Hijri yang muncul
+    // (bulan kosong tetap tampil sesuai keputusan owner 2026-08).
+    const tahunHijriSet = [...new Set((Array.isArray(taData.absensi) ? taData.absensi : [])
+      .map(a => a.tahun_hijri).filter(y => y > 0))].sort((a, b) => a - b);
+    let absensiRows = '';
+    if (tahunHijriSet.length > 0) {
+      let no = 0;
+      tahunHijriSet.forEach(th => {
+        NAMA_BULAN_HIJRI.forEach((nama, idx) => {
+          const key = `${th}:${idx + 1}`;
+          const d = absensiMapBulan[key] || { s: 0, i: 0, t: 0 };
+          const has = !!absensiMapBulan[key];
+          no++;
+          absensiRows += `
+            <tr class="${has && d.t ? 'bg-red-50/60 dark:bg-red-900/10' : ''}">
+              <td class="px-2 py-1.5 border border-gray-200 dark:border-gray-700 text-center text-xs text-gray-400">${String(no).padStart(2, '0')}</td>
+              <td class="px-3 py-1.5 border border-gray-200 dark:border-gray-700 font-medium text-gray-800 dark:text-gray-200">${nama} ${th} H</td>
+              <td class="px-2 py-1.5 border border-gray-200 dark:border-gray-700 text-center font-bold text-blue-600 dark:text-blue-400">${d.s || '-'}</td>
+              <td class="px-2 py-1.5 border border-gray-200 dark:border-gray-700 text-center font-bold text-amber-600 dark:text-amber-400">${d.i || '-'}</td>
+              <td class="px-2 py-1.5 border border-gray-200 dark:border-gray-700 text-center font-bold ${d.t ? 'text-red-600 dark:text-red-400' : 'text-gray-400'}">${d.t || '-'}</td>
+            </tr>`;
+        });
+      });
+      absensiRows += `
+        <tr class="bg-gray-50 dark:bg-gray-750 font-bold">
+          <td colspan="2" class="px-3 py-2 border border-gray-200 dark:border-gray-700 text-right text-gray-700 dark:text-gray-300 uppercase text-xs tracking-wide">Total</td>
+          <td class="px-2 py-2 border border-gray-200 dark:border-gray-700 text-center text-blue-700 dark:text-blue-300">${totS}</td>
+          <td class="px-2 py-2 border border-gray-200 dark:border-gray-700 text-center text-amber-700 dark:text-amber-300">${totI}</td>
+          <td class="px-2 py-2 border border-gray-200 dark:border-gray-700 text-center ${totA ? 'text-red-600 dark:text-red-400' : 'text-gray-500'}">${totA}</td>
+        </tr>`;
     }
+    const absensiTable = tahunHijriSet.length === 0
+      ? '<p class="text-sm text-gray-400 italic py-4">Belum ada data absensi di tahun ini.</p>'
+      : `
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm border-collapse max-w-lg">
+            <thead class="bg-gray-100 dark:bg-gray-800">
+              <tr>
+                <th class="px-2 py-2 border border-gray-200 dark:border-gray-700 text-center text-xs font-bold text-gray-500 dark:text-gray-400 uppercase w-12">#</th>
+                <th class="px-3 py-2 border border-gray-200 dark:border-gray-700 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Bulan</th>
+                <th class="px-2 py-2 border border-gray-200 dark:border-gray-700 text-center text-xs font-bold text-blue-600 dark:text-blue-400 uppercase w-16">S</th>
+                <th class="px-2 py-2 border border-gray-200 dark:border-gray-700 text-center text-xs font-bold text-amber-600 dark:text-amber-400 uppercase w-16">I</th>
+                <th class="px-2 py-2 border border-gray-200 dark:border-gray-700 text-center text-xs font-bold text-red-600 dark:text-red-400 uppercase w-16">T</th>
+              </tr>
+            </thead>
+            <tbody>${absensiRows}</tbody>
+          </table>
+        </div>
+        <p class="text-xs text-gray-400 mt-2">S = Sakit &nbsp;•&nbsp; I = Izin &nbsp;•&nbsp; T = Alpha (tanpa keterangan)</p>`;
 
     // Bangun tabel raport per mapel dengan 6 kolom nilai
     const raportArr = Array.isArray(taData.raport) ? taData.raport : [];
@@ -468,20 +520,7 @@ function populateRiwayat(riwayatArr) {
 
          <div class="p-6">
             <h4 class="text-md font-semibold text-gray-800 dark:text-gray-200 mb-3 border-b border-gray-200 dark:border-gray-700 pb-2">Rekap Absensi</h4>
-            <div class="grid grid-cols-3 gap-4 text-center max-w-lg mb-8">
-               <div class="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-3 border border-blue-100 dark:border-blue-800">
-                  <div class="text-xs font-medium text-blue-600 dark:text-blue-400 uppercase tracking-wide">Sakit (S)</div>
-                  <div class="mt-1 text-2xl font-bold text-blue-900 dark:text-blue-100">${totS}</div>
-               </div>
-               <div class="bg-yellow-50 dark:bg-yellow-900/30 rounded-lg p-3 border border-yellow-100 dark:border-yellow-800">
-                  <div class="text-xs font-medium text-yellow-600 dark:text-yellow-400 uppercase tracking-wide">Izin (I)</div>
-                  <div class="mt-1 text-2xl font-bold text-yellow-900 dark:text-yellow-100">${totI}</div>
-               </div>
-               <div class="bg-red-50 dark:bg-red-900/30 rounded-lg p-3 border border-red-100 dark:border-red-800">
-                  <div class="text-xs font-medium text-red-600 dark:text-red-400 uppercase tracking-wide">Alpha (A)</div>
-                  <div class="mt-1 text-2xl font-bold text-red-900 dark:text-red-100">${totA}</div>
-               </div>
-            </div>
+            <div class="mb-8">${absensiTable}</div>
 
             <h4 class="text-md font-semibold text-gray-800 dark:text-gray-200 mb-3 border-b border-gray-200 dark:border-gray-700 pb-2">Transkrip Nilai (Tamrin, Ujian & Raport)</h4>
             ${raportTable}

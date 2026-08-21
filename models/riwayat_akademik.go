@@ -10,11 +10,12 @@ import (
 )
 
 type RiwayatAbsensi struct {
-	Bulan      string `json:"bulan"`       // e.g. "Muharram"
-	BulanAngka int    `json:"bulan_angka"` // 1-12 (Hijriyah)
-	Sakit      int    `json:"s"`
-	Izin       int    `json:"i"`
-	TanpaKet   int    `json:"t"`
+	Bulan       string `json:"bulan"`       // e.g. "Muharram"
+	BulanAngka  int    `json:"bulan_angka"` // 1-12 (Hijriyah)
+	TahunHijri  int    `json:"tahun_hijri"` // tahun Hijri baris ini (TA bisa mencakup 2 tahun)
+	Sakit       int    `json:"s"`
+	Izin        int    `json:"i"`
+	TanpaKet    int    `json:"t"`
 }
 
 type RiwayatRaport struct {
@@ -368,7 +369,7 @@ func GetRiwayatAkademik(ctx context.Context, santriID int) ([]RiwayatAkademikTah
 				if a.BulanHijri >= 1 && a.BulanHijri <= 12 {
 					nama = bulanHijriNames[a.BulanHijri]
 				}
-				m = &RiwayatAbsensi{Bulan: nama, BulanAngka: a.BulanHijri}
+				m = &RiwayatAbsensi{Bulan: nama, BulanAngka: a.BulanHijri, TahunHijri: a.TahunHijri}
 				abMap[a.BulanHijri] = m
 			}
 			m.Sakit += a.Sakit

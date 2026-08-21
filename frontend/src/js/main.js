@@ -2,7 +2,7 @@
 
 // Reuse the canonical HTML escaper from xss.js so user-provided text rendered by
 // the dashboard render layer is escaped consistently with the rest of the app.
-import { escapeHTML } from './xss.js';
+import { escapeHTML, computeAllowedLinks } from './xss.js';
 
 // Decode entitas HTML yang sudah dihasilkan sanitizer global xss.js (& < > ' ")
 // SEBELUM render meng-escape ulang, agar tidak terjadi escape ganda (mis. tampil
@@ -1105,6 +1105,50 @@ async function loadKalenderAgenda(target, today) {
   }
 }
 
+// ==================== MENU LAUNCHER GRID (dashboard) ====================
+// Dashboard tidak lagi menampilkan statistik/grafik (keputusan owner 2026-08),
+// melainkan grid ikon menu sesuai role masing-masing pengguna — gaya
+// home-screen app. Menu yang tampil = MENU_ACCESS role (sama dengan sidebar).
+const DASH_MENU = {
+  '/santri.html':         { label: 'Santri',          icon: 'users',             grad: 'from-indigo-500 to-blue-500',      soft: 'bg-indigo-50 dark:bg-indigo-900/20' },
+  '/penilaian.html':      { label: 'Penilaian',       icon: 'file-check-2',      grad: 'from-teal-500 to-emerald-500',     soft: 'bg-teal-50 dark:bg-teal-900/20' },
+  '/absensi-manual.html': { label: 'Absensi',         icon: 'clipboard-check',   grad: 'from-emerald-500 to-green-500',    soft: 'bg-emerald-50 dark:bg-emerald-900/20' },
+  '/rapot.html':          { label: 'Raport',          icon: 'scroll-text',       grad: 'from-amber-500 to-orange-500',     soft: 'bg-amber-50 dark:bg-amber-900/20' },
+  '/catatan.html':        { label: 'Pelanggaran',     icon: 'alert-triangle',    grad: 'from-rose-500 to-red-500',         soft: 'bg-rose-50 dark:bg-rose-900/20' },
+  '/rekap.html':          { label: 'Rekap',           icon: 'bar-chart-3',       grad: 'from-cyan-500 to-sky-500',         soft: 'bg-cyan-50 dark:bg-cyan-900/20' },
+  '/pengajar.html':       { label: 'Pengajar',        icon: 'book-open',         grad: 'from-violet-500 to-purple-500',    soft: 'bg-violet-50 dark:bg-violet-900/20' },
+  '/dewan-harian.html':  { label: 'Dewan Harian',    icon: 'crown',             grad: 'from-yellow-500 to-amber-500',     soft: 'bg-yellow-50 dark:bg-yellow-900/20' },
+  '/alumni.html':         { label: 'Alumni',          icon: 'graduation-cap',    grad: 'from-fuchsia-500 to-pink-500',     soft: 'bg-fuchsia-50 dark:bg-fuchsia-900/20' },
+  '/arsip.html':          { label: 'Arsip',           icon: 'archive',           grad: 'from-slate-500 to-gray-600',       soft: 'bg-slate-100 dark:bg-slate-800/60' },
+  '/pengajar-purna.html': { label: 'Pengajar Purna',  icon: 'history',           grad: 'from-stone-500 to-neutral-600',    soft: 'bg-stone-100 dark:bg-stone-800/60' },
+  '/kelas.html':          { label: 'Kelas',           icon: 'school',            grad: 'from-sky-500 to-blue-500',         soft: 'bg-sky-50 dark:bg-sky-900/20' },
+  '/perpindahan.html':    { label: 'Perpindahan',     icon: 'arrow-right-left',  grad: 'from-lime-500 to-green-500',       soft: 'bg-lime-50 dark:bg-lime-900/20' },
+  '/settings.html':       { label: 'Pengaturan',      icon: 'settings',          grad: 'from-gray-500 to-slate-600',       soft: 'bg-gray-50 dark:bg-gray-800/60' },
+};
+
+function renderMenuGrid(roles, target) {
+  const el = target || document.getElementById('dash-menu-grid');
+  if (!el) return;
+  const allowed = computeAllowedLinks(roles);
+  // Urutan tetap: sesuai urutan DASH_MENU di atas; Beranda tidak ikut.
+  const links = Object.keys(DASH_MENU).filter(l => allowed.includes(l));
+  if (links.length === 0) { el.innerHTML = ''; return; }
+  const tiles = links.map(l => {
+    const m = DASH_MENU[l];
+    return `
+      <a href="${l}" class="group flex flex-col items-center gap-2 p-3 rounded-2xl ${m.soft} border border-transparent hover:border-gray-200 dark:hover:border-slate-600 hover:shadow-md transition-all active:scale-95">
+        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br ${m.grad} flex items-center justify-center text-white shadow-md group-hover:shadow-lg group-hover:scale-105 transition-all">
+          <i data-lucide="${m.icon}" class="w-7 h-7"></i>
+        </div>
+        <span class="text-xs font-semibold text-gray-700 dark:text-gray-200 text-center leading-tight">${escapeHTML(m.label)}</span>
+      </a>`;
+  }).join('');
+  el.innerHTML = `
+    <h3 class="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3 px-1">Menu</h3>
+    <div class="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3">${tiles}</div>`;
+  refreshIcons();
+}
+
 // ==================== WIRING ROLE-AWARE DASHBOARD ====================
 // Berdasarkan peran pengguna (via resolveDashboardView), render region konten
 // Dashboard sesuai peran dan orkestrasi widget yang relevan:
@@ -1137,33 +1181,19 @@ function initRoleAwareDashboard(role) {
   const hasAdmin = roles.some(r => ADMIN_DASHBOARD_ROLES.includes(r));
   const hasGuru = roles.some(r => GURU_DASHBOARD_ROLES.includes(r));
 
-  if (hasAdmin || hasGuru) {
-    show(side);
-    loadKalenderAgenda();
-  } else {
-    hide(side);
-  }
+  // Dashboard = menu launcher grid (statistik/grafik dihapus total, jadwal
+  // guru juga tidak ditampilkan — keputusan owner 2026-08). Widget jadwal,
+  // statistik, grafik, dan kolom samping semuanya disembunyikan.
+  hide(side);
+  hide(metrics);
+  hide(chartsCol);
+  hide(jadwal);
+  renderMenuGrid(roles);
 
-  if (hasAdmin) {
-    show(metrics);
-    show(chartsCol);
-    loadStats();
-    loadPengabdian();
-    loadPengajar();
-    loadSantriCharts();
-    if (roles.includes('pimpinan') || roles.includes('admin')) {
-      loadDataHealth();
-    }
-  } else {
-    hide(metrics);
-    hide(chartsCol);
-  }
-
-  if (hasGuru) {
-    show(jadwal);
-    loadJadwalHariIni();
-  } else {
-    hide(jadwal);
+  // Watchdog kesehatan data penilaian tetap ada untuk pimpinan/admin
+  // (ini notifikasi, bukan statistik).
+  if (hasAdmin && (roles.includes('pimpinan') || roles.includes('admin'))) {
+    loadDataHealth();
   }
 
   if (!hasAdmin && !hasGuru) {
