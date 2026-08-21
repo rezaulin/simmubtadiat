@@ -491,8 +491,9 @@ func main() {
 	r.Get("/*", func(w http.ResponseWriter, r *http.Request) {
 		filePath := filepath.Join(filesDir, r.URL.Path)
 
-		// If requesting HTML or the root path, prevent browser caching so new builds are immediately visible
-		if filepath.Ext(r.URL.Path) == ".html" || r.URL.Path == "/" {
+		// If requesting HTML, the service worker, or the root path, prevent
+		// browser/CDN caching so new builds are immediately visible.
+		if filepath.Ext(r.URL.Path) == ".html" || r.URL.Path == "/" || r.URL.Path == "/sw.js" {
 			w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
 			w.Header().Set("Pragma", "no-cache")
 			w.Header().Set("Expires", "0")
