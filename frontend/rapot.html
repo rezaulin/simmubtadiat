@@ -136,10 +136,14 @@
     /* Data identitas siswa: label Latin, dua kolom kiri-kanan.
        Spek: Times New Roman 14pt (label & nilai identitas).
        line-height diperkecil (preflight Tailwind = 1.5) agar raport
-       tetap muat 1 halaman F4. */
+       tetap muat 1 halaman F4.
+       Layout grid per baris: lebar label FIX -> titik dua (:) sejajar di
+       semua baris; nilai flex dengan garis titik-titik di bawahnya
+       (form-style) sehingga rapi apa pun panjang isinya. */
     .student-data {
         display: flex;
         justify-content: space-between;
+        gap: 12mm;
         margin-bottom: 8px;
         font-family: 'Times New Roman', serif;
         font-size: 14pt;
@@ -147,12 +151,24 @@
     }
 
     .student-data p {
+        display: flex;
+        align-items: baseline;
         margin-bottom: 1px;
     }
 
     .student-data .lbl {
-        display: inline-block;
-        min-width: 90px;
+        flex-shrink: 0;
+        width: 100px;
+    }
+
+    .student-data .colon {
+        margin-right: 8px;
+    }
+
+    .student-data .val {
+        flex: 1;
+        min-width: 20mm;
+        border-bottom: 1px dotted #000;
     }
 
 
@@ -489,19 +505,21 @@
               <h2 data-field="madrasah-line" class="ft-uth-16">المدرسة العالية للبنات هداية المبتدئات ليربيا كديري</h2>
               <p class="hdr-tahun ft-uth-16">سنة : <span data-field="tahun-ajaran">١٤٤٦ - ١٤٤٧ هـ / ٢٠٠٥ - ٢٠٠٦ م</span></p>
           </div>
-          <img src="/logo-v3.png" alt="Logo" class="header-logo" onerror="this.src='https://via.placeholder.com/80'">
+          <img src="/logo-raport-bw.png" alt="Logo" class="header-logo" onerror="this.src='/logo-v3.png'">
       </div>
 
-      <!-- STUDENT DATA (label Latin sesuai contoh, bukan Arab) -->
+      <!-- STUDENT DATA (label Latin sesuai contoh, bukan Arab).
+           Grid: label lebar fix + titik dua sejajar + nilai flex dengan
+           garis titik-titik di bawahnya (tidak ada ekor titik berantakan). -->
       <div class="student-data" dir="ltr">
           <div class="student-col">
-              <p><span class="lbl">Nama</span>: <strong data-field="nama">....................</strong></p>
-              <p><span class="lbl">No. Stambuk</span>: <strong data-field="stambuk">....................</strong></p>
-              <p><span class="lbl">Kelas</span>: <strong data-field="kelas">....................</strong></p>
+              <p><span class="lbl">Nama</span><span class="colon">:</span><strong class="val" data-field="nama">....................</strong></p>
+              <p><span class="lbl">No. Stambuk</span><span class="colon">:</span><strong class="val" data-field="stambuk">....................</strong></p>
+              <p><span class="lbl">Kelas</span><span class="colon">:</span><strong class="val" data-field="kelas">....................</strong></p>
           </div>
           <div class="student-col">
-              <p><span class="lbl">No. Tamrin</span>: <strong data-field="tamrin">....................</strong></p>
-              <p><span class="lbl">Bagian</span>: <strong data-field="bagian">....................</strong></p>
+              <p><span class="lbl">No. Tamrin</span><span class="colon">:</span><strong class="val" data-field="tamrin">....................</strong></p>
+              <p><span class="lbl">Bagian</span><span class="colon">:</span><strong class="val" data-field="bagian">....................</strong></p>
           </div>
       </div>
 
