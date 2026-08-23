@@ -495,7 +495,11 @@ function isExcludedRow(row) {
   const bayanBox = sheet.querySelector('[data-field="bayan-box"]');
   const sigMudir = sheet.querySelector('[data-field="sig-mudir"]');
   if (isSem2) {
-    set('bayan-value', data.bayan || '-');
+    const bayanLabel = data.bayan || '-';
+    set('bayan-value', bayanLabel);
+    // Nilai zona RODI (الرديء, Al-Bayan <= 5) dicetak merah.
+    const bayanTd = sheet.querySelector('[data-field="bayan-value"]');
+    if (bayanTd) bayanTd.style.color = decodeEntities(bayanLabel).includes('الرديء') ? '#dc2626' : '';
     if (bayanBox) bayanBox.style.display = 'block';
     if (sigMudir) sigMudir.style.display = 'block';
   } else {
