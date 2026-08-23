@@ -123,10 +123,15 @@ func GetDewanHarian(ctx context.Context, tahunAktif string) ([]DewanHarian, erro
 }
 
 func UpdatePengajar(ctx context.Context, id int, p Pengajar) error {
+	// PENTING: is_active TIDAK di-update di sini. Form edit frontend tidak
+	// mengirim is_active -> struct bool default false -> setiap edit membuat
+	// pengajar nonaktif dan "hilang" dari daftar (bug 2026-08, laporan owner:
+	// "kolom nama arab kalau diisi data pengajar jadi hilang").
+	// Nonaktifkan hanya lewat DeletePengajar (soft delete).
 	_, err := config.DB.Exec(ctx,
 		`UPDATE pengajar 
-		 SET nama=$1, nama_arab=$2, status=$3, no_hp=$4, alamat=$5, ttl=$6, nama_wali=$7, tahun_mengajar=$8, is_active=$9, updated_at=CURRENT_TIMESTAMP 
-		 WHERE id=$10`, p.Nama, p.NamaArab, p.Status, p.NoHP, p.Alamat, p.TTL, p.NamaWali, p.TahunMengajar, p.IsActive, id)
+		 SET nama=$1, nama_arab=$2, status=$3, no_hp=$4, alamat=$5, ttl=$6, nama_wali=$7, tahun_mengajar=$8, updated_at=CURRENT_TIMESTAMP 
+		 WHERE id=$9`, p.Nama, p.NamaArab, p.Status, p.NoHP, p.Alamat, p.TTL, p.NamaWali, p.TahunMengajar, id)
 	return err
 }
 
