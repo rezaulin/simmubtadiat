@@ -198,7 +198,7 @@ function renderSpreadsheet() {
     });
   });
 
-  // Clamp khos override (4-9) & bayan (5-9) + refresh tanda nilai rendah live.
+  // Clamp khos override (4-9) & bayan (0-9) + refresh tanda nilai rendah live.
   container.querySelectorAll('input[data-khos-sem], input[data-bayan]').forEach(inp => {
     inp.addEventListener('input', () => {
       clampNilaiInput(inp);
@@ -423,7 +423,11 @@ function refreshRendahMarks() {
     let anyLow = false;
     tr.querySelectorAll('input[data-k], input[data-khos-sem], input[data-nilai-display]').forEach(inp => {
       const v = parseFloat(inp.value);
-      const low = !isNaN(v) && v < NILAI_RENDAH_AMBANG;
+      if (isNaN(v)) return;
+      // Al-Bayan (data-nilai-display / data-bayan): merah mulai 5 KE BAWAH (<=5, zona RODI).
+      // Nilai kuartal & khos: merah kalau < 5 (5 masih aman).
+      const isBayan = inp.hasAttribute('data-nilai-display') || inp.hasAttribute('data-bayan');
+      const low = isBayan ? v <= NILAI_RENDAH_AMBANG : v < NILAI_RENDAH_AMBANG;
       inp.classList.toggle('nilai-rendah', low);
       if (low) anyLow = true;
     });
@@ -432,10 +436,10 @@ function refreshRendahMarks() {
       // Merah dipertahankan baik karena nilai rendah maupun absensi merah.
       const absensiMerah = namaTd.dataset.absensi === 'red';
       namaTd.classList.toggle('nama-rendah', anyLow || absensiMerah);
-      // Tooltip gabungan: alasan absensi + info nilai < 5 (jika ada).
+      // Tooltip gabungan: alasan absensi + info nilai rendah (jika ada).
       const parts = [];
       if (namaTd.dataset.absensiTitle) parts.push(namaTd.dataset.absensiTitle);
-      if (anyLow) parts.push('memiliki nilai di bawah 5');
+      if (anyLow) parts.push('memiliki nilai rendah (Al-Bayan: 5 atau di bawah)');
       if (parts.length) namaTd.setAttribute('title', parts.join(' • '));
       else namaTd.removeAttribute('title');
     }
@@ -601,9 +605,9 @@ function renderBayanSection(santri, nilaiKhos, nilaiBayan, absensiMap, totalMape
     
     const labelAkhir = hasilAkhir !== '-' ? bayanLabel(hasilAkhir) : '';
     if (!canEdit) {
-      html += `<td class="px-0 py-0 border text-center bg-gray-50 dark:bg-slate-800"><input type="text" disabled value="${hasilAkhir !== '-' ? hasilAkhir : ''}" class="w-full text-center text-xs py-2 bg-transparent border-0 outline-none text-gray-600 dark:text-gray-300 font-bold" title="${labelAkhir || 'Hanya mustahiq yang dapat mengedit'}"></td>`;
+      html += `<td class="px-0 py-0 border text-center bg-gray-50 dark:bg-slate-800"><input type="text" disabled data-nilai-display value="${hasilAkhir !== '-' ? hasilAkhir : ''}" class="w-full text-center text-xs py-2 bg-transparent border-0 outline-none text-gray-600 dark:text-gray-300 font-bold" title="${labelAkhir || 'Hanya mustahiq yang dapat mengedit'}"></td>`;
     } else {
-      html += `<td class="px-0 py-0 border text-center bg-emerald-50 dark:bg-emerald-900/20"><input type="number" min="5" max="9" data-bayan="${s.id}" data-nilai-display value="${hasilAkhir !== '-' ? hasilAkhir : ''}" class="w-full text-center text-xs py-1 bg-transparent border-0 focus:bg-emerald-100 dark:focus:bg-emerald-900/40 text-emerald-800 dark:text-emerald-200 outline-none font-bold" title="${labelAkhir}"></td>`;
+      html += `<td class="px-0 py-0 border text-center bg-emerald-50 dark:bg-emerald-900/20"><input type="number" min="0" max="9" data-bayan="${s.id}" data-nilai-display value="${hasilAkhir !== '-' ? hasilAkhir : ''}" class="w-full text-center text-xs py-1 bg-transparent border-0 focus:bg-emerald-100 dark:focus:bg-emerald-900/40 text-emerald-800 dark:text-emerald-200 outline-none font-bold" title="${labelAkhir}"></td>`;
     }
     html += '</tr>';
   });
