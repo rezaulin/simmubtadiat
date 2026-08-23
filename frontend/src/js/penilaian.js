@@ -536,7 +536,9 @@ function renderRaportSection(title, mapels, santri, khosMap, absensiMap, semeste
 }
 
 function renderBayanSection(santri, nilaiKhos, nilaiBayan, absensiMap, totalMapels, canEdit) {
-  const bayanLabels = { 9: 'JAYYID AWAL', 8: 'JAYYID TSANI', 7: 'MUTAWASSIT AWAL', 6: 'MUTAWASSIT TSANI', 5: "RODI'" };
+  // Label Al-Bayan: 9..6 punya label sendiri, <=5 semuanya RODI'.
+  const bayanLabels = { 9: 'JAYYID AWAL', 8: 'JAYYID TSANI', 7: 'MUTAWASSIT AWAL', 6: 'MUTAWASSIT TSANI' };
+  const bayanLabel = (v) => bayanLabels[v] || "RODI'";
 
   let html = `<h3 class="text-sm font-bold text-emerald-700 dark:text-emerald-400 mt-8 mb-2 px-1">AL-BAYAN (Prestasi Tahunan)</h3>`;
   html += '<div class="overflow-x-auto border border-emerald-200 dark:border-emerald-800 rounded-xl mb-4"><table class="border-collapse text-xs w-full">';
@@ -568,7 +570,7 @@ function renderBayanSection(santri, nilaiKhos, nilaiBayan, absensiMap, totalMape
     let koreksi = 0;
     koreksi -= potonganAbsensi(ab.izin, 15);
     koreksi -= potonganAbsensi(ab.alpha, 5);
-    let hasilAkhir = bayanAsli !== '-' ? Math.max(5, Math.min(9, bayanAsli + koreksi)) : '-';
+    let hasilAkhir = bayanAsli !== '-' ? Math.min(9, bayanAsli + koreksi) : '-';
 
     // Override from DB if exists
     let overridden = false;
@@ -597,7 +599,7 @@ function renderBayanSection(santri, nilaiKhos, nilaiBayan, absensiMap, totalMape
     html += `<td class="px-2 py-1 border text-center font-bold">${bayanAsli}</td>`;
     html += `<td class="px-2 py-1 border text-center ${koreksi < 0 && !overridden ? 'text-red-600 dark:text-red-400' : 'text-gray-400'}">${ketKoreksi}</td>`;
     
-    const labelAkhir = hasilAkhir !== '-' ? (bayanLabels[hasilAkhir] || '') : '';
+    const labelAkhir = hasilAkhir !== '-' ? bayanLabel(hasilAkhir) : '';
     if (!canEdit) {
       html += `<td class="px-0 py-0 border text-center bg-gray-50 dark:bg-slate-800"><input type="text" disabled value="${hasilAkhir !== '-' ? hasilAkhir : ''}" class="w-full text-center text-xs py-2 bg-transparent border-0 outline-none text-gray-600 dark:text-gray-300 font-bold" title="${labelAkhir || 'Hanya mustahiq yang dapat mengedit'}"></td>`;
     } else {

@@ -356,24 +356,24 @@ func BulkInputNilaiBayan(ctx context.Context, inputs []NilaiBayanInput, tahunAja
 	defer tx.Rollback(ctx)
 
 	for _, input := range inputs {
-		if input.HasilAkhir < 5 || input.HasilAkhir > 9 {
-			return fmt.Errorf("nilai al-bayan %d untuk santri id %d tidak valid. Harus antara 5 dan 9", input.HasilAkhir, input.SantriID)
+		if input.HasilAkhir < 0 || input.HasilAkhir > 9 {
+			return fmt.Errorf("nilai al-bayan %d untuk santri id %d tidak valid. Harus antara 0 dan 9", input.HasilAkhir, input.SantriID)
 		}
 
-		// Konversi Label. Skala Al-Bayan 5-9: tidak ada Mumtaz,
-		// nilai tertinggi = 9 (الجيد الأول / Jayyid Awal).
+		// Konversi Label. Skala Al-Bayan maksimal 9, tanpa batas bawah.
+		// Nilai 5 ke bawah semua = الرديء (dengan hamzah).
 		var label string
-		switch input.HasilAkhir {
-		case 9:
+		switch {
+		case input.HasilAkhir >= 9:
 			label = "الجيد الأول"
-		case 8:
+		case input.HasilAkhir >= 8:
 			label = "الجيد الثاني"
-		case 7:
+		case input.HasilAkhir >= 7:
 			label = "المتوسط الأول"
-		case 6:
+		case input.HasilAkhir >= 6:
 			label = "المتوسط الثاني"
-		case 5:
-			label = "الردي"
+		default:
+			label = "الرديء"
 		}
 
 		var bagianID int

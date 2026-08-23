@@ -123,8 +123,8 @@ func GenerateNilaiAm(ctx context.Context, bagianID int, semester int, tahunAjara
 //     Bi Idzni >= 15/tahun -> -1, tiap 15 hari lagi -> -1 lagi (55 hari = -3)
 //     Bi Ghoirihi >= 5/tahun -> -1, tiap 5 hari lagi -> -1 lagi
 //     Floor(hari / ambang) = jumlah pengurangan total
-//   - Batas nilai akhir: minimal 5, maksimal 9.
-//   - Label: 9=الجيد الأول, 8=الجيد الثاني, 7=المتوسط الأول, 6=المتوسط الثاني, 5=الردي.
+//   - Batas nilai akhir: maksimal 9, TANPA batas bawah (bisa < 5, bahkan negatif).
+//   - Label: 9=الجيد الأول, 8=الجيد الثاني, 7=المتوسط الأول, 6=المتوسط الثاني, <=5=الرديء.
 func GenerateAlBayan(ctx context.Context, santriID int, tahunAjaran string) error {
 	tx, err := config.DB.Begin(ctx)
 	if err != nil {
@@ -185,26 +185,26 @@ func GenerateAlBayan(ctx context.Context, santriID int, tahunAjaran string) erro
 	}
 
 	finalScore := math.Floor(rataRata+0.5) + float64(koreksi)
-	if finalScore < 5 {
-		finalScore = 5
-	} else if finalScore > 9 {
+	if finalScore > 9 {
 		finalScore = 9
 	}
+	// TIDAK ADA batas bawah: pengurangan kelipatan absensi berlaku penuh,
+	// nilai bisa turun di bawah 5 (bahkan < 0 bila koreksi sangat besar).
 
-	// Konversi Label. Skala Al-Bayan 5-9: tidak ada Mumtaz,
-	// nilai tertinggi = 9 (الجيد الأول / Jayyid Awal).
+	// Konversi Label. Skala Al-Bayan maksimal 9 (الجيد الأول / Jayyid Awal).
+	// Nilai 5 ke bawah semua ditulis الرديء (dengan hamzah).
 	var label string
-	switch finalScore {
-	case 9:
+	switch {
+	case finalScore >= 9:
 		label = "الجيد الأول"
-	case 8:
+	case finalScore >= 8:
 		label = "الجيد الثاني"
-	case 7:
+	case finalScore >= 7:
 		label = "المتوسط الأول"
-	case 6:
+	case finalScore >= 6:
 		label = "المتوسط الثاني"
-	case 5:
-		label = "الردي"
+	default:
+		label = "الرديء"
 	}
 
 	// Get bagian_id
