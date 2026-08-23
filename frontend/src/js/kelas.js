@@ -448,10 +448,22 @@ document.getElementById('btn-batal-mapel')?.addEventListener('click', resetMapel
 window.editMapel = function(id) {
   const m = cachedMapel.find(x => x.id === id);
   if (!m) return;
-  
+
+  // Decode entitas HTML (&amp; -> &, dst) sebelum mengisi form: XSS sanitizer
+  // global meng-escape semua response API, dan .value TIDAK men-decode
+  // entitas. Tanpa ini, tiap edit mapel menyimpan "&amp;" mentah ke DB dan
+  // berakumulasi jadi "&amp;amp;" (bug 2026-08: "Aswaja &amp;amp; Ke-NU-an"
+  // muncul di raport kelas 3).
+  const decodeEntities = (str) => {
+    if (str === null || str === undefined) return '';
+    const el = document.createElement('textarea');
+    el.innerHTML = String(str);
+    return el.value;
+  };
+
   document.getElementById('mapel-id').value = m.id;
-  formKelolaMapel.querySelector('[name="nama_mapel"]').value = m.nama_mapel;
-  formKelolaMapel.querySelector('[name="nama_kitab"]').value = m.nama_kitab;
+  formKelolaMapel.querySelector('[name="nama_mapel"]').value = decodeEntities(m.nama_mapel);
+  formKelolaMapel.querySelector('[name="nama_kitab"]').value = decodeEntities(m.nama_kitab);
   formKelolaMapel.querySelector('[name="urutan"]').value = m.urutan;
   
   formKelolaMapel.querySelector('[name="kuartal_1"]').checked = m.aktif_kuartal?.includes(1) || false;

@@ -168,7 +168,9 @@
     .student-data .val {
         flex: 1;
         min-width: 20mm;
-        border-bottom: 1px dotted #000;
+        /* Tanpa border-bottom dotted & tanpa <strong> (bold): owner minta
+           isian identitas polos, tidak tebal, tanpa garis (2026-08). */
+        font-weight: normal;
     }
 
 
@@ -210,9 +212,12 @@
         font-size: 16pt;
     }
 
-    /* Angka nilai — TNR 14pt bold */
+    /* Angka nilai khos/am — KFGQPC Uthman Taha 14pt bold.
+       DULU TNR, tapi Times New Roman TIDAK punya glyph angka Arab-Hindi
+       (٠١٢٣٤٥٦٧٨٩) sehingga browser fallback ke font acak dan tampilannya
+       tidak konsisten. KFGQPC punya glyph lengkap (owner 2026-08). */
     .rapot-sheet td.td-num {
-        font-family: 'Times New Roman', serif;
+        font-family: 'KFGQPC Uthman Taha Naskh','Amiri',serif;
         font-size: 14pt;
         font-weight: bold;
     }
@@ -509,17 +514,16 @@
       </div>
 
       <!-- STUDENT DATA (label Latin sesuai contoh, bukan Arab).
-           Grid: label lebar fix + titik dua sejajar + nilai flex dengan
-           garis titik-titik di bawahnya (tidak ada ekor titik berantakan). -->
+           Isian TIDAK tebal dan TIDAK bergaris (owner request 2026-08). -->
       <div class="student-data" dir="ltr">
           <div class="student-col">
-              <p><span class="lbl">Nama</span><span class="colon">:</span><strong class="val" data-field="nama">....................</strong></p>
-              <p><span class="lbl">No. Stambuk</span><span class="colon">:</span><strong class="val" data-field="stambuk">....................</strong></p>
-              <p><span class="lbl">Kelas</span><span class="colon">:</span><strong class="val" data-field="kelas">....................</strong></p>
+              <p><span class="lbl">Nama</span><span class="colon">:</span><span class="val" data-field="nama">....................</span></p>
+              <p><span class="lbl">No. Stambuk</span><span class="colon">:</span><span class="val" data-field="stambuk">....................</span></p>
+              <p><span class="lbl">Kelas</span><span class="colon">:</span><span class="val" data-field="kelas">....................</span></p>
           </div>
           <div class="student-col">
-              <p><span class="lbl">No. Tamrin</span><span class="colon">:</span><strong class="val" data-field="tamrin">....................</strong></p>
-              <p><span class="lbl">Bagian</span><span class="colon">:</span><strong class="val" data-field="bagian">....................</strong></p>
+              <p><span class="lbl">No. Tamrin</span><span class="colon">:</span><span class="val" data-field="tamrin">....................</span></p>
+              <p><span class="lbl">Bagian</span><span class="colon">:</span><span class="val" data-field="bagian">....................</span></p>
           </div>
       </div>
 
