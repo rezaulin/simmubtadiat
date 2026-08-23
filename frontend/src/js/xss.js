@@ -4,12 +4,17 @@ const originalJson = Response.prototype.json;
 
 function escapeHTML(str) {
   if (typeof str !== 'string') return str;
-  return str.replace(/[&<>'"]/g, 
+  // CATATAN: '&' '<' '>' '"' di-escape. Apostrof ("'") SENGAJA TIDAK di-escape:
+  // option.value (dibangun via innerHTML) men-decode entitas kembali ke karakter
+  // asli, sedangkan string data di memori tetap ter-encode -> perbandingan ===
+  // gagal dan filter (mis. tingkatan "I'dadiyah") tidak menemukan data apa pun.
+  // Karena semua atribut template memakai kutip ganda, apostrof di dalam value
+  // atribut tetap aman.
+  return str.replace(/[&<>"]/g, 
     tag => ({
       '&': '&amp;',
       '<': '&lt;',
       '>': '&gt;',
-      "'": '&#39;',
       '"': '&quot;'
     }[tag] || tag)
   );
