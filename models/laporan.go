@@ -165,12 +165,15 @@ func GetRaportSantri(ctx context.Context, santriID int, semester int, tahunAjara
 		}
 
 		var mudarris string
+		// Mustahiq bagian diambil dari tabel mustahiq_bagian (tabel penugasan
+		// resmi; pengajar_bagian WHERE peran='mustahiq' isinya kosong).
+		// Diurutkan tahun_ajaran DESC agar TA terbaru menang (2026-08 fix).
 		config.DB.QueryRow(ctx,
 			`SELECT COALESCE(NULLIF(p.nama_arab, ''), p.nama)
-			 FROM pengajar_bagian pb
-			 JOIN pengajar p ON pb.pengajar_id = p.id
-			 WHERE pb.bagian_id = $1 AND pb.peran = 'mustahiq'
-			 ORDER BY pb.tahun_ajaran DESC
+			 FROM mustahiq_bagian mb
+			 JOIN pengajar p ON mb.pengajar_id = p.id
+			 WHERE mb.bagian_id = $1
+			 ORDER BY mb.tahun_ajaran DESC
 			 LIMIT 1`, *bagianID).Scan(&mudarris)
 		result.NamaMudarris = mudarris
 
