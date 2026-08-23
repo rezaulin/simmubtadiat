@@ -259,7 +259,8 @@ func GenerateNilaiKhos(ctx context.Context, santriID int, semester int, tahunAja
 	rows.Close()
 
 	// 3. Koreksi absensi untuk akhlaq-perilaku (per semester).
-	//    Bi Idzni >= 20/semester -> -1, Bi Ghoirihi >= 6/semester -> -1 (independen).
+	//    Bi Idzni >= 20/semester -> -1, tiap kelipatan 20 lagi -> -1 lagi.
+	//    Bi Ghoirihi >= 6/semester -> -1, tiap kelipatan 6 lagi -> -1 lagi.
 	//    Sumber 1: rekap_absensi (dari ustadz, satuan PERTEMUAN → konversi hari).
 	var totalIzin, totalAlpha int
 	err = tx.QueryRow(ctx,
@@ -290,12 +291,13 @@ func GenerateNilaiKhos(ctx context.Context, santriID int, semester int, tahunAja
 	izinHari += manualIzin
 	alphaHari += manualAlpha
 
+	// Kelipatan: floor(hari / ambang) = jumlah pengurangan
 	koreksiAkhlaq := 0
 	if izinHari >= 20 {
-		koreksiAkhlaq--
+		koreksiAkhlaq -= izinHari / 20
 	}
 	if alphaHari >= 6 {
-		koreksiAkhlaq--
+		koreksiAkhlaq -= alphaHari / 6
 	}
 
 	// 4. Apply correction, rounding, and limits

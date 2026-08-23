@@ -368,14 +368,27 @@ const ABSENSI_AMBANG = {
   tahunan: { izin: 15, alpha: 5 },
 };
 
+// Koreksi KELIPATAN (2026-08): tiap ambang penuh = -1.
+// izin 55 hari, ambang 15 -> floor(55/15) = -3. Di bawah ambang = 0.
+function potonganAbsensi(hari, ambang) {
+  const h = hari || 0;
+  return h >= ambang ? Math.floor(h / ambang) : 0;
+}
+
 function alasanAbsensi(ab, ambang, target) {
-  const warnIzin = Math.ceil(ambang.izin * 0.75);
-  const warnAlpha = Math.ceil(ambang.alpha * 0.75);
   const red = [], warn = [];
-  if ((ab.izin || 0) >= ambang.izin) red.push(`Izin ${ab.izin} hari (≥${ambang.izin}) → ${target} −1`);
-  else if ((ab.izin || 0) >= warnIzin) warn.push(`Izin ${ab.izin} hari — ${ambang.izin - ab.izin} hari lagi memotong ${target}`);
-  if ((ab.alpha || 0) >= ambang.alpha) red.push(`Alpha ${ab.alpha} hari (≥${ambang.alpha}) → ${target} −1`);
-  else if ((ab.alpha || 0) >= warnAlpha) warn.push(`Alpha ${ab.alpha} hari — ${ambang.alpha - ab.alpha} hari lagi memotong ${target}`);
+  const potongIzin = potonganAbsensi(ab.izin, ambang.izin);
+  const potongAlpha = potonganAbsensi(ab.alpha, ambang.alpha);
+  if (potongIzin > 0) red.push(`Izin ${ab.izin} hari (setiap ${ambang.izin} hari = -1) → ${target} −${potongIzin}`);
+  else {
+    const warnIzin = Math.ceil(ambang.izin * 0.75);
+    if ((ab.izin || 0) >= warnIzin) warn.push(`Izin ${ab.izin} hari — ${ambang.izin - ab.izin} hari lagi memotong ${target}`);
+  }
+  if (potongAlpha > 0) red.push(`Alpha ${ab.alpha} hari (setiap ${ambang.alpha} hari = -1) → ${target} −${potongAlpha}`);
+  else {
+    const warnAlpha = Math.ceil(ambang.alpha * 0.75);
+    if ((ab.alpha || 0) >= warnAlpha) warn.push(`Alpha ${ab.alpha} hari — ${ambang.alpha - ab.alpha} hari lagi memotong ${target}`);
+  }
   return { red, warn };
 }
 
@@ -550,24 +563,27 @@ function renderBayanSection(santri, nilaiKhos, nilaiBayan, absensiMap, totalMape
     }
     const bayanAsli = countKhos > 0 ? Math.round(sumKhos / countKhos) : '-';
 
-    // Koreksi absensi
+    // Koreksi absensi — KELIPATAN (sama dengan backend GenerateAlBayan):
+    // tiap 15 hari izin = -1, tiap 5 hari alpha = -1 (2026-08).
     let koreksi = 0;
-    if (ab.izin >= 15) koreksi--;
-    if (ab.alpha >= 5) koreksi--;
+    koreksi -= potonganAbsensi(ab.izin, 15);
+    koreksi -= potonganAbsensi(ab.alpha, 5);
     let hasilAkhir = bayanAsli !== '-' ? Math.max(5, Math.min(9, bayanAsli + koreksi)) : '-';
 
     // Override from DB if exists
     let overridden = false;
     if (bayan.hasil_akhir != null) { hasilAkhir = bayan.hasil_akhir; overridden = true; }
 
-    // Keterangan: alasan pengurangan (izin >= 15 hari / alpha >= 5 hari).
+    // Keterangan: alasan pengurangan kelipatan (izin per 15 hari / alpha per 5 hari).
     let ketKoreksi;
     if (overridden) {
       ketKoreksi = 'Override manual';
     } else if (koreksi < 0) {
       const sebab = [];
-      if (ab.izin >= 15) sebab.push(`izin ${ab.izin} hari`);
-      if (ab.alpha >= 5) sebab.push(`alpha ${ab.alpha} hari`);
+      const pIzin = potonganAbsensi(ab.izin, 15);
+      const pAlpha = potonganAbsensi(ab.alpha, 5);
+      if (pIzin > 0) sebab.push(`izin ${ab.izin} hari`);
+      if (pAlpha > 0) sebab.push(`alpha ${ab.alpha} hari`);
       ketKoreksi = `Dikurangi ${-koreksi} (${sebab.join(' + ')})`;
     } else {
       ketKoreksi = 'Tidak ada pengurangan';

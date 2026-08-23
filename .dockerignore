@@ -10,6 +10,7 @@ public/uploads
 /main
 tmp/
 tmp_*
+!tmp_batch_regen
 
 # Database / data lokal (JANGAN ikut ke image)
 *.db

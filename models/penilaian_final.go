@@ -119,8 +119,10 @@ func GenerateNilaiAm(ctx context.Context, bagianID int, semester int, tahunAjara
 // Aturan:
 //   - Nilai dasar = rata-rata Nilai Khos SEMUA mapel dari 2 semester.
 //   - Pembulatan setengah ke atas.
-//   - Koreksi absensi tahunan INDEPENDEN: Bi Idzni >= 15/tahun -> -1,
-//     Bi Ghoirihi >= 5/tahun -> -1 (bisa turun sampai 2).
+//   - Koreksi absensi tahunan INDEPENDEN dengan KEKELIPATAN: 
+//     Bi Idzni >= 15/tahun -> -1, tiap 15 hari lagi -> -1 lagi (55 hari = -3)
+//     Bi Ghoirihi >= 5/tahun -> -1, tiap 5 hari lagi -> -1 lagi
+//     Floor(hari / ambang) = jumlah pengurangan total
 //   - Batas nilai akhir: minimal 5, maksimal 9.
 //   - Label: 9=الجيد الأول, 8=الجيد الثاني, 7=المتوسط الأول, 6=المتوسط الثاني, 5=الردي.
 func GenerateAlBayan(ctx context.Context, santriID int, tahunAjaran string) error {
@@ -174,11 +176,12 @@ func GenerateAlBayan(ctx context.Context, santriID int, tahunAjaran string) erro
 	alphaHari += manualAlpha
 
 	koreksi := 0
+	// Kelipatan: floor(hari / ambang) = jumlah pengurangan
 	if izinHari >= 15 {
-		koreksi--
+		koreksi -= izinHari / 15
 	}
 	if alphaHari >= 5 {
-		koreksi--
+		koreksi -= alphaHari / 5
 	}
 
 	finalScore := math.Floor(rataRata+0.5) + float64(koreksi)
