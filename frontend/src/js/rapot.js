@@ -490,7 +490,9 @@ function isExcludedRow(row) {
   }
 
 
-  // البيان & tanda tangan المدير hanya di semester 2
+  // البيان & tanda tangan المدير hanya di semester 2.
+  // bayan-box sekarang <tr> di dalam tfoot tabel utama (merged, plek
+  // ketiplek referensi) — display '' (table-row), bukan 'block'.
   const isSem2 = String(semester) === '2';
   const bayanBox = sheet.querySelector('[data-field="bayan-box"]');
   const sigMudir = sheet.querySelector('[data-field="sig-mudir"]');
@@ -500,7 +502,7 @@ function isExcludedRow(row) {
     // Nilai zona RODI (الرديء, Al-Bayan <= 5) dicetak merah.
     const bayanTd = sheet.querySelector('[data-field="bayan-value"]');
     if (bayanTd) bayanTd.style.color = decodeEntities(bayanLabel).includes('الرديء') ? '#dc2626' : '';
-    if (bayanBox) bayanBox.style.display = 'block';
+    if (bayanBox) bayanBox.style.display = '';
     if (sigMudir) sigMudir.style.display = 'block';
   } else {
     if (bayanBox) bayanBox.style.display = 'none';

@@ -542,44 +542,39 @@
               </tr>
           </thead>
           <tbody data-field="tbody"></tbody>
+          <!-- TFOOT MERGED — plek ketiplek raport fisik referensi (owner 2026-08-24):
+               total + أيام التأخر (rowspan) + البيان semua MENYATU dalam tabel utama,
+               border kolom nyambung terus ke bawah. Urutan: total → absen → bayan.
+               Angka hari absen ada di kolom الخاصة (kolom nilai pertama).
+               Baris البيان hanya tampil di semester 2 (display diatur rapot.js). -->
           <tfoot>
               <tr>
                   <th colspan="3" style="text-align: right;">جملة أرقام الدرجات الدراسية</th>
                   <th data-field="total-khos">0</th>
                   <th data-field="total-am">0</th>
               </tr>
-          </tfoot>
-      </table>
-
-      <!-- AL-BAYAN (البيان) — hanya tampil di semester 2.
-           Label = Uthman Taha 18pt bold (spek oranye), nilai = Uthman 16pt. -->
-      <div data-field="bayan-box" class="mt-1" style="display: none;">
-          <table style="width: 100%; margin-top: 0;">
               <tr>
-                  <th style="width: 150px;">البيان</th>
-                  <td data-field="bayan-value" class="td-arab" style="text-align: center; font-weight: bold;">-</td>
-              </tr>
-          </table>
-      </div>
-
-      <!-- ABSENCE — label Arab Uthman 16pt, angka TNR 14pt -->
-      <div class="mt-2">
-          <table style="width: 300px; margin-top: 0;">
-              <tr>
-                  <th colspan="3" style="font-size: 18pt;">أيام التأخر</th>
-              </tr>
-              <tr>
+                  <td></td>
+                  <th rowspan="2">أيام التأخر</th>
                   <td class="td-arab">بإذن</td>
                   <td data-field="absen-izin" class="td-num">0</td>
-                  <td class="td-arab">يوم</td>
+                  <td></td>
               </tr>
               <tr>
-                  <td class="td-arab">بغير إذن</td>
+                  <td></td>
+                  <td class="td-arab">بغيره</td>
                   <td data-field="absen-alfa" class="td-num">0</td>
-                  <td class="td-arab">يوم</td>
+                  <td></td>
               </tr>
-          </table>
-      </div>
+              <tr data-field="bayan-box" style="display: none;">
+                  <td></td>
+                  <th>البيان</th>
+                  <td data-field="bayan-value" class="td-arab" style="font-weight: bold;">-</td>
+                  <td></td>
+                  <td></td>
+              </tr>
+          </tfoot>
+      </table>
 
 
       <!-- SIGNATURES — footer raport, diposisikan di bawah lembar (margin-top auto).
