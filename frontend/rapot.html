@@ -184,12 +184,16 @@
 
     .rapot-sheet th, .rapot-sheet td {
         border: 2px solid black;
-        padding: 1px 6px;
+        /* Padding vertikal 2px (owner 2026-08-24): raport fisik referensi
+           punya celah tinta-ke-garis ~0.7-2mm; padding 1px lama cuma
+           0.08-0.14mm sehingga teks nyaris MENYENTUH garis, terutama huruf
+           descender (خ ج ح ع غ ي ق). 2px + line-height 1.07 (kompensasi
+           tinggi) tetap muat 1 halaman A4/F4 — verified dual-paper check. */
+        padding: 2px 6px;
         /* Tailwind preflight men-set line-height 1.5 global -> tiap baris
-           tabel bengkak dan raport overflow ke halaman 2. Dikompresi ke 1.1
-           + padding 1px agar muat 1 halaman di F4 (area 297mm) DAN A4
-           (area ~264mm) — print preview HP biasanya paginate pakai A4. */
-        line-height: 1.1;
+           tabel bengkak dan raport overflow ke halaman 2. Dikompresi ke 1.07
+           (dari 1.1) sebagai kompensasi padding vertikal yang dinaikkan. */
+        line-height: 1.05;
         text-align: center;
     }
 
