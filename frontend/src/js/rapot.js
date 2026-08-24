@@ -490,20 +490,25 @@ function isExcludedRow(row) {
   }
 
 
-  // البيان tampil di SEMUA semester (plek ketiplek referensi, owner 2026-08-24 —
-  // sebelumnya hanya sem2). Label tahunan siswi dari backend; '-' bila belum
-  // di-generate. bayan-box = <tr> di tfoot tabel utama (display '' = table-row).
-  // Tanda tangan Direktur tetap hanya semester 2.
-  const bayanLabel = data.bayan || '-';
-  set('bayan-value', bayanLabel);
-  const bayanTd = sheet.querySelector('[data-field="bayan-value"]');
-  if (bayanTd) bayanTd.style.color = decodeEntities(bayanLabel).includes('الرديء') ? '#dc2626' : '';
-
+  // البيان & tanda tangan Direktur HANYA di semester 2 (aturan owner —
+  // rapor akhir tahun). Catatan 2026-08-24: sempat diubah tampil di semua
+  // semester, owner koreksi: hanya sem2. bayan-box = <tr> di tfoot tabel
+  // utama (display '' = table-row, BUKAN 'block').
   const isSem2 = String(semester) === '2';
   const bayanBox = sheet.querySelector('[data-field="bayan-box"]');
   const sigMudir = sheet.querySelector('[data-field="sig-mudir"]');
-  if (bayanBox) bayanBox.style.display = '';
-  if (sigMudir) sigMudir.style.display = isSem2 ? 'block' : 'none';
+  if (isSem2) {
+    const bayanLabel = data.bayan || '-';
+    set('bayan-value', bayanLabel);
+    // Nilai zona RODI (الرديء, Al-Bayan <= 5) dicetak merah.
+    const bayanTd = sheet.querySelector('[data-field="bayan-value"]');
+    if (bayanTd) bayanTd.style.color = decodeEntities(bayanLabel).includes('الرديء') ? '#dc2626' : '';
+    if (bayanBox) bayanBox.style.display = '';
+    if (sigMudir) sigMudir.style.display = 'block';
+  } else {
+    if (bayanBox) bayanBox.style.display = 'none';
+    if (sigMudir) sigMudir.style.display = 'none';
+  }
 
   return sheet;
 }
