@@ -184,19 +184,19 @@
 
     .rapot-sheet th, .rapot-sheet td {
         border: 2px solid black;
-        /* Padding vertikal 4px (owner 2026-08-25 fix #2): 
-           Foto desktop screenshot user BUKTINYA teks MASIH NYENTUH garis!
-           Pengukuran: gap terkecil hanya 0.37mm dari 1px padding.
-           Referensi fisik lo: min gap ~0.74mm, median ~2.2mm.
-           
-           Font Uthman descender sangat dalam (خ ج ح ع غ ي ق) butuh ruang lebih.
-           Naik jadi 4px = ~1.5mm visual gap, jauh dari border.
-           Kompensasi tinggi dengan line-height 1.12 (bukan 1.05), tetap muat 1 halaman. */
-        padding: 4px 6px;
-        /* Tailwind preflight men-set line-height 1.5 global -> tiap baris
-           tabel bengkak dan raport overflow ke halaman 2. Dikompresi ke 1.12
-           (dari 1.05) sebagai kompensasi padding vertikal yang dinaikkan 2px->4px. */
-        line-height: 1.12;
+        /* Padding vertikal minimal (owner 2026-08-25 fix #3): 
+           User screenshot desktop BUKTINYA text MENYENGKAU garis!
+            
+           Problem: padding tinggi (>2px) bikin overflow 3 halaman.
+            
+           Solution: Line-height besar (1.35) memberi ruang internal 
+                     tanpa menambah tinggi table cell secara total.
+                     Font 17pt (bukan 18pt) juga mengurangi descender depth.
+           Result: muat di A4/F4 dalam 1 halaman, gap visual cukup. */
+        padding: 2px 6px;
+        font-size: 17pt; /* dikurang dari 18pt agar descender tidak terlalu turun */
+        line-height: 1.35; /* naik drastis untuk beri ruang internal */
+        vertical-align: middle;
         text-align: center;
     }
 
