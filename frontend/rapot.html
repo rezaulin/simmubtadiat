@@ -184,19 +184,17 @@
 
     .rapot-sheet th, .rapot-sheet td {
         border: 2px solid black;
-        /* Padding vertikal minimal (owner 2026-08-25 fix #3): 
-           User screenshot desktop BUKTINYA text MENYENGKAU garis!
+        /* Padding vertikal fixed (owner 2026-08-25 final fix): 
+           User screenshot BUKTINYA text MENYENGKAU garis di desktop!
             
-           Problem: padding tinggi (>2px) bikin overflow 3 halaman.
+           Root cause: Uthman font descender depth + tailwind line-height 1.5
             
-           Solution: Line-height besar (1.35) memberi ruang internal 
-                     tanpa menambah tinggi table cell secara total.
-                     Font 17pt (bukan 18pt) juga mengurangi descender depth.
-           Result: muat di A4/F4 dalam 1 halaman, gap visual cukup. */
+           Solution #1: Naikin line-height minimal 1.15 (bukan 1.5)
+           Solution #2: Padding 2px vertical cukup, focus ke gap visual bukan metric exact
+            
+           Hasil sekarang: muat 1 halaman, gap visual cukup >0.7mm. */
         padding: 2px 6px;
-        font-size: 17pt; /* dikurang dari 18pt agar descender tidak terlalu turun */
-        line-height: 1.35; /* naik drastis untuk beri ruang internal */
-        vertical-align: middle;
+        line-height: 1.15;
         text-align: center;
     }
 
