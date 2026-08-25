@@ -555,22 +555,23 @@
                Angka hari absen ada di kolom الخاصة (kolom nilai pertama).
                Baris البيان hanya tampil di semester 2 (display diatur rapot.js). -->
           <tfoot>
+              <!-- جملة أرقام الدرجات الدراسية → Label colspan=3, values in columns 4+5 -->
               <tr>
                   <th colspan="3" style="text-align: right;">جملة أرقام الدرجات الدراسية</th>
                   <th data-field="total-khos">0</th>
                   <th data-field="total-am">0</th>
               </tr>
+              <!-- أيام التأخر → Label colspan=2 rowspan=2 on RIGHT side (RTL), values in COLUMN 3 only -->
               <tr>
                   <th colspan="2" rowspan="2">أيام التأخر</th>
                   <td class="td-arab">بإذن</td>
                   <td data-field="absen-izin" class="td-num">0</td>
-                  <td></td>
               </tr>
               <tr>
                   <td class="td-arab">بغيره</td>
                   <td data-field="absen-alfa" class="td-num">0</td>
-                  <td></td>
               </tr>
+              <!-- البيان → Only semester 2, colspan=2 label + colspan=3 value -->
               <tr data-field="bayan-box" style="display: none;">
                   <th colspan="2">البيان</th>
                   <td colspan="3" data-field="bayan-value" class="td-arab" style="font-weight: bold;">-</td>
