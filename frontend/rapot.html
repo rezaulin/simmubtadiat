@@ -65,27 +65,31 @@
             padding: 0 !important;
             max-width: 100% !important;
             width: auto !important;
-            /* 263mm = pas untuk area konten A4 (297 - 12,7 - 20 = 264,3mm)
-               sehingga footer-pinning tetap aman saat preview HP paginate
-               pakai A4; di F4 tanda tangan duduk ~34mm di atas tepi bawah.
-               !important WAJIB: rule layar .rapot-sheet di bawah file ini
-               men-set min-height 330,2mm dan datang belakangan (2026-08 fix). */
-            min-height: 263mm !important;
+            /* 275mm — konten riil hanya ~260mm; min-height ini cuma buat
+               footer-pinning (tanda tangan nempel dasar via margin-top:auto).
+               282mm dulu kelewat mepet ke batas cetak F4 285,2mm → rounding
+               numpahin ke halaman ke-3. 275 kasih headroom aman, TTD cuma
+               naik ~10mm dari tepi bawah (oke di F4). !important WAJIB. */
+            min-height: 270mm !important;
         }
         .rapot-sheet:last-child { page-break-after: auto; }
+        /* Garis hr harus explicit print-visible */
+        .rapot-sheet hr {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+            display: block !important;
+        }
     }
 
-    /* Lembar raport: F4 (215,9 × 330,2 mm) dengan margin sesuai spek:
-       top 2,5cm — tapi header dimulai dari 1,27cm (header from top),
-       left/right 1,5cm, bottom 2cm. Di layar ditampilkan sebagai kertas
-       putih; saat print @page memakai ukuran & margin yang sama sehingga
-     posisi 1:1. */
+    /* Lembar raport: F4 (215,9 × 330,2 mm) dengan margin sesuai spek owner:
+       top 2,5cm, left/right 1,5cm, bottom 2cm. Di layar padding = margin cetak
+       agar posisi header 1:1 dengan hasil print (@page margin sama). */
     .rapot-sheet {
         font-family: 'Times New Roman', serif;
         width: 215.9mm;
         min-height: 330.2mm;
         margin: 0 auto 30px auto;
-        padding: 1.27cm 1.5cm 2cm 1.5cm;
+        padding: 2.5cm 1.5cm 2cm 1.5cm;
         background-color: white;
         box-sizing: border-box;
         display: flex;
@@ -179,7 +183,7 @@
     .rapot-sheet table {
         width: 100%;
         border-collapse: collapse;
-        margin-top: 1.27cm !important;
+        margin-top: 0.6cm !important;
     }
 
     .rapot-sheet th, .rapot-sheet td {
@@ -193,8 +197,8 @@
            Solution #2: Padding 2px vertical cukup, focus ke gap visual bukan metric exact
             
            /* F4 limit 297mm allows for this, and at 1 halaman, gap visual cukup >0.7mm. */
-           padding: 1px 8px 4px 6px;
-           line-height: 1.22;
+           padding: 1px 8px 3px 6px;
+           line-height: 1.1;
            text-align: center;
     }
 
@@ -217,35 +221,49 @@
         font-size: 16pt;
     }
 
-    /* Angka nilai khos/am — KFGQPC Uthman Taha 14pt bold.
-       DULU TNR, tapi Times New Roman TIDAK punya glyph angka Arab-Hindi
-       (٠١٢٣٤٥٦٧٨٩) sehingga browser fallback ke font acak dan tampilannya
-       tidak konsisten. KFGQPC punya glyph lengkap (owner 2026-08). */
+    /* Angka nilai khos/am — KFGQPC Uthman Taha 14pt (NOT BOLD). */
     .rapot-sheet td.td-num {
         font-family: 'KFGQPC Uthman Taha Naskh','Amiri',serif;
         font-size: 14pt;
-        font-weight: bold;
+        font-weight: normal;
     }
 
-    /* Baris total (tfoot) — Uthman Taha 18pt bold sesuai spek oranye */
+    /* Baris total (tfoot) — Uthman Taha 18pt bold sesuai spek oranye.
+       Padding vertikal disamakan dengan sel data (baris footer di foto
+       referensi tipis ~8mm, bukan tinggi). 1,27cm dulu = SALAH → tfoot
+       bengkak 101mm & raport tumpah jadi 5 halaman (fix 2026-08-25). */
     .rapot-sheet tfoot th {
         font-family: 'KFGQPC Uthman Taha Naskh','Amiri',serif;
         font-size: 18pt;
         font-weight: bold;
-        padding: 1.27cm 6px; /* Bottom padding for spacing from bottom border */
+        padding: 1px 6px 4px 6px;
     }
 
     .td-left {
         text-align: right; /* Since RTL, right is starting side */
     }
 
+    /* margin-top: auto → footer-pinning BENERAN (tanda tangan melayang ke
+       dasar sheet mengikuti min-height). DULU 1.27cm !important = SALAH:
+       override-nya bikin jarak mati 12,7mm yang selalu nambah tinggi →
+       semester-2 tembus batas cetak F4 & tumpah ke halaman ke-3 (fix
+       2026-08-25). Inline style="margin-top:auto" di template sekarang menang. */
     .signature-box {
-        margin-top: 1.27cm !important;
         display: flex;
         justify-content: space-between;
         padding: 0 40px;
         page-break-inside: avoid;
         break-inside: avoid;
+        margin-top: 8px !important; /* Perkecil gap dari tabel */
+    }
+    
+    .signature-box p {
+        margin: 0;
+    }
+    
+    .signature-box .ft-tnr {
+        border-bottom: 2px solid #000;
+        padding-bottom: 2px;
     }
   </style>
   <link rel="manifest" href="/manifest.json">
@@ -504,100 +522,107 @@
 
   <!-- TEMPLATE satu lembar rapot (disembunyikan, di-clone oleh JS) -->
   <template id="rapot-template">
+    
     <div class="rapot-sheet" dir="rtl">
-      <!-- HEADER (4 baris Arab sesuai raport asli). Spek font:
-           judul & judul semester = Uthman Taha 18pt bold,
-           nama madrasah & tahun = Uthman Taha 16pt,
-           header dimulai 1,27cm dari tepi atas (padding sheet). -->
-      <div class="flex items-center border-b-4 border-black pb-3 mb-3">
-          <div class="header-logo"></div>
-          <div class="header-text">
-              <p class="hdr-1 ft-uth-18">كشف الدرجات الدراسية</p>
-              <h1 data-field="semester-title" class="ft-uth-18">فصل الدراسية الأولى</h1>
-              <h2 data-field="madrasah-line" class="ft-uth-16">المدرسة العالية للبنات هداية المبتدئات ليربيا كديري</h2>
-              <p class="hdr-tahun ft-uth-16">سنة : <span data-field="tahun-ajaran">١٤٤٦ - ١٤٤٧ هـ / ٢٠٠٥ - ٢٠٠٦ م</span></p>
+      <!-- HEADER (sesuai reference PDF) -->
+      <!-- Logo kiri, text Arab kanan dengan gap yang jelas -->
+      <!-- DIR='RTL': ELEMENT AKHIR = VISUAL KIRI, ELEMENT PERTAMA = KANAN -->
+      <div class="flex items-start pb-3 mb-2 text-biru gap-4">
+          <div class="header-text" style="line-height: 1.3;">
+              <h1 class="ft-uth-18">كشف الدرجات الدراسية</h1>
+              <h1 data-field="semester-title" class="ft-uth-18" style="font-size: 18pt;">فصل الدراسة الثانية</h1>
+              <h2 data-field="madrasah-line" class="ft-uth-16" style="font-size: 16pt;">المدرسة الابتدائية للبنات هداية المبتدئات كديري ليربيا</h2>
           </div>
-          <img src="/logo-raport-bw-v5.png" alt="Logo" class="header-logo" onerror="this.src='/logo-v3.png'">
+          <img src="/logo-raport-bw-v5.png" alt="Logo Raport BW" class="header-logo" onerror="this.src='/logo-raport-bw-v4.png'">
+      </div>
+      
+      <!-- Garis pembatas setelah nama sekolah - partial width under text block -->
+      <hr style="border:none;height:2px;background-color:#000;margin:2px auto 8px auto;width:55%; min-width: 120px;">
+      
+      <!-- Tahun ajaran (centered below line) -->
+      <div class="text-center mb-2">
+          <p class="hdr-tahun ft-uth-16" style="font-family: 'KFGQPC Uthman Taha Naskh','Amiri',serif; font-size: 16pt;">سنة : <span data-field="tahun-ajaran">١٤٤٧ - ١٤٤٨ هـ / ٢٠٢٦ - ٢٠٢٧ م</span></p>
       </div>
 
-      <!-- STUDENT DATA (label Latin sesuai contoh, bukan Arab).
-           Isian TIDAK tebal dan TIDAK bergaris (owner request 2026-08). -->
-      <div class="student-data" dir="ltr">
+      <!-- STUDENT DATA (label Latin sesuai contoh, bukan Arab) -->
+      <div class="student-data text-hijau" dir="ltr">
           <div class="student-col">
-              <p><span class="lbl">Nama</span><span class="colon">:</span><span class="val" data-field="nama">....................</span></p>
-              <p><span class="lbl">No. Stambuk</span><span class="colon">:</span><span class="val" data-field="stambuk">....................</span></p>
-              <p><span class="lbl">Kelas</span><span class="colon">:</span><span class="val" data-field="kelas">....................</span></p>
+              <p><span class="lbl">Nama</span>: <span data-field="nama">....................</span></p>
+              <p><span class="lbl">No. Stambuk</span>: <span data-field="stambuk">....................</span></p>
+              <p><span class="lbl">Kelas</span>: <span data-field="kelas">....................</span></p>
           </div>
           <div class="student-col">
-              <p><span class="lbl">No. Tamrin</span><span class="colon">:</span><span class="val" data-field="tamrin">....................</span></p>
-              <p><span class="lbl">Bagian</span><span class="colon">:</span><span class="val" data-field="bagian">....................</span></p>
+              <p><span class="lbl">No. Tamrin</span>: <span data-field="tamrin">....................</span></p>
+              <p><span class="lbl">Bagian</span>: <span data-field="bagian">....................</span></p>
           </div>
       </div>
 
       <!-- GRADES TABLE -->
       <table>
-          <thead>
+          <thead class="text-orange">
               <tr>
-                  <th rowspan="2" style="width: 50px;">الرقم</th>
-                  <th rowspan="2">الكتب المدرسية</th>
+                  <th rowspan="2" style="width: 50px;">النمرة</th>
+                  <th rowspan="2">الكتب الدراسية</th>
                   <th rowspan="2">الفنون</th>
-                  <th colspan="2">أرقام الدرجات الخاصة والعامة</th>
+                  <th colspan="2" style="white-space: nowrap; font-size: 16pt;">أرقام الدرجات الخاصة والعامة</th>
               </tr>
               <tr>
                   <th style="width: 80px;">الخاصة</th>
                   <th style="width: 80px;">العامة</th>
               </tr>
           </thead>
-          <tbody data-field="tbody"></tbody>
-          <!-- TFOOT MERGED — plek ketiplek raport fisik referensi (owner 2026-08-24):
-               total + أيام التأخر (rowspan) + البيان semua MENYATU dalam tabel utama,
-               border kolom nyambung terus ke bawah. Urutan: total → absen → bayan.
-               Angka hari absen ada di kolom الخاصة (kolom nilai pertama).
-               Baris البيان hanya tampil di semester 2 (display diatur rapot.js). -->
+          <!-- Isi tabel secara default biru, Am dibuat hijau via rapot.js -->
+          <tbody data-field="tbody" class="text-biru"></tbody>
+          
+          <!-- TFOOT: Footer merged — plek ketiplek raport fisik referensi -->
           <tfoot>
-              <!-- جملة أرقام الدرجات الدراسية → Label colspan=3, values in columns 4+5 -->
-              <tr>
-                  <th colspan="3" style="text-align: right;">جملة أرقام الدرجات الدراسية</th>
-                  <th data-field="total-khos">0</th>
-                  <th data-field="total-am">0</th>
+              <!-- Total Row: جملة أرقام الدرجات -->
+              <tr class="text-orange">
+                  <th colspan="3" style="text-align: center;">جملة أرقام الدرجات الدراسية</th>
+                  <td class="text-hijau" data-field="total-khos">0</td>
+                  <td class="text-hijau" data-field="total-am">0</td>
               </tr>
-              <!-- أيام التأخر → Label colspan=2 rowspan=2 on RIGHT side (RTL), values in COLUMN 3 only -->
+              
+              <!-- Absen Izin & Alfa Rowspan -->
               <tr>
-                  <th colspan="2" rowspan="2">أيام التأخر</th>
-                  <td class="td-arab">بإذن</td>
-                  <td data-field="absen-izin" class="td-num">0</td>
+                  <th rowspan="2" colspan="2">أيام التأخّر</th>
+                  <td class="text-biru" style="font-weight:bold; text-align:center;">بإذن</td>
+                  <td class="text-hijau" data-field="absen-izin">0</td>
+                  <td class="text-hijau">-</td>
               </tr>
               <tr>
-                  <td class="td-arab">بغيره</td>
-                  <td data-field="absen-alfa" class="td-num">0</td>
+                  <td class="text-biru" style="font-weight:bold; text-align:center;">بغيره</td>
+                  <td class="text-hijau" data-field="absen-alfa">0</td>
+                  <td class="text-hijau">-</td>
               </tr>
-              <!-- البيان → Only semester 2, colspan=2 label + colspan=3 value -->
-              <tr data-field="bayan-box" style="display: none;">
-                  <th colspan="2">البيان</th>
-                  <td colspan="3" data-field="bayan-value" class="td-arab" style="font-weight: bold;">-</td>
+              
+              <!-- Bayan/Decision (Semester 2 only) -->
+              <tr data-field="bayan-box" style="display:none;">
+                  <th colspan="2" style="font-weight:bold; text-align:center;">البيان</th>
+                  <td colspan="3" data-field="bayan-value" style="text-align:right; padding-right:20px;">-</td>
               </tr>
           </tfoot>
       </table>
 
 
-      <!-- SIGNATURES — footer raport, diposisikan di bawah lembar (margin-top auto).
-           Label = Uthman Taha 18pt bold, nama = TNR 14pt.
-           Posisi tetap (dir=ltr): المدير di KIRI, المدرس di KANAN.
-           Semester 1: hanya المدرس. Semester 2: Direktur + المدرس. Diatur oleh rapot.js -->
-      <div class="signature-box" dir="ltr" style="margin-top: auto;">
+      <!-- SIGNATURES -->
+      <!-- SIGNATURES -->
+      <!-- Posisi tetap (dir=ltr): المدير di KIRI, المدرس di KANAN. -->
+      <div class="signature-box" dir="ltr">
           <div class="text-center" data-field="sig-mudir" style="display: none;">
-              <p class="ft-uth-18">المدير</p>
+              <p class="ft-uth-16 mb-2" style="font-family: 'KFGQPC Uthman Taha Naskh','Amiri',serif; font-size: 16pt; margin-bottom: 4px;">المدير</p>
               <img data-field="sig-mudir-ttd" src="" alt="" style="display:none; max-height:48px; margin:2px auto 0;">
               <div data-field="sig-mudir-space" style="height:36px;"></div>
-              <p class="ft-tnr">(<span data-field="sig-mudir-nama">.........................</span>)</p>
+              <p class="ft-uth-18" style="font-family: 'KFGQPC Uthman Taha Naskh','Amiri',serif; font-size: 18pt; font-weight: bold; margin-top: 4px;">(<span data-field="sig-mudir-nama">.........................</span>)</p>
           </div>
           <div class="text-center">
-              <p class="ft-uth-18">المدرس</p>
+              <p class="ft-uth-16 mb-2" style="font-family: 'KFGQPC Uthman Taha Naskh','Amiri',serif; font-size: 16pt; margin-bottom: 4px;">المدرس</p>
               <div style="height:36px;"></div>
-              <p class="ft-tnr">(<span data-field="sig-mudarris-nama">.........................</span>)</p>
+              <p class="ft-uth-18" style="font-family: 'KFGQPC Uthman Taha Naskh','Amiri',serif; font-size: 18pt; font-weight: bold; margin-top: 4px;">(<span data-field="sig-mudarris-nama">.........................</span>)</p>
           </div>
       </div>
     </div>
+  
   </template>
 
     </div>
@@ -658,15 +683,14 @@
     }
   </script>
   <style id="page-style">
-    @media print { @page { size: 215.9mm 330.2mm; margin: 1.27cm 1.5cm 2cm 1.5cm; } }
+    @media print { @page { size: 215.9mm 330.2mm; margin: 2.5cm 1.5cm 2cm 1.5cm; } }
   </style>
   <script>
     function updatePageSize() {
       const size = document.getElementById('kertas-selector').value;
-      // Margin spek raport: top 1,27cm (header from top, Word-style) —
-      // left/right 1,5cm — bottom 2cm. A4 pakai margin sama agar posisi
-      // cetak konsisten dengan preview layar.
-      document.getElementById('page-style').textContent = `@media print { @page { size: ${size}; margin: 1.27cm 1.5cm 2cm 1.5cm; } }`;
+      // Margin spek raport: top 2,5cm — left/right 1,5cm — bottom 2cm.
+      // A4 pakai margin sama agar posisi cetak konsisten dengan preview layar.
+      document.getElementById('page-style').textContent = `@media print { @page { size: ${size}; margin: 2.5cm 1.5cm 2cm 1.5cm; } }`;
     }
   </script>
 </body>

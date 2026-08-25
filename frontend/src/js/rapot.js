@@ -58,7 +58,6 @@ function madrasahLine(tingkatanNama) {
   return `المدرسة ${jenjang} للبنات هداية المبتدئات ليربيا كديري`;
 }
 
-
 // Format angka nilai: integer tampil apa adanya, desimal dibulatkan 1 angka di belakang koma,
 // lalu dikonversi ke Arab-Hindi. Null/undefined -> sel kosong.
 function fmtNilai(n) {
