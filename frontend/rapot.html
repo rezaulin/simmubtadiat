@@ -102,48 +102,58 @@
        blok kedua yang men-override min-height jadi 'auto' dan membuat
        footer tanda tangan tidak menempel di dasar halaman (2026-08 fix). */
 
+    /* Header & Logo Alignment — centered title, balanced logo placement */
+    .header-container {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 8px;
+    }
+    
     .header-logo {
-        width: 3cm;
-        height: 3cm;
+        width: 75px;
+        height: auto;
         object-fit: contain;
     }
 
-    .header-text {
+    .header-title {
         text-align: center;
-        flex: 1;
+        flex-grow: 1;
+        direction: rtl;
     }
 
-    .header-text p, .header-text h1, .header-text h2 {
-        line-height: 1.15; /* kompresi kop: preflight 1.5 terlalu tinggi */
-    }
-
-    .header-text .hdr-1 {
-        font-size: 14px;
-        margin-bottom: 2px;
-    }
-
-    .header-text h1 {
+    .header-title h2 {
+        margin: 0;
         font-size: 18pt;
         font-weight: bold;
-        margin-bottom: 2px;
     }
-
-    .header-text h2 {
+    
+    .header-title h3 {
+        margin: 4px 0 0 0;
         font-size: 16pt;
-        margin-bottom: 2px;
     }
 
-    .header-text .hdr-tahun {
+    .header-title p {
+        margin: 4px 0 0 0;
         font-size: 13px;
     }
 
-    /* Data identitas siswa: label Latin, dua kolom kiri-kanan.
-       Spek: Times New Roman 14pt (label & nilai identitas).
-       line-height diperkecil (preflight Tailwind = 1.5) agar raport
-       tetap muat 1 halaman F4.
-       Layout grid per baris: lebar label FIX -> titik dua (:) sejajar di
-       semua baris; nilai flex dengan garis titik-titik di bawahnya
-       (form-style) sehingga rapi apa pun panjang isinya. */
+    /* Garis Pembatas Tebal-Tipis ala Kop Surat */
+    .header-divider {
+        border: none;
+        border-top: 2px solid #000;
+        margin: 10px 0 6px 0;
+    }
+
+    .year-text {
+        text-align: center;
+        direction: rtl;
+        font-size: 14px;
+        font-weight: bold;
+        margin-bottom: 12px;
+    }
+
+    /* Data identitas siswa: label Latin, fixed-width per baris untuk titik dua sejajar. */
     .student-data {
         display: flex;
         justify-content: space-between;
@@ -162,19 +172,37 @@
 
     .student-data .lbl {
         flex-shrink: 0;
-        width: 100px;
+        width: 90px;
     }
-
+    
     .student-data .colon {
-        margin-right: 8px;
+        width: 10px;
+        text-align: center;
     }
 
     .student-data .val {
         flex: 1;
         min-width: 20mm;
-        /* Tanpa border-bottom dotted & tanpa <strong> (bold): owner minta
-           isian identitas polos, tidak tebal, tanpa garis (2026-08). */
         font-weight: normal;
+    }
+
+    /* Tabel identitas siswa (fixed label width, colon alignment) */
+    .identity-table {
+        border-collapse: collapse;
+    }
+
+    .identity-table td {
+        padding: 2px 4px;
+        vertical-align: top;
+    }
+
+    .identity-table td.lbl {
+        width: 90px;
+    }
+    
+    .identity-table td.colon {
+        width: 10px;
+        text-align: center;
     }
 
 
@@ -524,37 +552,57 @@
   <template id="rapot-template">
     
     <div class="rapot-sheet" dir="rtl">
-      <!-- HEADER (sesuai reference PDF) -->
-      <!-- Logo kiri, text Arab kanan dengan gap yang jelas -->
-      <!-- DIR='RTL': ELEMENT AKHIR = VISUAL KIRI, ELEMENT PERTAMA = KANAN -->
-      <div class="flex items-start pb-3 mb-2 text-biru gap-4">
-          <div class="header-text" style="line-height: 1.3;">
-              <h1 class="ft-uth-18">كشف الدرجات الدراسية</h1>
-              <h1 data-field="semester-title" class="ft-uth-18" style="font-size: 18pt;">فصل الدراسة الثانية</h1>
-              <h2 data-field="madrasah-line" class="ft-uth-16" style="font-size: 16pt;">المدرسة الابتدائية للبنات هداية المبتدئات كديري ليربيا</h2>
-          </div>
-          <img src="/logo-raport-bw-v5.png" alt="Logo Raport BW" class="header-logo" onerror="this.src='/logo-raport-bw-v4.png'">
+      <!-- HEADER - centered title, balanced logo -->
+      <div class="header-container">
+        <img src="/logo-raport-bw-v5.png" alt="Logo Raport BW" class="header-logo" onerror="this.src='/logo-raport-bw-v4.png'">
+        <div class="header-title">
+          <h2>كشف الدرجات الدراسية</h2>
+          <h3 data-field="semester-title">فصل الدراسة الثانية</h3>
+          <p data-field="madrasah-line">المدرسة الابتدائية للبنات هداية المبتدئات كديري ليربيا</p>
+        </div>
+        <div style="width: 75px;"></div>
       </div>
       
-      <!-- Garis pembatas setelah nama sekolah - partial width under text block -->
-      <hr style="border:none;height:2px;background-color:#000;margin:2px auto 8px auto;width:55%; min-width: 120px;">
+      <!-- Garis pembatas tebal di bawah judul -->
+      <hr class="header-divider">
       
       <!-- Tahun ajaran (centered below line) -->
-      <div class="text-center mb-2">
-          <p class="hdr-tahun ft-uth-16" style="font-family: 'KFGQPC Uthman Taha Naskh','Amiri',serif; font-size: 16pt;">سنة : <span data-field="tahun-ajaran">١٤٤٧ - ١٤٤٨ هـ / ٢٠٢٦ - ٢٠٢٧ م</span></p>
+      <div class="year-text">
+        سنة : <span data-field="tahun-ajaran">١٤٤٧ - ١٤٤٨ هـ / ٢٠٢٦ - ٢٠٢٧ م</span>
       </div>
 
-      <!-- STUDENT DATA (label Latin sesuai contoh, bukan Arab) -->
-      <div class="student-data text-hijau" dir="ltr">
-          <div class="student-col">
-              <p><span class="lbl">Nama</span>: <span data-field="nama">....................</span></p>
-              <p><span class="lbl">No. Stambuk</span>: <span data-field="stambuk">....................</span></p>
-              <p><span class="lbl">Kelas</span>: <span data-field="kelas">....................</span></p>
-          </div>
-          <div class="student-col">
-              <p><span class="lbl">No. Tamrin</span>: <span data-field="tamrin">....................</span></p>
-              <p><span class="lbl">Bagian</span>: <span data-field="bagian">....................</span></p>
-          </div>
+      <!-- STUDENT DATA (label Latin, fixed-width untuk titik dua sejajar) -->
+      <div class="student-data" dir="ltr">
+          <table class="identity-table">
+            <tr>
+              <td class="lbl">Nama</td>
+              <td class="colon">:</td>
+              <td class="val"><strong data-field="nama"></strong></td>
+            </tr>
+            <tr>
+              <td class="lbl">No. Stambuk</td>
+              <td class="colon">:</td>
+              <td class="val"><strong data-field="stambuk"></strong></td>
+            </tr>
+            <tr>
+              <td class="lbl">Kelas</td>
+              <td class="colon">:</td>
+              <td class="val"><strong data-field="kelas"></strong></td>
+            </tr>
+          </table>
+
+          <table class="identity-table">
+            <tr>
+              <td class="lbl">No. Tamrin</td>
+              <td class="colon">:</td>
+              <td class="val"><strong data-field="tamrin"></strong></td>
+            </tr>
+            <tr>
+              <td class="lbl">Bagian</td>
+              <td class="colon">:</td>
+              <td class="val"><strong data-field="bagian"></strong></td>
+            </tr>
+          </table>
       </div>
 
       <!-- GRADES TABLE -->
