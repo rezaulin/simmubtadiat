@@ -342,28 +342,33 @@ function renderGridSantri(canEdit = false) {
   html += `<span class="text-xs text-gray-400">${currentSantriIdx + 1}/${santriList.length}</span>`;
   html += '</div>';
 
-  html += '<table class="border-collapse text-sm w-full"><thead><tr>';
-  html += '<th class="px-2 py-2 border text-center w-10">#</th>';
-  html += '<th class="px-3 py-2 border text-left">BULAN</th>';
-  html += '<th class="px-3 py-2 border text-center w-16">S</th>';
-  html += '<th class="px-3 py-2 border text-center w-16">I</th>';
-  html += '<th class="px-3 py-2 border text-center w-16">T</th>';
+  html += '<table class="w-full border-collapse text-sm table-fixed">';
+  html += '<colgroup><col style="width:10%"><col style="width:40%"><col style="width:16.6%"><col style="width:16.6%"><col style="width:16.6%"></colgroup>';
+  html += '<thead><tr>';
+  html += '<th class="px-1 py-2 border text-center text-xs">#</th>';
+  html += '<th class="px-2 py-2 border text-left text-xs">BULAN</th>';
+  html += '<th class="px-1 py-2 border text-center text-xs">S</th>';
+  html += '<th class="px-1 py-2 border text-center text-xs">I</th>';
+  html += '<th class="px-1 py-2 border text-center text-xs">T</th>';
   html += '</tr></thead><tbody>';
 
   bulanListTA.forEach((b, idx) => {
     const key = `${b.tahun}:${b.bulan}`;
-    const d = data[key] || { s: 0, i: 0, a: 0 };
+    const d = data[key]; // undefined = belum diisi → biarkan kosong (jangan 0)
+    const vs = d ? (d.s || '') : '';
+    const vi = d ? (d.i || '') : '';
+    const va = d ? (d.a || '') : '';
     html += '<tr>';
-    html += `<td class="px-2 py-1.5 border text-center text-gray-400 text-xs">${String(idx + 1).padStart(2, '0')}</td>`;
-    html += `<td class="px-3 py-1.5 border font-medium">${b.label}</td>`;
+    html += `<td class="px-1 py-1.5 border text-center text-gray-400 text-xs">${String(idx + 1).padStart(2, '0')}</td>`;
+    html += `<td class="px-2 py-1.5 border font-medium text-xs break-words">${b.label}</td>`;
     if (canEdit) {
-      html += `<td class="px-1 py-1 border text-center"><input type="number" min="0" data-bulan="${key}" data-type="s" value="${d.s}" class="w-12 text-center glass-input rounded px-1 py-1 text-sm"></td>`;
-      html += `<td class="px-1 py-1 border text-center"><input type="number" min="0" data-bulan="${key}" data-type="i" value="${d.i}" class="w-12 text-center glass-input rounded px-1 py-1 text-sm"></td>`;
-      html += `<td class="px-1 py-1 border text-center"><input type="number" min="0" data-bulan="${key}" data-type="a" value="${d.a}" class="w-12 text-center glass-input rounded px-1 py-1 text-sm"></td>`;
+      html += `<td class="px-0.5 py-1 border text-center"><input type="number" min="0" inputmode="numeric" data-bulan="${key}" data-type="s" value="${vs}" class="w-full text-center glass-input rounded px-0.5 py-1 text-sm"></td>`;
+      html += `<td class="px-0.5 py-1 border text-center"><input type="number" min="0" inputmode="numeric" data-bulan="${key}" data-type="i" value="${vi}" class="w-full text-center glass-input rounded px-0.5 py-1 text-sm"></td>`;
+      html += `<td class="px-0.5 py-1 border text-center"><input type="number" min="0" inputmode="numeric" data-bulan="${key}" data-type="a" value="${va}" class="w-full text-center glass-input rounded px-0.5 py-1 text-sm"></td>`;
     } else {
-      html += `<td class="px-3 py-1.5 border text-center">${d.s || '-'}</td>`;
-      html += `<td class="px-3 py-1.5 border text-center">${d.i || '-'}</td>`;
-      html += `<td class="px-3 py-1.5 border text-center text-red-600 dark:text-red-400 font-semibold">${d.a || '-'}</td>`;
+      html += `<td class="px-1 py-1.5 border text-center">${vs || '-'}</td>`;
+      html += `<td class="px-1 py-1.5 border text-center">${vi || '-'}</td>`;
+      html += `<td class="px-1 py-1.5 border text-center text-red-600 dark:text-red-400 font-semibold">${va || '-'}</td>`;
     }
     html += '</tr>';
   });
@@ -470,30 +475,36 @@ function renderGridPengajar(canEdit = false) {
   }
 
   let html = '';
-  html += '<table class="border-collapse text-sm w-full"><thead><tr>';
-  html += '<th class="px-2 py-2 border text-center w-10">#</th>';
-  html += '<th class="px-3 py-2 border text-left">NAMA PENGAJAR</th>';
-  html += '<th class="px-3 py-2 border text-center w-24">Kuartal 1</th>';
-  html += '<th class="px-3 py-2 border text-center w-24">Kuartal 2 &amp; 3</th>';
-  html += '<th class="px-3 py-2 border text-center w-24">Kuartal 4</th>';
+  html += '<table class="w-full border-collapse text-sm table-fixed">';
+  html += '<colgroup><col style="width:40%"><col style="width:20%"><col style="width:20%"><col style="width:20%"></colgroup>';
+  html += '<thead><tr>';
+  html += '<th class="px-2 py-2 border text-left text-xs">NAMA</th>';
+  html += '<th class="px-1 py-2 border text-center text-xs leading-tight">K1</th>';
+  html += '<th class="px-1 py-2 border text-center text-xs leading-tight">K2&amp;3</th>';
+  html += '<th class="px-1 py-2 border text-center text-xs leading-tight">K4</th>';
   html += '</tr></thead><tbody>';
 
   pengajarKuartalList.forEach((p, idx) => {
+    // Sebelum ada record (id==0) biarkan kosong, jangan tampilkan 0.
+    const has = p.id > 0;
+    const v1 = has ? p.kuartal_1 : '';
+    const v23 = has ? p.kuartal_23 : '';
+    const v4 = has ? p.kuartal_4 : '';
     html += '<tr>';
-    html += `<td class="px-2 py-1.5 border text-center text-gray-400 text-xs">${String(idx + 1).padStart(2, '0')}</td>`;
-    html += `<td class="px-3 py-1.5 border font-medium whitespace-nowrap">${p.pengajar_nama || '-'}</td>`;
+    html += `<td class="px-2 py-1.5 border font-medium text-xs break-words">${p.pengajar_nama || '-'}</td>`;
     if (canEdit) {
-      html += `<td class="px-1 py-1 border text-center"><input type="number" min="0" data-pid="${p.pengajar_id}" data-k="1" value="${p.kuartal_1 || 0}" class="w-16 text-center glass-input rounded px-1 py-1 text-sm"></td>`;
-      html += `<td class="px-1 py-1 border text-center"><input type="number" min="0" data-pid="${p.pengajar_id}" data-k="23" value="${p.kuartal_23 || 0}" class="w-16 text-center glass-input rounded px-1 py-1 text-sm"></td>`;
-      html += `<td class="px-1 py-1 border text-center"><input type="number" min="0" data-pid="${p.pengajar_id}" data-k="4" value="${p.kuartal_4 || 0}" class="w-16 text-center glass-input rounded px-1 py-1 text-sm"></td>`;
+      html += `<td class="px-0.5 py-1 border text-center"><input type="number" min="0" inputmode="numeric" data-pid="${p.pengajar_id}" data-k="1" value="${v1}" class="w-full text-center glass-input rounded px-0.5 py-1 text-sm"></td>`;
+      html += `<td class="px-0.5 py-1 border text-center"><input type="number" min="0" inputmode="numeric" data-pid="${p.pengajar_id}" data-k="23" value="${v23}" class="w-full text-center glass-input rounded px-0.5 py-1 text-sm"></td>`;
+      html += `<td class="px-0.5 py-1 border text-center"><input type="number" min="0" inputmode="numeric" data-pid="${p.pengajar_id}" data-k="4" value="${v4}" class="w-full text-center glass-input rounded px-0.5 py-1 text-sm"></td>`;
     } else {
-      html += `<td class="px-3 py-1.5 border text-center">${p.kuartal_1 || '-'}</td>`;
-      html += `<td class="px-3 py-1.5 border text-center">${p.kuartal_23 || '-'}</td>`;
-      html += `<td class="px-3 py-1.5 border text-center">${p.kuartal_4 || '-'}</td>`;
+      html += `<td class="px-1 py-1.5 border text-center">${has ? p.kuartal_1 : '-'}</td>`;
+      html += `<td class="px-1 py-1.5 border text-center">${has ? p.kuartal_23 : '-'}</td>`;
+      html += `<td class="px-1 py-1.5 border text-center">${has ? p.kuartal_4 : '-'}</td>`;
     }
     html += '</tr>';
   });
   html += '</tbody></table>';
+  html += '<p class="text-xs text-gray-400 mt-2">K1 = Kuartal 1 &nbsp;•&nbsp; K2&amp;3 = Kuartal 2 &amp; 3 &nbsp;•&nbsp; K4 = Kuartal 4</p>';
 
   if (!canEdit) {
     html += '<p class="text-xs text-red-500 mt-2 italic">* Anda tidak memiliki akses untuk mengedit absensi pengajar.</p>';
