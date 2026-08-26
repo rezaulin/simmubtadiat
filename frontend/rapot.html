@@ -44,36 +44,18 @@
     @media print {
         body { margin: 0; padding: 0; background-color: white; }
         .no-print { display: none !important; }
-        /* Wrapper layar (main, #rapot-wrap [p-4 md:p-8], #print-area) punya
-           padding/margin -> kalau tidak dinolkan, tiap lembar bergeser
-           ~8,5mm ke bawah dan bagian akhir (tanda tangan) tumpah ke
-           halaman ekstra (2026-08 fix). */
         main, #rapot-wrap, #print-area { padding: 0 !important; margin: 0 !important; overflow: visible !important; }
-        /* Tiap lembar rapot dipisah agar rapi saat cetak (single & bulk).
-           Padding sheet dinolkan karena margin cetak sudah diatur lewat
-           @page (1,27cm atas, 1,5cm kiri/kanan, 2cm bawah) — posisi 1:1
-           dengan tampilan layar (header mulai 1,27cm dari tepi).
-           min-height = tinggi area konten F4 (330,2 - 12,7 - 20 mm) agar
-           blok tanda tangan (footer) selalu di dasar halaman via
-           margin-top:auto, meniru footer Word 1,27cm dari bawah. */
         .rapot-sheet {
             page-break-after: always;
             page-break-inside: avoid;
             break-inside: avoid;
-            margin: 0 !important; /* juga buang margin-bottom 30px screen
-              style -> tanpa ini ada halaman KOSONG ekstra setelah lembar akhir */
+            margin: 0 !important;
             padding: 0 !important;
             max-width: 100% !important;
             width: auto !important;
-            /* 275mm — konten riil hanya ~260mm; min-height ini cuma buat
-               footer-pinning (tanda tangan nempel dasar via margin-top:auto).
-               282mm dulu kelewat mepet ke batas cetak F4 285,2mm → rounding
-               numpahin ke halaman ke-3. 275 kasih headroom aman, TTD cuma
-               naik ~10mm dari tepi bawah (oke di F4). !important WAJIB. */
-            min-height: 270mm !important;
+            min-height: 275mm !important;
         }
         .rapot-sheet:last-child { page-break-after: auto; }
-        /* Garis hr harus explicit print-visible */
         .rapot-sheet hr {
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
@@ -81,9 +63,6 @@
         }
     }
 
-    /* Lembar raport: F4 (215,9 × 330,2 mm) dengan margin sesuai spek owner:
-       top 2,5cm, left/right 1,5cm, bottom 2cm. Di layar padding = margin cetak
-       agar posisi header 1:1 dengan hasil print (@page margin sama). */
     .rapot-sheet {
         font-family: 'Times New Roman', serif;
         width: 215.9mm;
@@ -102,107 +81,117 @@
        blok kedua yang men-override min-height jadi 'auto' dan membuat
        footer tanda tangan tidak menempel di dasar halaman (2026-08 fix). */
 
-    /* Header & Logo Alignment — centered title, balanced logo placement */
-    .header-container {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 8px;
+    /* HEADER - Logo fixed LEFT */
+    .header-wrapper {
+        position: relative;
+        width: 100%;
+        min-height: 80px;
+        margin-bottom: 6px;
     }
-    
+
     .header-logo {
-        width: 75px;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 90px;
         height: auto;
-        object-fit: contain;
     }
 
-    .header-title {
+    .header-text {
+        margin-left: 120px;
         text-align: center;
-        flex-grow: 1;
         direction: rtl;
+        padding-top: 2px;
     }
 
-    .header-title h2 {
+    .header-text h2 {
+        font-size: 20pt;
+        font-weight: normal;
         margin: 0;
-        font-size: 18pt;
+    }
+
+    .header-text h3 {
+        font-size: 22pt;
         font-weight: bold;
-    }
-    
-    .header-title h3 {
-        margin: 4px 0 0 0;
-        font-size: 16pt;
+        margin: 3px 0;
     }
 
-    .header-title p {
-        margin: 4px 0 0 0;
-        font-size: 13px;
+    .header-text p {
+        font-size: 14pt;
+        margin: 2px 0;
     }
 
-    /* Garis Pembatas Tebal-Tipis ala Kop Surat */
-    .header-divider {
-        border: none;
-        border-top: 2px solid #000;
-        margin: 10px 0 6px 0;
+    .year-line {
+        width: 60%;
+        height: 0.3mm;
+        background-color: #000;
+        margin: 3px auto 2mm auto;
     }
 
     .year-text {
-        text-align: center;
-        direction: rtl;
-        font-size: 14px;
-        font-weight: bold;
-        margin-bottom: 12px;
+        font-size: 9pt;
+        margin: 0;
     }
 
-    /* Data identitas siswa: label Latin, fixed-width per baris untuk titik dua sejajar. */
-    .student-data {
-        display: flex;
-        justify-content: space-between;
-        gap: 12mm;
-        margin-bottom: 8px;
+    /* Identitas siswa - TABLE tanpa border, alignment sempurna */
+    .student-table {
+        width: 100%;
+        margin-bottom: 4px;
         font-family: 'Times New Roman', serif;
         font-size: 14pt;
-        line-height: 1.25;
+        color: #000000;
+        border: none !important;
+        border-collapse: collapse !important;
     }
 
-    .student-data p {
-        display: flex;
-        align-items: baseline;
-        margin-bottom: 1px;
+    .student-table td,
+    .student-table tr {
+        padding: 0 !important;
+        vertical-align: top;
+        border: none !important;
+        outline: none !important;
+        box-shadow: none !important;
     }
 
-    .student-data .lbl {
-        flex-shrink: 0;
-        width: 90px;
-    }
-    
-    .student-data .colon {
-        width: 10px;
-        text-align: center;
-    }
-
-    .student-data .val {
-        flex: 1;
-        min-width: 20mm;
-        font-weight: normal;
-    }
-
-    /* Tabel identitas siswa (fixed label width, colon alignment) */
-    .identity-table {
-        border-collapse: collapse;
-    }
-
-    .identity-table td {
-        padding: 2px 4px;
+    .st-left,
+    .st-right {
+        width: 50%;
+        border: none !important;
         vertical-align: top;
     }
 
-    .identity-table td.lbl {
-        width: 90px;
+    /* Inner tables hug content (jangan stretch ke 50%) biar gap : -> isian
+       konsisten kiri & kanan. Semua rata kiri, TIDAK di-center. */
+    .st-left > table,
+    .st-right > table {
+        width: auto;
+        border-collapse: collapse;
     }
-    
-    .identity-table td.colon {
+
+    /* label rata kiri, lebar fixed supaya titik dua sejajar vertikal */
+    .student-table .st-label {
+        text-align: left !important;
+        white-space: nowrap;
+        width: 110px;
+        padding: 1px 0 !important;
+        border: none !important;
+    }
+
+    /* titik dua: kolom sempit, satu spasi ke isian */
+    .student-table .st-colon {
+        text-align: left !important;
         width: 10px;
-        text-align: center;
+        padding: 1px 0 !important;
+        border: none !important;
+    }
+
+    /* isian: rata kiri, jarak sedikit dari titik dua (jangan mepet) */
+    .student-table .st-value {
+        text-align: left !important;
+        font-weight: normal;
+        padding: 1px 0 1px 12px !important;
+        border: none !important;
+        white-space: nowrap;
     }
 
 
@@ -211,7 +200,7 @@
     .rapot-sheet table {
         width: 100%;
         border-collapse: collapse;
-        margin-top: 0.6cm !important;
+        margin-top: 0.3cm !important;
     }
 
     .rapot-sheet th, .rapot-sheet td {
@@ -552,58 +541,36 @@
   <template id="rapot-template">
     
     <div class="rapot-sheet" dir="rtl">
-      <!-- HEADER - centered title, balanced logo -->
-      <div class="header-container">
+      <!-- HEADER - Logo left, text center -->
+      <div class="header-wrapper">
         <img src="/logo-raport-bw-v5.png" alt="Logo Raport BW" class="header-logo" onerror="this.src='/logo-raport-bw-v4.png'">
-        <div class="header-title">
+        <div class="header-text">
           <h2>كشف الدرجات الدراسية</h2>
           <h3 data-field="semester-title">فصل الدراسة الثانية</h3>
           <p data-field="madrasah-line">المدرسة الابتدائية للبنات هداية المبتدئات كديري ليربيا</p>
+          <hr class="year-line">
+          <p class="year-text">سنة : <span data-field="tahun-ajaran">١٤٤٧ - ١٤٤٨ هـ / ٢٠٢٦ - ٢٠٢٧ م</span></p>
         </div>
-        <div style="width: 75px;"></div>
-      </div>
-      
-      <!-- Garis pembatas tebal di bawah judul -->
-      <hr class="header-divider">
-      
-      <!-- Tahun ajaran (centered below line) -->
-      <div class="year-text">
-        سنة : <span data-field="tahun-ajaran">١٤٤٧ - ١٤٤٨ هـ / ٢٠٢٦ - ٢٠٢٧ م</span>
       </div>
 
-      <!-- STUDENT DATA (label Latin, fixed-width untuk titik dua sejajar) -->
-      <div class="student-data" dir="ltr">
-          <table class="identity-table">
-            <tr>
-              <td class="lbl">Nama</td>
-              <td class="colon">:</td>
-              <td class="val"><strong data-field="nama"></strong></td>
-            </tr>
-            <tr>
-              <td class="lbl">No. Stambuk</td>
-              <td class="colon">:</td>
-              <td class="val"><strong data-field="stambuk"></strong></td>
-            </tr>
-            <tr>
-              <td class="lbl">Kelas</td>
-              <td class="colon">:</td>
-              <td class="val"><strong data-field="kelas"></strong></td>
-            </tr>
-          </table>
-
-          <table class="identity-table">
-            <tr>
-              <td class="lbl">No. Tamrin</td>
-              <td class="colon">:</td>
-              <td class="val"><strong data-field="tamrin"></strong></td>
-            </tr>
-            <tr>
-              <td class="lbl">Bagian</td>
-              <td class="colon">:</td>
-              <td class="val"><strong data-field="bagian"></strong></td>
-            </tr>
-          </table>
-      </div>
+      <!-- STUDENT DATA (black, no boxes - table for perfect alignment) -->
+      <table class="student-table" dir="ltr">
+        <tr>
+          <td class="st-left">
+            <table>
+              <tr><td class="st-label">Nama</td><td class="st-colon">:</td><td class="st-value" data-field="nama"></td></tr>
+              <tr><td class="st-label">No. Stambuk</td><td class="st-colon">:</td><td class="st-value" data-field="stambuk"></td></tr>
+              <tr><td class="st-label">Kelas</td><td class="st-colon">:</td><td class="st-value" data-field="kelas"></td></tr>
+            </table>
+          </td>
+          <td class="st-right">
+            <table>
+              <tr><td class="st-label">No. Tamrin</td><td class="st-colon">:</td><td class="st-value" data-field="tamrin"></td></tr>
+              <tr><td class="st-label">Bagian</td><td class="st-colon">:</td><td class="st-value" data-field="bagian"></td></tr>
+            </table>
+          </td>
+        </tr>
+      </table>
 
       <!-- GRADES TABLE -->
       <table>
@@ -634,12 +601,12 @@
               <!-- Absen Izin & Alfa Rowspan -->
               <tr>
                   <th rowspan="2" colspan="2">أيام التأخّر</th>
-                  <td class="text-biru" style="font-weight:bold; text-align:center;">بإذن</td>
+                  <td class="text-biru" style="font-weight:bold; text-align:right; padding-right:8px;">بإذن</td>
                   <td class="text-hijau" data-field="absen-izin">0</td>
                   <td class="text-hijau">-</td>
               </tr>
               <tr>
-                  <td class="text-biru" style="font-weight:bold; text-align:center;">بغيره</td>
+                  <td class="text-biru" style="font-weight:bold; text-align:right; padding-right:8px;">بغيره</td>
                   <td class="text-hijau" data-field="absen-alfa">0</td>
                   <td class="text-hijau">-</td>
               </tr>
