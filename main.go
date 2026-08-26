@@ -259,6 +259,16 @@ func main() {
 					r.Post("/pengajar", handlers.SaveAbsensiManualPengajar)
 				})
 
+				// Absensi Pengajar Kuartal (input numerik per kuartal, ganti model bulanan)
+				r.Route("/absensi-pengajar-kuartal", func(r chi.Router) {
+					r.Use(appMiddleware.RequireRoles("pimpinan", "mufatish", "muroqib", "mustahiq", "tim_rapot"))
+					r.Get("/", handlers.GetAbsensiPengajarKuartal)
+					r.Group(func(r chi.Router) {
+						r.Use(appMiddleware.RequireRoles("pimpinan", "mufatish", "muroqib"))
+						r.Post("/", handlers.SaveAbsensiPengajarKuartal)
+					})
+				})
+
 				// Penilaian
 				r.Route("/penilaian", func(r chi.Router) {
 					r.Group(func(r chi.Router) {

@@ -417,24 +417,14 @@ btnSaveSantri?.addEventListener('click', async () => {
   }
 });
 
-// === TAB PENGAJAR ===
-const selBulanHijriP = document.getElementById('sel-bulan-hijri-p');
+// === TAB PENGAJAR (input numerik per KUARTAL: K1 | K2&3 | K4) ===
+// Ganti model bulanan S/I/T. Isi = angka bebas per grup kuartal, per pengajar.
 const btnLoadGridP = document.getElementById('btn-load-grid-p');
 const gridContainerP = document.getElementById('grid-pengajar-container');
 const gridElP = document.getElementById('grid-pengajar');
 const btnSavePengajar = document.getElementById('btn-save-pengajar');
 
-let pengajarList = [];
-// (pengajarData lama dihapus — pakai pengajarGridData)
-
-// Populate bulan dropdown pengajar
-function initPengajarDropdowns() {
-  populateBulanDropdown(selBulanHijriP);
-}
-
-let pengajarGridData = {}; // key: pengajarId -> { "tahun:bulan": { s, i, a } }
-let bulanListTAP = [];
-let currentPengajarIdx = 0;
+let pengajarKuartalList = []; // [{ pengajar_id, pengajar_nama, kuartal_1, kuartal_23, kuartal_4 }]
 let currentTingkatanP = null, currentKelasP = null;
 
 btnLoadGridP?.addEventListener('click', loadGridPengajar);
@@ -442,148 +432,107 @@ btnLoadGridP?.addEventListener('click', loadGridPengajar);
 async function loadGridPengajar() {
   const tingkatanId = selTingkatanP.value;
   const kelasId = selKelasP.value;
-  if (!tingkatanId || !kelasId) {
-    alert('Pilih Tingkatan dan Kelas');
+  if (!tingkatanId) { alert('Pilih Tingkatan'); return; }
+
+  const params = new URLSearchParams({
+    tahun_ajaran: activeTahunAjaran,
+    tingkatan_id: tingkatanId,
+  });
+  if (kelasId) params.set('kelas_id', kelasId);
+
+  try {
+    const res = await fetch(`/api/absensi-pengajar-kuartal?${params.toString()}`);
+    if (!res.ok) throw new Error(await res.text());
+    const arr = await res.json();
+    pengajarKuartalList = (Array.isArray(arr) ? arr : []);
+  } catch (err) {
+    alert('Gagal memuat pengajar: ' + err.message);
     return;
   }
 
-  bulanListTAP = buildBulanListTA();
-  if (bulanListTAP.length === 0) { alert('Kalender akademik belum diset (Settings).'); return; }
-
-  const resP = await fetch(`/api/pengajar?tingkatan_id=${tingkatanId}&kelas_id=${kelasId}`);
-  const pJson = await resP.json();
-  pengajarList = (Array.isArray(pJson) ? pJson : []).sort((a, b) => (a.nama || '').localeCompare(b.nama || ''));
-
-  // Load existing data — semua tahun Hijri dalam rentang TA.
-  const tahunSet = [...new Set(bulanListTAP.map(b => b.tahun))];
-  const existing = [];
-  for (const th of tahunSet) {
-    try {
-      const resData = await fetch(`/api/absensi-manual/pengajar?tingkatan_id=${tingkatanId}&kelas_id=${kelasId}&tahun_hijri=${th}`);
-      const arr = await resData.json();
-      if (Array.isArray(arr)) existing.push(...arr);
-    } catch (_) {}
-  }
-
-  pengajarGridData = {};
-  existing.forEach(e => {
-    const key = `${e.pengajar_id}`;
-    if (!pengajarGridData[key]) pengajarGridData[key] = {};
-    pengajarGridData[key][`${e.tahun_hijri}:${e.bulan_hijri}`] = {
-      s: e.total_sakit || 0, i: e.total_izin || 0, a: e.total_alpha || 0
-    };
-  });
-
-  currentPengajarIdx = 0;
   currentTingkatanP = tingkatanId;
   currentKelasP = kelasId;
 
-  const canEdit = cachedBagian.some(b => b.tingkatan_id == tingkatanId && b.kelas_id == kelasId && b.can_edit_absensi);
+  const isAdminOrPimpinan = currentRoles.includes('admin') || currentRoles.includes('pimpinan');
+  const canEdit = isAdminOrPimpinan || currentRoles.includes('mufatish') || currentRoles.includes('muroqib');
 
   renderGridPengajar(canEdit);
   gridContainerP.classList.remove('hidden');
-  btnSavePengajar?.classList.toggle('hidden', !canEdit || pengajarList.length === 0);
+  btnSavePengajar?.classList.toggle('hidden', !canEdit || pengajarKuartalList.length === 0);
 }
 
-function movePengajar(delta) {
-  if (!pengajarList.length) return;
-  currentPengajarIdx = (currentPengajarIdx + delta + pengajarList.length) % pengajarList.length;
-  const canEdit = cachedBagian.some(b => b.tingkatan_id == currentTingkatanP && b.kelas_id == currentKelasP && b.can_edit_absensi);
-  renderGridPengajar(canEdit);
-}
-window.movePengajar = movePengajar;
-
-// Render grid pengajar: seluruh bulan TA × S/I/T untuk 1 pengajar.
+// Render tabel: baris = pengajar (mustahiq + munawwib), kolom = K1 | K2&3 | K4.
+// Pengajar tanpa catatan tetap tampil (angka default 0).
 function renderGridPengajar(canEdit = false) {
-  if (!pengajarList.length) {
-    gridElP.innerHTML = '<p class="text-gray-400 text-center py-4">Tidak ada pengajar.</p>';
+  if (!pengajarKuartalList.length) {
+    gridElP.innerHTML = '<p class="text-gray-400 text-center py-4">Tidak ada pengajar untuk filter ini.</p>';
     return;
   }
 
-  const p = pengajarList[currentPengajarIdx];
-  const data = pengajarGridData[String(p.id)] || {};
-
   let html = '';
-  html += '<div class="mb-3 flex items-center justify-between gap-2 flex-wrap">';
-  html += '<div class="flex items-center gap-2">';
-  html += `<button onclick="movePengajar(-1)" class="tap-target px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-200 text-sm font-bold hover:bg-gray-200 dark:hover:bg-slate-600" aria-label="Pengajar sebelumnya">◀</button>`;
-  html += `<span class="text-sm font-bold text-gray-800 dark:text-white whitespace-nowrap">${String(currentPengajarIdx + 1).padStart(2, '0')}. ${p.nama}</span>`;
-  html += `<button onclick="movePengajar(1)" class="tap-target px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-200 text-sm font-bold hover:bg-gray-200 dark:hover:bg-slate-600" aria-label="Pengajar berikutnya">▶</button>`;
-  html += '</div>';
-  html += `<span class="text-xs text-gray-400">${currentPengajarIdx + 1}/${pengajarList.length}</span>`;
-  html += '</div>';
-
   html += '<table class="border-collapse text-sm w-full"><thead><tr>';
   html += '<th class="px-2 py-2 border text-center w-10">#</th>';
-  html += '<th class="px-3 py-2 border text-left">BULAN</th>';
-  html += '<th class="px-3 py-2 border text-center w-16">S</th>';
-  html += '<th class="px-3 py-2 border text-center w-16">I</th>';
-  html += '<th class="px-3 py-2 border text-center w-16">T</th>';
+  html += '<th class="px-3 py-2 border text-left">NAMA PENGAJAR</th>';
+  html += '<th class="px-3 py-2 border text-center w-24">Kuartal 1</th>';
+  html += '<th class="px-3 py-2 border text-center w-24">Kuartal 2 &amp; 3</th>';
+  html += '<th class="px-3 py-2 border text-center w-24">Kuartal 4</th>';
   html += '</tr></thead><tbody>';
 
-  bulanListTAP.forEach((b, idx) => {
-    const key = `${b.tahun}:${b.bulan}`;
-    const d = data[key] || { s: 0, i: 0, a: 0 };
+  pengajarKuartalList.forEach((p, idx) => {
     html += '<tr>';
     html += `<td class="px-2 py-1.5 border text-center text-gray-400 text-xs">${String(idx + 1).padStart(2, '0')}</td>`;
-    html += `<td class="px-3 py-1.5 border font-medium">${b.label}</td>`;
+    html += `<td class="px-3 py-1.5 border font-medium whitespace-nowrap">${p.pengajar_nama || '-'}</td>`;
     if (canEdit) {
-      html += `<td class="px-1 py-1 border text-center"><input type="number" min="0" data-bulan="${key}" data-type="s" value="${d.s}" class="w-12 text-center glass-input rounded px-1 py-1 text-sm"></td>`;
-      html += `<td class="px-1 py-1 border text-center"><input type="number" min="0" data-bulan="${key}" data-type="i" value="${d.i}" class="w-12 text-center glass-input rounded px-1 py-1 text-sm"></td>`;
-      html += `<td class="px-1 py-1 border text-center"><input type="number" min="0" data-bulan="${key}" data-type="a" value="${d.a}" class="w-12 text-center glass-input rounded px-1 py-1 text-sm"></td>`;
+      html += `<td class="px-1 py-1 border text-center"><input type="number" min="0" data-pid="${p.pengajar_id}" data-k="1" value="${p.kuartal_1 || 0}" class="w-16 text-center glass-input rounded px-1 py-1 text-sm"></td>`;
+      html += `<td class="px-1 py-1 border text-center"><input type="number" min="0" data-pid="${p.pengajar_id}" data-k="23" value="${p.kuartal_23 || 0}" class="w-16 text-center glass-input rounded px-1 py-1 text-sm"></td>`;
+      html += `<td class="px-1 py-1 border text-center"><input type="number" min="0" data-pid="${p.pengajar_id}" data-k="4" value="${p.kuartal_4 || 0}" class="w-16 text-center glass-input rounded px-1 py-1 text-sm"></td>`;
     } else {
-      html += `<td class="px-3 py-1.5 border text-center">${d.s || '-'}</td>`;
-      html += `<td class="px-3 py-1.5 border text-center">${d.i || '-'}</td>`;
-      html += `<td class="px-3 py-1.5 border text-center text-red-600 dark:text-red-400 font-semibold">${d.a || '-'}</td>`;
+      html += `<td class="px-3 py-1.5 border text-center">${p.kuartal_1 || '-'}</td>`;
+      html += `<td class="px-3 py-1.5 border text-center">${p.kuartal_23 || '-'}</td>`;
+      html += `<td class="px-3 py-1.5 border text-center">${p.kuartal_4 || '-'}</td>`;
     }
     html += '</tr>';
   });
   html += '</tbody></table>';
 
-  html += '<p class="text-xs text-gray-400 mt-2">S = Sakit &nbsp;•&nbsp; I = Izin &nbsp;•&nbsp; T = Alpha (tanpa keterangan)</p>';
   if (!canEdit) {
-    html += '<p class="text-xs text-red-500 mt-2 italic">* Anda tidak memiliki akses untuk mengedit absensi kelas ini.</p>';
+    html += '<p class="text-xs text-red-500 mt-2 italic">* Anda tidak memiliki akses untuk mengedit absensi pengajar.</p>';
   }
   gridElP.innerHTML = html;
 }
 
 btnSavePengajar?.addEventListener('click', async () => {
-  if (!pengajarList.length) return;
-  const tahunAjaran = activeTahunAjaran;
-  const entries = [];
+  if (!pengajarKuartalList.length) return;
 
-  gridElP.querySelectorAll('input[data-bulan]').forEach(inp => {
-    const [th, bl] = inp.dataset.bulan.split(':').map(Number);
-    const type = inp.dataset.type;
-    const val = parseInt(inp.value) || 0;
-
-    let entry = entries.find(e => e.tahun_hijri === th && e.bulan_hijri === bl);
-    if (!entry) {
-      entry = { pengajar_id: pengajarList[currentPengajarIdx].id, tahun_hijri: th, bulan_hijri: bl, tahun_ajaran: tahunAjaran, total_sakit: 0, total_izin: 0, total_alpha: 0, total_hadir: 0 };
-      entries.push(entry);
-    }
-    if (type === 's') entry.total_sakit = val;
-    if (type === 'i') entry.total_izin = val;
-    if (type === 'a') entry.total_alpha = val;
+  // Kumpulkan nilai per pengajar dari input K1/K23/K4.
+  const byPid = {};
+  gridElP.querySelectorAll('input[data-pid]').forEach(inp => {
+    const pid = parseInt(inp.dataset.pid, 10);
+    const k = inp.dataset.k;
+    const val = parseInt(inp.value, 10) || 0;
+    if (!byPid[pid]) byPid[pid] = { pengajar_id: pid, kuartal_1: 0, kuartal_23: 0, kuartal_4: 0 };
+    if (k === '1') byPid[pid].kuartal_1 = val;
+    if (k === '23') byPid[pid].kuartal_23 = val;
+    if (k === '4') byPid[pid].kuartal_4 = val;
   });
+  const data = Object.values(byPid);
 
   btnSavePengajar.disabled = true;
   btnSavePengajar.textContent = 'Menyimpan...';
   try {
-    const res = await fetch('/api/absensi-manual/pengajar', {
+    const res = await fetch('/api/absensi-pengajar-kuartal', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(entries)
+      body: JSON.stringify({ tahun_ajaran: activeTahunAjaran, data })
     });
     if (!res.ok) throw new Error(await res.text());
-    const result = await res.json();
-    alert(`Tersimpan! ${result.saved} disimpan, ${result.deleted} dihapus.`);
-    if (pengajarList.length > 1) movePengajar(1);
+    await res.json();
+    alert('Absensi pengajar tersimpan.');
   } catch (err) {
     alert('Error: ' + err.message);
   } finally {
     btnSavePengajar.disabled = false;
-    btnSavePengajar.textContent = 'Simpan & Lanjut ▶';
+    btnSavePengajar.textContent = 'Simpan';
   }
 });
 
@@ -592,6 +541,5 @@ checkAuth().then(() => {
   loadSettings().then(async () => {
     await loadKalenderRange();
     loadFilters();
-    initPengajarDropdowns();
   });
 });

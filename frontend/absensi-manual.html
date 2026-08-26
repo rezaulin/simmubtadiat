@@ -105,8 +105,8 @@
 
     <div class="max-w-6xl mx-auto px-4 md:px-8 pt-6 space-y-6">
       <div>
-        <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Absensi Manual Bulanan</h2>
-        <p class="text-sm text-gray-500 dark:text-gray-400">Input total absensi (hari) per bulan Hijriyah. Cukup isi jumlah Hadir / Sakit / Izin / Alpha.</p>
+        <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Absensi Manual</h2>
+        <p class="text-sm text-gray-500 dark:text-gray-400">Santri: total S/I/T per bulan Hijriyah. Pengajar: nilai per kuartal (K1 | K2&amp;3 | K4).</p>
       </div>
 
       <!-- TABS -->
@@ -158,7 +158,7 @@
         </div>
       </div>
 
-      <!-- TAB PENGAJAR -->
+      <!-- TAB PENGAJAR (input numerik per kuartal: K1 | K2&3 | K4) -->
       <div id="panel-pengajar" class="hidden">
         <div class="glass dark:bg-slate-800/80 rounded-2xl border border-gray-200 dark:border-slate-700 p-4 mb-4">
           <div class="grid grid-cols-2 sm:flex sm:flex-row gap-3 sm:flex-wrap sm:items-end">
@@ -170,7 +170,7 @@
               <label class="text-xs font-semibold text-gray-500">Kelas</label>
               <select id="sel-kelas-p" class="glass-input px-3 py-2 rounded-lg text-sm w-full"><option value="">-- Pilih --</option></select>
             </div>
-            <div class="flex flex-col gap-1">
+            <div class="flex flex-col gap-1 hidden">
               <label class="text-xs font-semibold text-gray-500">Bagian</label>
               <select id="sel-bagian-p" class="glass-input px-3 py-2 rounded-lg text-sm w-full"><option value="">-- Pilih --</option></select>
             </div>
@@ -178,7 +178,7 @@
               <label class="text-xs font-semibold text-gray-500">Tahun Ajaran</label>
               <input type="text" id="sel-tahun-ajaran-p" class="glass-input px-3 py-2 rounded-lg text-sm min-w-[120px]" readonly>
             </div>
-            <div class="flex flex-col gap-1">
+            <div class="flex flex-col gap-1 hidden">
               <label class="text-xs font-semibold text-gray-500">Tahun Hijriyah</label>
               <input type="text" id="sel-tahun-hijri-p" class="glass-input px-3 py-2 rounded-lg text-sm min-w-[100px]" readonly>
             </div>
@@ -195,7 +195,7 @@
         <div id="grid-pengajar-container" class="overflow-x-auto glass dark:bg-slate-800/80 rounded-2xl border border-gray-200 dark:border-slate-700 p-4 hidden">
           <div id="grid-pengajar" class="text-sm"></div>
           <div class="mt-4 flex justify-end">
-            <button id="btn-save-pengajar" class="bg-primary hover:bg-primary-hover text-white px-6 py-2 rounded-xl text-sm font-medium shadow-md">Simpan &amp; Lanjut ▶</button>
+            <button id="btn-save-pengajar" class="bg-primary hover:bg-primary-hover text-white px-6 py-2 rounded-xl text-sm font-medium shadow-md">Simpan</button>
           </div>
         </div>
       </div>

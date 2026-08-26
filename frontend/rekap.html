@@ -230,29 +230,19 @@
         </button>
     </div>
 
-    <!-- FILTER SECTION: PENGAJAR -->
+    <!-- FILTER SECTION: PENGAJAR (kuartal: filter tingkatan & kelas) -->
     <div id="filter-section-pengajar" class="px-6 mb-6 flex-col sm:flex-row gap-4 flex-wrap hidden transition-opacity duration-300">
+        <select id="filter-tingkatan-pengajar" class="glass-input px-4 py-2 rounded-xl text-sm w-full sm:w-auto">
+            <option value="">-- Tingkatan --</option>
+        </select>
+        <select id="filter-kelas-pengajar" class="glass-input px-4 py-2 rounded-xl text-sm w-full sm:w-auto">
+            <option value="">-- Semua Kelas --</option>
+        </select>
         <select id="filter-tahun-pengajar" class="glass-input px-4 py-2 rounded-xl text-sm w-full sm:w-auto">
             <!-- Injected via JS -->
         </select>
-        <input type="number" id="filter-tahun-hijri-pengajar" class="glass-input px-4 py-2 rounded-xl text-sm w-full sm:w-auto" placeholder="Tahun (cth: 1447)">
-        <select id="filter-bulan-hijri-pengajar" class="glass-input px-4 py-2 rounded-xl text-sm w-full sm:w-auto">
-            <option value="0">-- Semua Bulan --</option>
-            <option value="1">Muharram</option>
-            <option value="2">Safar</option>
-            <option value="3">Rabi'ul Awal</option>
-            <option value="4">Rabi'ul Akhir</option>
-            <option value="5">Jumadil Awal</option>
-            <option value="6">Jumadil Akhir</option>
-            <option value="7">Rajab</option>
-            <option value="8">Sya'ban</option>
-            <option value="9">Ramadhan</option>
-            <option value="10">Syawal</option>
-            <option value="11">Dzulqa'dah</option>
-            <option value="12">Dzulhijjah</option>
-        </select>
         <button id="btn-load-pengajar" class="bg-primary hover:bg-primary-hover text-white px-6 py-2 rounded-xl text-sm font-medium transition-colors whitespace-nowrap shadow-sm">
-            Tampilkan Log
+            Tampilkan Data
         </button>
     </div>
 

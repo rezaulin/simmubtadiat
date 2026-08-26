@@ -14,9 +14,9 @@ const selTahunHijriSiswa = document.getElementById('filter-tahun-hijri-siswa');
 const selBulanHijriSiswa = document.getElementById('filter-bulan-hijri-siswa');
 const btnLoadSiswa = document.getElementById('btn-load-siswa');
 
+const selTingkatanPengajar = document.getElementById('filter-tingkatan-pengajar');
+const selKelasPengajar = document.getElementById('filter-kelas-pengajar');
 const selTahunPengajar = document.getElementById('filter-tahun-pengajar');
-const selTahunHijriPengajar = document.getElementById('filter-tahun-hijri-pengajar');
-const selBulanHijriPengajar = document.getElementById('filter-bulan-hijri-pengajar');
 const btnLoadPengajar = document.getElementById('btn-load-pengajar');
 
 const tableContainer = document.getElementById('table-container');
@@ -147,11 +147,16 @@ async function loadFilters() {
 
     setTahunDropdown(selTahunSiswa);
     setTahunDropdown(selTahunPengajar);
-    
+
+    // Populate filter tingkatan untuk tab pengajar (semua tingkatan yg diizinkan).
+    selTingkatanPengajar.innerHTML = '<option value="">-- Tingkatan --</option>';
+    opsiTingkatan.forEach(t => {
+        selTingkatanPengajar.innerHTML += `<option value="${t.id}">${t.nama}</option>`;
+    });
+
     // tahun_hijri_aktif bisa berupa pasangan "1447/1448"; prefill hanya jika angka tunggal.
     const prefHijri = /^\d+$/.test(String(tahunHijriAktif || '')) ? tahunHijriAktif : '';
     selTahunHijriSiswa.value = prefHijri;
-    selTahunHijriPengajar.value = prefHijri;
 
   } catch (err) {
     console.error(err);
@@ -407,30 +412,52 @@ function renderRekapSiswaGrid() {
 // Wrapper lama tetap ada supaya referensi lain tidak rusak.
 function renderSiswa(data) { renderRekapSiswaGrid(); }
 
-// Load Log Absensi Pengajar
+// Cascade tingkatan → kelas untuk tab pengajar.
+selTingkatanPengajar.addEventListener('change', () => {
+    const t = selTingkatanPengajar.value;
+    selKelasPengajar.innerHTML = '<option value="">-- Semua Kelas --</option>';
+    if (!t) return;
+    const availableClasses = new Set();
+    allBagian.filter(b => b.tingkatan_id == t).forEach(b => {
+        if (b.kelas) availableClasses.add(b.kelas);
+    });
+    Array.from(availableClasses).sort().forEach(k => {
+        selKelasPengajar.insertAdjacentHTML('beforeend', `<option value="${k}">Kelas ${k}</option>`);
+    });
+});
+
+// Load Rekap Absensi Pengajar (kuartal: K1 | K2&3 | K4)
 btnLoadPengajar.addEventListener('click', async () => {
     const tahunAjaran = selTahunPengajar.value;
-    const tahunHijri = selTahunHijriPengajar.value;
-    const bulanHijri = selBulanHijriPengajar.value;
+    const tingkatanId = selTingkatanPengajar.value;
+    const kelasVal = selKelasPengajar.value; // ini nomor kelas (mis. "12"), perlu map ke kelas_id
+
+    if (!tahunAjaran) { alert('Pilih Tahun Ajaran'); return; }
 
     btnLoadPengajar.disabled = true;
     btnLoadPengajar.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Memuat...`;
 
     try {
-        const res = await fetch(`/api/rekap/absensi-pengajar?tahun_ajaran=${tahunAjaran}&tahun_hijri=${tahunHijri}&bulan_hijri=${bulanHijri}`);
-        if (!res.ok) throw new Error('Gagal mengambil data log pengajar');
+        const params = new URLSearchParams({ tahun_ajaran: tahunAjaran });
+        if (tingkatanId) params.set('tingkatan_id', tingkatanId);
+        // Map nomor kelas → kelas_id lewat allBagian (bagian membawa kelas + kelas_id).
+        if (kelasVal) {
+            const b = allBagian.find(x => x.tingkatan_id == tingkatanId && x.kelas == kelasVal);
+            if (b && b.kelas_id) params.set('kelas_id', b.kelas_id);
+        }
+        const res = await fetch(`/api/absensi-pengajar-kuartal?${params.toString()}`);
+        if (!res.ok) throw new Error('Gagal mengambil data rekap pengajar');
         const data = await res.json();
-        
-        renderTablePengajar(data);
+        renderTablePengajar(Array.isArray(data) ? data : []);
     } catch (err) {
         alert(err.message);
     } finally {
         btnLoadPengajar.disabled = false;
-        btnLoadPengajar.innerHTML = 'Tampilkan Log';
+        btnLoadPengajar.innerHTML = 'Tampilkan Data';
     }
 });
 
-// ==================== LOG ABSENSI PENGAJAR ====================
+// ==================== REKAP ABSENSI PENGAJAR (KUARTAL) ====================
 
 function renderTablePengajar(data) {
   emptyState.classList.add('hidden');
@@ -438,28 +465,25 @@ function renderTablePengajar(data) {
   rekapSiswaView.classList.add('hidden');
   summaryPengajar.classList.remove('hidden');
   tableContainer.classList.remove('hidden');
+  if (tableScrollHint) tableScrollHint.classList.add('hidden');
 
   const list = data || [];
 
-  const totalHadir = list.length; // Actually total ustadz active
-  const totalSakit = list.reduce((a, u) => a + (u.total_sakit || 0), 0);
-  const totalIzin = list.reduce((a, u) => a + (u.total_izin || 0), 0);
-  const totalAlpha = list.reduce((a, u) => a + (u.total_alpha || 0), 0);
-  const totalAlphaClean = list.filter(u => u.total_alpha === 0).length;
+  const totalK1 = list.reduce((a, u) => a + (u.kuartal_1 || 0), 0);
+  const totalK23 = list.reduce((a, u) => a + (u.kuartal_23 || 0), 0);
+  const totalK4 = list.reduce((a, u) => a + (u.kuartal_4 || 0), 0);
 
-  const totalHadirGlobal = list.reduce((a, u) => a + (u.total_hadir || 0), 0);
-  
   summaryPengajar.innerHTML = `
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
       ${summaryCard('Total Pengajar', list.length, 'Pengajar aktif')}
-      ${summaryCard('Sakit & Izin', totalSakit + totalIzin, `S: ${totalSakit} • I: ${totalIzin}`)}
-      ${summaryCard('Total Alpha', totalAlpha, `Keseluruhan pengajar`, (totalAlpha ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-white'))}
-      ${summaryCard('Bersih Alpha', `${totalAlphaClean}/${list.length}`, 'Pengajar nihil alpha', 'text-blue-600 dark:text-blue-400')}
+      ${summaryCard('Jumlah Kuartal 1', totalK1, 'Total semua pengajar')}
+      ${summaryCard('Jumlah Kuartal 2 & 3', totalK23, 'Total semua pengajar')}
+      ${summaryCard('Jumlah Kuartal 4', totalK4, 'Total semua pengajar')}
     </div>`;
 
   if (list.length === 0) {
     tableHead.innerHTML = `<tr><th class="px-6 py-3">Data Kosong</th></tr>`;
-    tableBody.innerHTML = '<tr><td class="px-6 py-8 text-center text-gray-500">Tidak ada pengajar aktif atau data kosong.</td></tr>';
+    tableBody.innerHTML = '<tr><td class="px-6 py-8 text-center text-gray-500">Tidak ada pengajar untuk filter ini.</td></tr>';
     return;
   }
 
@@ -467,9 +491,9 @@ function renderTablePengajar(data) {
     <tr>
       <th class="px-4 py-3 w-12 text-center border-b border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-700">No</th>
       <th class="px-4 py-3 text-left border-b border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-700">Nama Pengajar</th>
-      <th class="px-4 py-3 text-center border-b border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-700 text-blue-600 dark:text-blue-400">Total Sakit</th>
-      <th class="px-4 py-3 text-center border-b border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-700 text-amber-600 dark:text-amber-400">Total Izin</th>
-      <th class="px-4 py-3 text-center border-b border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-700 text-red-600 dark:text-red-400">Total Alpha</th>
+      <th class="px-4 py-3 text-center border-b border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-700">Kuartal 1</th>
+      <th class="px-4 py-3 text-center border-b border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-700">Kuartal 2 &amp; 3</th>
+      <th class="px-4 py-3 text-center border-b border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-700">Kuartal 4</th>
     </tr>`;
 
   tableBody.innerHTML = list.map((u, idx) => {
@@ -477,11 +501,11 @@ function renderTablePengajar(data) {
       <tr class="hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors">
         <td class="px-4 py-3 text-gray-500 text-center">${idx + 1}</td>
         <td class="px-4 py-3">
-          <p class="font-medium text-gray-800 dark:text-gray-200 whitespace-nowrap">${u.nama_pengajar}</p>
+          <p class="font-medium text-gray-800 dark:text-gray-200 whitespace-nowrap">${u.pengajar_nama || '-'}</p>
         </td>
-        <td class="px-4 py-3 text-center font-bold text-blue-600 dark:text-blue-400">${u.total_sakit || 0}</td>
-        <td class="px-4 py-3 text-center font-bold text-amber-600 dark:text-amber-400">${u.total_izin || 0}</td>
-        <td class="px-4 py-3 text-center font-bold ${u.total_alpha ? 'text-red-600 dark:text-red-400' : 'text-gray-400'}">${u.total_alpha || 0}</td>
+        <td class="px-4 py-3 text-center font-bold text-gray-800 dark:text-gray-200">${u.kuartal_1 || 0}</td>
+        <td class="px-4 py-3 text-center font-bold text-gray-800 dark:text-gray-200">${u.kuartal_23 || 0}</td>
+        <td class="px-4 py-3 text-center font-bold text-gray-800 dark:text-gray-200">${u.kuartal_4 || 0}</td>
       </tr>`;
   }).join('');
 }
