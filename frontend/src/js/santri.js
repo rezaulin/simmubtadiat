@@ -913,7 +913,11 @@ if (btnImport) {
     try {
       const res = await fetch('/api/santri/import', { method: 'POST', body: fd });
       const data = await parseJSONSafe(res);
-      if (!res.ok) throw new Error((data && data.message) || 'Gagal mengimpor');
+      // Struktur hasil (sukses/gagal/errors) bisa datang DI JALUR 422 (parse/validasi
+      // gagal) maupun 200 (partial). Selama ada field terstruktur, render laporan —
+      // JANGAN throw hanya karena !res.ok, biar tabel detail tetap tampil.
+      const hasStruct = data && (typeof data.gagal === 'number' || typeof data.sukses === 'number' || Array.isArray(data.errors));
+      if (!res.ok && !hasStruct) throw new Error((data && data.message) || 'Gagal mengimpor');
 
       const berhasil = (data && data.sukses) ?? 0;
       const gagal = (data && data.gagal) ?? 0;

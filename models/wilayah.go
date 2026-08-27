@@ -2,7 +2,10 @@ package models
 
 import (
 	"context"
+	"sort"
+	"strings"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/mubtadiaat/app/config"
 )
 
@@ -93,28 +96,117 @@ func lookupNama(ctx context.Context, table, kode string) (string, error) {
 	return nama, err
 }
 
+// normalizeWilayah membersihkan nama wilayah untuk pencocokan impor Excel:
+// strip prefix administratif (KABUPATEN/KOTA/KAB./KEC./PROVINSI/dst),
+// buang tanda baca titik, rapatkan spasi. Case-insensitive di sisi SQL.
+func normalizeWilayahNama(s string) string {
+	s = strings.ToLower(strings.TrimSpace(s))
+	s = strings.ReplaceAll(s, ".", " ")
+	for _, pfx := range []string{"kabupaten ", "kota administrasi ", "kota ", "kab ", "kecamatan ", "kec ", "provinsi ", "prov ", "kepulauan "} {
+		if strings.HasPrefix(s, pfx) {
+			s = strings.TrimSpace(s[len(pfx):])
+		}
+	}
+	return strings.Join(strings.Fields(s), " ")
+}
+
 // FindKabupatenByNama mencari kabupaten berdasarkan nama (case-insensitive) untuk impor Excel.
+// Toleran terhadap perbedaan prefix ("KABUPATEN X" vs "X") & kata tambahan
+// ("Bangka Belitung" vs "Kepulauan Bangka Belitung") via pencocokan bertahap.
 func FindKabupatenByNama(ctx context.Context, provinsiKode, nama string) (Wilayah, error) {
-	var w Wilayah
-	err := config.DB.QueryRow(ctx,
-		`SELECT kode, nama FROM wil_kabupaten WHERE provinsi_kode = $1 AND LOWER(nama) = LOWER($2) LIMIT 1`,
-		provinsiKode, nama).Scan(&w.Kode, &w.Nama)
-	return w, err
+	return findWilayahFleksibel(ctx, "wil_kabupaten", "provinsi_kode", provinsiKode, nama)
+}
+
+// ResolveKabupatenKecamatan menyelesaikan ambiguitas KOTA vs KABUPATEN dengan
+// nama sama (mis. "TEGAL" → KABUPATEN TEGAL & KOTA TEGAL). Bila kecNama diberikan,
+// dipilih kandidat kabupaten/kota yang BENAR-BENAR memuat kecamatan tersebut.
+// Kembalian: kabupaten terpilih + kecamatan (kec kosong bila kecNama == "").
+func ResolveKabupatenKecamatan(ctx context.Context, provinsiKode, kabNama, kecNama string) (kab Wilayah, kec Wilayah, err error) {
+	cands, err := findWilayahCandidates(ctx, "wil_kabupaten", "provinsi_kode", provinsiKode, kabNama)
+	if err != nil {
+		return Wilayah{}, Wilayah{}, err
+	}
+	if len(cands) == 0 {
+		return Wilayah{}, Wilayah{}, pgx.ErrNoRows
+	}
+	if kecNama == "" {
+		return cands[0], Wilayah{}, nil
+	}
+	// Coba tiap kandidat kabupaten; ambil yang punya kecamatannya.
+	var lastErr error = pgx.ErrNoRows
+	for _, c := range cands {
+		k, e := findWilayahFleksibel(ctx, "wil_kecamatan", "kabupaten_kode", c.Kode, kecNama)
+		if e == nil {
+			return c, k, nil
+		}
+		lastErr = e
+	}
+	// Tidak ada kandidat yang cocok untuk kecamatan → laporkan pakai kandidat pertama.
+	return cands[0], Wilayah{}, lastErr
 }
 
 // FindProvinsiByNama mencari provinsi berdasarkan nama (case-insensitive) untuk impor Excel.
 func FindProvinsiByNama(ctx context.Context, nama string) (Wilayah, error) {
-	var w Wilayah
-	err := config.DB.QueryRow(ctx,
-		`SELECT kode, nama FROM wil_provinsi WHERE LOWER(nama) = LOWER($1) LIMIT 1`, nama).Scan(&w.Kode, &w.Nama)
-	return w, err
+	return findWilayahFleksibel(ctx, "wil_provinsi", "", "", nama)
 }
 
 // FindKecamatanByNama mencari kecamatan berdasarkan nama (case-insensitive) untuk impor Excel.
 func FindKecamatanByNama(ctx context.Context, kabupatenKode, nama string) (Wilayah, error) {
-	var w Wilayah
-	err := config.DB.QueryRow(ctx,
-		`SELECT kode, nama FROM wil_kecamatan WHERE kabupaten_kode = $1 AND LOWER(nama) = LOWER($2) LIMIT 1`,
-		kabupatenKode, nama).Scan(&w.Kode, &w.Nama)
-	return w, err
+	return findWilayahFleksibel(ctx, "wil_kecamatan", "kabupaten_kode", kabupatenKode, nama)
+}
+
+// findWilayahCandidates mengembalikan SEMUA wilayah yang cocok (exact-norm atau
+// contains dua arah) pada bentuk ternormalisasi, diurut dari nama terpendek
+// (paling spesifik) agar pemilih di atasnya deterministik.
+func findWilayahCandidates(ctx context.Context, table, parentCol, parentKode, nama string) ([]Wilayah, error) {
+	q := `SELECT kode, nama FROM ` + table
+	args := []interface{}{}
+	if parentCol != "" {
+		q += ` WHERE ` + parentCol + ` = $1`
+		args = append(args, parentKode)
+	}
+	rows, err := config.DB.Query(ctx, q, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	target := normalizeWilayahNama(nama)
+	var exact []Wilayah
+	var contains []Wilayah
+	for rows.Next() {
+		var c Wilayah
+		if err := rows.Scan(&c.Kode, &c.Nama); err != nil {
+			continue
+		}
+		cn := normalizeWilayahNama(c.Nama)
+		if cn == target {
+			exact = append(exact, c)
+		} else if strings.Contains(cn, target) || strings.Contains(target, cn) {
+			contains = append(contains, c)
+		}
+	}
+	out := append(exact, contains...)
+	sort.SliceStable(out, func(i, j int) bool {
+		return len(normalizeWilayahNama(out[i].Nama)) < len(normalizeWilayahNama(out[j].Nama))
+	})
+	return out, nil
+}
+
+// findWilayahFleksibel mencari satu wilayah dengan strategi bertingkat:
+//  1. exact (LOWER = LOWER)
+//  2. normalisasi kedua sisi (strip prefix admin + titik) lalu bandingkan sama persis
+//  3. contains dua arah pada bentuk ternormalisasi (mis. "bangka belitung" ⊂
+//     "kepulauan bangka belitung"), diambil kandidat terpendek agar tak ambigu.
+//
+// parentCol kosong → tabel tanpa filter induk (provinsi).
+func findWilayahFleksibel(ctx context.Context, table, parentCol, parentKode, nama string) (Wilayah, error) {
+	cands, err := findWilayahCandidates(ctx, table, parentCol, parentKode, nama)
+	if err != nil {
+		return Wilayah{}, err
+	}
+	if len(cands) == 0 {
+		return Wilayah{}, pgx.ErrNoRows
+	}
+	return cands[0], nil
 }

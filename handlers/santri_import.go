@@ -229,24 +229,25 @@ func ImportSantri(w http.ResponseWriter, r *http.Request) {
 			s.ProvinsiNama = &prov.Nama
 
 			if kabNama != "" {
-				kab, err := models.FindKabupatenByNama(ctx, prov.Kode, kabNama)
+				// Selesaikan ambiguitas KOTA vs KABUPATEN (mis. "TEGAL" ada dua):
+				// pilih kandidat yang benar-benar memuat kecamatan yang ditulis.
+				kab, kec, err := models.ResolveKabupatenKecamatan(ctx, prov.Kode, kabNama, kecNama)
 				if err != nil {
-					parseErrors = append(parseErrors, models.ImportRowError{
-						Baris: baris, Nama: nama, Pesan: fmt.Sprintf("Kabupaten/Kota '%s' tidak ada di provinsi %s", kabNama, prov.Nama),
-					})
+					// Bedakan pesan: kab tak ketemu vs kec tak ketemu di kab manapun.
+					if kab.Kode == "" {
+						parseErrors = append(parseErrors, models.ImportRowError{
+							Baris: baris, Nama: nama, Pesan: fmt.Sprintf("Kabupaten/Kota '%s' tidak ada di provinsi %s", kabNama, prov.Nama),
+						})
+					} else {
+						parseErrors = append(parseErrors, models.ImportRowError{
+							Baris: baris, Nama: nama, Pesan: fmt.Sprintf("Kecamatan '%s' tidak ada di %s", kecNama, kab.Nama),
+						})
+					}
 					continue
 				}
 				s.KabupatenKode = &kab.Kode
 				s.KabupatenNama = &kab.Nama
-
-				if kecNama != "" {
-					kec, err := models.FindKecamatanByNama(ctx, kab.Kode, kecNama)
-					if err != nil {
-						parseErrors = append(parseErrors, models.ImportRowError{
-							Baris: baris, Nama: nama, Pesan: fmt.Sprintf("Kecamatan '%s' tidak ada di %s", kecNama, kab.Nama),
-						})
-						continue
-					}
+				if kecNama != "" && kec.Kode != "" {
 					s.KecamatanKode = &kec.Kode
 					s.KecamatanNama = &kec.Nama
 				}
