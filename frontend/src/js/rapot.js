@@ -380,7 +380,13 @@ function buildSheet(data, semester) {
   set('stambuk', santri.stambuk || '-');
   // No. Tamrin tidak tersimpan di database; sisakan placeholder untuk diisi manual.
   set('tamrin', santri.nomor_tamrin || '....................');
-  set('kelas', data.kelas_nama || '-');
+  // Kelas + tingkatan (owner 2026-08): "1 Tsanawiyah" — kelas diikuti nama tingkatan.
+  const kelasNama = decodeEntities(data.kelas_nama || '');
+  const tingkatanNama = decodeEntities(data.tingkatan_nama || '');
+  let kelasDisplay = kelasNama || '-';
+  if (kelasNama && tingkatanNama) kelasDisplay = `${kelasNama} ${tingkatanNama}`;
+  else if (!kelasNama && tingkatanNama) kelasDisplay = tingkatanNama;
+  set('kelas', kelasDisplay);
   set('bagian', data.bagian_nama || '-');
 
   // Judul semester Arab (baris besar kop). Sem 2 -> الثانية, selain itu الأولى.
