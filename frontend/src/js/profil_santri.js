@@ -214,22 +214,36 @@ async function loadData() {
     const resRiwayat = await fetch(`/api/santri/${santriId}/riwayat-akademik`);
     const riwayat = resRiwayat.ok ? await resRiwayat.json() : [];
 
-    // 2b. Untuk tiap TA, ambil rentang tahun Hijri dari kalender akademik
-    //     supaya grid absensi tetap tampil penuh meski belum ada catatan absen
-    //     (owner 2026-08: bulan kosong tetap tampil, nilai 0).
-    const hijriYearsByTA = {};
+    // 2b. Untuk tiap TA, susun daftar bulan Hijri LENGKAP dari kalender akademik
+    //     (mulai→selesai, SAMA seperti Input Manual & Rekap) supaya grid absensi
+    //     detail santri konsisten: bukan 2 tahun utuh, tapi rentang TA sebenarnya.
+    //     Bulan kosong tetap tampil (nilai 0) — owner 2026-08.
+    const bulanListByTA = {};
     await Promise.all((Array.isArray(riwayat) ? riwayat : []).map(async (t) => {
       try {
         const res = await fetch(`/api/kalender/hijri-semester?tahun_ajaran=${encodeURIComponent(t.tahun_ajaran)}`);
         if (!res.ok) return;
         const rows = await res.json();
         if (!Array.isArray(rows) || rows.length === 0) return;
-        const yrs = new Set();
+        // Cari batas mulai (paling awal) & selesai (paling akhir) lintas semester.
+        const ord = (y, m, d) => y * 360 + m * 30 + d;
+        let mulai = null, selesai = null;
         rows.forEach(r => {
-          if (r.mulai_tahun_hijri) yrs.add(r.mulai_tahun_hijri);
-          if (r.selesai_tahun_hijri) yrs.add(r.selesai_tahun_hijri);
+          const m = { thn: r.mulai_tahun_hijri, bln: r.mulai_bulan_hijri, tgl: r.mulai_tanggal };
+          const s = { thn: r.selesai_tahun_hijri, bln: r.selesai_bulan_hijri, tgl: r.selesai_tanggal };
+          if (!mulai || ord(m.thn, m.bln, m.tgl) < ord(mulai.thn, mulai.bln, mulai.tgl)) mulai = m;
+          if (!selesai || ord(s.thn, s.bln, s.tgl) > ord(selesai.thn, selesai.bln, selesai.tgl)) selesai = s;
         });
-        hijriYearsByTA[t.tahun_ajaran] = [...yrs].sort((a, b) => a - b);
+        if (!mulai || !selesai) return;
+        // Bangun daftar bulan dari bulan-mulai s/d bulan-selesai (inklusif).
+        const list = [];
+        let y = mulai.thn, mo = mulai.bln;
+        const end = selesai.thn * 12 + selesai.bln;
+        while (y * 12 + mo <= end) {
+          list.push({ tahun: y, bulan: mo });
+          mo++; if (mo > 12) { mo = 1; y++; }
+        }
+        bulanListByTA[t.tahun_ajaran] = list;
       } catch (_) {}
     }));
 
@@ -239,7 +253,7 @@ async function loadData() {
 
     currentSantriData = s;
     populateBiodata(s);
-    populateRiwayat(riwayat, hijriYearsByTA);
+    populateRiwayat(riwayat, bulanListByTA);
     populateCatatan(catatan, canWriteCatatan);
 
     loadingIndicator.classList.add('hidden');
@@ -402,7 +416,7 @@ const EXCLUDED_KATEGORI = new Set([
   'akhlaq_perilaku'
 ]);
 
-function populateRiwayat(riwayatArr, hijriYearsByTA = {}) {
+function populateRiwayat(riwayatArr, bulanListByTA = {}) {
   if (!riwayatArr || riwayatArr.length === 0) {
     riwayatEmpty.classList.remove('hidden');
     return;
@@ -427,30 +441,30 @@ function populateRiwayat(riwayatArr, hijriYearsByTA = {}) {
        totA += a.t || 0;
        absensiMapBulan[`${a.tahun_hijri || 0}:${a.bulan_angka || 0}`] = { s: a.s || 0, i: a.i || 0, t: a.t || 0 };
     });
-    // Susun daftar bulan lengkap. Sumber tahun Hijri: data absensi yang ada,
-    // DIGABUNG dengan rentang kalender akademik TA (hijriYearsByTA) supaya grid
-    // tetap tampil penuh meski belum ada catatan absen (owner 2026-08).
-    const tahunFromData = (Array.isArray(taData.absensi) ? taData.absensi : [])
-      .map(a => a.tahun_hijri).filter(y => y > 0);
-    const tahunFromKalender = hijriYearsByTA[taData.tahun_ajaran] || [];
-    const tahunHijriSet = [...new Set([...tahunFromData, ...tahunFromKalender])].sort((a, b) => a - b);
+    // Daftar bulan dari kalender akademik TA (mulai→selesai, sama seperti Input
+    // Manual & Rekap). Fallback: turunkan dari tahun Hijri yang muncul di data.
+    let bulanList = bulanListByTA[taData.tahun_ajaran] || [];
+    if (bulanList.length === 0) {
+      // Fallback bila kalender belum diset: pakai bulan yang ada di data absensi.
+      bulanList = (Array.isArray(taData.absensi) ? taData.absensi : [])
+        .filter(a => a.tahun_hijri > 0 && a.bulan_angka >= 1 && a.bulan_angka <= 12)
+        .map(a => ({ tahun: a.tahun_hijri, bulan: a.bulan_angka }));
+    }
     let absensiRows = '';
-    if (tahunHijriSet.length > 0) {
-      let no = 0;
-      tahunHijriSet.forEach(th => {
-        NAMA_BULAN_HIJRI.forEach((nama, idx) => {
-          const key = `${th}:${idx + 1}`;
-          const d = absensiMapBulan[key] || { s: 0, i: 0, t: 0 };
-          no++;
-          absensiRows += `
+    if (bulanList.length > 0) {
+      bulanList.forEach((b, i) => {
+        const th = b.tahun, idx = b.bulan - 1;
+        const nama = NAMA_BULAN_HIJRI[idx] || '';
+        const key = `${th}:${b.bulan}`;
+        const d = absensiMapBulan[key] || { s: 0, i: 0, t: 0 };
+        absensiRows += `
             <tr class="${d.t ? 'bg-red-50/60 dark:bg-red-900/10' : ''}">
-              <td class="px-2 py-1.5 border border-gray-200 dark:border-gray-700 text-center text-xs text-gray-400">${String(no).padStart(2, '0')}</td>
+              <td class="px-2 py-1.5 border border-gray-200 dark:border-gray-700 text-center text-xs text-gray-400">${String(i + 1).padStart(2, '0')}</td>
               <td class="px-3 py-1.5 border border-gray-200 dark:border-gray-700 font-medium text-gray-800 dark:text-gray-200">${nama} ${th} H</td>
               <td class="px-2 py-1.5 border border-gray-200 dark:border-gray-700 text-center font-bold text-blue-600 dark:text-blue-400">${d.s || 0}</td>
               <td class="px-2 py-1.5 border border-gray-200 dark:border-gray-700 text-center font-bold text-amber-600 dark:text-amber-400">${d.i || 0}</td>
               <td class="px-2 py-1.5 border border-gray-200 dark:border-gray-700 text-center font-bold ${d.t ? 'text-red-600 dark:text-red-400' : 'text-gray-400'}">${d.t || 0}</td>
             </tr>`;
-        });
       });
       absensiRows += `
         <tr class="bg-gray-50 dark:bg-gray-750 font-bold">
@@ -460,7 +474,7 @@ function populateRiwayat(riwayatArr, hijriYearsByTA = {}) {
           <td class="px-2 py-2 border border-gray-200 dark:border-gray-700 text-center ${totA ? 'text-red-600 dark:text-red-400' : 'text-gray-500'}">${totA}</td>
         </tr>`;
     }
-    const absensiTable = tahunHijriSet.length === 0
+    const absensiTable = bulanList.length === 0
       ? '<p class="text-sm text-gray-400 italic py-4">Belum ada data absensi di tahun ini.</p>'
       : `
         <div class="overflow-x-auto">
