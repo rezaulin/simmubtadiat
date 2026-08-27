@@ -454,8 +454,8 @@ function isExcludedRow(row) {
         <td class="td-num">${toArabicDigits(idx + 1)}</td>
         <td class="td-left td-arab">${row.nama_kitab}</td>
         <td class="td-left td-arab">${row.mapel}</td>
-        <td class="td-num">${fmtNilai(khos)}</td>
-        <td class="td-num">${fmtNilaiAm(am)}</td>
+        <td class="td-num">${fmtNilai(khos) || '-'}</td>
+        <td class="td-num">${fmtNilaiAm(am) || '-'}</td>
       </tr>
     `;
   });
@@ -497,11 +497,16 @@ function isExcludedRow(row) {
   const bayanBox = sheet.querySelector('[data-field="bayan-box"]');
   const sigMudir = sheet.querySelector('[data-field="sig-mudir"]');
   if (isSem2) {
-    const bayanLabel = data.bayan || '-';
+    // Owner 2026-08: di RAPORT CETAK, siswi yang Al-Bayan rodli' (الرديء, ≤5)
+    // ditulis المثبت (Musbat) — karena rodli' sudah dipastikan musbat (tetap).
+    // Di menu Penilaian & data tetap الرديء (tidak diubah, hanya tampilan cetak).
+    let bayanLabel = data.bayan || '-';
+    const isRodli = decodeEntities(bayanLabel).includes('الرديء');
+    if (isRodli) bayanLabel = 'المثبت';
     set('bayan-value', bayanLabel);
-    // Nilai zona RODI (الرديء, Al-Bayan <= 5) dicetak merah.
+    // Nilai zona RODI (rodli'/musbat) dicetak merah.
     const bayanTd = sheet.querySelector('[data-field="bayan-value"]');
-    if (bayanTd) bayanTd.style.color = decodeEntities(bayanLabel).includes('الرديء') ? '#dc2626' : '';
+    if (bayanTd) bayanTd.style.color = isRodli ? '#dc2626' : '';
     if (bayanBox) bayanBox.style.display = '';
     if (sigMudir) sigMudir.style.display = 'block';
   } else {

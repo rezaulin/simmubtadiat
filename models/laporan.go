@@ -220,7 +220,11 @@ func GetRaportSantri(ctx context.Context, santriID int, semester int, tahunAjara
 		            AND EXISTS (SELECT 1 FROM nilai_kuartal nk2
 		                        WHERE nk2.mapel_id = m.id AND nk2.santri_id = $1 AND nk2.tahun_ajaran = $3)
 		        ))
-		       AND (m.aktif_kuartal @> to_jsonb($4::int) OR m.aktif_kuartal @> to_jsonb($5::int))
+		       -- Owner 2026-08: SEMUA mapel kelas tampil di raport Smt 1 & Smt 2.
+		       -- Mapel yang hanya diajar 1 kuartal/1 semester tetap muncul, nilainya
+		       -- kosong ("-") di semester yang tidak diajarkan. Filter aktif_kuartal
+		       -- dinonaktifkan (OR TRUE) — $4/$5 tetap dikirim agar placeholder valid.
+		       AND (m.aktif_kuartal @> to_jsonb($4::int) OR m.aktif_kuartal @> to_jsonb($5::int) OR TRUE)
 		 ORDER BY m.urutan ASC, m.id ASC`, santriID, semester, tahunAjaran, q1, q2)
 
 	if err == nil {
