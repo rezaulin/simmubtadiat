@@ -436,15 +436,17 @@ formSantri.addEventListener('submit', async (e) => {
     kecamatan_kode: orNull(formData.get('kecamatan_kode')),
     kecamatan_nama: orNull(formData.get('kecamatan_nama')),
     desa: orNull(formData.get('desa')),
-    status: "aktif"
+    status: "aktif",
+    // Kirim bagian_awal_id agar backend CreateSantri langsung set bagian_id +
+    // insert riwayat_bagian dalam satu transaksi → santri langsung masuk kelas
+    // (tidak nyangkut di "belum di kelas"). owner 2026-08.
+    bagian_awal_id: parseInt(formData.get('bagian_awal_id'), 10) || 0
   };
-  
-  const bagianId = formData.get('bagian_awal_id');
-  
+
   const btnSubmit = formSantri.querySelector('button[type="submit"]');
   btnSubmit.disabled = true;
   btnSubmit.textContent = 'Menyimpan...';
-  
+
   try {
     const response = await fetch('/api/santri', {
       method: 'POST',
@@ -453,19 +455,7 @@ formSantri.addEventListener('submit', async (e) => {
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.message);
-    
-    // Assign if bagian selected
-    if (bagianId) {
-      await fetch('/api/perpindahan/naik-kelas', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-          santri_ids: [data.id],
-          bagian_tujuan_id: bagianId
-        })
-      });
-    }
-    
+
     closeModal();
     loadData();
   } catch (err) {
