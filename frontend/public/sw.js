@@ -1,11 +1,9 @@
-const CACHE_NAME = 'mubtadiaat-cache-v30';
+const CACHE_NAME = 'mubtadiaat-cache-v34';
 const urlsToCache = [
   '/index.html',
   '/logo.jpg',
   '/favicon.svg',
-  '/style.css',
-  '/rapot.html',
-  '/dist/rapot.html'
+  '/style.css'
 ];
 
 self.addEventListener('install', event => {
