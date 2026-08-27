@@ -422,6 +422,7 @@ formKelolaMapel?.addEventListener('submit', async (e) => {
         kelas_id: parseInt(currentKuriKelasId),
         nama_mapel: data.nama_mapel,
         nama_kitab: data.nama_kitab || '',
+        nama_indo: data.nama_indo || '',
         kategori: 'umum',
         urutan: parseInt(data.urutan),
         aktif_kuartal: aktif_kuartal
@@ -464,6 +465,8 @@ window.editMapel = function(id) {
   document.getElementById('mapel-id').value = m.id;
   formKelolaMapel.querySelector('[name="nama_mapel"]').value = decodeEntities(m.nama_mapel);
   formKelolaMapel.querySelector('[name="nama_kitab"]').value = decodeEntities(m.nama_kitab);
+  const indoInput = formKelolaMapel.querySelector('[name="nama_indo"]');
+  if (indoInput) indoInput.value = decodeEntities(m.nama_indo || '');
   formKelolaMapel.querySelector('[name="urutan"]').value = m.urutan;
   
   formKelolaMapel.querySelector('[name="kuartal_1"]').checked = m.aktif_kuartal?.includes(1) || false;

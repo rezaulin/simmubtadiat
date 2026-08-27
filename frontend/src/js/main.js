@@ -1512,7 +1512,7 @@ function buildRiwayatAkademik(riwayat) {
     const rows = (ta.raport || []).map((m, i) => `
       <tr class="border-b border-gray-100 dark:border-slate-700">
         <td class="px-3 py-2 text-center text-gray-400">${i + 1}</td>
-        <td class="px-3 py-2 font-medium text-gray-800 dark:text-gray-200">${waliEscape(m.mapel)}</td>
+        <td class="px-3 py-2 font-medium text-gray-800 dark:text-gray-200">${waliEscape((m.nama_indo && m.nama_indo.trim()) ? m.nama_indo.trim() : m.mapel)}</td>
         <td class="px-3 py-2 text-center font-bold">${waliFmtNilai(m.smt1)}</td>
         <td class="px-3 py-2 text-center font-bold">${waliFmtNilai(m.smt2)}</td>
       </tr>`).join('');

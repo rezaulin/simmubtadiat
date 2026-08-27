@@ -18,6 +18,7 @@ type Mapel struct {
 	KelasID       int    `json:"kelas_id"`
 	NamaMapel     string `json:"nama_mapel"`
 	NamaKitab     string `json:"nama_kitab"`
+	NamaIndo      string `json:"nama_indo"`
 	Kategori      string `json:"kategori"`
 	Urutan        int    `json:"urutan"`
 	AktifKuartal  []int  `json:"aktif_kuartal"`
@@ -33,7 +34,7 @@ func GetMapelByKelas(w http.ResponseWriter, r *http.Request) {
 	}
 
 	rows, err := config.DB.Query(context.Background(),
-		`SELECT id, tingkatan_id, kelas_id, nama_mapel, COALESCE(nama_kitab, ''), kategori, urutan, aktif_kuartal
+		`SELECT id, tingkatan_id, kelas_id, nama_mapel, COALESCE(nama_kitab, ''), COALESCE(nama_indo, ''), kategori, urutan, aktif_kuartal
 		 FROM mata_pelajaran WHERE tingkatan_id=$1 AND kelas_id=$2 ORDER BY urutan ASC, id ASC`, tingkatanIDStr, kelasIDStr)
 	if err != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -45,7 +46,7 @@ func GetMapelByKelas(w http.ResponseWriter, r *http.Request) {
 	for rows.Next() {
 		var m Mapel
 		var aktifJSON []byte
-		if err := rows.Scan(&m.ID, &m.TingkatanID, &m.KelasID, &m.NamaMapel, &m.NamaKitab, &m.Kategori, &m.Urutan, &aktifJSON); err != nil {
+		if err := rows.Scan(&m.ID, &m.TingkatanID, &m.KelasID, &m.NamaMapel, &m.NamaKitab, &m.NamaIndo, &m.Kategori, &m.Urutan, &aktifJSON); err != nil {
 			continue
 		}
 		if err := json.Unmarshal(aktifJSON, &m.AktifKuartal); err != nil {
@@ -86,9 +87,9 @@ func CreateMapel(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = config.DB.QueryRow(context.Background(),
-		`INSERT INTO mata_pelajaran (tingkatan_id, kelas_id, nama_mapel, nama_kitab, kategori, urutan, aktif_kuartal)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
-		m.TingkatanID, m.KelasID, m.NamaMapel, m.NamaKitab, m.Kategori, m.Urutan, aktifJSON).Scan(&m.ID)
+		`INSERT INTO mata_pelajaran (tingkatan_id, kelas_id, nama_mapel, nama_kitab, nama_indo, kategori, urutan, aktif_kuartal)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
+		m.TingkatanID, m.KelasID, m.NamaMapel, m.NamaKitab, m.NamaIndo, m.Kategori, m.Urutan, aktifJSON).Scan(&m.ID)
 
 	if err != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -127,8 +128,8 @@ func UpdateMapel(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_, err = config.DB.Exec(context.Background(),
-		`UPDATE mata_pelajaran SET nama_mapel=$1, nama_kitab=$2, kategori=$3, urutan=$4, aktif_kuartal=$5 WHERE id=$6`,
-		m.NamaMapel, m.NamaKitab, m.Kategori, m.Urutan, aktifJSON, id)
+		`UPDATE mata_pelajaran SET nama_mapel=$1, nama_kitab=$2, nama_indo=$3, kategori=$4, urutan=$5, aktif_kuartal=$6 WHERE id=$7`,
+		m.NamaMapel, m.NamaKitab, m.NamaIndo, m.Kategori, m.Urutan, aktifJSON, id)
 
 	if err != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)

@@ -214,13 +214,32 @@ async function loadData() {
     const resRiwayat = await fetch(`/api/santri/${santriId}/riwayat-akademik`);
     const riwayat = resRiwayat.ok ? await resRiwayat.json() : [];
 
+    // 2b. Untuk tiap TA, ambil rentang tahun Hijri dari kalender akademik
+    //     supaya grid absensi tetap tampil penuh meski belum ada catatan absen
+    //     (owner 2026-08: bulan kosong tetap tampil, nilai 0).
+    const hijriYearsByTA = {};
+    await Promise.all((Array.isArray(riwayat) ? riwayat : []).map(async (t) => {
+      try {
+        const res = await fetch(`/api/kalender/hijri-semester?tahun_ajaran=${encodeURIComponent(t.tahun_ajaran)}`);
+        if (!res.ok) return;
+        const rows = await res.json();
+        if (!Array.isArray(rows) || rows.length === 0) return;
+        const yrs = new Set();
+        rows.forEach(r => {
+          if (r.mulai_tahun_hijri) yrs.add(r.mulai_tahun_hijri);
+          if (r.selesai_tahun_hijri) yrs.add(r.selesai_tahun_hijri);
+        });
+        hijriYearsByTA[t.tahun_ajaran] = [...yrs].sort((a, b) => a - b);
+      } catch (_) {}
+    }));
+
     // 3. Fetch Catatan Pelanggaran & Prestasi
     const resCatatan = await fetch(`/api/catatan?santri_id=${santriId}`);
     const catatan = resCatatan.ok ? (await resCatatan.json()) || [] : [];
 
     currentSantriData = s;
     populateBiodata(s);
-    populateRiwayat(riwayat);
+    populateRiwayat(riwayat, hijriYearsByTA);
     populateCatatan(catatan, canWriteCatatan);
 
     loadingIndicator.classList.add('hidden');
@@ -383,7 +402,7 @@ const EXCLUDED_KATEGORI = new Set([
   'akhlaq_perilaku'
 ]);
 
-function populateRiwayat(riwayatArr) {
+function populateRiwayat(riwayatArr, hijriYearsByTA = {}) {
   if (!riwayatArr || riwayatArr.length === 0) {
     riwayatEmpty.classList.remove('hidden');
     return;
@@ -408,10 +427,13 @@ function populateRiwayat(riwayatArr) {
        totA += a.t || 0;
        absensiMapBulan[`${a.tahun_hijri || 0}:${a.bulan_angka || 0}`] = { s: a.s || 0, i: a.i || 0, t: a.t || 0 };
     });
-    // Susun daftar bulan lengkap: seluruh bulan pada tahun Hijri yang muncul
-    // (bulan kosong tetap tampil sesuai keputusan owner 2026-08).
-    const tahunHijriSet = [...new Set((Array.isArray(taData.absensi) ? taData.absensi : [])
-      .map(a => a.tahun_hijri).filter(y => y > 0))].sort((a, b) => a - b);
+    // Susun daftar bulan lengkap. Sumber tahun Hijri: data absensi yang ada,
+    // DIGABUNG dengan rentang kalender akademik TA (hijriYearsByTA) supaya grid
+    // tetap tampil penuh meski belum ada catatan absen (owner 2026-08).
+    const tahunFromData = (Array.isArray(taData.absensi) ? taData.absensi : [])
+      .map(a => a.tahun_hijri).filter(y => y > 0);
+    const tahunFromKalender = hijriYearsByTA[taData.tahun_ajaran] || [];
+    const tahunHijriSet = [...new Set([...tahunFromData, ...tahunFromKalender])].sort((a, b) => a - b);
     let absensiRows = '';
     if (tahunHijriSet.length > 0) {
       let no = 0;
@@ -419,15 +441,14 @@ function populateRiwayat(riwayatArr) {
         NAMA_BULAN_HIJRI.forEach((nama, idx) => {
           const key = `${th}:${idx + 1}`;
           const d = absensiMapBulan[key] || { s: 0, i: 0, t: 0 };
-          const has = !!absensiMapBulan[key];
           no++;
           absensiRows += `
-            <tr class="${has && d.t ? 'bg-red-50/60 dark:bg-red-900/10' : ''}">
+            <tr class="${d.t ? 'bg-red-50/60 dark:bg-red-900/10' : ''}">
               <td class="px-2 py-1.5 border border-gray-200 dark:border-gray-700 text-center text-xs text-gray-400">${String(no).padStart(2, '0')}</td>
               <td class="px-3 py-1.5 border border-gray-200 dark:border-gray-700 font-medium text-gray-800 dark:text-gray-200">${nama} ${th} H</td>
-              <td class="px-2 py-1.5 border border-gray-200 dark:border-gray-700 text-center font-bold text-blue-600 dark:text-blue-400">${d.s || '-'}</td>
-              <td class="px-2 py-1.5 border border-gray-200 dark:border-gray-700 text-center font-bold text-amber-600 dark:text-amber-400">${d.i || '-'}</td>
-              <td class="px-2 py-1.5 border border-gray-200 dark:border-gray-700 text-center font-bold ${d.t ? 'text-red-600 dark:text-red-400' : 'text-gray-400'}">${d.t || '-'}</td>
+              <td class="px-2 py-1.5 border border-gray-200 dark:border-gray-700 text-center font-bold text-blue-600 dark:text-blue-400">${d.s || 0}</td>
+              <td class="px-2 py-1.5 border border-gray-200 dark:border-gray-700 text-center font-bold text-amber-600 dark:text-amber-400">${d.i || 0}</td>
+              <td class="px-2 py-1.5 border border-gray-200 dark:border-gray-700 text-center font-bold ${d.t ? 'text-red-600 dark:text-red-400' : 'text-gray-400'}">${d.t || 0}</td>
             </tr>`;
         });
       });
@@ -466,7 +487,9 @@ function populateRiwayat(riwayatArr) {
       // Nama kitab (Arab) di-translasi ke Latin. Nama Arab asli tetap
       // dipertahankan sebagai tooltip agar informasi tak hilang.
       const rawMapel = r.mapel || '';
-      const mapelDisplay = translateKitab(rawMapel) || rawMapel || '-';
+      // Owner 2026-08: tampilkan nama_indo (input admin) bila ada; jika kosong,
+      // fallback ke nama Arab apa adanya (BUKAN translate kamus).
+      const mapelDisplay = (r.nama_indo && r.nama_indo.trim()) ? r.nama_indo.trim() : (rawMapel || '-');
       const mapelTitle  = rawMapel && rawMapel !== mapelDisplay ? ` title="${escapeHtml(rawMapel)}"` : '';
       raportRows += `
         <tr class="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750">

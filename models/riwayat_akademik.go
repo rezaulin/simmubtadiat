@@ -19,7 +19,8 @@ type RiwayatAbsensi struct {
 }
 
 type RiwayatRaport struct {
-	NamaMapel string  `json:"mapel"`
+	NamaMapel string  `json:"mapel"`      // nama Arab (nama_kitab) — fallback display
+	NamaIndo  string  `json:"nama_indo"`  // nama Indonesia (admin input); "" = pakai Arab
 	// Nilai Raport (Khos) per semester — hasil olahan tamrin+ujian
 	Smt1 *string `json:"smt1"` // Raport semester 1 (Nilai Khos)
 	Smt2 *string `json:"smt2"` // Raport semester 2 (Nilai Khos)
@@ -28,6 +29,7 @@ type RiwayatRaport struct {
 	UjianK2  *string `json:"ujian_k2"`  // Kuartal 2 = ujian semester 1
 	TamrinK3 *string `json:"tamrin_k3"` // Kuartal 3 = tamrin semester 2
 	UjianK4  *string `json:"ujian_k4"`  // Kuartal 4 = ujian semester 2
+	urutan   int     // internal: urutan mapel raport (untuk sorting)
 }
 
 type RiwayatAkademikTahun struct {
@@ -113,22 +115,24 @@ func GetRiwayatAkademik(ctx context.Context, santriID int) ([]RiwayatAkademikTah
 	type rawRaport struct {
 		TA       string
 		Mapel    string
+		NamaIndo string
+		Urutan   int
 		Semester int
 		Nilai    string
 	}
 	var raports []rawRaport
-	// Kirim NAMA KITAB (Arab) apa adanya. Frontend akan mentranslasi ke
-	// ejaan Latin/Indonesia via modul kitab-translate.js. Kalau nama_kitab
-	// kosong, gunakan nama_mapel sebagai fallback.
+	// Kirim NAMA KITAB (Arab) + nama_indo + urutan. Frontend menampilkan
+	// nama_indo bila ada, jika kosong fallback ke Arab (owner 2026-08).
+	// Urutan mapel disamakan dengan raport (ORDER BY m.urutan).
 	if rowsRaport, err := config.DB.Query(ctx, `
-		SELECT n.tahun_ajaran, COALESCE(NULLIF(m.nama_kitab, ''), m.nama_mapel), n.semester, n.nilai_akhir
+		SELECT n.tahun_ajaran, COALESCE(NULLIF(m.nama_kitab, ''), m.nama_mapel), COALESCE(m.nama_indo, ''), m.urutan, n.semester, n.nilai_akhir
 		FROM nilai_khos n
 		JOIN mata_pelajaran m ON n.mapel_id = m.id
 		WHERE n.santri_id = $1`, santriID); err == nil {
 		for rowsRaport.Next() {
 			var r rawRaport
 			var nilai float64
-			if err := rowsRaport.Scan(&r.TA, &r.Mapel, &r.Semester, &nilai); err == nil {
+			if err := rowsRaport.Scan(&r.TA, &r.Mapel, &r.NamaIndo, &r.Urutan, &r.Semester, &nilai); err == nil {
 				r.Nilai = fmt.Sprintf("%v", nilai)
 				raports = append(raports, r)
 				addTA(r.TA)
@@ -141,21 +145,23 @@ func GetRiwayatAkademik(ctx context.Context, santriID int) ([]RiwayatAkademikTah
 
 	// 2b. Nilai per Kuartal (Tamrin K1/K3, Ujian K2/K4) — untuk detail lengkap.
 	type rawKuartal struct {
-		TA      string
-		Mapel   string
-		Kuartal int
-		Nilai   string
+		TA       string
+		Mapel    string
+		NamaIndo string
+		Urutan   int
+		Kuartal  int
+		Nilai    string
 	}
 	var kuartals []rawKuartal
 	if rowsK, err := config.DB.Query(ctx, `
-		SELECT nk.tahun_ajaran, COALESCE(NULLIF(m.nama_kitab, ''), m.nama_mapel), nk.kuartal, nk.nilai
+		SELECT nk.tahun_ajaran, COALESCE(NULLIF(m.nama_kitab, ''), m.nama_mapel), COALESCE(m.nama_indo, ''), m.urutan, nk.kuartal, nk.nilai
 		FROM nilai_kuartal nk
 		JOIN mata_pelajaran m ON nk.mapel_id = m.id
 		WHERE nk.santri_id = $1`, santriID); err == nil {
 		for rowsK.Next() {
 			var r rawKuartal
 			var nilai float64
-			if err := rowsK.Scan(&r.TA, &r.Mapel, &r.Kuartal, &nilai); err == nil {
+			if err := rowsK.Scan(&r.TA, &r.Mapel, &r.NamaIndo, &r.Urutan, &r.Kuartal, &nilai); err == nil {
 				r.Nilai = fmt.Sprintf("%v", nilai)
 				kuartals = append(kuartals, r)
 				addTA(r.TA)
@@ -318,7 +324,7 @@ func GetRiwayatAkademik(ctx context.Context, santriID int) ([]RiwayatAkademikTah
 			}
 			m, ok := mapelMap[r.Mapel]
 			if !ok {
-				m = &RiwayatRaport{NamaMapel: r.Mapel}
+				m = &RiwayatRaport{NamaMapel: r.Mapel, NamaIndo: r.NamaIndo, urutan: r.Urutan}
 				mapelMap[r.Mapel] = m
 				mapelOrder = append(mapelOrder, r.Mapel)
 			}
@@ -337,7 +343,7 @@ func GetRiwayatAkademik(ctx context.Context, santriID int) ([]RiwayatAkademikTah
 			}
 			m, ok := mapelMap[k.Mapel]
 			if !ok {
-				m = &RiwayatRaport{NamaMapel: k.Mapel}
+				m = &RiwayatRaport{NamaMapel: k.Mapel, NamaIndo: k.NamaIndo, urutan: k.Urutan}
 				mapelMap[k.Mapel] = m
 				mapelOrder = append(mapelOrder, k.Mapel)
 			}
@@ -353,6 +359,10 @@ func GetRiwayatAkademik(ctx context.Context, santriID int) ([]RiwayatAkademikTah
 				m.UjianK4 = &val
 			}
 		}
+		// Urutkan mapel sesuai urutan di raport (ORDER BY m.urutan).
+		sort.SliceStable(mapelOrder, func(i, j int) bool {
+			return mapelMap[mapelOrder[i]].urutan < mapelMap[mapelOrder[j]].urutan
+		})
 		for _, name := range mapelOrder {
 			rat.Raport = append(rat.Raport, *mapelMap[name])
 		}
