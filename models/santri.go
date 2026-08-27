@@ -444,17 +444,12 @@ type ImportResult struct {
 	Errors []ImportRowError `json:"errors"`
 }
 
-// ImportSantriBatch memasukkan banyak santri dalam satu transaksi. Jika ada baris
-// yang gagal validasi/insert, seluruh transaksi dibatalkan dan errornya dilaporkan
-// agar pengguna memperbaiki file lalu mengunggah ulang.
+// ImportSantriBatch memasukkan banyak santri. Mode PARTIAL (owner 2026-08):
+// setiap baris di-commit sendiri-sendiri — baris valid MASUK, baris yang gagal
+// validasi/insert di-SKIP dan dikumpulkan di res.Errors (baris, nama, alasan)
+// agar admin tahu persis data siapa yang tidak sesuai dan bisa memperbaikinya.
 func ImportSantriBatch(ctx context.Context, list []Santri, rowNumbers []int) (ImportResult, error) {
 	res := ImportResult{}
-
-	tx, err := config.DB.Begin(ctx)
-	if err != nil {
-		return res, err
-	}
-	defer tx.Rollback(ctx)
 
 	for i, s := range list {
 		baris := i + 2
@@ -462,14 +457,28 @@ func ImportSantriBatch(ctx context.Context, list []Santri, rowNumbers []int) (Im
 			baris = rowNumbers[i]
 		}
 
-		_, err := tx.Exec(ctx,
+		// Commit per baris: baris gagal tidak menggagalkan baris lain.
+		tx, err := config.DB.Begin(ctx)
+		if err != nil {
+			res.Gagal++
+			res.Errors = append(res.Errors, ImportRowError{Baris: baris, Nama: s.Nama, Pesan: humanizeDBError(err)})
+			continue
+		}
+
+		_, err = tx.Exec(ctx,
 			`INSERT INTO santri (nik, stambuk, nisn, nama, nama_wali, ttl_tempat, ttl_tanggal, alamat, no_hp_wali, kamar, status,
 				provinsi_kode, provinsi_nama, kabupaten_kode, kabupaten_nama, kecamatan_kode, kecamatan_nama, desa, tahun_masuk)
-			 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'aktif', $12, $13, $14, $15, $16, $17, $18, EXTRACT(YEAR FROM CURRENT_DATE)::TEXT)`,
+			 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'aktif', $11, $12, $13, $14, $15, $16, $17, EXTRACT(YEAR FROM CURRENT_DATE)::TEXT)`,
 			s.NIK, s.Stambuk, s.NISN, s.Nama, s.NamaWali, s.TTLTempat, s.TTLTanggal, s.Alamat, s.NoHPWali, s.Kamar,
 			s.ProvinsiKode, s.ProvinsiNama, s.KabupatenKode, s.KabupatenNama, s.KecamatanKode, s.KecamatanNama, s.Desa)
 
 		if err != nil {
+			tx.Rollback(ctx)
+			res.Gagal++
+			res.Errors = append(res.Errors, ImportRowError{Baris: baris, Nama: s.Nama, Pesan: humanizeDBError(err)})
+			continue
+		}
+		if err := tx.Commit(ctx); err != nil {
 			res.Gagal++
 			res.Errors = append(res.Errors, ImportRowError{Baris: baris, Nama: s.Nama, Pesan: humanizeDBError(err)})
 			continue
@@ -477,14 +486,6 @@ func ImportSantriBatch(ctx context.Context, list []Santri, rowNumbers []int) (Im
 		res.Sukses++
 	}
 
-	if res.Gagal > 0 {
-		// Batalkan semua agar tidak ada data setengah masuk.
-		return res, fmt.Errorf("impor dibatalkan: %d baris gagal", res.Gagal)
-	}
-
-	if err := tx.Commit(ctx); err != nil {
-		return res, err
-	}
 	return res, nil
 }
 

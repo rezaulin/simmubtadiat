@@ -34,6 +34,15 @@ let allTingkatan = [];
 let allProvinsi = [];
 let cachedSantriData = null;
 
+// Escape teks untuk mencegah HTML injection saat render (mis. nama/alasan impor).
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
 // Safely parse a fetch Response as JSON. Some backend error paths return a
 // plain-text body (e.g. "no rows in result set"), which would make
 // response.json() throw "Unexpected token 'o'... is not valid JSON". This
@@ -919,24 +928,69 @@ if (btnImport) {
       const berhasil = (data && data.sukses) ?? 0;
       const gagal = (data && data.gagal) ?? 0;
       const errors = (data && data.errors) || [];
-      let html = `<p class="font-semibold text-emerald-600 dark:text-emerald-400">Berhasil: ${berhasil} santri.</p>`;
-      if (gagal > 0) {
-        html += `<p class="font-semibold text-red-600 dark:text-red-400 mt-1">Gagal: ${gagal} baris.</p>`;
-        if (errors.length) {
-          html += '<ul class="list-disc list-inside mt-1 text-xs text-red-500 max-h-32 overflow-y-auto">';
-          errors.forEach(e => {
-            const baris = e.baris ? `Baris ${e.baris}` : '';
+      let html = `<div class="flex flex-wrap gap-2 mb-2">
+        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-sm font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">✅ Berhasil: ${berhasil}</span>
+        ${gagal > 0 ? `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-sm font-semibold bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300">⚠️ Dilewati: ${gagal}</span>` : ''}
+      </div>`;
+      if (gagal > 0 && errors.length) {
+        // Teks polos untuk tombol Salin (baris\tnama\talasan).
+        const plain = errors.map(e => {
+          const b = e.baris ? `Baris ${e.baris}` : '';
+          const n = e.nama || '';
+          const p = e.pesan || e;
+          return `${b}\t${n}\t${p}`;
+        }).join('\n');
+        window.__importErrorText = plain;
 
-            const nama = e.nama ? ` (${e.nama})` : '';
-            const pesan = e.pesan || e;
-            html += `<li>${baris}${nama}: ${pesan}</li>`;
-          });
-          html += '</ul>';
-        }
+        html += `<div class="flex items-center justify-between mb-1 mt-2">
+          <p class="text-xs font-semibold text-red-600 dark:text-red-400">Data tidak sesuai (diperbaiki lalu unggah ulang):</p>
+          <button type="button" id="btn-copy-import-err" class="text-xs px-2 py-1 rounded-md bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-200 font-medium">📋 Salin</button>
+        </div>`;
+        html += `<div class="max-h-52 overflow-y-auto rounded-lg border border-red-200 dark:border-red-800">
+          <table class="w-full text-xs">
+            <thead class="bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 sticky top-0">
+              <tr>
+                <th class="px-2 py-1.5 text-center font-semibold w-14">Baris</th>
+                <th class="px-2 py-1.5 text-left font-semibold">Nama</th>
+                <th class="px-2 py-1.5 text-left font-semibold">Alasan</th>
+              </tr>
+            </thead>
+            <tbody>`;
+        errors.forEach(e => {
+          const b = e.baris || '-';
+          const n = e.nama || '-';
+          const p = e.pesan || e;
+          html += `<tr class="bg-red-50/40 dark:bg-red-900/10 border-t border-red-100 dark:border-red-900/40">
+            <td class="px-2 py-1.5 text-center text-gray-600 dark:text-gray-400">${b}</td>
+            <td class="px-2 py-1.5 font-medium text-gray-800 dark:text-gray-200">${escapeHtml(String(n))}</td>
+            <td class="px-2 py-1.5 text-red-600 dark:text-red-400">${escapeHtml(String(p))}</td>
+          </tr>`;
+        });
+        html += `</tbody></table></div>`;
       }
       importResult.className = 'text-sm rounded-lg p-3 bg-gray-50 dark:bg-slate-900/50';
       importResult.innerHTML = html;
       importResult.classList.remove('hidden');
+      // Wire tombol Salin.
+      const btnCopy = document.getElementById('btn-copy-import-err');
+      if (btnCopy) {
+        btnCopy.addEventListener('click', async () => {
+          try {
+            await navigator.clipboard.writeText(window.__importErrorText || '');
+            btnCopy.textContent = '✅ Tersalin';
+            setTimeout(() => { btnCopy.textContent = '📋 Salin'; }, 1500);
+          } catch (_) {
+            // Fallback: seleksi via textarea sementara.
+            const ta = document.createElement('textarea');
+            ta.value = window.__importErrorText || '';
+            document.body.appendChild(ta); ta.select();
+            try { document.execCommand('copy'); } catch (e) {}
+            document.body.removeChild(ta);
+            btnCopy.textContent = '✅ Tersalin';
+            setTimeout(() => { btnCopy.textContent = '📋 Salin'; }, 1500);
+          }
+        });
+      }
       if (berhasil > 0) loadData();
     } catch (err) {
       importResult.className = 'text-sm rounded-lg p-3 bg-red-50 text-red-600 dark:bg-red-900/30';

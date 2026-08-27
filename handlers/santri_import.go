@@ -279,16 +279,24 @@ func ImportSantri(w http.ResponseWriter, r *http.Request) {
 
 	res, err := models.ImportSantriBatch(ctx, list, rowNumbers)
 	if err != nil {
-		// Batch gagal (mis. duplikat). Kembalikan ringkasan dengan detail baris.
+		// Error tak terduga (bukan per-baris). Kembalikan detail yang ada.
 		w.WriteHeader(http.StatusUnprocessableEntity)
 		json.NewEncoder(w).Encode(res)
 		return
 	}
 
+	// Mode PARTIAL: baris valid sudah masuk; baris gagal dilaporkan di res.Errors
+	// agar admin tahu data siapa yang tidak sesuai (owner 2026-08).
+	msg := fmt.Sprintf("%d santri berhasil diimpor", res.Sukses)
+	if res.Gagal > 0 {
+		msg = fmt.Sprintf("%d santri berhasil, %d dilewati (data tidak sesuai)", res.Sukses, res.Gagal)
+	}
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status":  "success",
-		"message": fmt.Sprintf("%d santri berhasil diimpor", res.Sukses),
+		"message": msg,
 		"sukses":  res.Sukses,
+		"gagal":   res.Gagal,
+		"errors":  res.Errors,
 	})
 }
 
