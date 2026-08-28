@@ -261,6 +261,13 @@
         font-weight: normal;
     }
 
+    /* Angka jumlah (jملة khos/am) & absen di tfoot + keterangan bayan:
+       pakai KFGQPC Uthman Taha juga (owner 2026-08), bukan Times New Roman. */
+    .rapot-sheet .text-hijau,
+    .rapot-sheet [data-field="bayan-value"] {
+        font-family: 'KFGQPC Uthman Taha Naskh','Amiri',serif;
+    }
+
     /* Baris total (tfoot) — Uthman Taha 18pt bold sesuai spek oranye.
        Padding vertikal disamakan dengan sel data (baris footer di foto
        referensi tipis ~8mm, bukan tinggi). 1,27cm dulu = SALAH → tfoot
@@ -617,12 +624,12 @@
               <!-- Absen Izin & Alfa Rowspan -->
               <tr>
                   <th rowspan="2" colspan="2">أيام التأخّر</th>
-                  <td class="td-arab text-biru" style="font-weight:bold; text-align:right; padding-right:8px;">بإذن</td>
+                  <td class="td-arab text-biru" style="text-align:right; padding-right:8px;">بإذن</td>
                   <td class="text-hijau" data-field="absen-izin">0</td>
                   <td class="text-hijau">-</td>
               </tr>
               <tr>
-                  <td class="td-arab text-biru" style="font-weight:bold; text-align:right; padding-right:8px;">بغيره</td>
+                  <td class="td-arab text-biru" style="text-align:right; padding-right:8px;">بغيره</td>
                   <td class="text-hijau" data-field="absen-alfa">0</td>
                   <td class="text-hijau">-</td>
               </tr>
@@ -646,7 +653,7 @@
               <div data-field="sig-mudir-space" style="height:36px;"></div>
               <p class="ft-uth-18" style="font-family: 'KFGQPC Uthman Taha Naskh','Amiri',serif; font-size: 18pt; font-weight: bold; margin-top: 4px;"><span data-field="sig-mudir-nama">.........................</span></p>
           </div>
-          <div class="text-center">
+          <div class="text-center" style="margin-left:auto;">
               <p class="ft-uth-16 mb-2" style="font-family: 'KFGQPC Uthman Taha Naskh','Amiri',serif; font-size: 16pt; margin-bottom: 4px;">المدرس</p>
               <div style="height:36px;"></div>
               <p class="ft-uth-18" style="font-family: 'KFGQPC Uthman Taha Naskh','Amiri',serif; font-size: 18pt; font-weight: bold; margin-top: 4px;"><span data-field="sig-mudarris-nama">.........................</span></p>

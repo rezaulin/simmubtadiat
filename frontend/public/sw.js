@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mubtadiaat-cache-v36';
+const CACHE_NAME = 'mubtadiaat-cache-v38';
 const urlsToCache = [
   '/index.html',
   '/logo.jpg',
@@ -31,6 +31,12 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
+  // Hanya tangani GET. POST/PUT/DELETE (mis. upload import multipart) DILEWATKAN
+  // ke jaringan native — SW yang me-refetch request POST bisa gagal & memicu
+  // "Failed to fetch" di browser (Cache API juga tak mendukung POST). owner 2026-08.
+  if (event.request.method !== 'GET') {
+    return; // jangan respondWith → browser handle sendiri
+  }
   if (event.request.url.includes('/api/')) {
     // Network first for API
     event.respondWith(
