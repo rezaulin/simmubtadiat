@@ -510,9 +510,10 @@ function isExcludedRow(row) {
     const isRodli = decodeEntities(bayanLabel).includes('الرديء');
     if (isRodli) bayanLabel = 'المثبت';
     set('bayan-value', bayanLabel);
-    // Nilai zona RODI (rodli'/musbat) dicetak merah.
+    // Owner 2026-08-29: nilai البيان (termasuk المثبت) dicetak HITAM, tidak
+    // pernah merah. Warna merah zona RODI dihapus — hanya di menu Penilaian.
     const bayanTd = sheet.querySelector('[data-field="bayan-value"]');
-    if (bayanTd) bayanTd.style.color = isRodli ? '#dc2626' : '';
+    if (bayanTd) bayanTd.style.color = '';
     if (bayanBox) bayanBox.style.display = '';
     if (sigMudir) sigMudir.style.display = 'block';
   } else {
