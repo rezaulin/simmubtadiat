@@ -83,24 +83,28 @@
 
     /* HEADER - Logo fixed LEFT */
     /* Spec klien 2026-09-11: gap logo→teks kop = 0.3cm; gap kop→isi = 0.5cm */
+    /* HEADER - Logo + teks = SATU UNIT ter-center (spec klien 2026-09-12,
+       match referensi 3 TSN C.pdf: komposit logo+teks center di halaman,
+       logo DI KIRI teks dgn gap 0.3cm, bukan nempel margin kiri) */
     .header-wrapper {
-        position: relative;
         width: 100%;
         min-height: 80px;
         margin-bottom: 0.5cm; /* JARAK #2: kop ke isi bawah (spec klien: 0.5cm) */
+        display: flex;
+        align-items: center;
+        justify-content: center; /* unit komposit center — match referensi */
+        direction: ltr;          /* LTR di wrapper: logo kiri, teks kanan (teks di dalemnya tetap rtl) */
     }
 
     .header-logo {
-        position: absolute;
-        left: 0;
-        top: 0;
         width: 3cm;
         height: 3cm;
         object-fit: contain;
+        margin-right: 0.3cm; /* JARAK #1: logo→teks 0.3cm (spec klien) — LTR: margin kanan logo = jarak ke teks */
+        flex-shrink: 0;
     }
 
     .header-text {
-        margin-left: calc(3cm + 0.3cm); /* JARAK #1: logo 3cm + gap 0.3cm (spec klien) */
         text-align: center;
         direction: rtl;
         padding-top: 2px;
