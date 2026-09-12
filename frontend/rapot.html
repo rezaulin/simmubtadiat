@@ -146,12 +146,13 @@
         margin: 0 auto;
     }
 
-    /* 2026-09-12: clearance kop (logo→teks komposit) = 5cm dari tepi kertas.
-       Font 16pt natural = 9.31cm → blok kop 12.58cm → clearance 4.50cm.
-       Rapatkan tracking madrasah (baris terterlebar) 6.5px/gap supaya blok
-       text ≤ 8.29cm → komposit ≤ 11.59cm → clearance 5.0cm. */
+    /* 2026-09-12: clearance kop = 5cm dari tepi. Font 16pt natural 8.97cm + logo 3cm +
+       gap 0.3cm = 12.27cm → clearance 4.66cm. word-spacing NEGATIF DILARANG —
+       spasi natural Arab cuma 7.7px; -6.5px sisakan 1.2px → kata TUMPUK horizontal
+       (keluhan klien 2026-09-12 "madrasah tumpuk tumpuk"). Kompensasi via logo
+       lebih kecil & gap rapat. */
     .madrasah-block p {
-        word-spacing: -6.5px;
+        word-spacing: 0;
     }
 
     .year-line {
