@@ -131,8 +131,16 @@
         margin: 2px 0;
     }
 
+    /* Garis bawah madrasah: PANJANG garis = PANJANG teks madrasah (baris tepat di atasnya).
+       Request klien 2026-09-12: teks di atas garis = nama madrasah (BUKAN tahun ajaran —
+       tahun ajaran ada di BAWAH garis). */
+    .madrasah-block {
+        width: fit-content;   /* lebar blok = lebar teks madrasah */
+        margin: 0 auto;
+    }
+
     .year-line {
-        width: 60%;
+        width: 100%;          /* = 100% madrasah-block → garis SEPANJANG teks madrasah di atasnya */
         height: 0.3mm;
         background-color: #000;
         margin: 3px auto 2mm auto;
@@ -588,8 +596,10 @@
         <div class="header-text">
           <h2>كشف الدرجات الدراسية</h2>
           <h3 data-field="semester-title">فصل الدراسة الثانية</h3>
-          <p data-field="madrasah-line">المدرسة الابتدائية للبنات هداية المبتدئات كديري ليربيا</p>
-          <hr class="year-line">
+          <div class="madrasah-block">
+            <p data-field="madrasah-line">المدرسة الابتدائية للبنات هداية المبتدئات كديري ليربيا</p>
+            <hr class="year-line">
+          </div>
           <p class="year-text">سنة : <span data-field="tahun-ajaran">١٤٤٧ - ١٤٤٨ هـ / ٢٠٢٦ - ٢٠٢٧ م</span></p>
         </div>
       </div>
