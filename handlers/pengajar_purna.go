@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -211,4 +212,49 @@ func DownloadTemplatePengajarPurna(w http.ResponseWriter, r *http.Request) {
 	if err := f.Write(w); err != nil {
 		http.Error(w, "Gagal membuat template: "+err.Error(), http.StatusInternalServerError)
 	}
+}
+
+// PindahPengajarPurna: POST /api/pengajar/{id}/pindah-purna — pindahkan pengajar
+// aktif ke arsip purna (single) atau POST /api/pengajar/pindah-purna dengan body
+// {ids: [...]} untuk bulk. Status purna auto-copy dari status terakhir pengajar.
+func PindahPengajarPurna(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		IDs            []int  `json:"ids"`             // bulk: daftar ID pengajar
+		TahunKeluar    string `json:"tahun_keluar"`
+		ProvinsiKode   string `json:"provinsi_kode"`
+		ProvinsiNama   string `json:"provinsi_nama"`
+		KabupatenKode  string `json:"kabupaten_kode"`
+		KabupatenNama  string `json:"kabupaten_nama"`
+	}
+
+	// Single: ID dari URL param; bulk: dari body.
+	if idParam := chi.URLParam(r, "id"); idParam != "" {
+		id, err := strconv.Atoi(idParam)
+		if err != nil {
+			writeJSONError(w, "ID tidak valid", http.StatusBadRequest)
+			return
+		}
+		req.IDs = []int{id}
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil && r.ContentLength > 0 {
+		writeJSONError(w, "Body tidak valid", http.StatusBadRequest)
+		return
+	}
+	if len(req.IDs) == 0 {
+		writeJSONError(w, "Tidak ada pengajar yang dipilih", http.StatusBadRequest)
+		return
+	}
+
+	res, err := models.PindahPengajarKePurna(r.Context(), req.IDs,
+		req.TahunKeluar, req.ProvinsiKode, req.ProvinsiNama, req.KabupatenKode, req.KabupatenNama)
+	if err != nil {
+		writeJSONError(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"status":  "success",
+		"message": fmt.Sprintf("%d pengajar dipindah ke purna, %d dilewati", res.Moved, res.Skipped),
+		"result":  res,
+	})
 }

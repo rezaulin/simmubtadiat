@@ -199,7 +199,7 @@ async function loadPengajar(query = '') {
 // 4. Render Table
 function renderTable(pengajarArray) {
   if (!pengajarArray || pengajarArray.length === 0) {
-    tableBody.innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-gray-400">Tidak ada data pengajar ditemukan.</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-gray-400">Tidak ada data pengajar ditemukan.</td></tr>`;
     return;
   }
 
@@ -227,6 +227,11 @@ function renderTable(pengajarArray) {
     const tr = document.createElement('tr');
     tr.className = 'hover:bg-gray-50/50 dark:hover:bg-slate-800/50 transition-colors';
     tr.innerHTML = `
+      <td data-label="Pilih" class="px-2 py-4 w-8 text-center">
+        <input type="checkbox" class="purna-check w-4 h-4 accent-amber-600 cursor-pointer"
+          data-id="${p.id}" data-nama="${(p.nama || '').replace(/"/g, '&quot;')}"
+          onchange="updatePurnaBulkBar()">
+      </td>
       <td data-label="Nama Lengkap" class="px-6 py-4 font-medium text-gray-900 dark:text-white">
         <div class="flex flex-col md:flex-row md:items-center gap-1 md:gap-2">
           <span class="whitespace-nowrap">${nama}</span>
@@ -243,6 +248,9 @@ function renderTable(pengajarArray) {
         <button onclick="openDetailPengajar(${p.id}, '${nama}')" class="text-blue-500 hover:underline text-sm font-medium mr-3">Info</button>
         ${window.isAdminRole(userRole) ? `
           <button onclick="editPengajar(${p.id})" class="text-primary dark:text-accent-emerald hover:underline text-sm font-medium mr-3">Edit</button>
+          ${window.isPimpinanRole(userRole) ? `
+          <button onclick="pindahPurna(${p.id})" class="text-amber-600 hover:underline text-sm font-medium mr-3">Purna</button>
+          ` : ''}
           <button onclick="deletePengajar(${p.id})" class="text-red-500 hover:underline text-sm font-medium">Hapus</button>
         ` : ''}
 
@@ -250,6 +258,7 @@ function renderTable(pengajarArray) {
     `;
     tableBody.appendChild(tr);
   });
+  updatePurnaBulkBar();
 }
 
 // 5. Search Logic (Debounced)
@@ -746,3 +755,174 @@ async function initPenugasan() {
   await fetchPenugasan();
 }
 initPenugasan();
+
+// ========== PINDAH KE PENGAJAR PURNA (single + bulk) ==========
+// Keputusan klien 2026-09-12: status purna auto-copy (opsi A), akun login
+// pengajar dimatikan + sesi diputus (backend), trigger per-detail maupun bulk.
+
+const purnaModal = document.getElementById('modal-pindah-purna');
+const purnaForm = document.getElementById('form-pindah-purna');
+const purnaRingkasan = document.getElementById('pindah-purna-ringkasan');
+const purnaError = document.getElementById('pindah-purna-error');
+const purnaProv = document.getElementById('pindah-provinsi');
+const purnaKab = document.getElementById('pindah-kabupaten');
+let purnaTargets = []; // daftar {id, nama, status} yang akan dipindah
+
+function purnaModalOpen() {
+  if (purnaModal) {
+    purnaModal.classList.remove('hidden');
+    const c = document.getElementById('pindah-purna-content');
+    if (c) { requestAnimationFrame(() => { c.classList.remove('scale-95', 'opacity-0'); }); }
+  }
+}
+function purnaModalClose() {
+  if (!purnaModal) return;
+  const c = document.getElementById('pindah-purna-content');
+  if (c) c.classList.add('scale-95', 'opacity-0');
+  purnaModal.classList.add('hidden');
+  purnaError.classList.add('hidden');
+  purnaTargets = [];
+}
+document.getElementById('pindah-purna-close')?.addEventListener('click', purnaModalClose);
+document.getElementById('pindah-purna-cancel')?.addEventListener('click', purnaModalClose);
+document.getElementById('pindah-purna-overlay')?.addEventListener('click', purnaModalClose);
+
+// Muat opsi provinsi (reuse endpoint wilayah yang sama dengan pengajar-purna.js).
+async function purnaLoadProvinsi() {
+  try {
+    const res = await fetch('/api/wilayah/provinsi');
+    if (!res.ok) return;
+    const data = await res.json();
+    let opts = '<option value="">-- Pilih Provinsi --</option>';
+    (data || []).forEach(p => {
+      opts += `<option value="${p.kode}" data-nama="${p.nama}">${p.nama}</option>`;
+    });
+    purnaProv.innerHTML = opts;
+  } catch (e) { /* provinsi opsional — biarkan kosong */ }
+}
+
+// Cascade provinsi → kabupaten.
+purnaProv?.addEventListener('change', async () => {
+  const kode = purnaProv.value;
+  purnaKab.innerHTML = '<option value="">-- Pilih Kabupaten --</option>';
+  if (!kode) { purnaKab.disabled = true; return; }
+  try {
+    const res = await fetch(`/api/wilayah/kabupaten?provinsi=${encodeURIComponent(kode)}`);
+    const data = await res.json();
+    let opts = '<option value="">-- Pilih Kabupaten --</option>';
+    (data || []).forEach(k => {
+      opts += `<option value="${k.kode}" data-nama="${k.nama}">${k.nama}</option>`;
+    });
+    purnaKab.innerHTML = opts;
+    purnaKab.disabled = false;
+  } catch (e) { purnaKab.disabled = true; }
+});
+
+// Trigger per-detail: window.pindahPurna(id) dipanggil dari tombol baris tabel.
+window.pindahPurna = (id) => {
+  const p = allPengajar.find(x => x.id === id);
+  if (!p) return;
+  purnaTargets = [{ id: p.id, nama: p.nama, status: p.status }];
+  purnaRingkasan.innerHTML = `
+    <div class="font-bold mb-1">${p.nama}</div>
+    <div>Status terakhir: <span class="font-semibold">${p.status || '-'}</span> (otomatis tersimpan di purna)</div>
+    <div>Tahun mengajar: ${p.tahun_mengajar || '-'}</div>`;
+  purnaForm.reset();
+  purnaKab.disabled = true;
+  purnaError.classList.add('hidden');
+  purnaModalOpen();
+};
+
+// Trigger bulk: window.pindahPurnaBulk() dari tombol "Pindah Purna (n)".
+window.pindahPurnaBulk = () => {
+  const checked = [...document.querySelectorAll('.purna-check:checked')];
+  if (!checked.length) { alert('Centang minimal satu pengajar dulu.'); return; }
+  purnaTargets = checked.map(c => {
+    const p = allPengajar.find(x => x.id === +c.dataset.id);
+    return { id: +c.dataset.id, nama: c.dataset.nama, status: p ? p.status : '' };
+  });
+  purnaRingkasan.innerHTML = `
+    <div class="font-bold mb-1">${purnaTargets.length} pengajar akan dipindah:</div>
+    <ul class="list-disc ml-4 max-h-32 overflow-y-auto">
+      ${purnaTargets.map(t => `<li>${t.nama} <span class="opacity-60">(${t.status || '-'})</span></li>`).join('')}
+    </ul>`;
+  purnaForm.reset();
+  purnaKab.disabled = true;
+  purnaError.classList.add('hidden');
+  purnaModalOpen();
+};
+
+// Submit → POST /api/pengajar/pindah-purna (bulk endpoint menangani 1..n IDs).
+purnaForm?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  if (!purnaTargets.length) return;
+  const tahun = document.getElementById('pindah-tahun-keluar').value.trim();
+  if (!/^\d{4}$/.test(tahun)) {
+    purnaError.textContent = 'Tahun keluar harus 4 digit (mis: 2026).';
+    purnaError.classList.remove('hidden');
+    return;
+  }
+  const provOpt = purnaProv.selectedOptions[0];
+  const kabOpt = purnaKab.selectedOptions[0];
+  const body = {
+    ids: purnaTargets.map(t => t.id),
+    tahun_keluar: tahun,
+    provinsi_kode: purnaProv.value || '',
+    provinsi_nama: provOpt ? (provOpt.dataset.nama || '') : '',
+    kabupaten_kode: purnaKab.value || '',
+    kabupaten_nama: kabOpt ? (kabOpt.dataset.nama || '') : '',
+  };
+
+  const btn = document.getElementById('pindah-purna-submit');
+  btn.disabled = true; btn.textContent = 'Memproses...';
+  purnaError.classList.add('hidden');
+  try {
+    const res = await fetch('/api/pengajar/pindah-purna', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Gagal memindah pengajar');
+    const r = data.result || {};
+    let msg = data.message || 'Selesai';
+    if (r.errors && r.errors.length) msg += '\n\nDilewati:\n' + r.errors.join('\n');
+    alert(msg);
+    purnaModalClose();
+    await loadPengajar(searchInput ? searchInput.value : '');
+    updatePurnaBulkBar();
+  } catch (err) {
+    purnaError.textContent = err.message;
+    purnaError.classList.remove('hidden');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Pindah ke Purna';
+  }
+});
+
+// Muat provinsi sekali di awal.
+purnaLoadProvinsi();
+
+// Bar aksi bulk: muncul saat ada checkbox tercentang (pimpinan only).
+window.updatePurnaBulkBar = function () {
+  let bar = document.getElementById('purna-bulk-bar');
+  if (!window.isPimpinanRole(userRole)) return;
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.id = 'purna-bulk-bar';
+    bar.className = 'hidden sticky top-2 z-40 mx-6 mb-3 items-center gap-3 bg-amber-50 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-800 rounded-xl px-4 py-2.5 shadow-md';
+    const content = document.getElementById('content-data');
+    if (content) content.insertBefore(bar, content.firstChild);
+  }
+  const n = document.querySelectorAll('.purna-check:checked').length;
+  if (n > 0) {
+    bar.innerHTML = `
+      <span class="text-sm font-semibold text-amber-800 dark:text-amber-300">${n} pengajar dipilih</span>
+      <button type="button" onclick="pindahPurnaBulk()" class="px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 transition-colors">Pindah ke Purna (${n})</button>
+      <button type="button" onclick="document.querySelectorAll('.purna-check').forEach(c => c.checked = false); updatePurnaBulkBar()" class="px-3 py-1.5 rounded-lg text-xs font-medium text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-colors">Bersihkan</button>`;
+    bar.classList.remove('hidden');
+    bar.classList.add('flex');
+  } else {
+    bar.classList.add('hidden');
+    bar.classList.remove('flex');
+  }
+};

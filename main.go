@@ -385,8 +385,12 @@ func main() {
 						r.Put("/{id}", handlers.UpdatePengajar)
 						r.Delete("/{id}", handlers.DeletePengajar)
 						r.Post("/import", handlers.ImportPengajar)
+						// Pindah pengajar aktif → arsip purna (bulk: body ids[], single: param id).
+						// Status purna auto-copy; user login pengajar dimatikan + sesi diputus.
+						r.Post("/pindah-purna", handlers.PindahPengajarPurna)
+						r.Post("/{id}/pindah-purna", handlers.PindahPengajarPurna)
 					})
-				})
+					})
 
 				r.Route("/dewan-harian", func(r chi.Router) {
 					// Read: pimpinan + mufatish + mustahiq + muroqib + admin (admin read-only viewer)

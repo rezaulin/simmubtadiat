@@ -291,6 +291,7 @@
             <thead
               class="bg-gray-50/50 dark:bg-slate-900/50 text-gray-500 dark:text-gray-400 uppercase font-semibold text-xs border-b border-gray-200 dark:border-slate-700">
               <tr>
+                <th class="px-2 py-4 w-8"></th>
                 <th class="px-6 py-4">Nama Lengkap</th>
                 <th class="px-6 py-4">Nomor HP</th>
                 <th class="px-6 py-4">Alamat</th>
@@ -300,7 +301,7 @@
             <tbody id="table-body" class="divide-y divide-gray-100 dark:divide-slate-700/50">
               <!-- Loading Skeleton -->
               <tr>
-                <td colspan="4" class="px-6 py-8 text-center text-gray-400">Memuat data pengajar...</td>
+                <td colspan="5" class="px-6 py-8 text-center text-gray-400">Memuat data pengajar...</td>
               </tr>
             </tbody>
           </table>
@@ -512,6 +513,71 @@
           </div>
         </form>
       </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL PINDAH KE PENGAJAR PURNA ==================== -->
+  <!-- Dipanggil per-detail (1 pengajar) maupun bulk (checkbox di tabel).
+       Field tahun keluar + wilayah diinput manual; status purna auto-copy
+       dari status terakhir pengajar (keputusan klien 2026-09-12: opsi A). -->
+  <div id="modal-pindah-purna" class="hidden fixed inset-0 z-[70] flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-gray-900/40 dark:bg-black/60 backdrop-blur-sm" id="pindah-purna-overlay"></div>
+
+    <div
+      class="glass dark:bg-slate-800 rounded-3xl w-full max-w-lg z-10 overflow-hidden shadow-2xl scale-95 opacity-0 transition-all duration-300 max-h-[90vh] overflow-y-auto"
+      id="pindah-purna-content">
+      <div class="p-6 border-b border-gray-100 dark:border-slate-700/60 flex items-center justify-between">
+        <h3 class="text-lg font-bold dark:text-white">Pindah ke Pengajar Purna</h3>
+        <button id="pindah-purna-close" type="button"
+          class="tap-target text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" aria-label="Tutup">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form id="form-pindah-purna" class="p-6 flex flex-col gap-4">
+        <div id="pindah-purna-ringkasan" class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-900/40 rounded-xl p-3 text-sm text-amber-800 dark:text-amber-300">
+          <!-- Ringkasan pengajar yang akan dipindah (diisi JS) -->
+        </div>
+
+        <div class="flex flex-col gap-1">
+          <label class="text-sm font-medium dark:text-gray-200" for="pindah-tahun-keluar">Tahun Keluar <span class="text-red-500">*</span></label>
+          <input type="text" id="pindah-tahun-keluar" inputmode="numeric" maxlength="4" required
+            class="glass-input px-3 py-2 rounded-lg text-sm w-full" placeholder="Mis: 2026">
+        </div>
+
+        <div class="flex flex-col gap-1">
+          <label class="text-sm font-medium dark:text-gray-200" for="pindah-provinsi">Provinsi (asal pengajar)</label>
+          <select id="pindah-provinsi" class="glass-input px-3 py-2 rounded-lg text-sm w-full">
+            <option value="">-- Pilih Provinsi --</option>
+          </select>
+        </div>
+
+        <div class="flex flex-col gap-1">
+          <label class="text-sm font-medium dark:text-gray-200" for="pindah-kabupaten">Kabupaten/Kota</label>
+          <select id="pindah-kabupaten" disabled
+            class="glass-input px-3 py-2 rounded-lg text-sm w-full disabled:opacity-50">
+            <option value="">-- Pilih Kabupaten --</option>
+          </select>
+        </div>
+
+        <div class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+          Pengajar akan dipindah ke arsip <strong>Pengajar Purna</strong> (status otomatis mengikuti status terakhir).
+          Baris pengajar asli tetap disimpan demi riwayat historis; <strong>akun login terkait akan dimatikan</strong> dan sesi aktif diputus.
+        </div>
+
+        <div id="pindah-purna-error" class="hidden text-sm text-red-500 bg-red-50 dark:bg-red-900/30 p-2 rounded-lg"></div>
+
+        <div class="flex items-center justify-end gap-3 pt-2">
+          <button type="button" id="pindah-purna-cancel"
+            class="px-4 py-2 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">
+            Batal
+          </button>
+          <button type="submit" id="pindah-purna-submit"
+            class="px-4 py-2 rounded-xl text-sm font-bold text-white bg-amber-600 hover:bg-amber-700 transition-colors shadow-md">
+            Pindah ke Purna
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 

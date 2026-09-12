@@ -145,6 +145,103 @@ func DeletePengajarPurna(ctx context.Context, id int) error {
 	return err
 }
 
+// PindahPurnaResult berisi hasil memindahkan pengajar aktif ke arsip purna.
+type PindahPurnaResult struct {
+	Moved        int      `json:"moved"`         // jumlah pengajar yang berhasil dipindah
+	Skipped      int      `json:"skipped"`       // dilewati (tidak ditemukan / sudah nonaktif)
+	Errors       []string `json:"errors"`        // detail per pengajar yang gagal
+	PurnaIDs     []int    `json:"purna_ids"`     // ID baris baru di pengajar_purna
+}
+
+// PindahPengajarKePurna memindahkan pengajar aktif menjadi arsip pengajar purna.
+//
+// Alur (satu transaksi atomik per pengajar):
+//  1. INSERT baris baru ke pengajar_purna — field disalin dari pengajar
+//     (nama, status auto-copy, ttl, nama_wali, no_hp, alamat, tahun_mengajar)
+//     plus tahun_keluar / wilayah dari permintaan.
+//  2. UPDATE pengajar SET is_active = false (baris ASLI dipertahankan —
+//     11 tabel FK historis: absensi, penilaian, jadwal, users, dll).
+//  3. UPDATE users SET is_active = false WHERE pengajar_id = ... (akun login dimatikan).
+//  4. DELETE FROM sessions WHERE user_id ... (sesi aktif diputus).
+func PindahPengajarKePurna(ctx context.Context, ids []int, tahunKeluar, provKode, provNama, kabKode, kabNama string) (*PindahPurnaResult, error) {
+	res := &PindahPurnaResult{Errors: []string{}}
+
+	for _, id := range ids {
+		var (
+			nama, status          string
+			ttl, namaWali, noHP   *string
+			alamat, tahunMengajar *string
+			ada                   bool
+		)
+		err := config.DB.QueryRow(ctx,
+			`SELECT nama, COALESCE(status,''), ttl, nama_wali, no_hp, alamat, tahun_mengajar, is_active
+			   FROM pengajar WHERE id = $1`, id).
+			Scan(&nama, &status, &ttl, &namaWali, &noHP, &alamat, &tahunMengajar, &ada)
+		if err != nil {
+			res.Skipped++
+			res.Errors = append(res.Errors, fmt.Sprintf("ID %d: tidak ditemukan", id))
+			continue
+		}
+		if !ada {
+			res.Skipped++
+			res.Errors = append(res.Errors, fmt.Sprintf("ID %d (%s): sudah nonaktif", id, nama))
+			continue
+		}
+
+		tx, err := config.DB.Begin(ctx)
+		if err != nil {
+			res.Skipped++
+			res.Errors = append(res.Errors, fmt.Sprintf("ID %d (%s): %v", id, nama, err))
+			continue
+		}
+		fail := func(e error) {
+			tx.Rollback(ctx)
+			res.Skipped++
+			res.Errors = append(res.Errors, fmt.Sprintf("ID %d (%s): %v", id, nama, e))
+		}
+
+		// 1. INSERT ke purna — status auto-copy dari status terakhir pengajar (keputusan klien 2026-09-12: opsi A)
+		var purnaID int
+		if err := tx.QueryRow(ctx,
+			`INSERT INTO pengajar_purna
+			   (nama, status, ttl, nama_wali, no_hp, alamat, tahun_mengajar, tahun_keluar,
+			    provinsi_kode, provinsi_nama, kabupaten_kode, kabupaten_nama, is_active)
+			 VALUES ($1, NULLIF($2,''), $3, $4, $5, $6, $7, NULLIF($8,''),
+			         NULLIF($9,''), NULLIF($10,''), NULLIF($11,''), NULLIF($12,''), true)
+			 RETURNING id`,
+			nama, status, ttl, namaWali, noHP, alamat, tahunMengajar, tahunKeluar,
+			provKode, provNama, kabKode, kabNama).Scan(&purnaID); err != nil {
+			fail(fmt.Errorf("insert purna: %w", err))
+			continue
+		}
+
+		// 2. Nonaktifkan baris pengajar asli (soft — riwayat historis FK tetap utuh).
+		if _, err := tx.Exec(ctx, `UPDATE pengajar SET is_active = false, updated_at = CURRENT_TIMESTAMP WHERE id = $1`, id); err != nil {
+			fail(fmt.Errorf("nonaktif pengajar: %w", err))
+			continue
+		}
+
+		// 3. Matikan akun login pengguna terkait + putus semua sesi aktif (keputusan klien: matikan).
+		if _, err := tx.Exec(ctx, `UPDATE users SET is_active = false, updated_at = CURRENT_TIMESTAMP WHERE pengajar_id = $1`, id); err != nil {
+			fail(fmt.Errorf("nonaktif user: %w", err))
+			continue
+		}
+		if _, err := tx.Exec(ctx, `DELETE FROM sessions WHERE user_id IN (SELECT id FROM users WHERE pengajar_id = $1)`, id); err != nil {
+			fail(fmt.Errorf("putus sesi: %w", err))
+			continue
+		}
+
+		if err := tx.Commit(ctx); err != nil {
+			fail(fmt.Errorf("commit: %w", err))
+			continue
+		}
+		res.Moved++
+		res.PurnaIDs = append(res.PurnaIDs, purnaID)
+	}
+
+	return res, nil
+}
+
 // PengajarPurnaImportResult berisi ringkasan hasil import.
 type PengajarPurnaImportResult struct {
 	Total    int      `json:"total"`
