@@ -53,7 +53,9 @@
             padding: 0 !important;
             max-width: 100% !important;
             width: auto !important;
-            min-height: 275mm !important;
+            /* 2026-09-12: F4 330.2mm - margin @page (12mm atas + 20mm bawah) = 298mm.
+               min-height 298mm → sheet nge-fill halaman → ttd nempel bawah (margin bawah 2cm). */
+            min-height: 298mm !important;
         }
         .rapot-sheet:last-child { page-break-after: auto; }
         .rapot-sheet hr {
@@ -68,7 +70,7 @@
         width: 215.9mm;
         min-height: 330.2mm;
         margin: 0 auto 30px auto;
-        padding: 2.5cm 1.5cm 2cm 1.5cm;
+        padding: 1.2cm 2.5cm 2cm 2.5cm; /* Spec klien 2026-09-12: atas 1.2cm, kiri/kanan 2.5cm, bawah 2cm */
         background-color: white;
         box-sizing: border-box;
         display: flex;
@@ -89,7 +91,7 @@
     .header-wrapper {
         width: 100%;
         min-height: 80px;
-        margin-bottom: 0.5cm; /* JARAK #2: kop ke isi bawah (spec klien: 0.5cm) */
+        margin-bottom: 0.4cm; /* JARAK #2: kop ke baris pertama isi (spec klien 2026-09-12: 0.4cm) */
         display: flex;
         align-items: center;
         justify-content: center; /* unit komposit center — match referensi */
@@ -154,7 +156,7 @@
     /* Identitas siswa - TABLE tanpa border, alignment sempurna */
     .student-table {
         width: 100%;
-        margin-bottom: 4px;
+        margin-bottom: 0; /* gap ke tabel nilai diatur .rapot-sheet table margin-top 0.7cm (spec 2026-09-12) */
         font-family: 'Times New Roman', serif;
         font-size: 14pt;
         color: #000000;
@@ -229,13 +231,19 @@
     .rapot-sheet table {
         width: 100%;
         border-collapse: collapse;
-        margin-top: 0.3cm !important;
+        margin-top: 0.7cm !important; /* Spec klien 2026-09-12: baris bawah identitas → tabel nilai = 0.7cm */
     }
 
     /* Spec klien 2026-09-11: jarak kop→identitas TOTAL 0.5cm.
        Wrapper sudah margin-bottom 0.5cm, jadi student-table harus mulai tanpa
        margin-top tambahan (override .rapot-sheet table di atas). */
     .rapot-sheet table.student-table {
+        margin-top: 0 !important;
+    }
+
+    /* INNER tables identitas juga gak boleh kena margin-top 0.7cm dari rule
+       .rapot-sheet table (bug 2026-09-12: bikin gap kop→Nama jadi 1.1cm). */
+    .rapot-sheet .student-table table {
         margin-top: 0 !important;
     }
 
@@ -749,14 +757,14 @@
     }
   </script>
   <style id="page-style">
-    @media print { @page { size: 215.9mm 330.2mm; margin: 2.5cm 1.5cm 2cm 1.5cm; } }
+    @media print { @page { size: 215.9mm 330.2mm; margin: 1.2cm 2.5cm 2cm 2.5cm; } }
   </style>
   <script>
     function updatePageSize() {
       const size = document.getElementById('kertas-selector').value;
-      // Margin spek raport: top 2,5cm — left/right 1,5cm — bottom 2cm.
+      // Spec klien 2026-09-12: top 1.2cm — left/right 2.5cm — bottom 2cm.
       // A4 pakai margin sama agar posisi cetak konsisten dengan preview layar.
-      document.getElementById('page-style').textContent = `@media print { @page { size: ${size}; margin: 2.5cm 1.5cm 2cm 1.5cm; } }`;
+      document.getElementById('page-style').textContent = `@media print { @page { size: ${size}; margin: 1.2cm 2.5cm 2cm 2.5cm; } }`;
     }
   </script>
 </body>
