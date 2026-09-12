@@ -41,18 +41,29 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Fetch user from DB
+	// Fetch user from DB — sekaligus cek pengajar aktif untuk role pengajar-based.
+	// Pengajar yang sudah nonaktif/purna tidak boleh login lagi, meski users.is_active
+	// masih true (menutup jalur lama: nonaktif manual via UI yang tidak mematikan user).
 	var id int
 	var hash, role string
 	var isPasswordChanged bool
+	var pengajarAktif bool
 
-	err := config.DB.QueryRow(context.Background(),
-		"SELECT id, password_hash, role, is_password_changed FROM users WHERE username=$1 AND is_active=true",
-		req.Username).Scan(&id, &hash, &role, &isPasswordChanged)
+	err := config.DB.QueryRow(context.Background(), `
+		SELECT u.id, u.password_hash, u.role, u.is_password_changed, COALESCE(p.is_active, true)
+		FROM users u
+		LEFT JOIN pengajar p ON p.id = u.pengajar_id
+		WHERE u.username=$1 AND u.is_active=true`,
+		req.Username).Scan(&id, &hash, &role, &isPasswordChanged, &pengajarAktif)
 
 	if err != nil {
 		// To prevent timing attacks, we should still compare a dummy hash or just return generic error
 		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
+		return
+	}
+
+	if !pengajarAktif {
+		http.Error(w, "Akun pengajar nonaktif", http.StatusUnauthorized)
 		return
 	}
 

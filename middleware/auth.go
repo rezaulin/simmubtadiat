@@ -45,11 +45,13 @@ func RequireAuth(next http.Handler) http.Handler {
 		var expiredAt time.Time
 
 		// Join sessions and users tables
-		err = config.DB.QueryRow(context.Background(),
-			`SELECT u.id, u.username, u.nama, u.role, u.pengajar_id, u.is_password_changed, s.expired_at 
-			 FROM sessions s 
-			 JOIN users u ON s.user_id = u.id 
-			 WHERE s.id = $1`,
+		// u.is_active=true: deaktivasi user berlaku instan — sesi masih ada pun
+		// langsung ditolak (tanpa menunggu expired_at; refresh 8 jam tidak membantu).
+		err = config.DB.QueryRow(context.Background(), `
+			SELECT u.id, u.username, u.nama, u.role, u.pengajar_id, u.is_password_changed, s.expired_at 
+			FROM sessions s 
+			JOIN users u ON s.user_id = u.id 
+			WHERE s.id = $1 AND u.is_active = true`,
 			cookie.Value).Scan(&user.ID, &user.Username, &user.Nama, &user.Role, &user.PengajarID, &user.IsPasswordChanged, &expiredAt)
 
 		if err != nil || expiredAt.Before(time.Now()) {
