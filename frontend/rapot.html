@@ -118,6 +118,7 @@
         font-size: 20pt;
         font-weight: normal;
         margin: 0;
+        line-height: 1; /* 2026-09-12: leading 9px bikin ink mulai 1.44cm, spec 1.2cm */
     }
 
     .header-text h3 {
@@ -151,6 +152,7 @@
     .year-text {
         font-size: 9pt;
         margin: 0;
+        line-height: 1; /* 2026-09-12: buang leading — spec gap kop→baris pertama 0.4cm */
     }
 
     /* Identitas siswa - TABLE tanpa border, alignment sempurna */
@@ -328,7 +330,10 @@
         padding: 0 40px;
         page-break-inside: avoid;
         break-inside: avoid;
-        margin-top: 8px !important; /* Perkecil gap dari tabel */
+        /* margin-top: auto = footer-pinning: sheet flex-column + min-height 298mm
+           → ttd melayang ke dasar halaman (spec 2026-09-12 margin bawah 2cm).
+           JANGAN ganti dengan fixed px — itu bunuh pinning (bug lama 2026-08-25). */
+        margin-top: auto !important;
     }
     
     .signature-box p {
