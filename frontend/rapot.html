@@ -121,6 +121,7 @@
         /* 2026-09-12 FIX TUMPUK: UthmanTN glyph box ~1.69x font-size. line-height:1
            bikin ink baris 1 nembus baris 2 (tinta kecat di luar line-box). 1.7 = aman. */
         line-height: 1.7;
+        white-space: nowrap; /* FIX 2-BARIS 2026-09-12: kop = single-line by design */
     }
 
     .header-text h3 {
@@ -129,6 +130,7 @@
         font-weight: bold;
         margin: 3px 0;
         line-height: 1.7; /* FIX TUMPUK 2026-09-12: 38px (1.5) kurang — glyph 19pt butuh ~43px */
+        white-space: nowrap; /* FIX 2-BARIS 2026-09-12: kop = single-line by design */
     }
 
     .header-text p {
@@ -153,6 +155,9 @@
        lebih kecil & gap rapat. */
     .madrasah-block p {
         word-spacing: 0;
+        white-space: nowrap; /* FIX 2-BARIS 2026-09-12: tahun-nowrap bikin container menyusut ke 299px,
+                                madrasah 16pt natural ~300px mepet → wrap di beberapa browser.
+                                nowrap semua baris kop → container = baris terterlebar, gak pernah wrap. */
     }
 
     .year-line {
