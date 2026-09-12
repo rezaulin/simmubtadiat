@@ -109,7 +109,7 @@
     .header-text {
         text-align: center;
         direction: rtl;
-        padding-top: 2px;
+        padding-top: 0; /* 2026-09-12: 2px bikin ink mulai 1.25cm — spec margin atas 1.2cm */
         font-family: 'KFGQPC Uthman Taha Naskh','Amiri',serif;
     }
 
@@ -146,7 +146,7 @@
         width: 100%;          /* = 100% madrasah-block → garis SEPANJANG teks madrasah di atasnya */
         height: 0.3mm;
         background-color: #000;
-        margin: 3px auto 2mm auto;
+        margin: 3px auto 1mm auto; /* 2026-09-12: 2mm→1mm — year text nempel hr (match foto referensi) */
     }
 
     .year-text {
@@ -338,6 +338,7 @@
     
     .signature-box p {
         margin: 0;
+        line-height: 1; /* 2026-09-12: buang trailing leading nama ttd — ink berakhir pas margin bawah 2cm */
     }
     
     .signature-box .ft-tnr {
