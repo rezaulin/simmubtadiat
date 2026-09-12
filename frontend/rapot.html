@@ -115,7 +115,7 @@
 
     .header-text h2 {
         font-family: 'KFGQPC Uthman Taha Naskh','Amiri',serif;
-        font-size: 20pt;
+        font-size: 12pt; /* spec klien 2026-09-12 (foto anotasi): baris 1 kop = 12pt */
         font-weight: normal;
         margin: 0;
         line-height: 1; /* 2026-09-12: leading 9px bikin ink mulai 1.44cm, spec 1.2cm */
@@ -123,14 +123,14 @@
 
     .header-text h3 {
         font-family: 'KFGQPC Uthman Taha Naskh','Amiri',serif;
-        font-size: 22pt;
+        font-size: 19pt; /* spec klien 2026-09-12 (foto anotasi): baris 2 kop = 19pt */
         font-weight: bold;
         margin: 3px 0;
     }
 
     .header-text p {
         font-family: 'KFGQPC Uthman Taha Naskh','Amiri',serif;
-        font-size: 14pt;
+        font-size: 16pt; /* spec klien 2026-09-12 (foto anotasi): baris 3 madrasah = 16pt */
         margin: 2px 0;
     }
 
@@ -149,8 +149,12 @@
         margin: 3px auto 1mm auto; /* 2026-09-12: 2mm→1mm — year text nempel hr (match foto referensi) */
     }
 
-    .year-text {
-        font-size: 9pt;
+    /* Baris 4 kop (tahun) = 12pt. Selector .header-text p.year-text (0-2-1) WAJIB —
+       menang atas .header-text p 16pt (0-1-1). Sebelumnya tahun ke-render 14pt karena
+       .header-text p mengalahkan .year-text 9pt lama (bug ketemu 2026-09-12). */
+    .year-text,
+    .header-text p.year-text {
+        font-size: 12pt; /* spec klien 2026-09-12 (foto anotasi): baris 4 = 12pt */
         margin: 0;
         line-height: 1; /* 2026-09-12: buang leading — spec gap kop→baris pertama 0.4cm */
     }

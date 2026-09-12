@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mubtadiaat-cache-v45';
+const CACHE_NAME = 'mubtadiaat-cache-v46';
 const urlsToCache = [
   '/index.html',
   '/logo.jpg',
