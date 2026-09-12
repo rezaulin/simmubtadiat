@@ -118,7 +118,9 @@
         font-size: 12pt; /* spec klien 2026-09-12 (foto anotasi): baris 1 kop = 12pt */
         font-weight: normal;
         margin: 0;
-        line-height: 1; /* 2026-09-12: leading 9px bikin ink mulai 1.44cm, spec 1.2cm */
+        /* 2026-09-12 FIX TUMPUK: UthmanTN glyph box ~1.69x font-size. line-height:1
+           bikin ink baris 1 nembus baris 2 (tinta kecat di luar line-box). 1.7 = aman. */
+        line-height: 1.7;
     }
 
     .header-text h3 {
@@ -126,12 +128,14 @@
         font-size: 19pt; /* spec klien 2026-09-12 (foto anotasi): baris 2 kop = 19pt */
         font-weight: bold;
         margin: 3px 0;
+        line-height: 1.7; /* FIX TUMPUK 2026-09-12: 38px (1.5) kurang — glyph 19pt butuh ~43px */
     }
 
     .header-text p {
         font-family: 'KFGQPC Uthman Taha Naskh','Amiri',serif;
         font-size: 16pt; /* spec klien 2026-09-12 (foto anotasi): baris 3 madrasah = 16pt */
         margin: 2px 0;
+        line-height: 1.7; /* FIX TUMPUK 2026-09-12: normal 1.5 kurang utk UthmanTN 16pt */
     }
 
     /* Garis bawah madrasah: PANJANG garis = PANJANG teks madrasah (baris tepat di atasnya).
@@ -164,7 +168,7 @@
     .header-text p.year-text {
         font-size: 12pt; /* spec klien 2026-09-12 (foto anotasi): baris 4 = 12pt */
         margin: 0;
-        line-height: 1; /* 2026-09-12: buang leading — spec gap kop→baris pertama 0.4cm */
+        line-height: 1.7; /* FIX TUMPUK 2026-09-12: line-height:1 bikin ink tahun nempel madrasah */
         white-space: nowrap; /* blok text menyusut (madrasah dirapatkan) — tahun jangan wrap */
     }
 
