@@ -99,8 +99,8 @@
     }
 
     .header-logo {
-        width: 3cm;
-        height: 3cm;
+        width: 2.8cm;   /* spec kop Word referensi 2026-09-12: logo terukur 2.82x2.84cm */
+        height: 2.8cm;
         object-fit: contain;
         margin-right: 0.3cm; /* JARAK #1: logo→teks 0.3cm (spec klien) — LTR: margin kanan logo = jarak ke teks */
         flex-shrink: 0;
@@ -143,28 +143,19 @@
     /* Garis bawah madrasah: PANJANG garis = PANJANG teks madrasah (baris tepat di atasnya).
        Request klien 2026-09-12: teks di atas garis = nama madrasah (BUKAN tahun ajaran —
        tahun ajaran ada di BAWAH garis). */
-    .madrasah-block {
-        width: fit-content;   /* lebar blok = lebar teks madrasah */
-        margin: 0 auto;
-    }
+    /* (madrasah-block wrapper dihapus 2026-09-12 — struktur mengikuti kop Word referensi:
+       garis full-width komposit, bukan fit-content madrasah) */
 
-    /* 2026-09-12: clearance kop = 5cm dari tepi. Font 16pt natural 8.97cm + logo 3cm +
-       gap 0.3cm = 12.27cm → clearance 4.66cm. word-spacing NEGATIF DILARANG —
-       spasi natural Arab cuma 7.7px; -6.5px sisakan 1.2px → kata TUMPUK horizontal
-       (keluhan klien 2026-09-12 "madrasah tumpuk tumpuk"). Kompensasi via logo
-       lebih kecil & gap rapat. */
     .madrasah-block p {
         word-spacing: 0;
-        white-space: nowrap; /* FIX 2-BARIS 2026-09-12: tahun-nowrap bikin container menyusut ke 299px,
-                                madrasah 16pt natural ~300px mepet → wrap di beberapa browser.
-                                nowrap semua baris kop → container = baris terterlebar, gak pernah wrap. */
+        white-space: nowrap; /* FIX 2-BARIS 2026-09-12: kop = single-line by design */
     }
 
     .year-line {
-        width: 100%;          /* = 100% madrasah-block → garis SEPANJANG teks madrasah di atasnya */
+        width: 100%;          /* Spec Word referensi 2026-09-12: garis FULL-WIDTH komposit kop */
         height: 0.3mm;
         background-color: #000;
-        margin: 3px auto 1mm auto; /* 2026-09-12: 2mm→1mm — year text nempel hr (match foto referensi) */
+        margin: 3px auto 1mm auto;
     }
 
     /* Baris 4 kop (tahun) = 12pt. Selector .header-text p.year-text (0-2-1) WAJIB —
@@ -633,10 +624,10 @@
         <div class="header-text">
           <h2>كشف الدرجات الدراسية</h2>
           <h3 data-field="semester-title">فصل الدراسة الثانية</h3>
-          <div class="madrasah-block">
-            <p data-field="madrasah-line">المدرسة الابتدائية للبنات هداية المبتدئات كديري ليربيا</p>
-            <hr class="year-line">
-          </div>
+          <p data-field="madrasah-line">المدرسة الابتدائية للبنات هداية المبتدئات كديري ليربيا</p>
+          <!-- Spec kop Word referensi 2026-09-12: garis FULL-WIDTH komposit (bukan fit-content
+               madrasah), tahun di BAWAH garis. -->
+          <hr class="year-line">
           <p class="year-text">سنة : <span data-field="tahun-ajaran">١٤٤٧ - ١٤٤٨ هـ / ٢٠٢٦ - ٢٠٢٧ م</span></p>
         </div>
       </div>
