@@ -91,7 +91,7 @@
     .header-wrapper {
         width: 100%;
         min-height: 80px;
-        margin-bottom: 0.4cm; /* JARAK #2: kop ke baris pertama isi (spec klien 2026-09-12: 0.4cm) */
+        margin-bottom: 0.15cm; /* spec INK-gap kop→Nama = 0.4cm: 0.15 CSS + ~0.25 leading (kompensasi 2026-09-12, terukur ink-level) */
         display: flex;
         align-items: center;
         justify-content: center; /* unit komposit center — match referensi */
@@ -233,7 +233,7 @@
     .rapot-sheet table {
         width: 100%;
         border-collapse: collapse;
-        margin-top: 0.7cm !important; /* Spec klien 2026-09-12: baris bawah identitas → tabel nilai = 0.7cm */
+        margin-top: 0.65cm !important; /* spec INK-gap identitas→tabel = 0.7cm: 0.65 CSS + ~0.05 descender Bagian (ink-level 2026-09-12) */
     }
 
     /* Spec klien 2026-09-11: jarak kop→identitas TOTAL 0.5cm.
