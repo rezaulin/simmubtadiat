@@ -215,11 +215,14 @@
         border-collapse: collapse;
     }
 
-    /* label rata kiri, lebar fixed supaya titik dua sejajar vertikal */
+    /* Spec Word referensi 2026-09-12: kolom identitas (LTR fisik)
+       label 3.02 | : 0.52 | nilai 7.00 || label 2.81 | : 0.65 | nilai 1.24 (total 15.23cm)
+       Tabel jc=center di konten 18.6cm → mulai 3.19cm dari tepi kertas.
+       Kolom kanan mulai di 10.54cm dari kiri tabel = sejajar kolom الفنون tabel nilai. */
     .student-table .st-label {
         text-align: left !important;
         white-space: nowrap;
-        width: 110px;
+        width: 3.02cm;   /* Word: 1714 dxa */
         padding: 1px 0 !important;
         border: none !important;
     }
@@ -227,7 +230,7 @@
     /* titik dua: kolom sempit, satu spasi ke isian */
     .student-table .st-colon {
         text-align: left !important;
-        width: 10px;
+        width: 0.52cm;   /* Word: 294 dxa */
         padding: 1px 0 !important;
         border: none !important;
     }
@@ -236,7 +239,7 @@
     .student-table .st-value {
         text-align: left !important;
         font-weight: normal;
-        padding: 1px 0 1px 12px !important;
+        padding: 1px 0 1px 0 !important;
         border: none !important;
         white-space: nowrap;
     }
@@ -655,14 +658,14 @@
       <table>
           <thead class="text-orange">
               <tr>
-                  <th rowspan="2" style="width: 50px;">النمرة</th>
-                  <th rowspan="2">الكتب الدراسية</th>
-                  <th rowspan="2">الفنون</th>
+                  <th rowspan="2" style="width: 1.24cm;">النمرة</th>
+                  <th rowspan="2" style="width: 4.1cm;">الفنون</th>
+                  <th rowspan="2" style="width: 4.4cm;">الكتب الدراسية</th>
                   <th colspan="2" style="white-space: nowrap; font-size: 16pt;">أرقام الدرجات الخاصة والعامة</th>
               </tr>
               <tr>
-                  <th style="width: 80px;">الخاصة</th>
-                  <th style="width: 80px;">العامة</th>
+                  <th style="width: 2.8cm;">الخاصة</th>
+                  <th style="width: 2.8cm;">العامة</th>
               </tr>
           </thead>
           <!-- Isi tabel secara default biru, Am dibuat hijau via rapot.js -->
