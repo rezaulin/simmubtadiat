@@ -1579,11 +1579,22 @@ function buildRiwayatAkademik(riwayat) {
 
     const rows = (ta.raport || []).map((m, i) => `
       <tr class="border-b border-gray-100 dark:border-slate-700">
-        <td class="px-3 py-2 text-center text-gray-400">${i + 1}</td>
-        <td class="px-3 py-2 font-medium text-gray-800 dark:text-gray-200">${waliEscape((m.nama_indo && m.nama_indo.trim()) ? m.nama_indo.trim() : m.mapel)}</td>
-        <td class="px-3 py-2 text-center font-bold">${waliFmtNilai(m.smt1)}</td>
-        <td class="px-3 py-2 text-center font-bold">${waliFmtNilai(m.smt2)}</td>
+        <td class="px-2 py-1.5 text-center text-gray-400 text-xs">${i + 1}</td>
+        <td class="px-2 py-1.5 font-medium text-gray-800 dark:text-gray-200 text-xs">${waliEscape((m.nama_indo && m.nama_indo.trim()) ? m.nama_indo.trim() : m.mapel)}</td>
+        <td class="px-2 py-1.5 text-center font-bold text-xs">${waliFmtNilai(m.tamrin_k1)}</td>
+        <td class="px-2 py-1.5 text-center font-bold text-xs">${waliFmtNilai(m.ujian_k2)}</td>
+        <td class="px-2 py-1.5 text-center font-bold text-xs">${waliFmtNilai(m.smt1)}</td>
+        <td class="px-2 py-1.5 text-center font-bold text-xs">${waliFmtNilai(m.tamrin_k3)}</td>
+        <td class="px-2 py-1.5 text-center font-bold text-xs">${waliFmtNilai(m.ujian_k4)}</td>
+        <td class="px-2 py-1.5 text-center font-bold text-xs">${waliFmtNilai(m.smt2)}</td>
       </tr>`).join('');
+
+    // Al-Bayan badge
+    const bayaanBadge = ta.al_bayan ? `
+      <div class="flex items-center gap-2 mt-4 p-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl">
+        <span class="text-sm font-semibold text-indigo-700 dark:text-indigo-300">Al-Bayan:</span>
+        <span class="px-3 py-1 bg-indigo-100 dark:bg-indigo-800/40 text-indigo-800 dark:text-indigo-200 rounded-full text-sm font-bold">${waliEscape(ta.al_bayan)}</span>
+      </div>` : '';
 
     return `
       <div class="bg-white dark:bg-slate-800 rounded-3xl border border-gray-100 dark:border-slate-700/60 shadow-sm overflow-hidden mb-6">
@@ -1604,25 +1615,34 @@ function buildRiwayatAkademik(riwayat) {
           <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Nilai Raport</h4>
           ${(ta.raport || []).length > 0 ? `
           <div class="overflow-x-auto rounded-xl border border-gray-100 dark:border-slate-700">
-            <table class="min-w-full text-sm">
+            <table class="min-w-full text-xs">
               <thead class="bg-gray-50 dark:bg-slate-900/40">
                 <tr>
-                  <th class="px-3 py-2 text-center text-xs font-bold text-gray-500 uppercase w-12">No</th>
-                  <th class="px-3 py-2 text-left text-xs font-bold text-gray-500 uppercase">Mapel</th>
-                  <th class="px-3 py-2 text-center text-xs font-bold text-gray-500 uppercase w-20">Smt 1</th>
-                  <th class="px-3 py-2 text-center text-xs font-bold text-gray-500 uppercase w-20">Smt 2</th>
+                  <th class="px-2 py-1.5 text-center text-xs font-bold text-gray-500 uppercase w-8">No</th>
+                  <th class="px-2 py-1.5 text-left text-xs font-bold text-gray-500 uppercase">Mapel</th>
+                  <th class="px-2 py-1.5 text-center text-xs font-bold text-gray-500 uppercase">Q1</th>
+                  <th class="px-2 py-1.5 text-center text-xs font-bold text-gray-500 uppercase">Q2</th>
+                  <th class="px-2 py-1.5 text-center text-xs font-bold text-gray-500 uppercase bg-blue-50 dark:bg-blue-900/20">Smt1</th>
+                  <th class="px-2 py-1.5 text-center text-xs font-bold text-gray-500 uppercase">Q3</th>
+                  <th class="px-2 py-1.5 text-center text-xs font-bold text-gray-500 uppercase">Q4</th>
+                  <th class="px-2 py-1.5 text-center text-xs font-bold text-gray-500 uppercase bg-blue-50 dark:bg-blue-900/20">Smt2</th>
                 </tr>
               </thead>
               <tbody>${rows}</tbody>
               <tfoot class="bg-indigo-50 dark:bg-indigo-900/20">
                 <tr>
-                  <td colspan="2" class="px-3 py-2 text-right font-bold text-indigo-900 dark:text-indigo-200">Rata-rata</td>
-                  <td class="px-3 py-2 text-center font-bold text-indigo-900 dark:text-indigo-200">${waliFmtNilai(avg1)}</td>
-                  <td class="px-3 py-2 text-center font-bold text-indigo-900 dark:text-indigo-200">${waliFmtNilai(avg2)}</td>
+                  <td colspan="2" class="px-2 py-1.5 text-right font-bold text-indigo-900 dark:text-indigo-200 text-xs">Rata-rata</td>
+                  <td class="px-2 py-1.5 text-center font-bold text-indigo-900 dark:text-indigo-200 text-xs">-</td>
+                  <td class="px-2 py-1.5 text-center font-bold text-indigo-900 dark:text-indigo-200 text-xs">-</td>
+                  <td class="px-2 py-1.5 text-center font-bold text-indigo-900 dark:text-indigo-200 text-xs bg-blue-50 dark:bg-blue-900/20">${waliFmtNilai(avg1)}</td>
+                  <td class="px-2 py-1.5 text-center font-bold text-indigo-900 dark:text-indigo-200 text-xs">-</td>
+                  <td class="px-2 py-1.5 text-center font-bold text-indigo-900 dark:text-indigo-200 text-xs">-</td>
+                  <td class="px-2 py-1.5 text-center font-bold text-indigo-900 dark:text-indigo-200 text-xs bg-blue-50 dark:bg-blue-900/20">${waliFmtNilai(avg2)}</td>
                 </tr>
               </tfoot>
             </table>
           </div>` : `<p class="text-sm text-gray-400 italic">Belum ada nilai untuk tahun ajaran ini.</p>`}
+          ${bayaanBadge}
         </div>
       </div>`;
   }).join('');
