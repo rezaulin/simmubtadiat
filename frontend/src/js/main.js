@@ -1417,19 +1417,87 @@ async function loadAnakDetail(santriId) {
   home.innerHTML = `<div class="text-center py-10 text-gray-400 text-sm">Memuat detail anak...</div>`;
 
   try {
-    const [resS, resR] = await Promise.all([
+    const [resS, resR, resC] = await Promise.all([
       fetch(`/api/santri/${santriId}`),
-      fetch(`/api/santri/${santriId}/riwayat-akademik`)
+      fetch(`/api/santri/${santriId}/riwayat-akademik`),
+      fetch(`/api/wali/catatan?santri_id=${santriId}`)
     ]);
     if (!resS.ok) throw new Error('Gagal memuat profil anak');
     const s = await resS.json();
     const riwayat = resR.ok ? ((await resR.json()) || []) : [];
+    const catatan = resC.ok ? ((await resC.json()) || []) : [];
 
-    home.innerHTML = buildAnakBiodata(s) + buildAlphaAlert(riwayat) + buildRiwayatAkademik(riwayat);
+    home.innerHTML = buildAnakBiodata(s) + buildAlphaAlert(riwayat) + buildCatatanAnak(catatan) + buildRiwayatAkademik(riwayat);
     if (window.lucide) window.lucide.createIcons();
   } catch (err) {
     home.innerHTML = `<div class="text-center py-10 text-red-500 text-sm">${waliEscape(err.message)}</div>`;
   }
+}
+
+function buildCatatanAnak(catatan) {
+  if (!catatan || catatan.length === 0) {
+    return '';
+  }
+
+  const pelanggaran = catatan.filter(c => c.jenis === 'pelanggaran');
+  const prestasi = catatan.filter(c => c.jenis === 'prestasi');
+
+  let html = '<div class="bg-white dark:bg-slate-800 rounded-3xl border border-gray-100 dark:border-slate-700/60 shadow-sm overflow-hidden mb-6">';
+
+  // Pelanggaran
+  if (pelanggaran.length > 0) {
+    html += `
+      <div class="px-6 py-4 border-b border-gray-100 dark:border-slate-700">
+        <h3 class="text-lg font-bold text-red-600 dark:text-red-400 flex items-center gap-2">
+          <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+          Pelanggaran (${pelanggaran.length})
+        </h3>
+      </div>
+      <div class="p-4 space-y-2">`;
+    pelanggaran.forEach(p => {
+      html += `
+        <div class="flex items-start gap-3 p-3 bg-red-50 dark:bg-red-900/20 rounded-xl">
+          <div class="w-2 h-2 rounded-full bg-red-500 mt-2 shrink-0"></div>
+          <div class="flex-1">
+            <div class="flex justify-between items-start">
+              <span class="text-sm font-medium text-red-800 dark:text-red-300">${waliEscape(p.kategori || '-')}</span>
+              <span class="text-xs text-red-500 dark:text-red-400">${waliEscape(p.tanggal)}</span>
+            </div>
+            <p class="text-sm text-red-700 dark:text-red-400 mt-1">${waliEscape(p.deskripsi)}</p>
+          </div>
+        </div>`;
+    });
+    html += '</div>';
+  }
+
+  // Prestasi
+  if (prestasi.length > 0) {
+    html += `
+      <div class="px-6 py-4 border-b border-gray-100 dark:border-slate-700 ${pelanggaran.length > 0 ? 'border-t' : ''}">
+        <h3 class="text-lg font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
+          <i data-lucide="award" class="w-5 h-5"></i>
+          Prestasi (${prestasi.length})
+        </h3>
+      </div>
+      <div class="p-4 space-y-2">`;
+    prestasi.forEach(p => {
+      html += `
+        <div class="flex items-start gap-3 p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl">
+          <div class="w-2 h-2 rounded-full bg-emerald-500 mt-2 shrink-0"></div>
+          <div class="flex-1">
+            <div class="flex justify-between items-start">
+              <span class="text-sm font-medium text-emerald-800 dark:text-emerald-300">${waliEscape(p.kategori || '-')}</span>
+              <span class="text-xs text-emerald-500 dark:text-emerald-400">${waliEscape(p.tanggal)}</span>
+            </div>
+            <p class="text-sm text-emerald-700 dark:text-emerald-400 mt-1">${waliEscape(p.deskripsi)}</p>
+          </div>
+        </div>`;
+    });
+    html += '</div>';
+  }
+
+  html += '</div>';
+  return html;
 }
 
 function buildAnakBiodata(s) {

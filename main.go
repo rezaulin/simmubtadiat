@@ -72,6 +72,7 @@ func main() {
 
 				// Wali Santri: daftar anak yang tertaut ke akunnya
 				r.Get("/wali/anak", handlers.GetAnakWali)
+				r.Get("/wali/catatan", handlers.GetCatatanAnakWali)
 
 				// Global Search (wali_santri tidak boleh mencari data santri lain)
 				r.Group(func(r chi.Router) {
