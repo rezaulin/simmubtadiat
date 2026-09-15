@@ -233,6 +233,11 @@ func GetRaportSantri(ctx context.Context, santriID int, semester int, tahunAjara
 			var mapel, namaKitab, kategori string
 			var khos, am *float64
 			rows.Scan(&mapel, &namaKitab, &kategori, &khos, &am)
+			// Fix: kalau khos=nil (belum input individu) → am juga nil
+			// Agar rapot gak nampilin nilai_am kelas untuk siswa yang belum input
+			if khos == nil {
+				am = nil
+			}
 			result.Nilai = append(result.Nilai, map[string]interface{}{
 				"mapel":      mapel,
 				"nama_kitab": namaKitab,

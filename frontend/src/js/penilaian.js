@@ -687,10 +687,18 @@ async function saveAll() {
       }
     }
 
-    // 2. Generate Khos for all santri (both semesters)
+    // 2. Generate Khos for all santri (only semesters with kuartal data)
     //    Auto-calculates: Khos = (tamrin + ujian) / 2, clamped to 4-9.
+    const semestersWithData = new Set();
+    kuartalInputs.forEach(k => {
+      const sem = k.kuartal <= 2 ? 1 : 2;
+      semestersWithData.add(sem);
+    });
+    // Always include both semesters if any data exists (for edge cases)
+    const semsToProcess = semestersWithData.size > 0 ? [...semestersWithData] : [1, 2];
+    
     for (const s of currentData.santri) {
-      for (const sem of [1, 2]) {
+      for (const sem of semsToProcess) {
         await fetch('/api/penilaian/generate-khos', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -715,8 +723,9 @@ async function saveAll() {
     }
 
     // 4. Generate Nilai Am (rata-rata kelas per mapel) per bagian per semester
+    //    Only generate for semesters that have kuartal data
     const bagianId = selBagian.value;
-    for (const sem of [1, 2]) {
+    for (const sem of semsToProcess) {
       await fetch('/api/penilaian/generate-am', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

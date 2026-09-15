@@ -884,7 +884,10 @@ async function loadSetupData() {
           <div>
             <span>${t.nama}</span> <span class="text-xs text-gray-400 ml-2">Urutan: ${t.urutan}</span>
           </div>
-          <button onclick="hapusTingkatan(${t.id})" class="text-red-500 hover:text-red-700 text-xs font-medium">Hapus</button>
+          <div class="flex gap-2">
+            <button onclick="editTingkatan(${t.id}, '${t.nama.replace(/'/g, "\\'")}', ${t.urutan})" class="text-blue-500 hover:text-blue-700 text-xs font-medium">Edit</button>
+            <button onclick="hapusTingkatan(${t.id})" class="text-red-500 hover:text-red-700 text-xs font-medium">Hapus</button>
+          </div>
         </li>`;
       });
     }
@@ -896,7 +899,10 @@ async function loadSetupData() {
       dataKelas.forEach(a => {
         listKelas.innerHTML += `<li class="flex justify-between items-center px-2 py-1 border-b border-gray-100 dark:border-slate-700">
           <span>${a.nama}</span>
-          <button onclick="hapusKelas(${a.id})" class="text-red-500 hover:text-red-700 text-xs font-medium">Hapus</button>
+          <div class="flex gap-2">
+            <button onclick="editKelas(${a.id}, '${a.nama.replace(/'/g, "\\'")}')" class="text-blue-500 hover:text-blue-700 text-xs font-medium">Edit</button>
+            <button onclick="hapusKelas(${a.id})" class="text-red-500 hover:text-red-700 text-xs font-medium">Hapus</button>
+          </div>
         </li>`;
       });
     }
@@ -945,6 +951,28 @@ window.hapusTingkatan = async function(id) {
   }
 };
 
+window.editTingkatan = async function(id, nama, urutan) {
+  const newNama = prompt("Nama Tingkatan:", nama);
+  if (newNama === null || newNama.trim() === '') return;
+  const newUrutanStr = prompt("Urutan:", urutan);
+  if (newUrutanStr === null) return;
+  const newUrutan = parseInt(newUrutanStr);
+  if (isNaN(newUrutan)) return alert("Urutan harus angka");
+  
+  try {
+    const res = await fetch(`/api/akademik/tingkatan/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nama: newNama.trim(), urutan: newUrutan, is_active: true })
+    });
+    if (!res.ok) throw new Error("Gagal update");
+    loadSetupData();
+    loadDropdowns();
+  } catch(err) {
+    alert("Gagal mengupdate tingkatan");
+  }
+};
+
 window.hapusKelas = async function(id) {
   if(!confirm("Hapus Kelas ini? Pastikan tidak ada data yang terikat dengan kelas ini.")) return;
   try {
@@ -953,7 +981,25 @@ window.hapusKelas = async function(id) {
     loadSetupData();
     loadDropdowns();
   } catch(err) {
-    alert(err.message);
+    alert("Gagal menghapus kelas");
+  }
+};
+
+window.editKelas = async function(id, nama) {
+  const newNama = prompt("Nama Kelas:", nama);
+  if (newNama === null || newNama.trim() === '') return;
+  
+  try {
+    const res = await fetch(`/api/akademik/kelas/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nama: newNama.trim(), tahun_masuk: new Date().getFullYear().toString(), is_active: true })
+    });
+    if (!res.ok) throw new Error("Gagal update");
+    loadSetupData();
+    loadDropdowns();
+  } catch(err) {
+    alert("Gagal mengupdate kelas");
   }
 };
 

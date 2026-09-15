@@ -89,6 +89,24 @@ func CreateKelas(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"status": "success"})
 }
 
+func UpdateKelas(w http.ResponseWriter, r *http.Request) {
+	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
+	var req struct {
+		Nama       string `json:"nama"`
+		TahunMasuk string `json:"tahun_masuk"`
+		IsActive   bool   `json:"is_active"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if err := models.UpdateKelas(r.Context(), id, req.Nama, req.TahunMasuk, req.IsActive); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	json.NewEncoder(w).Encode(map[string]string{"status": "success"})
+}
+
 func DeleteKelas(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
 	if err := models.DeleteKelas(r.Context(), id); err != nil {

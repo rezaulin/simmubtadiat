@@ -54,8 +54,8 @@
             max-width: 100% !important;
             width: auto !important;
             /* 2026-09-12: F4 330.2mm - margin @page (12mm atas + 20mm bawah) = 298mm.
-               min-height 298mm → sheet nge-fill halaman → ttd nempel bawah (margin bawah 2cm). */
-            min-height: 298mm !important;
+               min-height 308mm → sheet nge-fill halaman. */
+            min-height: 308mm !important;
         }
         .rapot-sheet:last-child { page-break-after: auto; }
         .rapot-sheet hr {
@@ -91,7 +91,7 @@
     .header-wrapper {
         width: 100%;
         min-height: 80px;
-        margin-bottom: 0.04cm; /* kalibrasi ink-gap kop→Nama 0.4cm: 0.04 + trailing leading tahun lh1.7 (~0.26) + leading Nama row (~0.10) */
+        margin-bottom: 0.2cm; /* 2026-09-14: lh turun 1.7→1.3, leading berkurang → naikkan margin biar gap kop→Nama tetap ~0.4cm */
         display: flex;
         align-items: center;
         justify-content: center; /* unit komposit center — match referensi */
@@ -117,10 +117,9 @@
         font-family: 'KFGQPC Uthman Taha Naskh','Amiri',serif;
         font-size: 12pt; /* spec klien 2026-09-12 (foto anotasi): baris 1 kop = 12pt */
         font-weight: normal;
-        margin: -0.15cm 0 0 0; /* kalibrasi ink: lh 1.7 geser ink turun 0.15 → margin-top kompensasi → ink mulai pas 1.20cm */
-        /* 2026-09-12 FIX TUMPUK: UthmanTN glyph box ~1.69x font-size. line-height:1
-           bikin ink baris 1 nembus baris 2 (tinta kecat di luar line-box). 1.7 = aman. */
-        line-height: 1.7;
+        margin: 0;
+        /* 2026-09-14: klien minta rapat. 1.1 = minimum tanpa tumpuk utk 12pt UthmanTN. */
+        line-height: 1.1;
         white-space: nowrap; /* FIX 2-BARIS 2026-09-12: kop = single-line by design */
     }
 
@@ -128,16 +127,16 @@
         font-family: 'KFGQPC Uthman Taha Naskh','Amiri',serif;
         font-size: 19pt; /* spec klien 2026-09-12 (foto anotasi): baris 2 kop = 19pt */
         font-weight: bold;
-        margin: 3px 0;
-        line-height: 1.7; /* FIX TUMPUK 2026-09-12: 38px (1.5) kurang — glyph 19pt butuh ~43px */
+        margin: 0;
+        line-height: 1.15; /* 2026-09-14: klien minta rapat. 1.15 = minimum utk 19pt bold UthmanTN */
         white-space: nowrap; /* FIX 2-BARIS 2026-09-12: kop = single-line by design */
     }
 
     .header-text p {
         font-family: 'KFGQPC Uthman Taha Naskh','Amiri',serif;
         font-size: 16pt; /* spec klien 2026-09-12 (foto anotasi): baris 3 madrasah = 16pt */
-        margin: 2px 0;
-        line-height: 1.7; /* FIX TUMPUK 2026-09-12: normal 1.5 kurang utk UthmanTN 16pt */
+        margin: 0;
+        line-height: 1.1; /* 2026-09-14: klien minta rapat. 1.1 = minimum utk 16pt */
     }
 
     /* Garis bawah madrasah: PANJANG garis = PANJANG teks madrasah (baris tepat di atasnya).
@@ -165,7 +164,7 @@
     .header-text p.year-text {
         font-size: 12pt; /* spec klien 2026-09-12 (foto anotasi): baris 4 = 12pt */
         margin: 0;
-        line-height: 1.7; /* FIX TUMPUK 2026-09-12: line-height:1 bikin ink tahun nempel madrasah */
+        line-height: 1.1; /* 2026-09-14: klien minta rapat */
         white-space: nowrap; /* blok text menyusut (madrasah dirapatkan) — tahun jangan wrap */
     }
 
@@ -187,32 +186,7 @@
         border: none !important;
         outline: none !important;
         box-shadow: none !important;
-    }
-
-    .st-left,
-    .st-right {
-        width: 50%;
-        border: none !important;
-        vertical-align: top;
-    }
-
-    /* Kolom kanan (No. Tamrin, Bagian) digeser ke kanan agar sejajar
-       dengan kolom "الكتب الدراسية" (kutubu dirosah) di tabel nilai. owner 2026-08.
-       Geser via margin-left pada tabel dalam (bukan padding td) supaya tidak
-       ditimpa rule .rapot-sheet td (specificity lebih tinggi). */
-    .st-right {
-        width: 50%;
-    }
-    .student-table .st-right > table {
-        margin-left: 65px !important;
-    }
-
-    /* Inner tables hug content (jangan stretch ke 50%) biar gap : -> isian
-       konsisten kiri & kanan. Semua rata kiri, TIDAK di-center. */
-    .st-left > table,
-    .st-right > table {
-        width: auto;
-        border-collapse: collapse;
+        overflow: visible !important; /* Override .rapot-sheet td overflow:hidden */
     }
 
     /* Spec Word referensi 2026-09-12: kolom identitas (LTR fisik)
@@ -246,11 +220,24 @@
 
 
     /* Tabel nilai: teks Arab (header & nama kitab/funun) = Uthman Taha,
-       angka nilai = Times New Roman 14pt bold. Border tebal sesuai asli. */
+       angka nilai = Times New Roman 14pt bold. Border tebal sesuai asli.
+       2026-09-14: table-layout:fixed enforce exact row height 10mm. */
     .rapot-sheet table {
         width: 100%;
         border-collapse: collapse;
-        margin-top: 0.65cm !important; /* spec INK-gap identitas→tabel = 0.7cm: 0.65 CSS + ~0.05 descender Bagian (ink-level 2026-09-12) */
+        table-layout: fixed;
+        margin-top: 0.65cm !important; /* spec INK-gap identitas→tabel = 0.7cm */
+    }
+    
+    /* Semester 2: gap identitas → tabel dikurangi (0.65cm → 0.2cm) biar muat 1 halaman
+       dengan 18 mapel max. Dinamis via rapot.js: sheet.classList.add('sem2-compact'). */
+    .rapot-sheet.sem2-compact table:not(.student-table) {
+        margin-top: 0.2cm !important;
+    }
+    
+    /* Semester 2: gap kop → identitas dikurangi (0.2cm → 0.05cm) */
+    .rapot-sheet.sem2-compact .header-wrapper {
+        margin-bottom: 0.05cm;
     }
 
     /* Spec klien 2026-09-11: jarak kop→identitas TOTAL 0.5cm.
@@ -266,26 +253,23 @@
         margin-top: 0 !important;
     }
 
+
     .rapot-sheet th, .rapot-sheet td {
         border: 2px solid black;
-        /* Padding vertikal fixed (owner 2026-08-25 final fix): 
-           User screenshot BUKTINYA text MENYENGKAU garis di desktop!
-            
-           Root cause: Uthman font descender depth + tailwind line-height 1.5
-            
-           Solution #1: Naikin line-height minimal 1.15 (bukan 1.5)
-           Solution #2: Padding 2px vertical cukup, focus ke gap visual bukan metric exact
-            
-           /* F4 limit 297mm allows for this, and at 1 halaman, gap visual cukup >0.7mm. */
-           padding: 1px 8px 3px 6px;
-           line-height: 1.1;
-           text-align: center;
+        height: 10mm;
+        padding: 0 4px;
+        line-height: 1;
+        text-align: center;
+        vertical-align: middle;
+        overflow: hidden;
+        box-sizing: border-box;
     }
 
     .rapot-sheet th {
         font-family: 'KFGQPC Uthman Taha Naskh','Amiri',serif;
         font-size: 18pt;
         font-weight: bold;
+        line-height: 0.9;  /* UthmanTN glyph box ~1.69x; 0.9 keeps ة visible within 10mm row */
         background-color: #f8f9fa !important;
         -webkit-print-color-adjust: exact;
     }
@@ -299,6 +283,7 @@
     .rapot-sheet td.td-arab {
         font-family: 'KFGQPC Uthman Taha Naskh','Amiri',serif;
         font-size: 16pt;
+        text-align: right;
     }
 
     /* Angka nilai khos/am — KFGQPC Uthman Taha 14pt (NOT BOLD). */
@@ -316,9 +301,17 @@
     }
 
     /* Nilai البيان di raport cetak = BOLD (owner 2026-08-29), warna tetap
-       hitam (tidak pernah merah — lihat rapot.js setBayan). */
+       hitam (tidak pernah merah — lihat rapot.js setBayan).
+       Font size 18pt sesuai Word reference. */
     .rapot-sheet [data-field="bayan-value"] {
         font-weight: bold;
+        font-size: 18pt;
+    }
+
+    /* Header tabel (thead): baris lebih tipis (8mm) — font 16pt UthmanTN muat.
+       16pt bold text height = 6.9mm, perlu 8mm biar gak kepotong. */
+    .rapot-sheet thead th {
+        height: 8mm;
     }
 
     /* Baris total (tfoot) — Uthman Taha 18pt bold sesuai spek oranye.
@@ -330,6 +323,7 @@
         font-size: 18pt;
         font-weight: bold;
         padding: 1px 6px 4px 6px;
+        height: 6mm;
     }
 
     .td-left {
@@ -344,13 +338,10 @@
     .signature-box {
         display: flex;
         justify-content: space-between;
-        padding: 0 40px;
+        padding: 0.5cm 40px 0 40px;
         page-break-inside: avoid;
         break-inside: avoid;
-        /* margin-top: auto = footer-pinning: sheet flex-column + min-height 298mm
-           → ttd melayang ke dasar halaman (spec 2026-09-12 margin bawah 2cm).
-           JANGAN ganti dengan fixed px — itu bunuh pinning (bug lama 2026-08-25). */
-        margin-top: auto !important;
+        /* Jarak tabel →المدرس/المدير = 0.5cm (spec 2026-09-14). */
     }
     
     .signature-box p {
@@ -627,7 +618,7 @@
         <div class="header-text">
           <h2>كشف الدرجات الدراسية</h2>
           <h3 data-field="semester-title">فصل الدراسة الثانية</h3>
-          <p data-field="madrasah-line">المدرسة الابتدائية للبنات هداية المبتدئات كديري ليربيا</p>
+          <p data-field="madrasah-line">المدرسة الإبتدائية للبنات هداية المبتدئات كديري ليربيا</p>
           <!-- Spec kop Word referensi 2026-09-12: garis FULL-WIDTH komposit (bukan fit-content
                madrasah), tahun di BAWAH garis. -->
           <hr class="year-line">
@@ -635,22 +626,34 @@
         </div>
       </div>
 
-      <!-- STUDENT DATA (black, no boxes - table for perfect alignment) -->
+      <!-- STUDENT DATA (black, no boxes - single table for perfect alignment) -->
       <table class="student-table" dir="ltr">
         <tr>
-          <td class="st-left">
-            <table>
-              <tr><td class="st-label">Nama</td><td class="st-colon">:</td><td class="st-value" data-field="nama"></td></tr>
-              <tr><td class="st-label">No. Stambuk</td><td class="st-colon">:</td><td class="st-value" data-field="stambuk"></td></tr>
-              <tr><td class="st-label">Kelas</td><td class="st-colon">:</td><td class="st-value" data-field="kelas"></td></tr>
-            </table>
-          </td>
-          <td class="st-right">
-            <table>
-              <tr><td class="st-label">No. Tamrin</td><td class="st-colon">:</td><td class="st-value" data-field="tamrin"></td></tr>
-              <tr><td class="st-label">Bagian</td><td class="st-colon">:</td><td class="st-value" data-field="bagian"></td></tr>
-            </table>
-          </td>
+          <td class="st-label">Nama</td>
+          <td class="st-colon">:</td>
+          <td class="st-value" data-field="nama"></td>
+          <td style="width: 2.5cm;"></td>
+          <td class="st-label" style="width: 2.81cm;">No. Tamrin</td>
+          <td class="st-colon" style="width: 0.65cm;">:</td>
+          <td class="st-value" data-field="tamrin"></td>
+        </tr>
+        <tr>
+          <td class="st-label">No. Stambuk</td>
+          <td class="st-colon">:</td>
+          <td class="st-value" data-field="stambuk"></td>
+          <td></td>
+          <td class="st-label" style="width: 2.81cm;">Bagian</td>
+          <td class="st-colon" style="width: 0.65cm;">:</td>
+          <td class="st-value" data-field="bagian"></td>
+        </tr>
+        <tr>
+          <td class="st-label">Kelas</td>
+          <td class="st-colon">:</td>
+          <td class="st-value" data-field="kelas"></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
         </tr>
       </table>
 
@@ -658,9 +661,9 @@
       <table>
           <thead class="text-orange">
               <tr>
-                  <th rowspan="2" style="width: 1.24cm;">النمرة</th>
-                  <th rowspan="2" style="width: 4.1cm;">الفنون</th>
-                  <th rowspan="2" style="width: 4.4cm;">الكتب الدراسية</th>
+                  <th rowspan="2" style="width: 1.6cm;">النمرة</th>
+                  <th rowspan="2" style="width: 5.1cm;">الكتب الدراسية</th>
+                  <th rowspan="2" style="width: 3.4cm;">الفنون</th>
                   <th colspan="2" style="white-space: nowrap; font-size: 16pt;">أرقام الدرجات الخاصة والعامة</th>
               </tr>
               <tr>
@@ -707,15 +710,15 @@
       <!-- Posisi tetap (dir=ltr): المدير di KIRI, المدرس di KANAN. -->
       <div class="signature-box" dir="ltr">
           <div class="text-center" data-field="sig-mudir" style="display: none;">
-              <p class="ft-uth-16 mb-2" style="font-family: 'KFGQPC Uthman Taha Naskh','Amiri',serif; font-size: 16pt; margin-bottom: 4px;">المدير</p>
+              <p class="ft-uth-16 mb-2" style="font-family: 'KFGQPC Uthman Taha Naskh','Amiri',serif; font-size: 16pt; margin-bottom: 0;">المدير</p>
               <img data-field="sig-mudir-ttd" src="" alt="" style="display:none; max-height:48px; margin:2px auto 0;">
-              <div data-field="sig-mudir-space" style="height:36px;"></div>
-              <p class="ft-uth-18" style="font-family: 'KFGQPC Uthman Taha Naskh','Amiri',serif; font-size: 18pt; font-weight: bold; margin-top: 4px;"><span data-field="sig-mudir-nama">.........................</span></p>
+              <div data-field="sig-mudir-space" style="height: 2cm;"></div>
+              <p class="ft-uth-18" style="font-family: 'KFGQPC Uthman Taha Naskh','Amiri',serif; font-size: 18pt; font-weight: bold; margin-top: 0;"><span data-field="sig-mudir-nama">.........................</span></p>
           </div>
           <div class="text-center" style="margin-left:auto;">
-              <p class="ft-uth-16 mb-2" style="font-family: 'KFGQPC Uthman Taha Naskh','Amiri',serif; font-size: 16pt; margin-bottom: 4px;">المدرس</p>
-              <div style="height:36px;"></div>
-              <p class="ft-uth-18" style="font-family: 'KFGQPC Uthman Taha Naskh','Amiri',serif; font-size: 18pt; font-weight: bold; margin-top: 4px;"><span data-field="sig-mudarris-nama">.........................</span></p>
+              <p class="ft-uth-16 mb-2" style="font-family: 'KFGQPC Uthman Taha Naskh','Amiri',serif; font-size: 16pt; margin-bottom: 0;">المدرس</p>
+              <div style="height: 2cm;"></div>
+              <p class="ft-uth-18" style="font-family: 'KFGQPC Uthman Taha Naskh','Amiri',serif; font-size: 18pt; font-weight: bold; margin-top: 0;"><span data-field="sig-mudarris-nama">.........................</span></p>
           </div>
       </div>
     </div>
@@ -780,14 +783,14 @@
     }
   </script>
   <style id="page-style">
-    @media print { @page { size: 215.9mm 330.2mm; margin: 1.2cm 2.5cm 2cm 2.5cm; } }
+    @media print { @page { size: 215.9mm 330.2mm; margin: 1.2cm 2.5cm 1cm 2.5cm; } }
   </style>
   <script>
     function updatePageSize() {
       const size = document.getElementById('kertas-selector').value;
       // Spec klien 2026-09-12: top 1.2cm — left/right 2.5cm — bottom 2cm.
       // A4 pakai margin sama agar posisi cetak konsisten dengan preview layar.
-      document.getElementById('page-style').textContent = `@media print { @page { size: ${size}; margin: 1.2cm 2.5cm 2cm 2.5cm; } }`;
+      document.getElementById('page-style').textContent = `@media print { @page { size: ${size}; margin: 1.2cm 2.5cm 1cm 2.5cm; } }`;
     }
   </script>
 </body>

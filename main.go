@@ -94,6 +94,7 @@ func main() {
 						r.Put("/tingkatan/{id}", handlers.UpdateTingkatan)
 						r.Delete("/tingkatan/{id}", handlers.DeleteTingkatan)
 						r.Post("/kelas", handlers.CreateKelas)
+						r.Put("/kelas/{id}", handlers.UpdateKelas)
 						r.Delete("/kelas/{id}", handlers.DeleteKelas)
 						r.Post("/bagian", handlers.CreateBagian)
 						r.Delete("/bagian/{id}", handlers.DeleteBagian)

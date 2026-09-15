@@ -51,7 +51,7 @@ function decodeEntities(str) {
 function madrasahLine(tingkatanNama) {
   const t = decodeEntities(tingkatanNama).toLowerCase();
   let jenjang = 'العالية';
-  if (t.includes('ibtida')) jenjang = 'الابتدائية';
+  if (t.includes('ibtida')) jenjang = 'الإبتدائية';
   else if (t.includes("i'dad") || t.includes('idad') || t.includes('iʼdad') || t.includes('إعداد')) jenjang = 'الإعدادية';
   else if (t.includes('tsanaw') || t.includes('sanaw') || t.includes('ثانو')) jenjang = 'الثانوية';
   else if (t.includes('aliy') || t.includes('عالي')) jenjang = 'العالية';
@@ -500,6 +500,11 @@ function isExcludedRow(row) {
   // semester, owner koreksi: hanya sem2. bayan-box = <tr> di tfoot tabel
   // utama (display '' = table-row, BUKAN 'block').
   const isSem2 = String(semester) === '2';
+  
+  // Semester 2: gap identitas → tabel dikurangi (0.65cm → 0.2cm) biar muat 1 halaman
+  // dengan 18 mapel max. Semester 1: tetap 0.65cm (normal).
+  if (isSem2) sheet.classList.add('sem2-compact');
+  
   const bayanBox = sheet.querySelector('[data-field="bayan-box"]');
   const sigMudir = sheet.querySelector('[data-field="sig-mudir"]');
   if (isSem2) {
