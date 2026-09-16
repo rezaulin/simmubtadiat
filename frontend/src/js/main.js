@@ -1566,16 +1566,29 @@ function buildRiwayatAkademik(riwayat) {
   const sorted = [...riwayat].sort((a, b) => String(b.tahun_ajaran).localeCompare(String(a.tahun_ajaran)));
 
   return sorted.map((ta, idx) => {
-    let totS = 0, totI = 0, totA = 0;
-    if (Array.isArray(ta.absensi)) ta.absensi.forEach(m => { totS += m.s || 0; totI += m.i || 0; totA += m.t || 0; });
+    let totS = 0, totI = 0, totA = 0, totH = 0;
+    if (Array.isArray(ta.absensi)) ta.absensi.forEach(m => { totS += m.s || 0; totI += m.i || 0; totA += m.t || 0; totH += m.h || 0; });
 
-    let sum1 = 0, c1 = 0, sum2 = 0, c2 = 0;
+    // Hitung rata-rata dari nilai_kuartal (bukan nilai_khos)
+    // Exclude: Al-Quran, Qiroatul Kutub, Khot/Imla', Akhlaq
+    const excludeKeywords = ['al-quran', 'قرآن', 'qiroat', 'qiraat', 'khot', 'khot/imla', 'akhlaq', 'أخلاق'];
+    let sumQ1 = 0, cQ1 = 0, sumQ2 = 0, cQ2 = 0, sumQ3 = 0, cQ3 = 0, sumQ4 = 0, cQ4 = 0;
     (ta.raport || []).forEach(m => {
-      const v1 = parseFloat(m.smt1); if (!isNaN(v1)) { sum1 += v1; c1++; }
-      const v2 = parseFloat(m.smt2); if (!isNaN(v2)) { sum2 += v2; c2++; }
+      const mapelLower = (m.mapel || '').toLowerCase();
+      const isExcluded = excludeKeywords.some(kw => mapelLower.includes(kw));
+      if (isExcluded) return;
+      
+      const v1 = parseFloat(m.tamrin_k1); if (!isNaN(v1)) { sumQ1 += v1; cQ1++; }
+      const v2 = parseFloat(m.ujian_k2); if (!isNaN(v2)) { sumQ2 += v2; cQ2++; }
+      const v3 = parseFloat(m.tamrin_k3); if (!isNaN(v3)) { sumQ3 += v3; cQ3++; }
+      const v4 = parseFloat(m.ujian_k4); if (!isNaN(v4)) { sumQ4 += v4; cQ4++; }
     });
-    const avg1 = c1 > 0 ? sum1 / c1 : 0;
-    const avg2 = c2 > 0 ? sum2 / c2 : 0;
+    const avgQ1 = cQ1 > 0 ? sumQ1 / cQ1 : 0;
+    const avgQ2 = cQ2 > 0 ? sumQ2 / cQ2 : 0;
+    const avgQ3 = cQ3 > 0 ? sumQ3 / cQ3 : 0;
+    const avgQ4 = cQ4 > 0 ? sumQ4 / cQ4 : 0;
+    const avgSmt1 = cQ1 > 0 ? (sumQ1 + sumQ2) / (cQ1 + cQ2) : 0;
+    const avgSmt2 = cQ3 > 0 ? (sumQ3 + sumQ4) / (cQ3 + cQ4) : 0;
 
     const rows = (ta.raport || []).map((m, i) => `
       <tr class="border-b border-gray-100 dark:border-slate-700">
@@ -1607,11 +1620,42 @@ function buildRiwayatAkademik(riwayat) {
         </div>
         <div class="p-6">
           <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Rekap Absensi</h4>
-          <div class="grid grid-cols-3 gap-3 max-w-md mb-6">
-            <div class="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-3 text-center"><div class="text-xs text-blue-600 dark:text-blue-400 font-medium">Sakit</div><div class="text-2xl font-bold text-blue-900 dark:text-blue-100">${totS}</div></div>
-            <div class="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-3 text-center"><div class="text-xs text-amber-600 dark:text-amber-400 font-medium">Izin</div><div class="text-2xl font-bold text-amber-900 dark:text-amber-100">${totI}</div></div>
-            <div class="bg-red-50 dark:bg-red-900/20 rounded-xl p-3 text-center"><div class="text-xs text-red-600 dark:text-red-400 font-medium">Alpha</div><div class="text-2xl font-bold text-red-900 dark:text-red-100">${totA}</div></div>
-          </div>
+          ${ta.absensi && ta.absensi.length > 0 ? `
+          <div class="overflow-x-auto rounded-xl border border-gray-100 dark:border-slate-700 mb-6">
+            <table class="min-w-full text-xs">
+              <thead class="bg-gray-50 dark:bg-slate-900/40">
+                <tr>
+                  <th class="px-2 py-1.5 text-center text-xs font-bold text-gray-500 uppercase">Bulan</th>
+                  <th class="px-2 py-1.5 text-center text-xs font-bold text-gray-500 uppercase">Hadir</th>
+                  <th class="px-2 py-1.5 text-center text-xs font-bold text-blue-600 uppercase">Sakit</th>
+                  <th class="px-2 py-1.5 text-center text-xs font-bold text-amber-600 uppercase">Izin</th>
+                  <th class="px-2 py-1.5 text-center text-xs font-bold text-red-600 uppercase">Alpha</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${ta.absensi.map(a => `
+                <tr class="border-b border-gray-100 dark:border-slate-700">
+                  <td class="px-2 py-1.5 text-center text-gray-800 dark:text-gray-200">${waliEscape(a.bulan || '-')}</td>
+                  <td class="px-2 py-1.5 text-center font-bold">${waliFmtNilai(a.hadir)}</td>
+                  <td class="px-2 py-1.5 text-center font-bold text-blue-600">${waliFmtNilai(a.sakit)}</td>
+                  <td class="px-2 py-1.5 text-center font-bold text-amber-600">${waliFmtNilai(a.izin)}</td>
+                  <td class="px-2 py-1.5 text-center font-bold text-red-600">${waliFmtNilai(a.alpha)}</td>
+                </tr>`).join('')}
+              </tbody>
+              <tfoot class="bg-gray-50 dark:bg-slate-900/40 font-bold">
+                <tr>
+                  <td class="px-2 py-1.5 text-center">Total</td>
+                  <td class="px-2 py-1.5 text-center">${totH || '-'}</td>
+                  <td class="px-2 py-1.5 text-center text-blue-600">${totS}</td>
+                  <td class="px-2 py-1.5 text-center text-amber-600">${totI}</td>
+                  <td class="px-2 py-1.5 text-center text-red-600">${totA}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>` : `
+          <div class="bg-gray-50 dark:bg-slate-900/20 rounded-xl p-4 text-center text-sm text-gray-400 italic mb-6">
+            Belum ada data absensi untuk tahun ajaran ini.
+          </div>`}
           <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Nilai Raport</h4>
           ${(ta.raport || []).length > 0 ? `
           <div class="overflow-x-auto rounded-xl border border-gray-100 dark:border-slate-700">
@@ -1632,12 +1676,12 @@ function buildRiwayatAkademik(riwayat) {
               <tfoot class="bg-indigo-50 dark:bg-indigo-900/20">
                 <tr>
                   <td colspan="2" class="px-2 py-1.5 text-right font-bold text-indigo-900 dark:text-indigo-200 text-xs">Rata-rata</td>
-                  <td class="px-2 py-1.5 text-center font-bold text-indigo-900 dark:text-indigo-200 text-xs">-</td>
-                  <td class="px-2 py-1.5 text-center font-bold text-indigo-900 dark:text-indigo-200 text-xs">-</td>
-                  <td class="px-2 py-1.5 text-center font-bold text-indigo-900 dark:text-indigo-200 text-xs bg-blue-50 dark:bg-blue-900/20">${waliFmtNilai(avg1)}</td>
-                  <td class="px-2 py-1.5 text-center font-bold text-indigo-900 dark:text-indigo-200 text-xs">-</td>
-                  <td class="px-2 py-1.5 text-center font-bold text-indigo-900 dark:text-indigo-200 text-xs">-</td>
-                  <td class="px-2 py-1.5 text-center font-bold text-indigo-900 dark:text-indigo-200 text-xs bg-blue-50 dark:bg-blue-900/20">${waliFmtNilai(avg2)}</td>
+                  <td class="px-2 py-1.5 text-center font-bold text-indigo-900 dark:text-indigo-200 text-xs">${waliFmtNilai(avgQ1)}</td>
+                  <td class="px-2 py-1.5 text-center font-bold text-indigo-900 dark:text-indigo-200 text-xs">${waliFmtNilai(avgQ2)}</td>
+                  <td class="px-2 py-1.5 text-center font-bold text-indigo-900 dark:text-indigo-200 text-xs bg-blue-50 dark:bg-blue-900/20">${waliFmtNilai(avgSmt1)}</td>
+                  <td class="px-2 py-1.5 text-center font-bold text-indigo-900 dark:text-indigo-200 text-xs">${waliFmtNilai(avgQ3)}</td>
+                  <td class="px-2 py-1.5 text-center font-bold text-indigo-900 dark:text-indigo-200 text-xs">${waliFmtNilai(avgQ4)}</td>
+                  <td class="px-2 py-1.5 text-center font-bold text-indigo-900 dark:text-indigo-200 text-xs bg-blue-50 dark:bg-blue-900/20">${waliFmtNilai(avgSmt2)}</td>
                 </tr>
               </tfoot>
             </table>

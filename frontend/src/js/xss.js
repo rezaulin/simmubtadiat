@@ -90,7 +90,7 @@ const MENU_ACCESS = {
   muroqib: ['/index.html', '/santri.html', '/absensi-manual.html', '/catatan.html', '/dewan-harian.html', '/pengajar.html'],
   tim_rapot: ['/index.html', '/penilaian.html', '/rapot.html', '/rekap.html'],
   keamanan: ['/index.html', '/santri.html', '/arsip.html', '/alumni.html', '/catatan.html'],
-  wali_santri: ['/index.html', '/rapot.html']
+  wali_santri: ['/index.html']
 };
 
 // Pure function: compute the links a role or array of roles is allowed to see.
