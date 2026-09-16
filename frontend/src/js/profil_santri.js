@@ -541,6 +541,33 @@ function populateRiwayat(riwayatArr, bulanListByTA = {}) {
               </tr>
             </thead>
             <tbody>${raportRows}</tbody>
+            <tfoot class="bg-indigo-50 dark:bg-indigo-900/20 font-bold">
+              <tr>
+                <td colspan="2" class="px-3 py-2 text-right text-xs text-indigo-900 dark:text-indigo-200">Rata-rata (kecuali Al-Quran, Qiroat, Khot, Akhlaq)</td>
+                ${(() => {
+                  const excludeKeywords = ['al-quran', 'قرآن', 'qiroat', 'qiraat', 'khot', 'khot/imla', 'akhlaq', 'أخلاق'];
+                  let sQ1=0,cQ1=0,sQ2=0,cQ2=0,sQ3=0,cQ3=0,sQ4=0,cQ4=0,sS1=0,cS1=0,sS2=0,cS2=0;
+                  raportArr.forEach(r => {
+                    const ml = (r.mapel || '').toLowerCase();
+                    if (excludeKeywords.some(kw => ml.includes(kw))) return;
+                    const v = (val) => { const n = parseFloat(val); return isNaN(n) ? null : n; };
+                    if (v(r.tamrin_k1) !== null) { sQ1 += v(r.tamrin_k1); cQ1++; }
+                    if (v(r.ujian_k2) !== null) { sQ2 += v(r.ujian_k2); cQ2++; }
+                    if (v(r.smt1) !== null) { sS1 += v(r.smt1); cS1++; }
+                    if (v(r.tamrin_k3) !== null) { sQ3 += v(r.tamrin_k3); cQ3++; }
+                    if (v(r.ujian_k4) !== null) { sQ4 += v(r.ujian_k4); cQ4++; }
+                    if (v(r.smt2) !== null) { sS2 += v(r.smt2); cS2++; }
+                  });
+                  const fmt = (s,c) => c > 0 ? (Math.round(s/c*10)/10).toFixed(1) : '-';
+                  return `<td class="px-2 py-2 text-center text-sm">${fmt(sQ1,cQ1)}</td>
+                    <td class="px-2 py-2 text-center text-sm">${fmt(sQ2,cQ2)}</td>
+                    <td class="px-2 py-2 text-center text-sm bg-indigo-50/50 dark:bg-indigo-900/10">${fmt(sS1,cS1)}</td>
+                    <td class="px-2 py-2 text-center text-sm">${fmt(sQ3,cQ3)}</td>
+                    <td class="px-2 py-2 text-center text-sm">${fmt(sQ4,cQ4)}</td>
+                    <td class="px-2 py-2 text-center text-sm bg-indigo-50/50 dark:bg-indigo-900/10">${fmt(sS2,cS2)}</td>`;
+                })()}
+              </tr>
+            </tfoot>
           </table>
         </div>
       `;
