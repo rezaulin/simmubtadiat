@@ -497,7 +497,15 @@ function populateRiwayat(riwayatArr, bulanListByTA = {}) {
     const raportArr = Array.isArray(taData.raport) ? taData.raport : [];
     let raportRows = '';
     raportArr.forEach((r, idx) => {
-      const cell = (v) => v != null && v !== '' ? escapeHtml(String(v)) : '<span class="text-gray-300">-</span>';
+      const cell = (v) => {
+        if (v == null || v === '') return '<span class="text-gray-300">-</span>';
+        const num = parseFloat(v);
+        const formatted = isNaN(num) ? String(v) : num.toFixed(1);
+        if (!isNaN(num) && num <= 4.4) {
+          return `<span class="text-red-600 dark:text-red-400">${escapeHtml(formatted)}</span>`;
+        }
+        return escapeHtml(formatted);
+      };
       // Nama kitab (Arab) di-translasi ke Latin. Nama Arab asli tetap
       // dipertahankan sebagai tooltip agar informasi tak hilang.
       const rawMapel = r.mapel || '';
@@ -543,13 +551,43 @@ function populateRiwayat(riwayatArr, bulanListByTA = {}) {
             <tbody>${raportRows}</tbody>
             <tfoot class="bg-indigo-50 dark:bg-indigo-900/20 font-bold">
               <tr>
+                <td colspan="2" class="px-3 py-2 text-right text-xs text-indigo-900 dark:text-indigo-200">Jumlah</td>
+                ${(() => {
+                  const EXCLUDED_KATEGORI = new Set(['al_quran', 'al_khot_imla', 'qiroah_kutub', 'muhafadhoh', 'akhlaq', 'akhlaq_perilaku']);
+                  const excludeMapel = ['القرءان', 'القراءة', 'المحافظة', 'الأخلاق', 'الكتاب'];
+                  const excludeKitab = ['القرءان الكريم', 'قراءة الكتب', 'المحافظة', 'الأخلاق', 'الخط والإملاء', 'الخط/ الإملاء'];
+                  let sQ1=0,sQ2=0,sS1=0,sQ3=0,sQ4=0,sS2=0;
+                  raportArr.forEach(r => {
+                    const namaMapel = (r.nama_mapel || '').trim();
+                    const mapelName = (r.mapel || '').trim();
+                    if (EXCLUDED_KATEGORI.has(r.kategori) || excludeMapel.includes(namaMapel) || excludeKitab.includes(mapelName)) return;
+                    const v = (val) => { const n = parseFloat(val); return isNaN(n) ? null : n; };
+                    if (v(r.tamrin_k1) !== null) sQ1 += v(r.tamrin_k1);
+                    if (v(r.ujian_k2) !== null) sQ2 += v(r.ujian_k2);
+                    if (v(r.smt1) !== null) sS1 += v(r.smt1);
+                    if (v(r.tamrin_k3) !== null) sQ3 += v(r.tamrin_k3);
+                    if (v(r.ujian_k4) !== null) sQ4 += v(r.ujian_k4);
+                    if (v(r.smt2) !== null) sS2 += v(r.smt2);
+                  });
+                  return `<td class="px-2 py-2 text-center text-sm">${sQ1.toFixed(1)}</td>
+                    <td class="px-2 py-2 text-center text-sm">${sQ2.toFixed(1)}</td>
+                    <td class="px-2 py-2 text-center text-sm bg-indigo-50/50 dark:bg-indigo-900/10">${sS1.toFixed(1)}</td>
+                    <td class="px-2 py-2 text-center text-sm">${sQ3.toFixed(1)}</td>
+                    <td class="px-2 py-2 text-center text-sm">${sQ4.toFixed(1)}</td>
+                    <td class="px-2 py-2 text-center text-sm bg-indigo-50/50 dark:bg-indigo-900/10">${sS2.toFixed(1)}</td>`;
+                })()}
+              </tr>
+              <tr>
                 <td colspan="2" class="px-3 py-2 text-right text-xs text-indigo-900 dark:text-indigo-200">Rata-rata (kecuali Al-Quran, Qiroat, Khot, Akhlaq)</td>
                 ${(() => {
-                  const excludeKeywords = ['al-quran', 'قرآن', 'qiroat', 'qiraat', 'khot', 'khot/imla', 'akhlaq', 'أخلاق'];
+                  const EXCLUDED_KATEGORI = new Set(['al_quran', 'al_khot_imla', 'qiroah_kutub', 'muhafadhoh', 'akhlaq', 'akhlaq_perilaku']);
+                  const excludeMapel = ['القرءان', 'القراءة', 'المحافظة', 'الأخلاق', 'الكتاب'];
+                  const excludeKitab = ['القرءان الكريم', 'قراءة الكتب', 'المحافظة', 'الأخلاق', 'الخط والإملاء', 'الخط/ الإملاء'];
                   let sQ1=0,cQ1=0,sQ2=0,cQ2=0,sQ3=0,cQ3=0,sQ4=0,cQ4=0,sS1=0,cS1=0,sS2=0,cS2=0;
                   raportArr.forEach(r => {
-                    const ml = (r.mapel || '').toLowerCase();
-                    if (excludeKeywords.some(kw => ml.includes(kw))) return;
+                    const namaMapel = (r.nama_mapel || '').trim();
+                    const mapelName = (r.mapel || '').trim();
+                    if (EXCLUDED_KATEGORI.has(r.kategori) || excludeMapel.includes(namaMapel) || excludeKitab.includes(mapelName)) return;
                     const v = (val) => { const n = parseFloat(val); return isNaN(n) ? null : n; };
                     if (v(r.tamrin_k1) !== null) { sQ1 += v(r.tamrin_k1); cQ1++; }
                     if (v(r.ujian_k2) !== null) { sQ2 += v(r.ujian_k2); cQ2++; }
@@ -558,7 +596,13 @@ function populateRiwayat(riwayatArr, bulanListByTA = {}) {
                     if (v(r.ujian_k4) !== null) { sQ4 += v(r.ujian_k4); cQ4++; }
                     if (v(r.smt2) !== null) { sS2 += v(r.smt2); cS2++; }
                   });
-                  const fmt = (s,c) => c > 0 ? (Math.round(s/c*10)/10).toFixed(1) : '-';
+                  const fmt = (s,c) => {
+                    if (c === 0) return '-';
+                    const val = (Math.round(s/c*10)/10).toFixed(1);
+                    const num = parseFloat(val);
+                    if (num <= 4.4) return `<span class="text-red-600 dark:text-red-400">${val}</span>`;
+                    return val;
+                  };
                   return `<td class="px-2 py-2 text-center text-sm">${fmt(sQ1,cQ1)}</td>
                     <td class="px-2 py-2 text-center text-sm">${fmt(sQ2,cQ2)}</td>
                     <td class="px-2 py-2 text-center text-sm bg-indigo-50/50 dark:bg-indigo-900/10">${fmt(sS1,cS1)}</td>

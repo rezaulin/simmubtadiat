@@ -1436,7 +1436,12 @@ async function loadAnakDetail(santriId) {
 
 function buildCatatanAnak(catatan) {
   if (!catatan || catatan.length === 0) {
-    return '';
+    return '<div class="bg-white dark:bg-slate-800 rounded-3xl border border-gray-100 dark:border-slate-700/60 shadow-sm overflow-hidden mb-6">' +
+      '<div class="px-6 py-4 border-b border-gray-100 dark:border-slate-700">' +
+      '<h3 class="text-lg font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2">' +
+      '<i data-lucide="clipboard-list" class="w-5 h-5"></i>' +
+      'Catatan Pelanggaran & Prestasi</h3></div>' +
+      '<div class="p-4 text-center text-sm text-gray-400 italic">Belum ada catatan pelanggaran atau prestasi.</div></div>';
   }
 
   const pelanggaran = catatan.filter(c => c.jenis === 'pelanggaran');
@@ -1558,6 +1563,23 @@ function buildAlphaAlert(riwayat) {
     </div>`;
 }
 
+function toArabicDigits(value) {
+  if (value === null || value === undefined || value === '') return '';
+  const map = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+  return String(value).replace(/[0-9]/g, (d) => map[Number(d)]);
+}
+
+function waliFmtNilaiRed(n) {
+  if (n === null || n === undefined || n === '') return '<span class="text-gray-300">-</span>';
+  const num = Number(n);
+  if (Number.isNaN(num)) return waliEscape(n);
+  const str = num.toFixed(1);
+  if (num <= 4.4) {
+    return `<span class="text-red-600 dark:text-red-400">${str}</span>`;
+  }
+  return str;
+}
+
 function buildRiwayatAkademik(riwayat) {
   if (!riwayat || riwayat.length === 0) {
     return `<div class="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-gray-100 dark:border-slate-700/60 text-center text-sm text-gray-500 dark:text-gray-400">Belum ada data akademik.</div>`;
@@ -1566,40 +1588,46 @@ function buildRiwayatAkademik(riwayat) {
   const sorted = [...riwayat].sort((a, b) => String(b.tahun_ajaran).localeCompare(String(a.tahun_ajaran)));
 
   return sorted.map((ta, idx) => {
-    let totS = 0, totI = 0, totA = 0, totH = 0;
-    if (Array.isArray(ta.absensi)) ta.absensi.forEach(m => { totS += m.s || 0; totI += m.i || 0; totA += m.t || 0; totH += m.h || 0; });
+    let totS = 0, totI = 0, totA = 0;
+    if (Array.isArray(ta.absensi)) ta.absensi.forEach(m => { totS += m.s || 0; totI += m.i || 0; totA += m.t || 0; });
 
     // Hitung rata-rata dari nilai_kuartal (bukan nilai_khos)
     // Exclude: Al-Quran, Qiroatul Kutub, Khot/Imla', Akhlaq
-    const excludeKeywords = ['al-quran', 'قرآن', 'qiroat', 'qiraat', 'khot', 'khot/imla', 'akhlaq', 'أخلاق'];
+    const EXCLUDED_KATEGORI = new Set(['al_quran', 'al_khot_imla', 'qiroah_kutub', 'muhafadhoh', 'akhlaq', 'akhlaq_perilaku']);
+    const excludeMapel = ['القرءان', 'القراءة', 'المحافظة', 'الأخلاق', 'الكتاب'];
+    const excludeKitab = ['القرءان الكريم', 'قراءة الكتب', 'المحافظة', 'الأخلاق', 'الخط والإملاء', 'الخط/ الإملاء'];
     let sumQ1 = 0, cQ1 = 0, sumQ2 = 0, cQ2 = 0, sumQ3 = 0, cQ3 = 0, sumQ4 = 0, cQ4 = 0;
+    let sumS1 = 0, cS1 = 0, sumS2 = 0, cS2 = 0;
     (ta.raport || []).forEach(m => {
-      const mapelLower = (m.mapel || '').toLowerCase();
-      const isExcluded = excludeKeywords.some(kw => mapelLower.includes(kw));
+      const namaMapel = (m.nama_mapel || '').trim();
+      const mapelName = (m.mapel || '').trim();
+      const isExcluded = EXCLUDED_KATEGORI.has(m.kategori) || excludeMapel.includes(namaMapel) || excludeKitab.includes(mapelName);
       if (isExcluded) return;
       
       const v1 = parseFloat(m.tamrin_k1); if (!isNaN(v1)) { sumQ1 += v1; cQ1++; }
       const v2 = parseFloat(m.ujian_k2); if (!isNaN(v2)) { sumQ2 += v2; cQ2++; }
+      const vs1 = parseFloat(m.smt1); if (!isNaN(vs1)) { sumS1 += vs1; cS1++; }
       const v3 = parseFloat(m.tamrin_k3); if (!isNaN(v3)) { sumQ3 += v3; cQ3++; }
       const v4 = parseFloat(m.ujian_k4); if (!isNaN(v4)) { sumQ4 += v4; cQ4++; }
+      const vs2 = parseFloat(m.smt2); if (!isNaN(vs2)) { sumS2 += vs2; cS2++; }
     });
     const avgQ1 = cQ1 > 0 ? sumQ1 / cQ1 : 0;
     const avgQ2 = cQ2 > 0 ? sumQ2 / cQ2 : 0;
     const avgQ3 = cQ3 > 0 ? sumQ3 / cQ3 : 0;
     const avgQ4 = cQ4 > 0 ? sumQ4 / cQ4 : 0;
-    const avgSmt1 = cQ1 > 0 ? (sumQ1 + sumQ2) / (cQ1 + cQ2) : 0;
-    const avgSmt2 = cQ3 > 0 ? (sumQ3 + sumQ4) / (cQ3 + cQ4) : 0;
+    const avgSmt1 = cS1 > 0 ? sumS1 / cS1 : 0;
+    const avgSmt2 = cS2 > 0 ? sumS2 / cS2 : 0;
 
     const rows = (ta.raport || []).map((m, i) => `
       <tr class="border-b border-gray-100 dark:border-slate-700">
         <td class="px-2 py-1.5 text-center text-gray-400 text-xs">${i + 1}</td>
         <td class="px-2 py-1.5 font-medium text-gray-800 dark:text-gray-200 text-xs">${waliEscape((m.nama_indo && m.nama_indo.trim()) ? m.nama_indo.trim() : m.mapel)}</td>
-        <td class="px-2 py-1.5 text-center font-bold text-xs">${waliFmtNilai(m.tamrin_k1)}</td>
-        <td class="px-2 py-1.5 text-center font-bold text-xs">${waliFmtNilai(m.ujian_k2)}</td>
-        <td class="px-2 py-1.5 text-center font-bold text-xs">${waliFmtNilai(m.smt1)}</td>
-        <td class="px-2 py-1.5 text-center font-bold text-xs">${waliFmtNilai(m.tamrin_k3)}</td>
-        <td class="px-2 py-1.5 text-center font-bold text-xs">${waliFmtNilai(m.ujian_k4)}</td>
-        <td class="px-2 py-1.5 text-center font-bold text-xs">${waliFmtNilai(m.smt2)}</td>
+        <td class="px-2 py-1.5 text-center font-bold text-xs">${waliFmtNilaiRed(m.tamrin_k1)}</td>
+        <td class="px-2 py-1.5 text-center font-bold text-xs">${waliFmtNilaiRed(m.ujian_k2)}</td>
+        <td class="px-2 py-1.5 text-center font-bold text-xs bg-indigo-50/50 dark:bg-indigo-900/10">${waliFmtNilaiRed(m.smt1)}</td>
+        <td class="px-2 py-1.5 text-center font-bold text-xs">${waliFmtNilaiRed(m.tamrin_k3)}</td>
+        <td class="px-2 py-1.5 text-center font-bold text-xs">${waliFmtNilaiRed(m.ujian_k4)}</td>
+        <td class="px-2 py-1.5 text-center font-bold text-xs bg-indigo-50/50 dark:bg-indigo-900/10">${waliFmtNilaiRed(m.smt2)}</td>
       </tr>`).join('');
 
     // Al-Bayan badge
@@ -1626,7 +1654,6 @@ function buildRiwayatAkademik(riwayat) {
               <thead class="bg-gray-50 dark:bg-slate-900/40">
                 <tr>
                   <th class="px-2 py-1.5 text-center text-xs font-bold text-gray-500 uppercase">Bulan</th>
-                  <th class="px-2 py-1.5 text-center text-xs font-bold text-gray-500 uppercase">Hadir</th>
                   <th class="px-2 py-1.5 text-center text-xs font-bold text-blue-600 uppercase">Sakit</th>
                   <th class="px-2 py-1.5 text-center text-xs font-bold text-amber-600 uppercase">Izin</th>
                   <th class="px-2 py-1.5 text-center text-xs font-bold text-red-600 uppercase">Alpha</th>
@@ -1636,16 +1663,14 @@ function buildRiwayatAkademik(riwayat) {
                 ${ta.absensi.map(a => `
                 <tr class="border-b border-gray-100 dark:border-slate-700">
                   <td class="px-2 py-1.5 text-center text-gray-800 dark:text-gray-200">${waliEscape(a.bulan || '-')}</td>
-                  <td class="px-2 py-1.5 text-center font-bold">${waliFmtNilai(a.hadir)}</td>
-                  <td class="px-2 py-1.5 text-center font-bold text-blue-600">${waliFmtNilai(a.sakit)}</td>
-                  <td class="px-2 py-1.5 text-center font-bold text-amber-600">${waliFmtNilai(a.izin)}</td>
-                  <td class="px-2 py-1.5 text-center font-bold text-red-600">${waliFmtNilai(a.alpha)}</td>
+                  <td class="px-2 py-1.5 text-center font-bold text-blue-600">${waliFmtNilai(a.s)}</td>
+                  <td class="px-2 py-1.5 text-center font-bold text-amber-600">${waliFmtNilai(a.i)}</td>
+                  <td class="px-2 py-1.5 text-center font-bold text-red-600">${waliFmtNilai(a.t)}</td>
                 </tr>`).join('')}
               </tbody>
               <tfoot class="bg-gray-50 dark:bg-slate-900/40 font-bold">
                 <tr>
                   <td class="px-2 py-1.5 text-center">Total</td>
-                  <td class="px-2 py-1.5 text-center">${totH || '-'}</td>
                   <td class="px-2 py-1.5 text-center text-blue-600">${totS}</td>
                   <td class="px-2 py-1.5 text-center text-amber-600">${totI}</td>
                   <td class="px-2 py-1.5 text-center text-red-600">${totA}</td>
@@ -1656,32 +1681,45 @@ function buildRiwayatAkademik(riwayat) {
           <div class="bg-gray-50 dark:bg-slate-900/20 rounded-xl p-4 text-center text-sm text-gray-400 italic mb-6">
             Belum ada data absensi untuk tahun ajaran ini.
           </div>`}
-          <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Nilai Raport</h4>
+          <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Transkrip Nilai (Tamrin, Ujian & Raport)</h4>
           ${(ta.raport || []).length > 0 ? `
           <div class="overflow-x-auto rounded-xl border border-gray-100 dark:border-slate-700">
             <table class="min-w-full text-xs">
               <thead class="bg-gray-50 dark:bg-slate-900/40">
                 <tr>
-                  <th class="px-2 py-1.5 text-center text-xs font-bold text-gray-500 uppercase w-8">No</th>
-                  <th class="px-2 py-1.5 text-left text-xs font-bold text-gray-500 uppercase">Mapel</th>
-                  <th class="px-2 py-1.5 text-center text-xs font-bold text-gray-500 uppercase">Q1</th>
-                  <th class="px-2 py-1.5 text-center text-xs font-bold text-gray-500 uppercase">Q2</th>
-                  <th class="px-2 py-1.5 text-center text-xs font-bold text-gray-500 uppercase bg-blue-50 dark:bg-blue-900/20">Smt1</th>
-                  <th class="px-2 py-1.5 text-center text-xs font-bold text-gray-500 uppercase">Q3</th>
-                  <th class="px-2 py-1.5 text-center text-xs font-bold text-gray-500 uppercase">Q4</th>
-                  <th class="px-2 py-1.5 text-center text-xs font-bold text-gray-500 uppercase bg-blue-50 dark:bg-blue-900/20">Smt2</th>
+                  <th rowspan="2" class="px-2 py-2 text-center text-xs font-bold text-gray-500 uppercase w-8 border-r border-gray-200 dark:border-gray-700">No</th>
+                  <th rowspan="2" class="px-2 py-2 text-left text-xs font-bold text-gray-500 uppercase border-r border-gray-200 dark:border-gray-700">Mata Pelajaran</th>
+                  <th colspan="3" class="px-2 py-2 text-center text-xs font-bold text-blue-600 dark:text-blue-400 uppercase border-r border-gray-200 dark:border-gray-700 border-b">Semester 1 (Ganjil)</th>
+                  <th colspan="3" class="px-2 py-2 text-center text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase border-b">Semester 2 (Genap)</th>
+                </tr>
+                <tr class="border-t border-gray-200 dark:border-gray-700">
+                  <th class="px-2 py-2 text-center text-[10px] font-bold text-gray-500 uppercase w-16">Tamrin K1</th>
+                  <th class="px-2 py-2 text-center text-[10px] font-bold text-gray-500 uppercase w-16">Ujian K2</th>
+                  <th class="px-2 py-2 text-center text-[10px] font-bold text-gray-500 uppercase w-16 border-r border-gray-200 dark:border-gray-700 bg-indigo-50/50 dark:bg-indigo-900/10">Raport</th>
+                  <th class="px-2 py-2 text-center text-[10px] font-bold text-gray-500 uppercase w-16">Tamrin K3</th>
+                  <th class="px-2 py-2 text-center text-[10px] font-bold text-gray-500 uppercase w-16">Ujian K4</th>
+                  <th class="px-2 py-2 text-center text-[10px] font-bold text-gray-500 uppercase w-16 bg-indigo-50/50 dark:bg-indigo-900/10">Raport</th>
                 </tr>
               </thead>
               <tbody>${rows}</tbody>
-              <tfoot class="bg-indigo-50 dark:bg-indigo-900/20">
+              <tfoot class="bg-indigo-50 dark:bg-indigo-900/20 font-bold">
                 <tr>
-                  <td colspan="2" class="px-2 py-1.5 text-right font-bold text-indigo-900 dark:text-indigo-200 text-xs">Rata-rata</td>
-                  <td class="px-2 py-1.5 text-center font-bold text-indigo-900 dark:text-indigo-200 text-xs">${waliFmtNilai(avgQ1)}</td>
-                  <td class="px-2 py-1.5 text-center font-bold text-indigo-900 dark:text-indigo-200 text-xs">${waliFmtNilai(avgQ2)}</td>
-                  <td class="px-2 py-1.5 text-center font-bold text-indigo-900 dark:text-indigo-200 text-xs bg-blue-50 dark:bg-blue-900/20">${waliFmtNilai(avgSmt1)}</td>
-                  <td class="px-2 py-1.5 text-center font-bold text-indigo-900 dark:text-indigo-200 text-xs">${waliFmtNilai(avgQ3)}</td>
-                  <td class="px-2 py-1.5 text-center font-bold text-indigo-900 dark:text-indigo-200 text-xs">${waliFmtNilai(avgQ4)}</td>
-                  <td class="px-2 py-1.5 text-center font-bold text-indigo-900 dark:text-indigo-200 text-xs bg-blue-50 dark:bg-blue-900/20">${waliFmtNilai(avgSmt2)}</td>
+                  <td colspan="2" class="px-2 py-2 text-right text-xs text-indigo-900 dark:text-indigo-200">Jumlah</td>
+                  <td class="px-2 py-2 text-center text-xs">${sumQ1.toFixed(1)}</td>
+                  <td class="px-2 py-2 text-center text-xs">${sumQ2.toFixed(1)}</td>
+                  <td class="px-2 py-2 text-center text-xs bg-indigo-50/50 dark:bg-indigo-900/10">${sumS1.toFixed(1)}</td>
+                  <td class="px-2 py-2 text-center text-xs">${sumQ3.toFixed(1)}</td>
+                  <td class="px-2 py-2 text-center text-xs">${sumQ4.toFixed(1)}</td>
+                  <td class="px-2 py-2 text-center text-xs bg-indigo-50/50 dark:bg-indigo-900/10">${sumS2.toFixed(1)}</td>
+                </tr>
+                <tr>
+                  <td colspan="2" class="px-2 py-2 text-right text-xs text-indigo-900 dark:text-indigo-200">Rata-rata (kecuali Al-Quran, Qiroat, Khot, Akhlaq)</td>
+                  <td class="px-2 py-2 text-center text-xs">${waliFmtNilaiRed(avgQ1)}</td>
+                  <td class="px-2 py-2 text-center text-xs">${waliFmtNilaiRed(avgQ2)}</td>
+                  <td class="px-2 py-2 text-center text-xs bg-indigo-50/50 dark:bg-indigo-900/10">${waliFmtNilaiRed(avgSmt1)}</td>
+                  <td class="px-2 py-2 text-center text-xs">${waliFmtNilaiRed(avgQ3)}</td>
+                  <td class="px-2 py-2 text-center text-xs">${waliFmtNilaiRed(avgQ4)}</td>
+                  <td class="px-2 py-2 text-center text-xs bg-indigo-50/50 dark:bg-indigo-900/10">${waliFmtNilaiRed(avgSmt2)}</td>
                 </tr>
               </tfoot>
             </table>

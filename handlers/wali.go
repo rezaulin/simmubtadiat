@@ -2,24 +2,27 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/mubtadiaat/app/config"
 	appMiddleware "github.com/mubtadiaat/app/middleware"
 )
 
 // AnakWali adalah ringkasan santri yang tertaut ke akun wali yang sedang login.
 type AnakWali struct {
-	ID           int     `json:"id"`
-	Nama         string  `json:"nama"`
-	Stambuk      string  `json:"stambuk"`
-	NIK          string  `json:"nik"`
-	Status       string  `json:"status"`
-	FotoURL      *string `json:"foto_url"`
-	Tingkatan    *string `json:"tingkatan_nama"`
-	Kelas        *string `json:"kelas_nama"`
-	Bagian       *string `json:"bagian_nama"`
+	ID           int            `json:"id"`
+	Nama         string         `json:"nama"`
+	Stambuk      pgtype.Text    `json:"stambuk"`
+	NIK          string         `json:"nik"`
+	Status       string         `json:"status"`
+	FotoURL      pgtype.Text    `json:"foto_url"`
+	Tingkatan    pgtype.Text    `json:"tingkatan_nama"`
+	Kelas        pgtype.Text    `json:"kelas_nama"`
+	Bagian       pgtype.Text    `json:"bagian_nama"`
 }
 
 // GetAnakWali mengembalikan daftar santri yang tertaut ke akun wali yang login.
@@ -118,8 +121,19 @@ func GetCatatanAnakWali(w http.ResponseWriter, r *http.Request) {
 	var list []CatatanItem
 	for rows.Next() {
 		var c CatatanItem
-		if err := rows.Scan(&c.ID, &c.SantriID, &c.Jenis, &c.Tanggal, &c.Kategori, &c.Deskripsi, &c.TahunAjaran); err != nil {
+		var tgl interface{}
+		if err := rows.Scan(&c.ID, &c.SantriID, &c.Jenis, &tgl, &c.Kategori, &c.Deskripsi, &c.TahunAjaran); err != nil {
 			continue
+		}
+		if tgl != nil {
+			switch v := tgl.(type) {
+			case time.Time:
+				s := v.Format("2006-01-02")
+				c.Tanggal = &s
+			default:
+				s := fmt.Sprintf("%v", v)
+				c.Tanggal = &s
+			}
 		}
 		list = append(list, c)
 	}

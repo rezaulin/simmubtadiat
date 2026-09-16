@@ -430,19 +430,15 @@ function isExcludedRow(row) {
   const kat = (row.kategori || '').toLowerCase();
   if (EXCLUDED_KATEGORI.has(kat)) return true;
 
-  const mapel = (row.mapel || '').toLowerCase();
-  const kitab = (row.nama_kitab || '').toLowerCase();
+  // Exact match — jangan substring, supaya 'علم الأخلاق' tidak ikut ke-exclude
+  const mapel = (row.mapel || '').trim();
+  const kitab = (row.nama_kitab || '').trim();
 
-  if (mapel.includes('quran') || mapel.includes('qur\'an') || mapel.includes('قرآن') || mapel.includes('القرءان') || mapel.includes('القرآن')) return true;
-  if (mapel.includes('khot') || mapel.includes('imla') || mapel.includes('خط') || mapel.includes('إملاء') || mapel.includes('الخط')) return true;
-  if (mapel.includes('qiroah') || mapel.includes('qira\'ah') || mapel.includes('qiraat') || mapel.includes('قراءة')) return true;
-  if (mapel.includes('akhlaq') || mapel.includes('akhlak') || mapel.includes('أخلاق')) return true;
-  if (mapel.includes('hafad') || mapel.includes('muhafadhoh') || mapel.includes('محافظة')) return true;
+  const excludeMapel = ['القرءان', 'القراءة', 'المحافظة', 'الأخلاق', 'الكتاب'];
+  const excludeKitab = ['القرءان الكريم', 'قراءة الكتب', 'المحافظة', 'الأخلاق', 'الخط والإملاء', 'الخط/ الإملاء'];
 
-  if (kitab.includes('quran') || kitab.includes('قرآن') || kitab.includes('القرآن')) return true;
-  if (kitab.includes('khot') || kitab.includes('خط') || kitab.includes('إملاء')) return true;
-  if (kitab.includes('qiroah') || kitab.includes('قراءة')) return true;
-  if (kitab.includes('akhlaq') || kitab.includes('أخلاق')) return true;
+  if (excludeMapel.includes(mapel)) return true;
+  if (excludeKitab.includes(kitab)) return true;
 
   return false;
 }
