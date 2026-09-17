@@ -553,14 +553,8 @@ function populateRiwayat(riwayatArr, bulanListByTA = {}) {
               <tr>
                 <td colspan="2" class="px-3 py-2 text-right text-xs text-indigo-900 dark:text-indigo-200">Jumlah</td>
                 ${(() => {
-                  const EXCLUDED_KATEGORI = new Set(['al_quran', 'al_khot_imla', 'qiroah_kutub', 'muhafadhoh', 'akhlaq', 'akhlaq_perilaku']);
-                  const excludeMapel = ['القرءان', 'القراءة', 'المحافظة', 'الأخلاق', 'الكتاب'];
-                  const excludeKitab = ['القرءان الكريم', 'قراءة الكتب', 'المحافظة', 'الأخلاق', 'الخط والإملاء', 'الخط/ الإملاء'];
                   let sQ1=0,sQ2=0,sS1=0,sQ3=0,sQ4=0,sS2=0;
                   raportArr.forEach(r => {
-                    const namaMapel = (r.nama_mapel || '').trim();
-                    const mapelName = (r.mapel || '').trim();
-                    if (EXCLUDED_KATEGORI.has(r.kategori) || excludeMapel.includes(namaMapel) || excludeKitab.includes(mapelName)) return;
                     const v = (val) => { const n = parseFloat(val); return isNaN(n) ? null : n; };
                     if (v(r.tamrin_k1) !== null) sQ1 += v(r.tamrin_k1);
                     if (v(r.ujian_k2) !== null) sQ2 += v(r.ujian_k2);
@@ -578,16 +572,10 @@ function populateRiwayat(riwayatArr, bulanListByTA = {}) {
                 })()}
               </tr>
               <tr>
-                <td colspan="2" class="px-3 py-2 text-right text-xs text-indigo-900 dark:text-indigo-200">Rata-rata (kecuali Al-Quran, Qiroat, Khot, Akhlaq)</td>
+                <td colspan="2" class="px-3 py-2 text-right text-xs text-indigo-900 dark:text-indigo-200">Rata-rata</td>
                 ${(() => {
-                  const EXCLUDED_KATEGORI = new Set(['al_quran', 'al_khot_imla', 'qiroah_kutub', 'muhafadhoh', 'akhlaq', 'akhlaq_perilaku']);
-                  const excludeMapel = ['القرءان', 'القراءة', 'المحافظة', 'الأخلاق', 'الكتاب'];
-                  const excludeKitab = ['القرءان الكريم', 'قراءة الكتب', 'المحافظة', 'الأخلاق', 'الخط والإملاء', 'الخط/ الإملاء'];
                   let sQ1=0,cQ1=0,sQ2=0,cQ2=0,sQ3=0,cQ3=0,sQ4=0,cQ4=0,sS1=0,cS1=0,sS2=0,cS2=0;
                   raportArr.forEach(r => {
-                    const namaMapel = (r.nama_mapel || '').trim();
-                    const mapelName = (r.mapel || '').trim();
-                    if (EXCLUDED_KATEGORI.has(r.kategori) || excludeMapel.includes(namaMapel) || excludeKitab.includes(mapelName)) return;
                     const v = (val) => { const n = parseFloat(val); return isNaN(n) ? null : n; };
                     if (v(r.tamrin_k1) !== null) { sQ1 += v(r.tamrin_k1); cQ1++; }
                     if (v(r.ujian_k2) !== null) { sQ2 += v(r.ujian_k2); cQ2++; }

@@ -1591,19 +1591,10 @@ function buildRiwayatAkademik(riwayat) {
     let totS = 0, totI = 0, totA = 0;
     if (Array.isArray(ta.absensi)) ta.absensi.forEach(m => { totS += m.s || 0; totI += m.i || 0; totA += m.t || 0; });
 
-    // Hitung rata-rata dari nilai_kuartal (bukan nilai_khos)
-    // Exclude: Al-Quran, Qiroatul Kutub, Khot/Imla', Akhlaq
-    const EXCLUDED_KATEGORI = new Set(['al_quran', 'al_khot_imla', 'qiroah_kutub', 'muhafadhoh', 'akhlaq', 'akhlaq_perilaku']);
-    const excludeMapel = ['القرءان', 'القراءة', 'المحافظة', 'الأخلاق', 'الكتاب'];
-    const excludeKitab = ['القرءان الكريم', 'قراءة الكتب', 'المحافظة', 'الأخلاق', 'الخط والإملاء', 'الخط/ الإملاء'];
+    // Hitung rata-rata dari semua nilai
     let sumQ1 = 0, cQ1 = 0, sumQ2 = 0, cQ2 = 0, sumQ3 = 0, cQ3 = 0, sumQ4 = 0, cQ4 = 0;
     let sumS1 = 0, cS1 = 0, sumS2 = 0, cS2 = 0;
     (ta.raport || []).forEach(m => {
-      const namaMapel = (m.nama_mapel || '').trim();
-      const mapelName = (m.mapel || '').trim();
-      const isExcluded = EXCLUDED_KATEGORI.has(m.kategori) || excludeMapel.includes(namaMapel) || excludeKitab.includes(mapelName);
-      if (isExcluded) return;
-      
       const v1 = parseFloat(m.tamrin_k1); if (!isNaN(v1)) { sumQ1 += v1; cQ1++; }
       const v2 = parseFloat(m.ujian_k2); if (!isNaN(v2)) { sumQ2 += v2; cQ2++; }
       const vs1 = parseFloat(m.smt1); if (!isNaN(vs1)) { sumS1 += vs1; cS1++; }
