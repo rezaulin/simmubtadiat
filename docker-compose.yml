@@ -11,7 +11,7 @@ services:
       - DB_USER=${DB_USER:-mubtadiaat}
       - DB_PASS=${DB_PASS:-mubtadiaat_secret}
       - DB_NAME=${DB_NAME:-mubtadiaat_db}
-      - JWT_SECRET=${JWT_SECRET:-supersecretkey}
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET must be set in .env}
       # Seed akun pimpinan awal (dipakai migrate-runner saat start bila belum ada admin).
       - SEED_ADMIN_USERNAME=${SEED_ADMIN_USERNAME:-admin}
       - SEED_ADMIN_PASSWORD=${SEED_ADMIN_PASSWORD:-}

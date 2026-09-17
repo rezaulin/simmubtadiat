@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/mubtadiaat/app/config"
+	appMiddleware "github.com/mubtadiaat/app/middleware"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -107,10 +108,23 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		Value:    sessionID,
 		Expires:  expires,
 		HttpOnly: true,
-		Secure:   false, // Set to false to allow login over HTTP on LAN
+		Secure:   true,
 		SameSite: http.SameSiteStrictMode,
 		Path:     "/",
 	})
+
+	// Set CSRF cookie
+	csrfToken := uuid.New().String()
+	http.SetCookie(w, &http.Cookie{
+		Name:     "csrf_token",
+		Value:    csrfToken,
+		Expires:  expires,
+		HttpOnly: false, // JS must read this
+		Secure:   true,
+		SameSite: http.SameSiteStrictMode,
+		Path:     "/",
+	})
+	w.Header().Set("X-CSRF-Token", csrfToken)
 
 	json.NewEncoder(w).Encode(AuthResponse{
 		Status:            "success",
@@ -242,10 +256,23 @@ func LoginWali(w http.ResponseWriter, r *http.Request) {
 		Value:    sessionID,
 		Expires:  expires,
 		HttpOnly: true,
-		Secure:   false,
+		Secure:   true,
 		SameSite: http.SameSiteStrictMode,
 		Path:     "/",
 	})
+
+	// Set CSRF cookie
+	csrfToken := uuid.New().String()
+	http.SetCookie(w, &http.Cookie{
+		Name:     "csrf_token",
+		Value:    csrfToken,
+		Expires:  expires,
+		HttpOnly: false,
+		Secure:   true,
+		SameSite: http.SameSiteStrictMode,
+		Path:     "/",
+	})
+	w.Header().Set("X-CSRF-Token", csrfToken)
 
 	json.NewEncoder(w).Encode(AuthResponse{
 		Status:            "success",
@@ -279,6 +306,12 @@ func ChangePassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Validate password complexity
+	if ok, msg := appMiddleware.ValidatePasswordComplexity(req.NewPassword); !ok {
+		http.Error(w, msg, http.StatusBadRequest)
+		return
+	}
+
 	// Verify old password
 	var hash string
 	err = config.DB.QueryRow(context.Background(),
@@ -309,7 +342,7 @@ func ChangePassword(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(map[string]string{
-		"status": "success",
+		"status":  "success",
 		"message": "Password berhasil diubah",
 	})
 }

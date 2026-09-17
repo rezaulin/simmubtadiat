@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 
@@ -211,7 +212,8 @@ func ImportDewanHarian(w http.ResponseWriter, r *http.Request) {
 			 VALUES ($1, $2, $3, $4, $5, $6, $7, true)`,
 			dh.Nama, dh.NamaWali, dh.NoHP, dh.Alamat, dh.Jabatan, dh.Lembaga, dh.TahunAktif)
 		if err != nil {
-			writeJSONError(w, fmt.Sprintf("Gagal insert '%s': %v", dh.Nama, err), http.StatusInternalServerError)
+			log.Printf("ERROR dewan_import: %v", err)
+			writeJSONError(w, "Gagal menyimpan data", http.StatusInternalServerError)
 			return
 		}
 	}

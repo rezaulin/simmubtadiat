@@ -21,6 +21,7 @@ func main() {
 
 	r := chi.NewRouter()
 
+	r.Use(appMiddleware.SecurityHeaders)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
@@ -40,14 +41,18 @@ func main() {
 		r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 			w.Write([]byte("OK"))
 		})
-		// Public Routes
-		r.Post("/login", handlers.Login)
-		r.Post("/login-wali", handlers.LoginWali)
+		// Public Routes (rate limited)
+		r.Group(func(r chi.Router) {
+			r.Use(appMiddleware.RateLimitLogin)
+			r.Post("/login", handlers.Login)
+			r.Post("/login-wali", handlers.LoginWali)
+		})
 		r.Post("/logout", handlers.Logout)
 
 		// Protected Routes
 		r.Group(func(r chi.Router) {
 			r.Use(appMiddleware.RequireAuth)
+			r.Use(appMiddleware.CSRFProtect)
 
 			// Can change password without RequirePasswordChanged middleware blocking it
 			r.Post("/change-password", handlers.ChangePassword)

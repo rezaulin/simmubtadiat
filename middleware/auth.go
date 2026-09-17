@@ -3,6 +3,7 @@ package middleware
 import (
 	"context"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/mubtadiaat/app/config"
@@ -20,6 +21,18 @@ type UserSession struct {
 	Roles             []string
 	PengajarID        *int
 	IsPasswordChanged bool
+}
+
+func getClientInfo(r *http.Request) (ip, ua string) {
+	ip = r.Header.Get("X-Forwarded-For")
+	if ip == "" {
+		ip = r.RemoteAddr
+	}
+	if idx := strings.LastIndex(ip, ":"); idx != -1 {
+		ip = ip[:idx]
+	}
+	ua = r.UserAgent()
+	return
 }
 
 // HasRole checks if the user has a specific role
@@ -83,6 +96,12 @@ func RequireAuth(next http.Handler) http.Handler {
 		// Refresh session expiry on each active request (§6.1 Panduan Kerja)
 		newExpiry := time.Now().Add(8 * time.Hour)
 		config.DB.Exec(context.Background(), "UPDATE sessions SET expired_at = $1 WHERE id = $2", newExpiry, cookie.Value)
+
+		// Update IP/UA binding for session hijack detection
+		clientIP, clientUA := getClientInfo(r)
+		config.DB.Exec(context.Background(),
+			"UPDATE sessions SET last_ip=$1, last_ua=$2 WHERE id=$3",
+			clientIP, clientUA, cookie.Value)
 
 		// Save user data in context
 		ctx := context.WithValue(r.Context(), UserContextKey, user)
