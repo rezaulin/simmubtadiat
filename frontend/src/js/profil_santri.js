@@ -553,14 +553,23 @@ function populateRiwayat(riwayatArr, bulanListByTA = {}) {
               <tr>
                 <td colspan="2" class="px-3 py-2 text-right text-xs text-indigo-900 dark:text-indigo-200">Jumlah</td>
                 ${(() => {
+                  const EXCLUDED_KATEGORI = new Set(['al_quran', 'al_khot_imla', 'qiroah_kutub', 'muhafadhoh', 'akhlaq', 'akhlaq_perilaku']);
+                  const excludeMapel = ['القرءان', 'القراءة', 'المحافظة', 'الأخلاق', 'الكتاب'];
+                  const excludeKitab = ['القرءان الكريم', 'قراءة الكتب', 'المحافظة', 'الأخلاق', 'الخط والإملاء', 'الخط/ الإملاء'];
                   let sQ1=0,sQ2=0,sS1=0,sQ3=0,sQ4=0,sS2=0;
                   raportArr.forEach(r => {
+                    const namaMapel = (r.nama_mapel || '').trim();
+                    const mapelName = (r.mapel || '').trim();
+                    const isExcl = EXCLUDED_KATEGORI.has(r.kategori) || excludeMapel.includes(namaMapel) || excludeKitab.includes(mapelName);
                     const v = (val) => { const n = parseFloat(val); return isNaN(n) ? null : n; };
-                    if (v(r.tamrin_k1) !== null) sQ1 += v(r.tamrin_k1);
-                    if (v(r.ujian_k2) !== null) sQ2 += v(r.ujian_k2);
+                    if (!isExcl) {
+                      if (v(r.tamrin_k1) !== null) sQ1 += v(r.tamrin_k1);
+                      if (v(r.ujian_k2) !== null) sQ2 += v(r.ujian_k2);
+                      if (v(r.tamrin_k3) !== null) sQ3 += v(r.tamrin_k3);
+                      if (v(r.ujian_k4) !== null) sQ4 += v(r.ujian_k4);
+                    }
+                    // Raport (Smt1 & Smt2): semua mapel masuk hitungan
                     if (v(r.smt1) !== null) sS1 += v(r.smt1);
-                    if (v(r.tamrin_k3) !== null) sQ3 += v(r.tamrin_k3);
-                    if (v(r.ujian_k4) !== null) sQ4 += v(r.ujian_k4);
                     if (v(r.smt2) !== null) sS2 += v(r.smt2);
                   });
                   return `<td class="px-2 py-2 text-center text-sm">${sQ1.toFixed(1)}</td>
@@ -574,14 +583,23 @@ function populateRiwayat(riwayatArr, bulanListByTA = {}) {
               <tr>
                 <td colspan="2" class="px-3 py-2 text-right text-xs text-indigo-900 dark:text-indigo-200">Rata-rata</td>
                 ${(() => {
+                  const EXCLUDED_KATEGORI = new Set(['al_quran', 'al_khot_imla', 'qiroah_kutub', 'muhafadhoh', 'akhlaq', 'akhlaq_perilaku']);
+                  const excludeMapel = ['القرءان', 'القراءة', 'المحافظة', 'الأخلاق', 'الكتاب'];
+                  const excludeKitab = ['القرءان الكريم', 'قراءة الكتب', 'المحافظة', 'الأخلاق', 'الخط والإملاء', 'الخط/ الإملاء'];
                   let sQ1=0,cQ1=0,sQ2=0,cQ2=0,sQ3=0,cQ3=0,sQ4=0,cQ4=0,sS1=0,cS1=0,sS2=0,cS2=0;
                   raportArr.forEach(r => {
+                    const namaMapel = (r.nama_mapel || '').trim();
+                    const mapelName = (r.mapel || '').trim();
+                    const isExcl = EXCLUDED_KATEGORI.has(r.kategori) || excludeMapel.includes(namaMapel) || excludeKitab.includes(mapelName);
                     const v = (val) => { const n = parseFloat(val); return isNaN(n) ? null : n; };
-                    if (v(r.tamrin_k1) !== null) { sQ1 += v(r.tamrin_k1); cQ1++; }
-                    if (v(r.ujian_k2) !== null) { sQ2 += v(r.ujian_k2); cQ2++; }
+                    if (!isExcl) {
+                      if (v(r.tamrin_k1) !== null) { sQ1 += v(r.tamrin_k1); cQ1++; }
+                      if (v(r.ujian_k2) !== null) { sQ2 += v(r.ujian_k2); cQ2++; }
+                      if (v(r.tamrin_k3) !== null) { sQ3 += v(r.tamrin_k3); cQ3++; }
+                      if (v(r.ujian_k4) !== null) { sQ4 += v(r.ujian_k4); cQ4++; }
+                    }
+                    // Raport (Smt1 & Smt2): semua mapel masuk hitungan
                     if (v(r.smt1) !== null) { sS1 += v(r.smt1); cS1++; }
-                    if (v(r.tamrin_k3) !== null) { sQ3 += v(r.tamrin_k3); cQ3++; }
-                    if (v(r.ujian_k4) !== null) { sQ4 += v(r.ujian_k4); cQ4++; }
                     if (v(r.smt2) !== null) { sS2 += v(r.smt2); cS2++; }
                   });
                   const fmt = (s,c) => {
