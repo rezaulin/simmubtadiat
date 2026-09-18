@@ -1142,7 +1142,7 @@ function menuTileHtml(l) {
         <span class="pointer-events-none absolute inset-x-1 top-0.5 h-[45%] rounded-t-[1rem] bg-gradient-to-b from-white/30 to-transparent"></span>
         <i data-lucide="${m.icon}" class="relative h-7 w-7" style="stroke-width:2.25"></i>
       </div>
-      <span class="max-w-[78px] text-center text-[11px] font-semibold leading-tight tracking-tight text-gray-700 dark:text-gray-200">${escapeHTML(m.label)}</span>
+      <span class="max-w-[78px] text-center text-[11px] font-semibold leading-tight tracking-tight text-white/90">${escapeHTML(m.label)}</span>
     </a>`;
 }
 
@@ -1163,14 +1163,14 @@ function renderMenuGrid(roles, target) {
     const tiles = links.map(menuTileHtml).join('');
     const tabsHtml = useTabs ? `
       <div class="mb-4 flex items-center justify-between gap-3">
-        <div class="flex items-center gap-1 rounded-xl bg-gray-100 p-1 dark:bg-slate-900/60">
-          <button id="tab-menu-utama" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${currentTab === 'utama' ? 'bg-white text-teal-700 shadow dark:bg-slate-700 dark:text-teal-300' : 'text-gray-500 dark:text-gray-400'}">Menu Utama</button>
-          <button id="tab-menu-semua" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${currentTab === 'semua' ? 'bg-white text-teal-700 shadow dark:bg-slate-700 dark:text-teal-300' : 'text-gray-500 dark:text-gray-400'}">Semua Menu</button>
+        <div class="flex items-center gap-1 rounded-xl bg-white/15 backdrop-blur-md p-1">
+          <button id="tab-menu-utama" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${currentTab === 'utama' ? 'bg-white/90 text-teal-800 shadow' : 'text-white/70 hover:text-white'}">Menu Utama</button>
+          <button id="tab-menu-semua" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${currentTab === 'semua' ? 'bg-white/90 text-teal-800 shadow' : 'text-white/70 hover:text-white'}">Semua Menu</button>
         </div>
-        <span class="hidden text-[11px] text-gray-400 dark:text-gray-500 md:block">${links.length} menu</span>
+        <span class="hidden text-[11px] text-white/60 md:block">${links.length} menu</span>
       </div>` : '';
     el.innerHTML = `
-      <div class="rounded-3xl border border-gray-100 bg-white/80 p-4 shadow-sm backdrop-blur dark:border-slate-700/60 dark:bg-slate-800/50 md:p-5">
+      <div class="hero-gradient hero-pattern rounded-3xl p-4 shadow-xl shadow-teal-900/20 dark:shadow-none md:p-5">
         ${tabsHtml}
         <div class="grid grid-cols-4 gap-y-5 gap-x-2 sm:grid-cols-5 lg:grid-cols-7">${tiles}</div>
       </div>`;
