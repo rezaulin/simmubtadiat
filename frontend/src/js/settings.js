@@ -241,7 +241,9 @@ function openUserModal(user = null) {
     }
     formUser.password.required = false;
     formUser.password.value = '';
-    formUser.password.placeholder = '•••••••• (kosongkan jika tidak diubah)';
+    formUser.password.placeholder = '••••••••';
+    formUser.password.disabled = true;
+    passwordHint.textContent = '✓ Sandi sudah diatur. Kosongkan jika tidak ingin diubah.';
     passwordHint.classList.remove('hidden');
     resetPasswordSection.classList.remove('hidden');
     if (user.pengajar_id) {
@@ -253,6 +255,7 @@ function openUserModal(user = null) {
     userIdField.value = '';
     currentUserEditId = null;
     formUser.password.required = true;
+    formUser.password.disabled = false;
     formUser.password.placeholder = 'Minimal 8 karakter';
     passwordHint.classList.add('hidden');
     resetPasswordSection.classList.add('hidden');
