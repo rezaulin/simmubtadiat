@@ -13,6 +13,9 @@ const userIdField = document.getElementById('user_id');
 const passwordHint = document.getElementById('password-hint');
 const modalError = document.getElementById('modal-error');
 const fieldPengajar = document.getElementById('field-pengajar');
+const resetPasswordSection = document.getElementById('reset-password-section');
+const btnResetPassword = document.getElementById('btn-reset-password');
+let currentUserEditId = null;
 
 
 let allPengajar = [];
@@ -147,7 +150,6 @@ async function loadUsers() {
         </td>
         <td class="px-4 py-3 text-right">
           <button class="btn-edit text-blue-500 hover:text-blue-700 mr-3 transition-colors" data-id="${u.id}" data-username="${u.username}" data-roles='${JSON.stringify(u.roles || [u.role]).replace(/'/g, "&#39;")}' data-nama="${u.nama || ''}" data-pengajar="${u.pengajar_id || ''}">Edit</button>
-          <button class="btn-reset text-amber-500 hover:text-amber-700 mr-3 transition-colors" data-id="${u.id}" data-nama="${u.nama || u.username}">Reset Sandi</button>
           <button class="btn-delete text-red-500 hover:text-red-700 transition-colors" data-id="${u.id}">Hapus</button>
         </td>
       `;
@@ -177,37 +179,6 @@ async function loadUsers() {
           } catch (err) {
             alert(err.message);
           }
-        }
-      });
-    });
-
-    document.querySelectorAll('.btn-reset').forEach(btn => {
-      btn.addEventListener('click', async (e) => {
-        const id = e.target.dataset.id;
-        const nama = e.target.dataset.nama;
-        const newPassword = prompt(`Reset sandi untuk "${nama}"?\n\nMasukkan sandi baru (min 8 karakter, huruf besar+kecil+angka):`);
-        if (!newPassword) return;
-        if (newPassword.length < 8) {
-          alert('Sandi minimal 8 karakter');
-          return;
-        }
-        if (!/[A-Z]/.test(newPassword) || !/[a-z]/.test(newPassword) || !/[0-9]/.test(newPassword)) {
-          alert('Sandi harus mengandung huruf besar, huruf kecil, dan angka');
-          return;
-        }
-        try {
-          const res = await fetch(`/api/settings/users/${id}/reset-password`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ password: newPassword })
-          });
-          if (!res.ok) {
-            const text = await res.text();
-            throw new Error(text || 'Gagal reset sandi');
-          }
-          alert(`Sandi untuk "${nama}" berhasil direset.\nUser akan diminta mengganti sandi saat login berikutnya.`);
-        } catch (err) {
-          alert(err.message);
         }
       });
     });
@@ -249,6 +220,7 @@ function openUserModal(user = null) {
   if (user) {
     modalTitle.textContent = 'Edit User';
     userIdField.value = user.id;
+    currentUserEditId = user.id;
     formUser.username.value = user.username;
     formUser.nama.value = user.nama || '';
     Array.from(formUser.roles).forEach(chk => chk.checked = false);
@@ -260,6 +232,7 @@ function openUserModal(user = null) {
     }
     formUser.password.required = false;
     passwordHint.classList.remove('hidden');
+    resetPasswordSection.classList.remove('hidden');
     if (user.pengajar_id) {
       formUser.pengajar_id.value = user.pengajar_id;
     }
@@ -267,8 +240,10 @@ function openUserModal(user = null) {
     modalTitle.textContent = 'Tambah User';
     formUser.reset();
     userIdField.value = '';
+    currentUserEditId = null;
     formUser.password.required = true;
     passwordHint.classList.add('hidden');
+    resetPasswordSection.classList.add('hidden');
   }
   
   togglePengajarField();
@@ -285,6 +260,38 @@ function closeUserModal() {
   setTimeout(() => {
     modalUser.classList.add('hidden');
   }, 300);
+}
+
+// Reset Password from modal
+if (btnResetPassword) {
+  btnResetPassword.addEventListener('click', async () => {
+    if (!currentUserEditId) return;
+    const nama = formUser.nama.value || formUser.username.value;
+    const newPassword = prompt(`Reset sandi untuk "${nama}"?\n\nMasukkan sandi baru (min 8 karakter, huruf besar+kecil+angka):`);
+    if (!newPassword) return;
+    if (newPassword.length < 8) {
+      alert('Sandi minimal 8 karakter');
+      return;
+    }
+    if (!/[A-Z]/.test(newPassword) || !/[a-z]/.test(newPassword) || !/[0-9]/.test(newPassword)) {
+      alert('Sandi harus mengandung huruf besar, huruf kecil, dan angka');
+      return;
+    }
+    try {
+      const res = await fetch(`/api/settings/users/${currentUserEditId}/reset-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: newPassword })
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || 'Gagal reset sandi');
+      }
+      alert(`Sandi untuk "${nama}" berhasil direset.`);
+    } catch (err) {
+      alert(err.message);
+    }
+  });
 }
 
 btnAddUser.addEventListener('click', () => openUserModal());
