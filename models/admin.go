@@ -331,7 +331,7 @@ func ResetPassword(ctx context.Context, id int, defaultPassword string) error {
 	}
 
 	_, err = config.DB.Exec(ctx,
-		`UPDATE users SET password_hash=$1, is_password_changed=false WHERE id=$2`,
+		`UPDATE users SET password_hash=$1, is_password_changed=true WHERE id=$2`,
 		string(hash), id)
 	return err
 }
