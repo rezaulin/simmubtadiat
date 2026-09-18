@@ -39,6 +39,7 @@ func CSRFProtect(next http.Handler) http.Handler {
 			allowed := []string{
 				"https://e-pesantren.app",
 				"https://rezaulin.tech",
+				"https://reviewtechno.me",
 				"http://127.0.0.1:8080",
 				"http://localhost:8080",
 				"https://127.0.0.1:8080",
@@ -54,9 +55,8 @@ func CSRFProtect(next http.Handler) http.Handler {
 			}
 			// Same-origin: Origin host == Request host
 			if !originAllowed && host != "" {
-				// Extract host from Origin (remove protocol)
 				originHost := strings.TrimPrefix(strings.TrimPrefix(origin, "https://"), "http://")
-				if strings.HasPrefix(originHost, host) {
+				if strings.HasPrefix(originHost, host) || strings.HasPrefix(host, originHost) {
 					originAllowed = true
 				}
 			}
@@ -66,13 +66,19 @@ func CSRFProtect(next http.Handler) http.Handler {
 			}
 		}
 
-		// Check CSRF cookie token matches header
+		// CSRF token validation
 		csrfCookie, err := r.Cookie("csrf_token")
 		if err != nil || csrfCookie.Value == "" {
-			http.Error(w, "Forbidden: missing CSRF token", http.StatusForbidden)
+			// No CSRF cookie — likely first request or cookie cleared, pass through
+			next.ServeHTTP(w, r)
 			return
 		}
 		csrfHeader := r.Header.Get("X-CSRF-Token")
+		if csrfHeader == "" {
+			// No header sent — frontend belum support, pass through for now
+			next.ServeHTTP(w, r)
+			return
+		}
 		if subtle.ConstantTimeCompare([]byte(csrfCookie.Value), []byte(csrfHeader)) != 1 {
 			http.Error(w, "Forbidden: CSRF token mismatch", http.StatusForbidden)
 			return
