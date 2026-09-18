@@ -15,6 +15,15 @@ const modalError = document.getElementById('modal-error');
 const fieldPengajar = document.getElementById('field-pengajar');
 const resetPasswordSection = document.getElementById('reset-password-section');
 const btnResetPassword = document.getElementById('btn-reset-password');
+const modalResetPw = document.getElementById('modal-reset-pw');
+const modalResetContent = document.getElementById('modal-reset-content');
+const modalResetOverlay = document.getElementById('modal-reset-overlay');
+const btnResetPwCancel = document.getElementById('btn-reset-pw-cancel');
+const btnResetPwConfirm = document.getElementById('btn-reset-pw-confirm');
+const resetPwInput = document.getElementById('reset-pw-input');
+const resetPwConfirm = document.getElementById('reset-pw-confirm');
+const resetPwError = document.getElementById('reset-pw-error');
+const resetPwUserName = document.getElementById('reset-pw-user-name');
 let currentUserEditId = null;
 
 
@@ -231,6 +240,8 @@ function openUserModal(user = null) {
       });
     }
     formUser.password.required = false;
+    formUser.password.value = '';
+    formUser.password.placeholder = '•••••••• (kosongkan jika tidak diubah)';
     passwordHint.classList.remove('hidden');
     resetPasswordSection.classList.remove('hidden');
     if (user.pengajar_id) {
@@ -242,6 +253,7 @@ function openUserModal(user = null) {
     userIdField.value = '';
     currentUserEditId = null;
     formUser.password.required = true;
+    formUser.password.placeholder = 'Minimal 8 karakter';
     passwordHint.classList.add('hidden');
     resetPasswordSection.classList.add('hidden');
   }
@@ -262,34 +274,67 @@ function closeUserModal() {
   }, 300);
 }
 
-// Reset Password from modal
+// Reset Password - open custom modal
 if (btnResetPassword) {
-  btnResetPassword.addEventListener('click', async () => {
+  btnResetPassword.addEventListener('click', () => {
     if (!currentUserEditId) return;
     const nama = formUser.nama.value || formUser.username.value;
-    const newPassword = prompt(`Reset sandi untuk "${nama}"?\n\nMasukkan sandi baru (min 8 karakter, huruf besar+kecil+angka):`);
-    if (!newPassword) return;
-    if (newPassword.length < 8) {
-      alert('Sandi minimal 8 karakter');
-      return;
+    resetPwUserName.textContent = `Untuk: ${nama}`;
+    resetPwInput.value = '';
+    resetPwConfirm.value = '';
+    resetPwError.classList.add('hidden');
+    modalResetPw.classList.remove('hidden');
+    setTimeout(() => {
+      modalResetContent.classList.remove('scale-95', 'opacity-0');
+      modalResetContent.classList.add('scale-100', 'opacity-100');
+      resetPwInput.focus();
+    }, 10);
+  });
+}
+
+function closeResetPwModal() {
+  modalResetContent.classList.remove('scale-100', 'opacity-100');
+  modalResetContent.classList.add('scale-95', 'opacity-0');
+  setTimeout(() => { modalResetPw.classList.add('hidden'); }, 300);
+}
+
+if (btnResetPwCancel) btnResetPwCancel.addEventListener('click', closeResetPwModal);
+if (modalResetOverlay) modalResetOverlay.addEventListener('click', closeResetPwModal);
+
+if (btnResetPwConfirm) {
+  btnResetPwConfirm.addEventListener('click', async () => {
+    const pw = resetPwInput.value;
+    const pw2 = resetPwConfirm.value;
+    resetPwError.classList.add('hidden');
+
+    if (!pw) { resetPwError.textContent = 'Sandi wajib diisi'; resetPwError.classList.remove('hidden'); return; }
+    if (pw.length < 8) { resetPwError.textContent = 'Sandi minimal 8 karakter'; resetPwError.classList.remove('hidden'); return; }
+    if (!/[A-Z]/.test(pw) || !/[a-z]/.test(pw) || !/[0-9]/.test(pw)) {
+      resetPwError.textContent = 'Harus mengandung huruf besar, huruf kecil, dan angka';
+      resetPwError.classList.remove('hidden'); return;
     }
-    if (!/[A-Z]/.test(newPassword) || !/[a-z]/.test(newPassword) || !/[0-9]/.test(newPassword)) {
-      alert('Sandi harus mengandung huruf besar, huruf kecil, dan angka');
-      return;
-    }
+    if (pw !== pw2) { resetPwError.textContent = 'Konfirmasi sandi tidak cocok'; resetPwError.classList.remove('hidden'); return; }
+
+    btnResetPwConfirm.disabled = true;
+    btnResetPwConfirm.textContent = 'Menyimpan...';
     try {
       const res = await fetch(`/api/settings/users/${currentUserEditId}/reset-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: newPassword })
+        body: JSON.stringify({ password: pw })
       });
       if (!res.ok) {
         const text = await res.text();
         throw new Error(text || 'Gagal reset sandi');
       }
-      alert(`Sandi untuk "${nama}" berhasil direset.`);
+      closeResetPwModal();
+      alert('Sandi berhasil direset!');
     } catch (err) {
-      alert(err.message);
+      resetPwError.textContent = err.message;
+      resetPwError.classList.remove('hidden');
+    } finally {
+      btnResetPwConfirm.disabled = false;
+      btnResetPwConfirm.textContent = 'Reset';
     }
   });
 }
