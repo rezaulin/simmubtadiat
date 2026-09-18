@@ -75,7 +75,7 @@
     <!-- Close button (Mobile only) -->
     <button id="btn-close-sidebar" class="tap-target md:hidden absolute top-4 right-4 p-2 bg-gray-50 dark:bg-slate-700 rounded-xl text-gray-500 hover:text-gray-700" aria-label="Tutup menu">
       <i data-lucide="x" class="w-5 h-5"></i>
-    </button>
+    
       <!-- Logo Area -->
       <div class="h-20 flex items-center px-6 border-b border-gray-100 dark:border-slate-700/60">
         <div class="flex items-center gap-3 cursor-pointer" onclick="window.location.href='/index.html'">
@@ -170,7 +170,7 @@
         <button id="logout-btn-desktop" class="w-full flex items-center gap-3 px-3 py-2.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-colors text-left font-medium">
           <i data-lucide="log-out" class="w-5 h-5"></i>
           Keluar
-        </button>
+        
       </div>
     </aside>
 
@@ -182,10 +182,7 @@
 
   <main class="md:ml-64 min-h-screen pb-24 md:pb-8 flex flex-col">
     <!-- MOBILE TOP BAR -->
-    <header class="md:hidden h-16 bg-white/80 backdrop-blur-md dark:bg-slate-800/80 border-b border-gray-100 dark:border-slate-700 flex items-center justify-between px-4 sticky top-0 z-40">
-      <button id="btn-open-sidebar" class="tap-target p-2 -ml-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors" aria-label="Buka menu">
-        <i data-lucide="menu" class="w-6 h-6 text-gray-700 dark:text-gray-200"></i>
-      </button>
+    <header class="md:hidden h-16 bg-white/80 backdrop-blur-md dark:bg-slate-800/80 border-b border-gray-100 dark:border-slate-700 flex items-center justify-end px-4 sticky top-0 z-40">
       <button id="theme-toggle-mobile" class="tap-target p-2 -mr-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors" aria-label="Ganti tema">
         <i data-lucide="moon" class="w-5 h-5 text-gray-700 dark:text-gray-200"></i>
       </button>
@@ -203,18 +200,18 @@
         <button id="btn-susun-stambuk" class="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl font-medium text-sm transition-all shadow-md">
           <i data-lucide="hash" class="w-4 h-4"></i>
           <span>Tata Ulang No. Stambuk</span>
-        </button>
+        
         <button id="btn-tambah" class="hidden flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-xl font-medium text-sm transition-all shadow-md">
           <span>Buat Ruang Baru (Bagian)</span>
-        </button>
+        
       </div>
     </div>
 
     <!-- TABS -->
     <div class="px-6 mb-4 flex gap-4 border-b border-gray-200 dark:border-slate-700">
-      <button id="tab-bagian" class="pb-2 text-sm font-semibold border-b-2 border-primary text-primary dark:border-accent-emerald dark:text-accent-emerald transition-colors">Ruang Kelas Fisik (Bagian)</button>
-      <button id="tab-kurikulum" class="pb-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 transition-colors">Kurikulum per Ruang Kelas</button>
-      <button id="tab-setup" class="pb-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 transition-colors">Setup Master Data</button>
+      <button id="tab-bagian" class="pb-2 text-sm font-semibold border-b-2 border-primary text-primary dark:border-accent-emerald dark:text-accent-emerald transition-colors">Ruang Kelas Fisik (Bagian)
+      <button id="tab-kurikulum" class="pb-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 transition-colors">Kurikulum per Ruang Kelas
+      <button id="tab-setup" class="pb-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 transition-colors">Setup Master Data
     </div>
 
     <!-- CONTENT AREA -->
@@ -257,7 +254,7 @@
             <select id="sel-kuri-kelas" class="glass-input px-3 py-2 rounded-lg text-sm flex-1 dark:bg-slate-700">
               <option value="">-- Pilih Kelas --</option>
             </select>
-            <button id="btn-load-kurikulum" class="bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-xl text-sm font-medium shadow-sm transition-all w-full sm:w-auto whitespace-nowrap">Lihat Kurikulum</button>
+            <button id="btn-load-kurikulum" class="bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-xl text-sm font-medium shadow-sm transition-all w-full sm:w-auto whitespace-nowrap">Lihat Kurikulum
           </div>
         </div>
 
@@ -292,8 +289,8 @@
               </div>
             </div>
             <div class="flex items-center gap-2 w-full sm:w-auto">
-              <button type="button" id="btn-batal-mapel" class="hidden bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-xl text-sm font-medium h-[38px]">Batal</button>
-              <button type="submit" id="btn-submit-mapel" class="bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-xl text-sm font-medium h-[38px] w-full sm:w-auto">Tambah</button>
+              <button type="button" id="btn-batal-mapel" class="hidden bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-xl text-sm font-medium h-[38px]">Batal
+              <button type="submit" id="btn-submit-mapel" class="bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-xl text-sm font-medium h-[38px] w-full sm:w-auto">Tambah
             </div>
           </form>
 
@@ -323,7 +320,7 @@
            <form id="form-tingkatan" class="flex flex-col gap-3">
              <input type="text" name="nama" placeholder="Contoh: Tsanawiyyah" required class="glass-input px-3 py-2 rounded-lg text-sm w-full">
              <input type="number" name="urutan" placeholder="Urutan (ex: 2)" required class="glass-input px-3 py-2 rounded-lg text-sm w-full">
-             <button type="submit" class="bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-xl text-sm font-medium">Simpan Tingkatan</button>
+             <button type="submit" class="bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-xl text-sm font-medium">Simpan Tingkatan
            </form>
            <ul id="list-tingkatan" class="mt-4 space-y-2 text-sm dark:text-gray-300"></ul>
         </div>
@@ -332,7 +329,7 @@
            <h3 class="text-lg font-bold mb-4 dark:text-white">Jenjang Kelas</h3>
            <form id="form-kelas-master" class="flex flex-col gap-3">
              <input type="text" name="nama" placeholder="Contoh: Kelas 1" required class="glass-input px-3 py-2 rounded-lg text-sm w-full">
-             <button type="submit" class="bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-xl text-sm font-medium">Simpan Kelas</button>
+             <button type="submit" class="bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-xl text-sm font-medium">Simpan Kelas
            </form>
            <ul id="list-kelas" class="mt-4 space-y-2 text-sm dark:text-gray-300"></ul>
         </div>
@@ -346,7 +343,7 @@
     <div class="glass dark:bg-slate-800 rounded-3xl w-full max-w-sm z-10 overflow-hidden shadow-2xl scale-95 opacity-0 transition-all duration-300" id="modal-content">
       <div class="px-6 py-4 border-b flex justify-between items-center">
         <h3 class="text-lg font-bold">Buat Ruang Kelas Fisik</h3>
-        <button id="modal-close" class="tap-target text-gray-400 hover:text-gray-600" aria-label="Tutup"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+        <button id="modal-close" class="tap-target text-gray-400 hover:text-gray-600" aria-label="Tutup"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
       </div>
       <div class="p-6">
         <form id="form-kelas" class="flex flex-col gap-4">
@@ -368,8 +365,8 @@
           </div>
           <div id="modal-error" class="hidden text-sm text-red-500 bg-red-50 p-2 rounded-lg mt-2"></div>
           <div class="flex justify-end gap-3 mt-4">
-            <button type="button" id="btn-cancel" class="px-4 py-2 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100">Batal</button>
-            <button type="submit" class="bg-primary hover:bg-primary-hover text-white px-5 py-2 rounded-xl text-sm font-medium">Buat</button>
+            <button type="button" id="btn-cancel" class="px-4 py-2 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100">Batal
+            <button type="submit" class="bg-primary hover:bg-primary-hover text-white px-5 py-2 rounded-xl text-sm font-medium">Buat
           </div>
         </form>
       </div>
@@ -383,7 +380,7 @@
         <h3 class="text-xl font-bold dark:text-white flex items-center gap-2">
           <button id="modal-kelola-close" class="tap-target text-gray-400 hover:text-gray-800 p-1 mr-2 rounded-lg hover:bg-gray-100 transition-colors" aria-label="Tutup">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-          </button>
+          
           <span id="kelola-title">Kelola Ruang A1</span>
         </h3>
         <p class="text-xs text-gray-500 dark:text-gray-400 ml-11" id="kelola-subtitle">Manajemen Santri dan Jadwal</p>
@@ -392,8 +389,8 @@
     
     <!-- KELOLA TABS -->
     <div class="px-6 pt-4 flex gap-6 border-b border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800">
-      <button id="tab-kelola-santri" class="pb-3 text-sm font-semibold border-b-2 border-primary text-primary transition-colors">Daftar Santri</button>
-      <button id="tab-kelola-jadwal" class="pb-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors">Jadwal Pelajaran & Guru</button>
+      <button id="tab-kelola-santri" class="pb-3 text-sm font-semibold border-b-2 border-primary text-primary transition-colors">Daftar Santri
+      <button id="tab-kelola-jadwal" class="pb-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors">Jadwal Pelajaran & Guru
     </div>
 
     <div class="p-6 overflow-y-auto flex-1 custom-scrollbar">
@@ -410,7 +407,7 @@
             <button id="btn-open-assign" class="flex items-center gap-2 bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-xl text-sm font-medium shadow-md">
               <i data-lucide="user-plus" class="w-4 h-4"></i>
               Tambah Santri ke Ruangan
-            </button>
+            
           </div>
         </div>
 
@@ -443,7 +440,7 @@
             <h3 class="text-lg font-bold dark:text-white">Tambah Santri ke Ruangan</h3>
             <button id="modal-assign-close" class="tap-target text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" aria-label="Tutup">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-            </button>
+            
           </div>
           <div class="p-6 overflow-y-auto flex-1 flex flex-col gap-4">
             <p class="text-sm text-gray-500 dark:text-gray-400">Pilih santri yang berstatus <b>"Belum Dikelas"</b>. Bisa pilih banyak sekaligus.</p>
@@ -468,8 +465,8 @@
             </div>
           </div>
           <div class="px-6 py-3 border-t border-gray-200 dark:border-slate-700 flex justify-end gap-2 bg-gray-50/50 dark:bg-slate-800/50">
-            <button id="modal-assign-cancel" class="px-4 py-2 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700">Batal</button>
-            <button id="btn-assign-santri" class="bg-primary hover:bg-primary-hover text-white px-5 py-2 rounded-xl text-sm font-medium shadow-md">Masukkan Santri Terpilih</button>
+            <button id="modal-assign-cancel" class="px-4 py-2 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700">Batal
+            <button id="btn-assign-santri" class="bg-primary hover:bg-primary-hover text-white px-5 py-2 rounded-xl text-sm font-medium shadow-md">Masukkan Santri Terpilih
           </div>
         </div>
       </div>
@@ -512,7 +509,7 @@
             </div>
             <button type="submit" class="bg-primary text-white px-4 py-2 rounded-xl text-sm font-medium shadow-sm transition-all h-[38px] md:col-span-1">
               Buat Jadwal
-            </button>
+            
           </form>
         </div>
         
@@ -560,7 +557,7 @@
       <div class="absolute left-1/2 -translate-x-1/2 -top-6">
         <button id="btn-mobile-search" class="tap-target w-[52px] h-[52px] bg-gradient-to-tr from-primary to-hero-to rounded-full flex items-center justify-center text-white shadow-[0_8px_20px_rgba(14,124,134,0.3)] active:scale-95 transition-transform border-[3px] border-white dark:border-slate-900" aria-label="Cari">
           <i data-lucide="search" class="w-5 h-5"></i>
-        </button>
+        
       </div>
 
       <a href="/absensi-manual.html" data-nav class="w-1/5 flex flex-col items-center gap-1 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">

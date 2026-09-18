@@ -75,7 +75,7 @@
     <!-- Close button (Mobile only) -->
     <button id="btn-close-sidebar" class="tap-target md:hidden absolute top-4 right-4 p-2 bg-gray-50 dark:bg-slate-700 rounded-xl text-gray-500 hover:text-gray-700" aria-label="Tutup menu">
       <i data-lucide="x" class="w-5 h-5"></i>
-    </button>
+    
       <!-- Logo Area -->
       <div class="h-20 flex items-center px-6 border-b border-gray-100 dark:border-slate-700/60">
         <div class="flex items-center gap-3 cursor-pointer" onclick="window.location.href='/index.html'">
@@ -170,7 +170,7 @@
         <button id="logout-btn-desktop" class="w-full flex items-center gap-3 px-3 py-2.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-colors text-left font-medium">
           <i data-lucide="log-out" class="w-5 h-5"></i>
           Keluar
-        </button>
+        
       </div>
     </aside>
 
@@ -183,10 +183,7 @@
   <main class="md:ml-64 min-h-screen pb-24 md:pb-8 flex flex-col">
     
     <!-- MOBILE TOP BAR -->
-    <header class="md:hidden h-16 bg-white/80 backdrop-blur-md dark:bg-slate-800/80 border-b border-gray-100 dark:border-slate-700 flex items-center justify-between px-4 sticky top-0 z-40">
-      <button id="btn-open-sidebar" class="tap-target p-2 -ml-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors" aria-label="Buka menu">
-        <i data-lucide="menu" class="w-6 h-6 text-gray-700 dark:text-gray-200"></i>
-      </button>
+    <header class="md:hidden h-16 bg-white/80 backdrop-blur-md dark:bg-slate-800/80 border-b border-gray-100 dark:border-slate-700 flex items-center justify-end px-4 sticky top-0 z-40">
       <button id="theme-toggle-mobile" class="tap-target p-2 -mr-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors" aria-label="Ganti tema">
         <i data-lucide="moon" class="w-5 h-5 text-gray-700 dark:text-gray-200"></i>
       </button>
@@ -208,21 +205,21 @@
         <button id="btn-tambah" class="hidden flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover dark:bg-accent-emerald dark:hover:bg-emerald-600 text-white px-4 py-2 rounded-xl font-medium text-sm transition-all shadow-md">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
           <span class="hidden md:inline">Proses Keluar</span>
-        </button>
+        
         <button id="btn-tambah-alumni" class="hidden flex items-center justify-center gap-2 bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-xl font-medium text-sm transition-all shadow-md">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
           <span class="hidden md:inline">Tambah Alumni</span>
-        </button>
+        
         <button id="btn-import-alumni" class="hidden flex items-center justify-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-xl font-medium text-sm transition-all shadow-md">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"></path></svg>
           <span class="hidden md:inline">Import Excel</span>
-        </button>
+        
         <a href="/api/alumni/template" id="btn-template-alumni" class="hidden flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-xl font-medium text-sm transition-all">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path></svg>
           <span class="hidden md:inline">Template</span>
         </a>
         <input type="file" id="input-import-file" accept=".xlsx,.xls" class="hidden">
-        </button>
+        
       </div>
     </div>
 
@@ -231,10 +228,10 @@
       <div class="flex gap-1 border-b border-gray-200 dark:border-slate-700">
         <button id="tab-pengabdian" type="button" class="tap-target px-4 py-3 -mb-px text-sm font-semibold border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 transition-colors">
           Pengabdian
-        </button>
+        
         <button id="tab-alumni" type="button" class="tap-target px-4 py-3 -mb-px text-sm font-semibold border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 transition-colors">
           Alumni
-        </button>
+        
       </div>
     </div>
 
@@ -273,7 +270,7 @@
           <label class="text-xs font-semibold text-gray-500 dark:text-gray-400">Tahun Keluar</label>
           <input type="text" id="filter-tahun-keluar" placeholder="Mis: 2024" class="glass-input px-3 py-2 rounded-lg text-sm bg-white dark:bg-slate-800 w-28">
         </div>
-        <button id="btn-reset-filter" class="mt-5 text-xs text-primary dark:text-accent-emerald hover:underline">Reset filter</button>
+        <button id="btn-reset-filter" class="mt-5 text-xs text-primary dark:text-accent-emerald hover:underline">Reset filter
       </div>
 
       <!-- TABLE AREA -->
@@ -330,7 +327,7 @@
       <div class="absolute left-1/2 -translate-x-1/2 -top-6">
         <button id="btn-mobile-search" class="tap-target w-[52px] h-[52px] bg-gradient-to-tr from-primary to-hero-to rounded-full flex items-center justify-center text-white shadow-[0_8px_20px_rgba(14,124,134,0.3)] active:scale-95 transition-transform border-[3px] border-white dark:border-slate-900" aria-label="Cari">
           <i data-lucide="search" class="w-5 h-5"></i>
-        </button>
+        
       </div>
 
       <a href="/absensi-manual.html" data-nav class="w-1/5 flex flex-col items-center gap-1 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
@@ -355,7 +352,7 @@
         <h3 class="text-lg font-bold dark:text-white">Proses Santri Keluar</h3>
         <button id="modal-close" class="tap-target text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" aria-label="Tutup">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-        </button>
+        
       </div>
       
       <div class="p-6">
@@ -424,8 +421,8 @@
           <div id="modal-error" class="hidden text-sm text-red-500 bg-red-50 dark:bg-red-900/30 p-2 rounded-lg mt-2"></div>
           
           <div class="flex justify-end gap-3 mt-4">
-            <button type="button" id="btn-cancel" class="px-4 py-2 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">Batal</button>
-            <button type="submit" class="bg-primary hover:bg-primary-hover dark:bg-accent-emerald dark:hover:bg-emerald-600 text-white px-5 py-2 rounded-xl text-sm font-medium transition-all shadow-md">Proses Keluar</button>
+            <button type="button" id="btn-cancel" class="px-4 py-2 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">Batal
+            <button type="submit" class="bg-primary hover:bg-primary-hover dark:bg-accent-emerald dark:hover:bg-emerald-600 text-white px-5 py-2 rounded-xl text-sm font-medium transition-all shadow-md">Proses Keluar
           </div>
         </form>
       </div>
@@ -440,7 +437,7 @@
         <h3 class="text-lg font-bold dark:text-white">Tambah Data Alumni</h3>
         <button id="modal-tambah-alumni-close" class="tap-target text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" aria-label="Tutup">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-        </button>
+        
       </div>
       <div class="p-6">
         <form id="form-tambah-alumni" class="flex flex-col gap-3">
@@ -525,8 +522,8 @@
           </div>
           <div id="modal-tambah-alumni-error" class="hidden text-sm text-red-500 bg-red-50 dark:bg-red-900/30 p-2 rounded-lg"></div>
           <div class="flex justify-end gap-3 mt-2">
-            <button type="button" id="modal-tambah-alumni-cancel" class="px-4 py-2 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700">Batal</button>
-            <button type="submit" class="bg-indigo-500 hover:bg-indigo-600 text-white px-5 py-2 rounded-xl text-sm font-medium shadow-md">Simpan Alumni</button>
+            <button type="button" id="modal-tambah-alumni-cancel" class="px-4 py-2 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700">Batal
+            <button type="submit" class="bg-indigo-500 hover:bg-indigo-600 text-white px-5 py-2 rounded-xl text-sm font-medium shadow-md">Simpan Alumni
           </div>
         </form>
       </div>
@@ -542,7 +539,7 @@
         <h3 class="text-lg font-bold dark:text-white">Detail Alumni</h3>
         <button id="modal-detail-close" class="tap-target text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" aria-label="Tutup">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-        </button>
+        
       </div>
       
       <div class="p-6">
@@ -571,7 +568,7 @@
         <!-- Editable Form -->
         
         <div class="mt-6 flex justify-end">
-          <button type="button" class="btn-tutup-detail px-5 py-2 rounded-xl text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-slate-700 dark:text-gray-300 dark:hover:bg-slate-600 transition-colors">Tutup</button>
+          <button type="button" class="btn-tutup-detail px-5 py-2 rounded-xl text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-slate-700 dark:text-gray-300 dark:hover:bg-slate-600 transition-colors">Tutup
         </div>
       </div>
     </div>
@@ -586,7 +583,7 @@
         <h3 class="text-lg font-bold dark:text-white">Edit Alumni</h3>
         <button id="modal-edit-close" type="button" class="tap-target text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" aria-label="Tutup">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-        </button>
+        
       </div>
       
       <div class="p-6">
@@ -684,7 +681,7 @@
           <div id="modal-detail-error" class="hidden text-sm text-red-500 bg-red-50 dark:bg-red-900/30 p-2 rounded-lg mt-2"></div>
           
           <div class="flex justify-end gap-3 mt-2">
-            <button type="submit" class="bg-primary hover:bg-primary-hover dark:bg-accent-emerald dark:hover:bg-emerald-600 text-white px-5 py-2 rounded-xl text-sm font-medium transition-all shadow-md">Simpan Perubahan</button>
+            <button type="submit" class="bg-primary hover:bg-primary-hover dark:bg-accent-emerald dark:hover:bg-emerald-600 text-white px-5 py-2 rounded-xl text-sm font-medium transition-all shadow-md">Simpan Perubahan
           </div>
         </form>
       </div>
@@ -701,7 +698,7 @@
         <h3 class="text-lg font-bold dark:text-white">Selesai Khidmah</h3>
         <button id="modal-selesai-close" class="tap-target text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" aria-label="Tutup">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-        </button>
+        
       </div>
 
       <div class="p-6">
@@ -719,8 +716,8 @@
           <div id="modal-selesai-error" class="hidden text-sm text-red-500 bg-red-50 dark:bg-red-900/30 p-2 rounded-lg mt-2"></div>
 
           <div class="flex justify-end gap-3 mt-4">
-            <button type="button" id="btn-selesai-cancel" class="px-4 py-2 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">Batal</button>
-            <button type="submit" class="bg-primary hover:bg-primary-hover dark:bg-accent-emerald dark:hover:bg-emerald-600 text-white px-5 py-2 rounded-xl text-sm font-medium transition-all shadow-md">Selesai Khidmah → Alumni</button>
+            <button type="button" id="btn-selesai-cancel" class="px-4 py-2 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">Batal
+            <button type="submit" class="bg-primary hover:bg-primary-hover dark:bg-accent-emerald dark:hover:bg-emerald-600 text-white px-5 py-2 rounded-xl text-sm font-medium transition-all shadow-md">Selesai Khidmah → Alumni
           </div>
         </form>
       </div>

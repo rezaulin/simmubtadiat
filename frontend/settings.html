@@ -75,7 +75,7 @@
     <!-- Close button (Mobile only) -->
     <button id="btn-close-sidebar" class="tap-target md:hidden absolute top-4 right-4 p-2 bg-gray-50 dark:bg-slate-700 rounded-xl text-gray-500 hover:text-gray-700" aria-label="Tutup menu">
       <i data-lucide="x" class="w-5 h-5"></i>
-    </button>
+    
       <!-- Logo Area -->
       <div class="h-20 flex items-center px-6 border-b border-gray-100 dark:border-slate-700/60">
         <div class="flex items-center gap-3 cursor-pointer" onclick="window.location.href='/index.html'">
@@ -170,7 +170,7 @@
         <button id="logout-btn-desktop" class="w-full flex items-center gap-3 px-3 py-2.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-colors text-left font-medium">
           <i data-lucide="log-out" class="w-5 h-5"></i>
           Keluar
-        </button>
+        
       </div>
     </aside>
 
@@ -183,10 +183,7 @@
   <main class="md:ml-64 min-h-screen pb-24 md:pb-8">
     
     <!-- MOBILE TOP BAR -->
-    <header class="md:hidden h-16 bg-white/80 backdrop-blur-md dark:bg-slate-800/80 border-b border-gray-100 dark:border-slate-700 flex items-center justify-between px-4 sticky top-0 z-40">
-      <button id="btn-open-sidebar" class="tap-target p-2 -ml-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors" aria-label="Buka menu">
-        <i data-lucide="menu" class="w-6 h-6 text-gray-700 dark:text-gray-200"></i>
-      </button>
+    <header class="md:hidden h-16 bg-white/80 backdrop-blur-md dark:bg-slate-800/80 border-b border-gray-100 dark:border-slate-700 flex items-center justify-end px-4 sticky top-0 z-40">
       <button id="theme-toggle-mobile" class="tap-target p-2 -mr-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors" aria-label="Ganti tema">
         <i data-lucide="moon" class="w-5 h-5 text-gray-700 dark:text-gray-200"></i>
       </button>
@@ -214,7 +211,7 @@
               <p class="text-xs text-gray-500 dark:text-gray-400">Kelola akun dan role admin</p>
             </div>
           </div>
-          <button id="btn-add-user" class="bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-xl text-sm font-medium shadow-sm transition-colors">Tambah User</button>
+          <button id="btn-add-user" class="bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-xl text-sm font-medium shadow-sm transition-colors">Tambah User
         </div>
 
         <!-- Filter peran + pencarian -->
@@ -255,8 +252,8 @@
         <div class="flex items-center justify-between gap-3 mt-4 relative z-10 text-sm">
           <span id="user-pagination-info" class="text-gray-500 dark:text-gray-400 text-xs"></span>
           <div class="flex items-center gap-2">
-            <button id="user-prev" class="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-slate-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">Sebelumnya</button>
-            <button id="user-next" class="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-slate-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">Berikutnya</button>
+            <button id="user-prev" class="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-slate-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">Sebelumnya
+            <button id="user-next" class="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-slate-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">Berikutnya
           </div>
         </div>
       </div>
@@ -310,8 +307,8 @@
             </div>
           </div>
           <div class="flex items-center gap-2">
-            <button type="submit" id="agenda-submit" class="bg-primary hover:bg-primary-hover text-white px-5 py-2 rounded-xl text-sm font-medium shadow-md transition-all">Tambah Agenda</button>
-            <button type="button" id="agenda-cancel" class="hidden text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 px-3 py-2">Batal</button>
+            <button type="submit" id="agenda-submit" class="bg-primary hover:bg-primary-hover text-white px-5 py-2 rounded-xl text-sm font-medium shadow-md transition-all">Tambah Agenda
+            <button type="button" id="agenda-cancel" class="hidden text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 px-3 py-2">Batal
           </div>
         </form>
         <div class="mt-5 relative z-10">
@@ -340,8 +337,8 @@
             <p class="text-xs text-gray-500">Tahun ajaran aktif saat ini: <span id="kalender-ta-active" class="font-mono font-bold text-amber-600 dark:text-amber-400">-</span>. Semua input absensi &amp; nilai default ke tahun aktif.</p>
             <div class="flex gap-2 flex-wrap">
               <input type="text" id="kalender-ta" class="glass-input px-3 py-2 rounded-lg text-sm w-full md:w-52 font-mono font-bold" placeholder="2026/2027">
-              <button type="button" id="kalender-load" class="px-4 py-2 rounded-xl text-sm font-medium bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors whitespace-nowrap">Muat</button>
-              <button type="button" id="kalender-set-active" class="px-4 py-2 rounded-xl text-sm font-medium bg-amber-500 hover:bg-amber-600 text-white transition-colors whitespace-nowrap">Jadikan Tahun Aktif</button>
+              <button type="button" id="kalender-load" class="px-4 py-2 rounded-xl text-sm font-medium bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors whitespace-nowrap">Muat
+              <button type="button" id="kalender-set-active" class="px-4 py-2 rounded-xl text-sm font-medium bg-amber-500 hover:bg-amber-600 text-white transition-colors whitespace-nowrap">Jadikan Tahun Aktif
             </div>
           </div>
           <div class="flex flex-col gap-1">
@@ -349,7 +346,7 @@
             <p class="text-xs text-gray-500">Digunakan di halaman Absensi Manual & Rekap. Contoh: 1447/1448 (2 tahun Hijri per TA). Aktif: <span id="kalender-th-active" class="font-mono font-bold text-emerald-600 dark:text-emerald-400">-</span></p>
             <div class="flex gap-2 flex-wrap">
               <input type="text" id="kalender-th" class="glass-input px-3 py-2 rounded-lg text-sm w-32 font-mono font-bold" placeholder="1447/1448">
-              <button type="button" id="kalender-set-hijri" class="px-4 py-2 rounded-xl text-sm font-medium bg-emerald-500 hover:bg-emerald-600 text-white transition-colors whitespace-nowrap">Simpan Tahun Hijri</button>
+              <button type="button" id="kalender-set-hijri" class="px-4 py-2 rounded-xl text-sm font-medium bg-emerald-500 hover:bg-emerald-600 text-white transition-colors whitespace-nowrap">Simpan Tahun Hijri
             </div>
           </div>
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -393,7 +390,7 @@
             </div>
           </div>
           <div id="kalender-preview" class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed"></div>
-          <div><button type="submit" class="bg-primary hover:bg-primary-hover text-white px-5 py-2 rounded-xl text-sm font-medium shadow-md transition-all">Simpan Kalender</button></div>
+          <div><button type="submit" class="bg-primary hover:bg-primary-hover text-white px-5 py-2 rounded-xl text-sm font-medium shadow-md transition-all">Simpan Kalender</div>
         </form>
       </div>
 
@@ -408,7 +405,7 @@
         <h3 class="text-lg font-bold dark:text-white" id="modal-title">Tambah User</h3>
         <button id="modal-close" class="tap-target text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" aria-label="Tutup">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-        </button>
+        
       </div>
       
       <div class="p-6">
@@ -433,7 +430,7 @@
                 class="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
                 <svg id="user-icon-eye" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                 <svg id="user-icon-eye-off" class="w-4 h-4 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path></svg>
-              </button>
+              
             </div>
             <p class="text-[10px] text-gray-400 hidden" id="password-hint">Kosongkan jika tidak ingin mengubah password (saat edit)</p>
           </div>
@@ -462,8 +459,8 @@
           <div id="modal-error" class="hidden text-sm text-red-500 bg-red-50 dark:bg-red-900/30 p-2 rounded-lg mt-2"></div>
           
           <div class="flex justify-end gap-3 mt-4">
-            <button type="button" id="btn-cancel" class="px-4 py-2 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">Batal</button>
-            <button type="submit" class="bg-primary hover:bg-primary-hover dark:bg-accent-emerald dark:hover:bg-emerald-600 text-white px-5 py-2 rounded-xl text-sm font-medium transition-all shadow-md">Simpan</button>
+            <button type="button" id="btn-cancel" class="px-4 py-2 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">Batal
+            <button type="submit" class="bg-primary hover:bg-primary-hover dark:bg-accent-emerald dark:hover:bg-emerald-600 text-white px-5 py-2 rounded-xl text-sm font-medium transition-all shadow-md">Simpan
           </div>
         </form>
       </div>
@@ -492,7 +489,7 @@
       <div class="absolute left-1/2 -translate-x-1/2 -top-6">
         <button id="btn-mobile-search" class="tap-target w-[52px] h-[52px] bg-gradient-to-tr from-primary to-hero-to rounded-full flex items-center justify-center text-white shadow-[0_8px_20px_rgba(14,124,134,0.3)] active:scale-95 transition-transform border-[3px] border-white dark:border-slate-900" aria-label="Cari">
           <i data-lucide="search" class="w-5 h-5"></i>
-        </button>
+        
       </div>
 
       <a href="/absensi-manual.html" data-nav class="w-1/5 flex flex-col items-center gap-1 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">

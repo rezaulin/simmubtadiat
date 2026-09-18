@@ -418,7 +418,7 @@
     <!-- Close button (Mobile only) -->
     <button id="btn-close-sidebar" class="tap-target md:hidden absolute top-4 right-4 p-2 bg-gray-50 dark:bg-slate-700 rounded-xl text-gray-500 hover:text-gray-700" aria-label="Tutup menu">
       <i data-lucide="x" class="w-5 h-5"></i>
-    </button>
+    
     <!-- Logo Area -->
     <div class="h-20 flex items-center px-6 border-b border-gray-100 dark:border-slate-700/60">
       <div class="flex items-center gap-3 cursor-pointer" onclick="window.location.href='/index.html'">
@@ -513,7 +513,7 @@
       <button id="logout-btn-desktop" class="w-full flex items-center gap-3 px-3 py-2.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-colors text-left font-medium">
         <i data-lucide="log-out" class="w-5 h-5"></i>
         Keluar
-      </button>
+      
     </div>
   </aside>
 
@@ -524,10 +524,7 @@
   <main class="md:ml-64 min-h-screen pb-24 md:pb-8">
     
     <!-- MOBILE TOP BAR -->
-    <header class="md:hidden h-16 bg-white/80 backdrop-blur-md dark:bg-slate-800/80 border-b border-gray-100 dark:border-slate-700 flex items-center justify-between px-4 sticky top-0 z-40 print:hidden">
-      <button id="btn-open-sidebar" class="tap-target p-2 -ml-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors" aria-label="Buka menu">
-        <i data-lucide="menu" class="w-6 h-6 text-gray-700 dark:text-gray-200"></i>
-      </button>
+    <header class="md:hidden h-16 bg-white/80 backdrop-blur-md dark:bg-slate-800/80 border-b border-gray-100 dark:border-slate-700 flex items-center justify-end px-4 sticky top-0 z-40">
       <button id="theme-toggle-mobile" class="tap-target p-2 -mr-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors" aria-label="Ganti tema">
         <i data-lucide="moon" class="w-5 h-5 text-gray-700 dark:text-gray-200"></i>
       </button>
@@ -587,7 +584,7 @@
         </div>
         <div class="flex flex-col w-full sm:w-auto">
           <label class="text-xs font-medium text-transparent mb-1 select-none hidden sm:block">.</label>
-          <button id="btn-load" class="w-full sm:w-auto shrink-0 bg-teal-600 text-white px-6 py-2 rounded font-bold hover:bg-teal-700">Tampilkan Santri</button>
+          <button id="btn-load" class="w-full sm:w-auto shrink-0 bg-teal-600 text-white px-6 py-2 rounded font-bold hover:bg-teal-700">Tampilkan Santri
         </div>
       </div>
 
@@ -595,7 +592,7 @@
       <div id="santri-panel" class="hidden border-t pt-4">
         <div class="flex justify-between items-center mb-3">
           <span id="santri-count" class="text-sm text-gray-600"></span>
-          <button id="btn-print-bulk" class="bg-green-600 text-white px-6 py-2 rounded font-bold hover:bg-green-700">Cetak Semua (Bulk)</button>
+          <button id="btn-print-bulk" class="bg-green-600 text-white px-6 py-2 rounded font-bold hover:bg-green-700">Cetak Semua (Bulk)
         </div>
         <div id="santri-list" class="border rounded divide-y max-h-80 overflow-y-auto"></div>
         <p id="santri-empty" class="hidden text-red-500 text-sm py-4 text-center">Tidak ada santri di bagian ini.</p>
@@ -751,7 +748,7 @@
       <div class="absolute left-1/2 -translate-x-1/2 -top-6">
         <button id="btn-mobile-search" class="tap-target w-[52px] h-[52px] bg-gradient-to-tr from-primary to-hero-to rounded-full flex items-center justify-center text-white shadow-[0_8px_20px_rgba(14,124,134,0.3)] active:scale-95 transition-transform border-[3px] border-white dark:border-slate-900" aria-label="Cari">
           <i data-lucide="search" class="w-5 h-5"></i>
-        </button>
+        
       </div>
 
       <a href="/absensi-manual.html" data-nav class="w-1/5 flex flex-col items-center gap-1 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
