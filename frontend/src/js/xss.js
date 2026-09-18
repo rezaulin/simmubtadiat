@@ -157,7 +157,7 @@ const BOTTOM_NAV = {
     { href: '/index.html', icon: 'home', label: 'Beranda' },
     { href: '/santri.html', icon: 'users', label: 'Santri' },
     { href: '/absensi-manual.html', icon: 'clipboard-check', label: 'Absen' },
-    { href: '/penilaian.html', icon: 'file-check-2', label: 'Nilai' }
+    { id: 'btn-menu-sidebar', icon: 'menu', label: 'Menu', isAction: true }
   ],
   admin: [
     { href: '/index.html', icon: 'home', label: 'Beranda' },
@@ -183,7 +183,7 @@ const BOTTOM_NAV = {
     { href: '/index.html', icon: 'home', label: 'Beranda' },
     { href: '/santri.html', icon: 'users', label: 'Santri' },
     { href: '/rekap.html', icon: 'clipboard-check', label: 'Absen' },
-    { href: '/penilaian.html', icon: 'file-check-2', label: 'Nilai' }
+    { id: 'btn-menu-sidebar', icon: 'menu', label: 'Menu', isAction: true }
   ]
 };
 
@@ -240,6 +240,14 @@ window.renderBottomNav = function(role) {
       localStorage.removeItem('user_token');
       localStorage.removeItem('user_role');
       window.location.href = '/login.html';
+    });
+  }
+
+  // Attach event listener for Menu button to open sidebar
+  const menuBtn = document.getElementById('btn-menu-sidebar');
+  if (menuBtn && !menuBtn.onclick) {
+    menuBtn.addEventListener('click', () => {
+      if (window.openSidebar) window.openSidebar();
     });
   }
 };
