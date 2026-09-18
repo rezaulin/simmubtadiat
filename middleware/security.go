@@ -32,15 +32,32 @@ func CSRFProtect(next http.Handler) http.Handler {
 			return
 		}
 
-		// Check Origin header against trusted origins
+		// Check Origin header — allow same-origin and trusted domains
 		origin := r.Header.Get("Origin")
 		if origin != "" {
-			allowed := []string{"https://e-pesantren.app", "https://rezaulin.tech", "http://127.0.0.1:8080", "http://localhost:8080"}
+			host := r.Host
+			allowed := []string{
+				"https://e-pesantren.app",
+				"https://rezaulin.tech",
+				"http://127.0.0.1:8080",
+				"http://localhost:8080",
+				"https://127.0.0.1:8080",
+				"https://localhost:8080",
+			}
+			// Also allow same-origin (Origin matches Host)
 			originAllowed := false
 			for _, a := range allowed {
 				if strings.HasPrefix(origin, a) {
 					originAllowed = true
 					break
+				}
+			}
+			// Same-origin: Origin host == Request host
+			if !originAllowed && host != "" {
+				// Extract host from Origin (remove protocol)
+				originHost := strings.TrimPrefix(strings.TrimPrefix(origin, "https://"), "http://")
+				if strings.HasPrefix(originHost, host) {
+					originAllowed = true
 				}
 			}
 			if !originAllowed {
