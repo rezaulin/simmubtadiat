@@ -147,6 +147,7 @@ async function loadUsers() {
         </td>
         <td class="px-4 py-3 text-right">
           <button class="btn-edit text-blue-500 hover:text-blue-700 mr-3 transition-colors" data-id="${u.id}" data-username="${u.username}" data-roles='${JSON.stringify(u.roles || [u.role]).replace(/'/g, "&#39;")}' data-nama="${u.nama || ''}" data-pengajar="${u.pengajar_id || ''}">Edit</button>
+          <button class="btn-reset text-amber-500 hover:text-amber-700 mr-3 transition-colors" data-id="${u.id}" data-nama="${u.nama || u.username}">Reset Sandi</button>
           <button class="btn-delete text-red-500 hover:text-red-700 transition-colors" data-id="${u.id}">Hapus</button>
         </td>
       `;
@@ -176,6 +177,37 @@ async function loadUsers() {
           } catch (err) {
             alert(err.message);
           }
+        }
+      });
+    });
+
+    document.querySelectorAll('.btn-reset').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        const id = e.target.dataset.id;
+        const nama = e.target.dataset.nama;
+        const newPassword = prompt(`Reset sandi untuk "${nama}"?\n\nMasukkan sandi baru (min 8 karakter, huruf besar+kecil+angka):`);
+        if (!newPassword) return;
+        if (newPassword.length < 8) {
+          alert('Sandi minimal 8 karakter');
+          return;
+        }
+        if (!/[A-Z]/.test(newPassword) || !/[a-z]/.test(newPassword) || !/[0-9]/.test(newPassword)) {
+          alert('Sandi harus mengandung huruf besar, huruf kecil, dan angka');
+          return;
+        }
+        try {
+          const res = await fetch(`/api/settings/users/${id}/reset-password`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: newPassword })
+          });
+          if (!res.ok) {
+            const text = await res.text();
+            throw new Error(text || 'Gagal reset sandi');
+          }
+          alert(`Sandi untuk "${nama}" berhasil direset.\nUser akan diminta mengganti sandi saat login berikutnya.`);
+        } catch (err) {
+          alert(err.message);
         }
       });
     });

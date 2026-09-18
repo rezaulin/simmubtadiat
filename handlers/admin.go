@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/mubtadiaat/app/middleware"
 	"github.com/mubtadiaat/app/models"
 )
 
@@ -83,6 +84,11 @@ func ResetPassword(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	// Validate password complexity
+	if ok, msg := middleware.ValidatePasswordComplexity(req.Password); !ok {
+		http.Error(w, msg, http.StatusBadRequest)
 		return
 	}
 	if err := models.ResetPassword(r.Context(), id, req.Password); err != nil {
