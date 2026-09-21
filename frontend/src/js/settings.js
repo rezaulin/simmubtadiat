@@ -24,6 +24,11 @@ const resetPwInput = document.getElementById('reset-pw-input');
 const resetPwConfirm = document.getElementById('reset-pw-confirm');
 const resetPwError = document.getElementById('reset-pw-error');
 const resetPwUserName = document.getElementById('reset-pw-user-name');
+const resetPwTitle = document.getElementById('reset-pw-title');
+const resetPwForm = document.getElementById('reset-pw-form');
+const resetPwResult = document.getElementById('reset-pw-result');
+const resetPwCustomWrap = document.getElementById('reset-pw-custom-wrap');
+const resetPwNikHint = document.getElementById('reset-pw-nik-hint');
 let currentUserEditId = null;
 
 
@@ -105,6 +110,43 @@ const userPaginationInfo = document.getElementById('user-pagination-info');
 const userState = { role: 'staf', q: '', limit: 25, offset: 0, total: 0 };
 let userSearchTimer = null;
 
+// Baris tercentang untuk reset massal. id -> {id, nama, username, anak}
+const selectedUsers = new Map();
+
+// Bar aksi massal + checkbox "pilih semua di halaman ini".
+const userCheckAll = document.getElementById('user-check-all');
+const userBulkBar = document.getElementById('user-bulk-bar');
+const userBulkInfo = document.getElementById('user-bulk-info');
+const btnBulkReset = document.getElementById('btn-bulk-reset');
+const btnBulkClear = document.getElementById('btn-bulk-clear');
+
+// Escape teks sebelum dimasukkan ke innerHTML.
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function updateBulkBar() {
+  if (!userBulkBar) return;
+  const n = selectedUsers.size;
+  if (n > 0) {
+    userBulkBar.classList.remove('hidden');
+    userBulkBar.classList.add('flex');
+    if (userBulkInfo) userBulkInfo.textContent = `${n} pengguna dipilih`;
+  } else {
+    userBulkBar.classList.add('hidden');
+    userBulkBar.classList.remove('flex');
+  }
+}
+
+function clearUserSelection() {
+  selectedUsers.clear();
+  document.querySelectorAll('.user-check').forEach(cb => { cb.checked = false; });
+  if (userCheckAll) userCheckAll.checked = false;
+  updateBulkBar();
+}
+
 function updateUserPagination() {
   const start = userState.total === 0 ? 0 : userState.offset + 1;
   const end = Math.min(userState.offset + userState.limit, userState.total);
@@ -129,7 +171,7 @@ async function loadUsers() {
 
     tableUsers.innerHTML = '';
     if (users.length === 0) {
-      tableUsers.innerHTML = `<tr><td colspan="3" class="px-4 py-6 text-center text-gray-400">Tidak ada pengguna.</td></tr>`;
+      tableUsers.innerHTML = `<tr><td colspan="5" class="px-4 py-6 text-center text-gray-400">Tidak ada pengguna.</td></tr>`;
       updateUserPagination();
       return;
     }
@@ -149,15 +191,33 @@ async function loadUsers() {
       
       const tr = document.createElement('tr');
       tr.className = 'hover:bg-gray-50/50 dark:hover:bg-slate-800/50 group';
+      // Kolom konteks anak (khusus wali). Orphan = akun wali tanpa tautan santri.
+      const anakCell = u.anak_nama
+        ? `<div class="font-medium text-gray-800 dark:text-gray-100">${esc(u.anak_nama)}</div>
+           <div class="text-[10px] text-gray-400">${esc(u.anak_kelas || '-')}</div>`
+        : (u.role === 'wali_santri'
+            ? `<span class="text-[10px] font-bold text-red-500 bg-red-50 dark:bg-red-900/30 px-2 py-1 rounded-md">🚫 ORPHAN</span>`
+            : `<span class="text-gray-300 dark:text-slate-600">&mdash;</span>`);
+      // Badge status sandi — pimpinan perlu tahu siapa yang belum pernah ganti.
+      const pwBadge = u.is_password_changed
+        ? `<span class="text-[10px] text-emerald-600 dark:text-emerald-400">✅ sudah ganti</span>`
+        : `<span class="text-[10px] font-semibold text-amber-600 dark:text-amber-400">⚠️ wajib ganti</span>`;
       tr.innerHTML = `
         <td class="px-4 py-3">
-          <div class="font-medium text-gray-900 dark:text-white">${u.nama || '-'}</div>
-          <div class="text-[10px] text-gray-400">${u.username}</div>
+          <input type="checkbox" class="user-check w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+                 data-id="${u.id}" data-nama="${esc(u.nama || '')}" data-username="${esc(u.username)}" data-anak="${esc(u.anak_nama || '')}">
         </td>
+        <td class="px-4 py-3">
+          <div class="font-medium text-gray-900 dark:text-white">${esc(u.nama || '-')}</div>
+          <div class="text-[10px] text-gray-400">${esc(u.username)}</div>
+          <div class="mt-0.5">${pwBadge}</div>
+        </td>
+        <td class="px-4 py-3">${anakCell}</td>
         <td class="px-4 py-3">
           ${roleBadges}
         </td>
-        <td class="px-4 py-3 text-right">
+        <td class="px-4 py-3 text-right whitespace-nowrap">
+          <button class="btn-reset-row text-amber-500 hover:text-amber-700 mr-3 transition-colors" data-id="${u.id}" data-nama="${esc(u.nama || '')}" data-username="${esc(u.username)}" data-anak="${esc(u.anak_nama || '')}" title="Reset sandi pengguna ini">🔑 Reset</button>
           <button class="btn-edit text-blue-500 hover:text-blue-700 mr-3 transition-colors" data-id="${u.id}" data-username="${u.username}" data-roles='${JSON.stringify(u.roles || [u.role]).replace(/'/g, "&#39;")}' data-nama="${u.nama || ''}" data-pengajar="${u.pengajar_id || ''}">Edit</button>
           <button class="btn-delete text-red-500 hover:text-red-700 transition-colors" data-id="${u.id}">Hapus</button>
         </td>
@@ -192,10 +252,44 @@ async function loadUsers() {
       });
     });
 
+    // Checkbox per baris → reset massal. Centang dipertahankan lintas halaman.
+    document.querySelectorAll('.user-check').forEach(cb => {
+      const id = parseInt(cb.dataset.id);
+      if (selectedUsers.has(id)) cb.checked = true;
+      cb.addEventListener('change', () => {
+        if (cb.checked) {
+          selectedUsers.set(id, { id, nama: cb.dataset.nama, username: cb.dataset.username, anak: cb.dataset.anak });
+        } else {
+          selectedUsers.delete(id);
+        }
+        syncCheckAll();
+        updateBulkBar();
+      });
+    });
+
+    // Tombol 🔑 Reset di baris → modal reset untuk satu pengguna.
+    document.querySelectorAll('.btn-reset-row').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const ds = e.target.dataset;
+        openResetPwModal([{
+          id: parseInt(ds.id), nama: ds.nama, username: ds.username, anak: ds.anak,
+        }]);
+      });
+    });
+
+    syncCheckAll();
     updateUserPagination();
+    updateBulkBar();
   } catch (err) {
-    tableUsers.innerHTML = `<tr><td colspan="3" class="px-4 py-4 text-center text-red-500">${err.message}</td></tr>`;
+    tableUsers.innerHTML = `<tr><td colspan="5" class="px-4 py-4 text-center text-red-500">${esc(err.message)}</td></tr>`;
   }
+}
+
+// Sinkronkan checkbox "pilih semua" dengan baris yang tampil di halaman ini.
+function syncCheckAll() {
+  if (!userCheckAll) return;
+  const all = document.querySelectorAll('.user-check');
+  userCheckAll.checked = all.length > 0 && Array.from(all).every(c => c.checked);
 }
 
 // Filter peran → reset ke halaman pertama.
@@ -275,22 +369,62 @@ function closeUserModal() {
   }, 300);
 }
 
-// Reset Password - open custom modal
-if (btnResetPassword) {
-  btnResetPassword.addEventListener('click', () => {
-    if (!currentUserEditId) return;
-    const nama = formUser.nama.value || formUser.username.value;
-    resetPwUserName.textContent = `Untuk: ${nama}`;
-    resetPwInput.value = '';
-    resetPwConfirm.value = '';
-    resetPwError.classList.add('hidden');
-    modalResetPw.classList.remove('hidden');
-    setTimeout(() => {
-      modalResetContent.classList.remove('scale-95', 'opacity-0');
-      modalResetContent.classList.add('scale-100', 'opacity-100');
-      resetPwInput.focus();
-    }, 10);
-  });
+// ---- Reset Sandi (single + massal) ----
+// resetTargets: [{id, nama, username, anak}]. Panjang 1 = single, >1 = massal.
+let resetTargets = [];
+
+function resetPwMode() {
+  const el = document.querySelector('input[name="reset-pw-mode"]:checked');
+  return el ? el.value : 'nik';
+}
+
+function toggleResetPwMode() {
+  const custom = resetPwMode() === 'custom';
+  if (resetPwCustomWrap) {
+    resetPwCustomWrap.classList.toggle('hidden', !custom);
+    resetPwCustomWrap.classList.toggle('flex', custom);
+  }
+  if (custom && resetPwInput) resetPwInput.focus();
+}
+
+document.querySelectorAll('input[name="reset-pw-mode"]').forEach(r =>
+  r.addEventListener('change', toggleResetPwMode));
+
+function openResetPwModal(targets) {
+  resetTargets = Array.isArray(targets) ? targets.filter(Boolean) : [];
+  if (resetTargets.length === 0) return;
+
+  // Kembalikan modal ke kondisi form (bukan kondisi hasil reset massal).
+  if (resetPwForm) resetPwForm.classList.remove('hidden');
+  if (resetPwResult) { resetPwResult.classList.add('hidden'); resetPwResult.classList.remove('flex'); resetPwResult.innerHTML = ''; }
+  if (btnResetPwConfirm) { btnResetPwConfirm.classList.remove('hidden'); btnResetPwConfirm.textContent = 'Reset'; btnResetPwConfirm.disabled = false; }
+  if (btnResetPwCancel) btnResetPwCancel.textContent = 'Batal';
+  resetPwError.classList.add('hidden');
+  resetPwInput.value = '';
+  resetPwConfirm.value = '';
+  const nikRadio = document.querySelector('input[name="reset-pw-mode"][value="nik"]');
+  if (nikRadio) nikRadio.checked = true;
+  toggleResetPwMode();
+
+  const isBulk = resetTargets.length > 1;
+  if (resetPwTitle) resetPwTitle.textContent = isBulk ? `🔑 Reset Sandi Massal (${resetTargets.length})` : '🔑 Reset Sandi';
+  if (isBulk) {
+    resetPwUserName.textContent = `${resetTargets.length} pengguna dipilih`;
+  } else {
+    const t = resetTargets[0];
+    resetPwUserName.textContent = `Untuk: ${t.nama || t.username}` + (t.anak ? ` — wali dari ${t.anak}` : '');
+  }
+  if (resetPwNikHint) {
+    resetPwNikHint.textContent = isBulk
+      ? 'Sandi setiap wali = NIK anaknya masing-masing'
+      : `Sandi = ${resetTargets[0].username}`;
+  }
+
+  modalResetPw.classList.remove('hidden');
+  setTimeout(() => {
+    modalResetContent.classList.remove('scale-95', 'opacity-0');
+    modalResetContent.classList.add('scale-100', 'opacity-100');
+  }, 10);
 }
 
 function closeResetPwModal() {
@@ -302,34 +436,121 @@ function closeResetPwModal() {
 if (btnResetPwCancel) btnResetPwCancel.addEventListener('click', closeResetPwModal);
 if (modalResetOverlay) modalResetOverlay.addEventListener('click', closeResetPwModal);
 
+// Tombol di dalam modal Edit User (perilaku lama dipertahankan).
+if (btnResetPassword) {
+  btnResetPassword.addEventListener('click', () => {
+    if (!currentUserEditId) return;
+    openResetPwModal([{
+      id: currentUserEditId,
+      nama: formUser.nama.value || formUser.username.value,
+      username: formUser.username.value,
+      anak: '',
+    }]);
+  });
+}
+
+// Bar aksi massal.
+if (btnBulkClear) btnBulkClear.addEventListener('click', clearUserSelection);
+if (btnBulkReset) btnBulkReset.addEventListener('click', () => {
+  if (selectedUsers.size === 0) return;
+  openResetPwModal(Array.from(selectedUsers.values()));
+});
+if (userCheckAll) userCheckAll.addEventListener('change', () => {
+  document.querySelectorAll('.user-check').forEach(cb => {
+    cb.checked = userCheckAll.checked;
+    const id = parseInt(cb.dataset.id);
+    if (userCheckAll.checked) {
+      selectedUsers.set(id, { id, nama: cb.dataset.nama, username: cb.dataset.username, anak: cb.dataset.anak });
+    } else {
+      selectedUsers.delete(id);
+    }
+  });
+  updateBulkBar();
+});
+
+// Hasil reset massal: daftar sandi baru supaya bisa dicatat & dibagikan.
+function renderBulkResetResult(data) {
+  if (!resetPwResult) return;
+  const rows = (data.results || []).map(r => {
+    const nama = esc(r.anak ? `${r.anak} — ${r.nama}` : (r.nama || r.username));
+    if (r.status === 'sukses') {
+      return `<tr><td class="px-2 py-1">${nama}</td><td class="px-2 py-1 font-mono font-bold">${esc(r.password)}</td></tr>`;
+    }
+    return `<tr class="text-red-500"><td class="px-2 py-1">${nama}</td><td class="px-2 py-1 text-[10px]">${esc(r.pesan || 'gagal')}</td></tr>`;
+  }).join('');
+
+  resetPwResult.innerHTML = `
+    <div class="text-xs font-bold text-gray-700 dark:text-gray-200 mb-1">
+      ✅ ${data.sukses || 0} berhasil${data.gagal ? ` · ⚠️ ${data.gagal} gagal` : ''}
+    </div>
+    <div class="max-h-56 overflow-y-auto border border-gray-200 dark:border-slate-600 rounded-xl">
+      <table class="w-full text-[11px] text-gray-700 dark:text-gray-300">
+        <thead class="bg-gray-50 dark:bg-slate-700/50 text-gray-500">
+          <tr><th class="px-2 py-1 text-left">Wali / Anak</th><th class="px-2 py-1 text-left">Sandi Baru</th></tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+    <p class="text-[10px] text-gray-400 leading-relaxed">
+      Catat sandi di atas lalu beritahukan ke wali. Wali wajib mengganti sendiri saat login.
+    </p>
+  `;
+  resetPwResult.classList.remove('hidden');
+  resetPwResult.classList.add('flex');
+}
+
 if (btnResetPwConfirm) {
   btnResetPwConfirm.addEventListener('click', async () => {
-    const pw = resetPwInput.value;
-    const pw2 = resetPwConfirm.value;
     resetPwError.classList.add('hidden');
+    const mode = resetPwMode();
+    let pw = '';
 
-    if (!pw) { resetPwError.textContent = 'Sandi wajib diisi'; resetPwError.classList.remove('hidden'); return; }
-    if (pw.length < 8) { resetPwError.textContent = 'Sandi minimal 8 karakter'; resetPwError.classList.remove('hidden'); return; }
-    if (!/[A-Z]/.test(pw) || !/[a-z]/.test(pw) || !/[0-9]/.test(pw)) {
-      resetPwError.textContent = 'Harus mengandung huruf besar, huruf kecil, dan angka';
-      resetPwError.classList.remove('hidden'); return;
+    // Mode custom wajib lolos validasi kompleksitas (sama dengan backend).
+    if (mode === 'custom') {
+      pw = resetPwInput.value;
+      const pw2 = resetPwConfirm.value;
+      if (!pw) { resetPwError.textContent = 'Sandi wajib diisi'; resetPwError.classList.remove('hidden'); return; }
+      if (pw.length < 8) { resetPwError.textContent = 'Sandi minimal 8 karakter'; resetPwError.classList.remove('hidden'); return; }
+      if (!/[A-Z]/.test(pw) || !/[a-z]/.test(pw) || !/[0-9]/.test(pw)) {
+        resetPwError.textContent = 'Harus mengandung huruf besar, huruf kecil, dan angka';
+        resetPwError.classList.remove('hidden'); return;
+      }
+      if (pw !== pw2) { resetPwError.textContent = 'Konfirmasi sandi tidak cocok'; resetPwError.classList.remove('hidden'); return; }
     }
-    if (pw !== pw2) { resetPwError.textContent = 'Konfirmasi sandi tidak cocok'; resetPwError.classList.remove('hidden'); return; }
 
+    const isBulk = resetTargets.length > 1;
     btnResetPwConfirm.disabled = true;
     btnResetPwConfirm.textContent = 'Menyimpan...';
     try {
-      const res = await fetch(`/api/settings/users/${currentUserEditId}/reset-password`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: pw })
-      });
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(text || 'Gagal reset sandi');
+      if (isBulk) {
+        // Mode NIK → password dikosongkan, backend memakai NIK anak per user.
+        const res = await fetch('/api/settings/users/reset-password-bulk', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids: resetTargets.map(t => t.id), password: mode === 'nik' ? '' : pw }),
+        });
+        if (!res.ok) throw new Error((await res.text()) || 'Gagal reset sandi massal');
+        const data = await res.json();
+        renderBulkResetResult(data);
+        if (resetPwForm) resetPwForm.classList.add('hidden');
+        btnResetPwConfirm.classList.add('hidden');
+        if (btnResetPwCancel) btnResetPwCancel.textContent = 'Tutup';
+        clearUserSelection();
+        loadUsers();
+      } else {
+        const t = resetTargets[0];
+        const res = await fetch(`/api/settings/users/${t.id}/reset-password`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: mode === 'nik' ? t.username : pw }),
+        });
+        if (!res.ok) throw new Error((await res.text()) || 'Gagal reset sandi');
+        closeResetPwModal();
+        alert(`Sandi ${t.nama || t.username} berhasil direset` +
+              (mode === 'nik' ? ` ke NIK anak: ${t.username}` : '') +
+          '.\n\nWali wajib mengganti sandi sendiri saat login berikutnya.');
+        loadUsers();
       }
-      closeResetPwModal();
-      alert('Sandi berhasil direset!');
     } catch (err) {
       resetPwError.textContent = err.message;
       resetPwError.classList.remove('hidden');

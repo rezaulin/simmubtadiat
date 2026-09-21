@@ -2,6 +2,7 @@ package models
 
 import (
 	"context"
+	"errors"
 	"strconv"
 	"strings"
 
@@ -19,11 +20,19 @@ type User struct {
 	IsActive          bool     `json:"is_active"`
 	IsPasswordChanged bool     `json:"is_password_changed"`
 	PengajarID        *int     `json:"pengajar_id,omitempty"`
+
+	// Konteks wali santri (hanya terisi untuk role wali_santri).
+	// AnakNama/AnakKelas diambil dari wali_santri_link supaya pimpinan tahu
+	// akun wali ini milik siapa. Orphan=true bila akun wali tidak tertaut
+	// ke santri manapun (sampah data yang perlu dibersihkan).
+	AnakNama  string `json:"anak_nama,omitempty"`
+	AnakKelas string `json:"anak_kelas,omitempty"`
+	Orphan    bool   `json:"orphan,omitempty"`
 }
 
 // GetAllUsers mengembalikan daftar user dengan filter & paginasi.
-//   role: "" atau "staf" â†’ semua KECUALI wali_santri; "wali_santri" â†’ hanya wali;
-//         nilai peran lain â†’ tepat peran itu.
+//   role: "" atau "staf" → semua KECUALI wali_santri; "wali_santri" → hanya wali;
+//         "all" → semua role termasuk wali; nilai peran lain → tepat peran itu.
 //   q: cari di nama/username (opsional). limit/offset: paginasi.
 // Mengembalikan (items, total, error); total = jumlah baris sesuai filter (untuk paginasi).
 func GetAllUsers(ctx context.Context, role, q string, limit, offset int) ([]User, int, error) {
@@ -34,6 +43,8 @@ func GetAllUsers(ctx context.Context, role, q string, limit, offset int) ([]User
 	where += " AND is_active = true"
 
 	switch role {
+	case "all":
+		// Semua role, termasuk wali_santri (dipakai filter "Semua Role" di UI).
 	case "", "staf":
 		where += " AND role <> 'wali_santri'"
 	case "wali_santri":
@@ -122,6 +133,48 @@ func GetAllUsers(ctx context.Context, role, q string, limit, offset int) ([]User
 						}
 					}
 				}
+			}
+		}
+	}
+
+	// Konteks wali: anak yang tertaut (nama + kelas/tingkatan). Tanpa ini
+	// pimpinan cuma lihat "Wali <NamaAnak>" + username NIK tanpa tahu
+	// anaknya siapa / kelas berapa — susah cari wali yang mau direset.
+	if len(userIDs) > 0 {
+		linkRows, err := config.DB.Query(ctx, `
+			SELECT wl.user_id, COALESCE(s.nama,''), COALESCE(k.nama,''), COALESCE(t.nama,'')
+			FROM wali_santri_link wl
+			JOIN santri s ON s.id = wl.santri_id
+			LEFT JOIN bagian b ON s.bagian_id = b.id
+			LEFT JOIN tingkatan t ON b.tingkatan_id = t.id
+			LEFT JOIN kelas k ON b.kelas_id = k.id
+			WHERE wl.user_id = ANY($1)
+			ORDER BY s.nama`, userIDs)
+		if err == nil {
+			defer linkRows.Close()
+			anakNama := map[int][]string{}
+			anakKelas := map[int][]string{}
+			for linkRows.Next() {
+				var uid int
+				var nama, kelas, tingkatan string
+				if err := linkRows.Scan(&uid, &nama, &kelas, &tingkatan); err != nil {
+					continue
+				}
+				anakNama[uid] = append(anakNama[uid], nama)
+				// Konvensi raport: "<kelas> <tingkatan>", mis. "3 Aliyah".
+				anakKelas[uid] = append(anakKelas[uid], strings.TrimSpace(kelas+" "+tingkatan))
+			}
+			for uid, names := range anakNama {
+				if u, ok := userMap[uid]; ok {
+					u.AnakNama = strings.Join(names, ", ")
+					u.AnakKelas = strings.Join(anakKelas[uid], ", ")
+				}
+			}
+		}
+		// Wali aktif yang tidak tertaut santri manapun = orphan.
+		for i := range results {
+			if results[i].Role == "wali_santri" && results[i].AnakNama == "" {
+				results[i].Orphan = true
 			}
 		}
 	}
@@ -324,16 +377,101 @@ func DeleteUser(ctx context.Context, id int) error {
 	return nil
 }
 
+// ErrUserNotFound dikembalikan bila id user tidak ada / sudah dihapus.
+var ErrUserNotFound = errors.New("user tidak ditemukan")
+
+// ResetPassword mengganti sandi user.
+//
+// is_password_changed di-set FALSE supaya user WAJIB mengganti sandinya sendiri
+// saat login berikutnya — sandi yang direset pimpinan tidak boleh jadi sandi
+// permanen yang diketahui orang lain (keputusan owner 2026-09).
+// Sesi lama juga dicabut: sandi lama tidak boleh tetap hidup di perangkat lain.
 func ResetPassword(ctx context.Context, id int, defaultPassword string) error {
 	hash, err := bcrypt.GenerateFromPassword([]byte(defaultPassword), 12)
 	if err != nil {
 		return err
 	}
 
-	_, err = config.DB.Exec(ctx,
-		`UPDATE users SET password_hash=$1, is_password_changed=true WHERE id=$2`,
+	tx, err := config.DB.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	tag, err := tx.Exec(ctx,
+		`UPDATE users SET password_hash=$1, is_password_changed=false, updated_at=NOW() WHERE id=$2`,
 		string(hash), id)
-	return err
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return ErrUserNotFound
+	}
+
+	if _, err := tx.Exec(ctx, `DELETE FROM sessions WHERE user_id=$1`, id); err != nil {
+		return err
+	}
+
+	return tx.Commit(ctx)
+}
+
+// ResetPasswordBulkResult melaporkan hasil reset per user.
+type ResetPasswordBulkResult struct {
+	ID       int    `json:"id"`
+	Nama     string `json:"nama"`
+	Username string `json:"username"`
+	AnakNama string `json:"anak_nama,omitempty"`
+	Password string `json:"password,omitempty"` // sandi baru, untuk diberitahukan ke wali
+	Status   string `json:"status"`             // "sukses" | "gagal"
+	Pesan    string `json:"pesan,omitempty"`
+}
+
+// ResetPasswordBulk mereset sandi banyak user sekaligus.
+//
+// password kosong → sandi dikembalikan ke NIK anak (untuk wali, username == NIK
+// anak — sudah diverifikasi di produksi 2026-09). Setiap user diproses terpisah
+// (PARTIAL): satu id yang bermasalah tidak menggagalkan sisanya.
+func ResetPasswordBulk(ctx context.Context, ids []int, password string) ([]ResetPasswordBulkResult, error) {
+	results := make([]ResetPasswordBulkResult, 0, len(ids))
+
+	for _, id := range ids {
+		var nama, username, anakNama string
+		err := config.DB.QueryRow(ctx, `
+			SELECT COALESCE(u.nama,''), u.username,
+			       COALESCE((SELECT s.nama FROM wali_santri_link wl
+			                 JOIN santri s ON s.id = wl.santri_id
+			                 WHERE wl.user_id = u.id
+			                 ORDER BY s.nama LIMIT 1), '')
+			FROM users u WHERE u.id=$1 AND u.is_active=true`, id).
+			Scan(&nama, &username, &anakNama)
+		if err != nil {
+			results = append(results, ResetPasswordBulkResult{
+				ID: id, Status: "gagal", Pesan: "user tidak ditemukan / nonaktif",
+			})
+			continue
+		}
+
+		pw := password
+		if pw == "" {
+			// Default: NIK anak == username wali.
+			pw = username
+		}
+
+		if err := ResetPassword(ctx, id, pw); err != nil {
+			results = append(results, ResetPasswordBulkResult{
+				ID: id, Nama: nama, Username: username, AnakNama: anakNama,
+				Status: "gagal", Pesan: err.Error(),
+			})
+			continue
+		}
+
+		results = append(results, ResetPasswordBulkResult{
+			ID: id, Nama: nama, Username: username, AnakNama: anakNama,
+			Password: pw, Status: "sukses",
+		})
+	}
+
+	return results, nil
 }
 
 type DynamicColumn struct {

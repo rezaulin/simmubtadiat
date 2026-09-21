@@ -482,6 +482,9 @@ func main() {
 						// Users Management
 						r.Get("/users", handlers.GetUsers)
 						r.Post("/users", handlers.CreateUser)
+						// Reset massal HARUS didaftarkan sebelum /users/{id}/...
+						// agar chi memilih segmen statis ini (bukan {id}).
+						r.Post("/users/reset-password-bulk", handlers.ResetPasswordBulk)
 						r.Put("/users/{id}", handlers.UpdateUser)
 						r.Delete("/users/{id}", handlers.DeleteUser)
 						r.Post("/users/{id}/reset-password", handlers.ResetPassword)

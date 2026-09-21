@@ -2,8 +2,10 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/mubtadiaat/app/middleware"
@@ -77,6 +79,9 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"status": "success", "message": "User berhasil dihapus"})
 }
 
+// ResetPassword — POST /api/settings/users/{id}/reset-password
+// Body: {"password":"..."}. Sandi wajib lolos validasi kompleksitas.
+// Setelah reset, user WAJIB mengganti sandi sendiri saat login (lihat models.ResetPassword).
 func ResetPassword(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
 	var req struct {
@@ -92,10 +97,67 @@ func ResetPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := models.ResetPassword(r.Context(), id, req.Password); err != nil {
+		if errors.Is(err, models.ErrUserNotFound) {
+			http.Error(w, "User tidak ditemukan", http.StatusNotFound)
+			return
+		}
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	json.NewEncoder(w).Encode(map[string]string{"status": "success", "message": "Password user berhasil direset"})
+}
+
+// ResetPasswordBulk — POST /api/settings/users/reset-password-bulk
+// Body: {"ids":[1,2,3], "password":""} — password kosong = reset ke NIK anak.
+// Partial: id yang bermasalah dilaporkan per-baris, sisanya tetap diproses.
+func ResetPasswordBulk(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		IDs      []int  `json:"ids"`
+		Password string `json:"password"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Body tidak valid", http.StatusBadRequest)
+		return
+	}
+	if len(req.IDs) == 0 {
+		http.Error(w, "Pilih minimal satu pengguna", http.StatusBadRequest)
+		return
+	}
+	if len(req.IDs) > 200 {
+		http.Error(w, "Maksimal 200 pengguna per sekali reset", http.StatusBadRequest)
+		return
+	}
+
+	pw := strings.TrimSpace(req.Password)
+	// Sandi custom tetap harus lolos validasi kompleksitas. Mode NIK (kosong)
+	// tidak divalidasi karena NIK bisa pendek (mis. "5555").
+	if pw != "" {
+		if ok, msg := middleware.ValidatePasswordComplexity(pw); !ok {
+			http.Error(w, msg, http.StatusBadRequest)
+			return
+		}
+	}
+
+	results, err := models.ResetPasswordBulk(r.Context(), req.IDs, pw)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	sukses, gagal := 0, 0
+	for _, res := range results {
+		if res.Status == "sukses" {
+			sukses++
+		} else {
+			gagal++
+		}
+	}
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"status":  "success",
+		"sukses":  sukses,
+		"gagal":   gagal,
+		"results": results,
+	})
 }
 
 // Dynamic Columns
