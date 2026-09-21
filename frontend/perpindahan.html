@@ -201,40 +201,11 @@
       <div class="flex items-center gap-2 bg-gray-100 dark:bg-slate-800 p-1 rounded-xl flex-wrap">
         <button id="tab-mutasi" class="px-4 py-2 rounded-lg text-sm font-medium bg-white dark:bg-slate-700 shadow-sm text-gray-800 dark:text-white transition-all">Naik Kelas &amp; Mutasi
         <button id="tab-cuti" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-all">Status Cuti / Boyong
-        <button id="tab-stambuk" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-all">Kelola Stambuk Massal
       </div>
     </div>
 
     <!-- TAB 1: KENAIKAN KELAS -->
     <div id="content-mutasi" class="px-6 pb-6 flex-1 flex flex-col gap-6">
-
-      <!-- Susun Ulang Stambuk (posisi) per tingkatan -->
-      <div class="glass dark:bg-slate-800/80 rounded-2xl border border-amber-200 dark:border-amber-800/50 p-6 shadow-sm flex flex-col gap-3">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white shadow-md shrink-0">
-            <i data-lucide="list-ordered" class="w-5 h-5"></i>
-          </div>
-          <div>
-            <h3 class="text-base font-bold text-gray-800 dark:text-white">Susun Ulang Stambuk</h3>
-            <p class="text-xs text-gray-500 dark:text-gray-400">Beri nomor stambuk posisi (urut kelas &rarr; bagian &rarr; nama) ke seluruh santri aktif di tingkatan. Jalankan saat awal tahun / setelah kenaikan tingkatan.</p>
-          </div>
-        </div>
-        <div class="flex flex-col sm:flex-row gap-3 sm:items-end">
-          <div class="flex-1 flex flex-col gap-1">
-            <label class="text-xs font-semibold text-gray-500">Tingkatan</label>
-            <select id="select-tingkatan-stambuk" class="glass-input px-3 py-2 rounded-xl text-sm w-full font-medium">
-              <option value="">-- Pilih Tingkatan --</option>
-            </select>
-          </div>
-          <div class="flex-1 flex flex-col gap-1">
-            <label class="text-xs font-semibold text-gray-500">Kelas</label>
-            <select id="select-kelas-stambuk" class="glass-input px-3 py-2 rounded-xl text-sm w-full font-medium" disabled>
-              <option value="">-- Pilih Kelas --</option>
-            </select>
-          </div>
-          <button id="btn-susun-stambuk" class="bg-amber-500 hover:bg-amber-600 text-white px-5 py-2 rounded-xl text-sm font-medium shadow-md transition-all whitespace-nowrap">Susun Ulang
-        </div>
-      </div>
 
       <div class="glass dark:bg-slate-800/80 rounded-2xl border border-gray-200 dark:border-slate-700 p-6 shadow-sm flex flex-col gap-4">
         <div class="flex flex-col gap-6">
@@ -367,72 +338,7 @@
 
     </div>
 
-    <!-- TAB 3: KELOLA Stambuk MASSAL -->
-    <div id="content-stambuk" class="px-6 pb-6 hidden flex-col gap-6">
 
-      <!-- Filter tingkatan + kelas -->
-      <div class="glass dark:bg-slate-800/80 rounded-2xl border border-gray-200 dark:border-slate-700 p-6 shadow-sm">
-        <div class="flex items-center gap-3 mb-4">
-          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center text-white shadow-md shrink-0">
-            <i data-lucide="hash" class="w-5 h-5"></i>
-          </div>
-          <div>
-            <h3 class="text-base font-bold text-gray-800 dark:text-white">Kelola Stambuk Massal per Kelas</h3>
-            <p class="text-xs text-gray-500 dark:text-gray-400">Beri Stambuk ke seluruh santri di satu kelas (lintas bagian). Urut bagian → alfabet nama. Stambuk counter per tingkatan (tidak reset).</p>
-          </div>
-        </div>
-
-        <div class="flex flex-col sm:flex-row gap-3 sm:items-end flex-wrap">
-          <div class="flex flex-col gap-1">
-            <label class="text-xs font-semibold text-gray-500">Tingkatan</label>
-            <select id="stambuk-tingkatan" class="glass-input px-3 py-2 rounded-xl text-sm min-w-[160px] font-medium">
-              <option value="">-- Pilih Tingkatan --</option>
-            </select>
-          </div>
-          <div class="flex flex-col gap-1">
-            <label class="text-xs font-semibold text-gray-500">Kelas</label>
-            <select id="stambuk-kelas" class="glass-input px-3 py-2 rounded-xl text-sm min-w-[120px] font-medium" disabled>
-              <option value="">-- Pilih Kelas --</option>
-            </select>
-          </div>
-          <button id="stambuk-load" class="bg-primary hover:bg-primary-hover text-white px-5 py-2 rounded-xl text-sm font-medium shadow-md">Tampilkan
-        </div>
-      </div>
-
-      <!-- Info + tombol generate/simpan -->
-      <div id="stambuk-toolbar" class="hidden glass dark:bg-slate-800/80 rounded-2xl border border-indigo-200 dark:border-indigo-800/50 p-4 flex flex-col sm:flex-row gap-3 sm:items-center flex-wrap">
-        <div class="flex-1 text-sm">
-          <p class="text-gray-600 dark:text-gray-300">Stambuk terakhir di tingkatan: <span id="stambuk-max" class="font-mono font-bold text-indigo-700 dark:text-indigo-400">-</span></p>
-          <p class="text-xs text-gray-400">Auto-detect dari MAX(Stambuk) di seluruh santri tingkatan tersebut.</p>
-        </div>
-        <div class="flex flex-col gap-1">
-          <label class="text-xs font-semibold text-gray-500">Mulai dari nomor</label>
-          <input type="number" id="stambuk-start" class="glass-input px-3 py-2 rounded-lg text-sm w-32 font-mono font-bold">
-        </div>
-        <button id="stambuk-generate" class="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-medium">Generate Otomatis
-        <button id="stambuk-clear" class="bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-xl text-sm font-medium">Kosongkan Semua
-        <button id="stambuk-save" class="bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-2 rounded-xl text-sm font-medium shadow-md">Simpan Semua
-      </div>
-
-      <!-- Tabel santri -->
-      <div id="stambuk-table-container" class="hidden glass dark:bg-slate-800/80 rounded-2xl border border-gray-200 dark:border-slate-700 overflow-hidden shadow-sm">
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-sm text-gray-600 dark:text-gray-300">
-            <thead class="bg-gray-50/50 dark:bg-slate-900/50 text-gray-500 dark:text-gray-400 uppercase font-semibold text-xs border-b border-gray-200 dark:border-slate-700">
-              <tr>
-                <th class="px-4 py-3 w-24">Bagian</th>
-                <th class="px-4 py-3 w-12 text-center">No</th>
-                <th class="px-4 py-3">Nama Lengkap</th>
-                <th class="px-4 py-3 w-40">Stambuk</th>
-              </tr>
-            </thead>
-            <tbody id="stambuk-table-body" class="divide-y divide-gray-100 dark:divide-slate-700/50"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <div id="stambuk-empty" class="hidden text-center text-gray-400 py-8">Tidak ada santri aktif di kelas ini.</div>
-    </div>
 
   </main>
 
