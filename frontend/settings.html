@@ -191,16 +191,16 @@
     </header>
 
     <!-- CONTENT HEADER -->
-    <div class="px-6 py-6">
+    <div class="px-4 py-4 md:px-6 md:py-6">
       <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Pengaturan Sistem</h2>
       <p class="text-sm text-gray-500 dark:text-gray-400">Kelola pengguna, akses aplikasi, dan pengaturan raport (Hanya untuk Admin/Pimpinan).</p>
     </div>
 
     <!-- MAIN DASHBOARD CONTENT -->
-    <div class="px-6 pb-24 grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="px-4 pb-24 md:px-6 grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
       
       <!-- Users Management -->
-      <div class="glass dark:bg-slate-800/80 rounded-3xl p-6 border border-gray-200 dark:border-slate-700 shadow-sm relative overflow-hidden group">
+      <div class="glass dark:bg-slate-800/80 rounded-3xl p-4 md:p-6 border border-gray-200 dark:border-slate-700 shadow-sm relative overflow-hidden group">
         <div class="absolute -right-10 -top-10 w-40 h-40 bg-primary/10 rounded-full blur-3xl group-hover:bg-primary/20 transition-colors"></div>
         <div class="flex items-center justify-between mb-6 relative z-10">
           <div class="flex items-center gap-4">
@@ -245,7 +245,7 @@
         </div>
 
         <div class="overflow-x-auto relative z-10">
-          <table class="w-full text-left text-sm text-gray-600 dark:text-gray-300">
+          <table class="w-full text-left text-sm text-gray-600 dark:text-gray-300 table-responsive">
             <thead class="bg-gray-50/50 dark:bg-slate-700/50 text-gray-500 dark:text-gray-400 text-xs uppercase font-semibold border-b border-gray-200 dark:border-slate-700">
               <tr>
                 <th class="px-4 py-3 w-10">
@@ -275,7 +275,7 @@
       </div>
 
       <!-- Mudir per Tingkatan (tanda tangan raport semester 2) -->
-      <div class="glass dark:bg-slate-800/80 rounded-3xl p-6 border border-gray-200 dark:border-slate-700 shadow-sm relative overflow-hidden group flex flex-col col-span-1 md:col-span-2">
+      <div class="glass dark:bg-slate-800/80 rounded-3xl p-4 md:p-6 border border-gray-200 dark:border-slate-700 shadow-sm relative overflow-hidden group flex flex-col col-span-1 md:col-span-2">
         <div class="flex items-center gap-4 mb-6 relative z-10">
           <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-teal-400 to-cyan-500 flex items-center justify-center text-white shadow-lg">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -291,7 +291,7 @@
       </div>
 
       <!-- Agenda / Acara -->
-      <div class="glass dark:bg-slate-800/80 rounded-3xl p-6 border border-gray-200 dark:border-slate-700 shadow-sm relative overflow-hidden group flex flex-col">
+      <div class="glass dark:bg-slate-800/80 rounded-3xl p-4 md:p-6 border border-gray-200 dark:border-slate-700 shadow-sm relative overflow-hidden group flex flex-col">
         <div class="absolute -right-10 -top-10 w-40 h-40 bg-primary/10 rounded-full blur-3xl group-hover:bg-primary/20 transition-colors"></div>
         <div class="flex items-center gap-4 mb-6 relative z-10">
           <div class="w-12 h-12 rounded-2xl hero-gradient flex items-center justify-center text-white shadow-lg">
@@ -336,7 +336,7 @@
       </div>
 
       <!-- Kalender Akademik (Hijriyah) -->
-      <div class="glass dark:bg-slate-800/80 rounded-3xl p-6 border border-gray-200 dark:border-slate-700 shadow-sm relative overflow-hidden group flex flex-col">
+      <div class="glass dark:bg-slate-800/80 rounded-3xl p-4 md:p-6 border border-gray-200 dark:border-slate-700 shadow-sm relative overflow-hidden group flex flex-col">
         <div class="absolute -right-10 -top-10 w-40 h-40 bg-sky-500/10 rounded-full blur-3xl group-hover:bg-sky-500/20 transition-colors"></div>
         <div class="flex items-center gap-4 mb-6 relative z-10">
           <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-sky-500 to-cyan-500 flex items-center justify-center text-white shadow-lg">
@@ -351,17 +351,19 @@
           <div class="flex flex-col gap-1">
             <label class="text-sm font-semibold text-gray-700 dark:text-gray-300">Tahun Ajaran</label>
             <p class="text-xs text-gray-500">Tahun ajaran aktif saat ini: <span id="kalender-ta-active" class="font-mono font-bold text-amber-600 dark:text-amber-400">-</span>. Semua input absensi &amp; nilai default ke tahun aktif.</p>
-            <div class="flex gap-2 flex-wrap">
-              <input type="text" id="kalender-ta" class="glass-input px-3 py-2 rounded-lg text-sm w-full md:w-52 font-mono font-bold" placeholder="2026/2027">
-              <button type="button" id="kalender-load" class="px-4 py-2 rounded-xl text-sm font-medium bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors whitespace-nowrap">Muat
-              <button type="button" id="kalender-set-active" class="px-4 py-2 rounded-xl text-sm font-medium bg-amber-500 hover:bg-amber-600 text-white transition-colors whitespace-nowrap">Jadikan Tahun Aktif
+            <div class="flex flex-col sm:flex-row gap-2">
+              <input type="text" id="kalender-ta" class="glass-input px-3 py-2 rounded-lg text-sm w-full sm:w-52 font-mono font-bold" placeholder="2026/2027">
+              <div class="flex gap-2 flex-wrap">
+                <button type="button" id="kalender-load" class="px-4 py-2 rounded-xl text-sm font-medium bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors whitespace-nowrap">Muat
+                <button type="button" id="kalender-set-active" class="px-4 py-2 rounded-xl text-sm font-medium bg-amber-500 hover:bg-amber-600 text-white transition-colors whitespace-nowrap">Jadikan Tahun Aktif
+              </div>
             </div>
           </div>
           <div class="flex flex-col gap-1">
             <label class="text-sm font-semibold text-gray-700 dark:text-gray-300">Tahun Hijriyah Aktif</label>
             <p class="text-xs text-gray-500">Digunakan di halaman Absensi Manual & Rekap. Contoh: 1447/1448 (2 tahun Hijri per TA). Aktif: <span id="kalender-th-active" class="font-mono font-bold text-emerald-600 dark:text-emerald-400">-</span></p>
-            <div class="flex gap-2 flex-wrap">
-              <input type="text" id="kalender-th" class="glass-input px-3 py-2 rounded-lg text-sm w-32 font-mono font-bold" placeholder="1447/1448">
+            <div class="flex flex-col sm:flex-row gap-2">
+              <input type="text" id="kalender-th" class="glass-input px-3 py-2 rounded-lg text-sm w-full sm:w-32 font-mono font-bold" placeholder="1447/1448">
               <button type="button" id="kalender-set-hijri" class="px-4 py-2 rounded-xl text-sm font-medium bg-emerald-500 hover:bg-emerald-600 text-white transition-colors whitespace-nowrap">Simpan Tahun Hijri
             </div>
           </div>
@@ -370,18 +372,18 @@
               <h4 class="text-sm font-bold text-gray-700 dark:text-gray-200">Semester 1</h4>
               <div class="flex flex-col gap-1">
                 <label class="text-xs font-semibold text-gray-500">Mulai Semester 1</label>
-                <div class="flex gap-2">
-              <input type="number" id="s1-mulai-tgl" min="1" max="30" placeholder="Tgl" class="glass-input px-2 py-2 rounded-lg text-sm w-16">
-              <select id="s1-mulai-bln" class="glass-input px-2 py-2 rounded-lg text-sm flex-1"><option value="">Bulan</option><option value="1">Muharram</option><option value="2">Safar</option><option value="3">Rabiul Awal</option><option value="4">Rabiul Akhir</option><option value="5">Jumadil Awal</option><option value="6">Jumadil Akhir</option><option value="7">Rajab</option><option value="8">Sya'ban</option><option value="9">Ramadhan</option><option value="10">Syawal</option><option value="11">Dzulqa'dah</option><option value="12">Dzulhijjah</option></select>
-              <input type="number" id="s1-mulai-thn" min="1300" max="1600" placeholder="Tahun H" class="glass-input px-2 py-2 rounded-lg text-sm w-24 font-mono">
+                <div class="flex flex-col sm:flex-row gap-2">
+              <input type="number" id="s1-mulai-tgl" min="1" max="30" placeholder="Tgl" class="glass-input px-2 py-2 rounded-lg text-sm w-full sm:w-16">
+              <select id="s1-mulai-bln" class="glass-input px-2 py-2 rounded-lg text-sm flex-1 min-w-0"><option value="">Bulan</option><option value="1">Muharram</option><option value="2">Safar</option><option value="3">Rabiul Awal</option><option value="4">Rabiul Akhir</option><option value="5">Jumadil Awal</option><option value="6">Jumadil Akhir</option><option value="7">Rajab</option><option value="8">Sya'ban</option><option value="9">Ramadhan</option><option value="10">Syawal</option><option value="11">Dzulqa'dah</option><option value="12">Dzulhijjah</option></select>
+              <input type="number" id="s1-mulai-thn" min="1300" max="1600" placeholder="Tahun H" class="glass-input px-2 py-2 rounded-lg text-sm w-full sm:w-24 font-mono">
             </div>
               </div>
               <div class="flex flex-col gap-1">
                 <label class="text-xs font-semibold text-gray-500">Selesai Semester 1</label>
-                <div class="flex gap-2">
-              <input type="number" id="s1-selesai-tgl" min="1" max="30" placeholder="Tgl" class="glass-input px-2 py-2 rounded-lg text-sm w-16">
-              <select id="s1-selesai-bln" class="glass-input px-2 py-2 rounded-lg text-sm flex-1"><option value="">Bulan</option><option value="1">Muharram</option><option value="2">Safar</option><option value="3">Rabiul Awal</option><option value="4">Rabiul Akhir</option><option value="5">Jumadil Awal</option><option value="6">Jumadil Akhir</option><option value="7">Rajab</option><option value="8">Sya'ban</option><option value="9">Ramadhan</option><option value="10">Syawal</option><option value="11">Dzulqa'dah</option><option value="12">Dzulhijjah</option></select>
-              <input type="number" id="s1-selesai-thn" min="1300" max="1600" placeholder="Tahun H" class="glass-input px-2 py-2 rounded-lg text-sm w-24 font-mono">
+                <div class="flex flex-col sm:flex-row gap-2">
+              <input type="number" id="s1-selesai-tgl" min="1" max="30" placeholder="Tgl" class="glass-input px-2 py-2 rounded-lg text-sm w-full sm:w-16">
+              <select id="s1-selesai-bln" class="glass-input px-2 py-2 rounded-lg text-sm flex-1 min-w-0"><option value="">Bulan</option><option value="1">Muharram</option><option value="2">Safar</option><option value="3">Rabiul Awal</option><option value="4">Rabiul Akhir</option><option value="5">Jumadil Awal</option><option value="6">Jumadil Akhir</option><option value="7">Rajab</option><option value="8">Sya'ban</option><option value="9">Ramadhan</option><option value="10">Syawal</option><option value="11">Dzulqa'dah</option><option value="12">Dzulhijjah</option></select>
+              <input type="number" id="s1-selesai-thn" min="1300" max="1600" placeholder="Tahun H" class="glass-input px-2 py-2 rounded-lg text-sm w-full sm:w-24 font-mono">
             </div>
               </div>
             </div>
@@ -389,18 +391,18 @@
               <h4 class="text-sm font-bold text-gray-700 dark:text-gray-200">Semester 2</h4>
               <div class="flex flex-col gap-1">
                 <label class="text-xs font-semibold text-gray-500">Mulai Semester 2</label>
-                <div class="flex gap-2">
-              <input type="number" id="s2-mulai-tgl" min="1" max="30" placeholder="Tgl" class="glass-input px-2 py-2 rounded-lg text-sm w-16">
-              <select id="s2-mulai-bln" class="glass-input px-2 py-2 rounded-lg text-sm flex-1"><option value="">Bulan</option><option value="1">Muharram</option><option value="2">Safar</option><option value="3">Rabiul Awal</option><option value="4">Rabiul Akhir</option><option value="5">Jumadil Awal</option><option value="6">Jumadil Akhir</option><option value="7">Rajab</option><option value="8">Sya'ban</option><option value="9">Ramadhan</option><option value="10">Syawal</option><option value="11">Dzulqa'dah</option><option value="12">Dzulhijjah</option></select>
-              <input type="number" id="s2-mulai-thn" min="1300" max="1600" placeholder="Tahun H" class="glass-input px-2 py-2 rounded-lg text-sm w-24 font-mono">
+                <div class="flex flex-col sm:flex-row gap-2">
+              <input type="number" id="s2-mulai-tgl" min="1" max="30" placeholder="Tgl" class="glass-input px-2 py-2 rounded-lg text-sm w-full sm:w-16">
+              <select id="s2-mulai-bln" class="glass-input px-2 py-2 rounded-lg text-sm flex-1 min-w-0"><option value="">Bulan</option><option value="1">Muharram</option><option value="2">Safar</option><option value="3">Rabiul Awal</option><option value="4">Rabiul Akhir</option><option value="5">Jumadil Awal</option><option value="6">Jumadil Akhir</option><option value="7">Rajab</option><option value="8">Sya'ban</option><option value="9">Ramadhan</option><option value="10">Syawal</option><option value="11">Dzulqa'dah</option><option value="12">Dzulhijjah</option></select>
+              <input type="number" id="s2-mulai-thn" min="1300" max="1600" placeholder="Tahun H" class="glass-input px-2 py-2 rounded-lg text-sm w-full sm:w-24 font-mono">
             </div>
               </div>
               <div class="flex flex-col gap-1">
                 <label class="text-xs font-semibold text-gray-500">Selesai Semester 2</label>
-                <div class="flex gap-2">
-              <input type="number" id="s2-selesai-tgl" min="1" max="30" placeholder="Tgl" class="glass-input px-2 py-2 rounded-lg text-sm w-16">
-              <select id="s2-selesai-bln" class="glass-input px-2 py-2 rounded-lg text-sm flex-1"><option value="">Bulan</option><option value="1">Muharram</option><option value="2">Safar</option><option value="3">Rabiul Awal</option><option value="4">Rabiul Akhir</option><option value="5">Jumadil Awal</option><option value="6">Jumadil Akhir</option><option value="7">Rajab</option><option value="8">Sya'ban</option><option value="9">Ramadhan</option><option value="10">Syawal</option><option value="11">Dzulqa'dah</option><option value="12">Dzulhijjah</option></select>
-              <input type="number" id="s2-selesai-thn" min="1300" max="1600" placeholder="Tahun H" class="glass-input px-2 py-2 rounded-lg text-sm w-24 font-mono">
+                <div class="flex flex-col sm:flex-row gap-2">
+              <input type="number" id="s2-selesai-tgl" min="1" max="30" placeholder="Tgl" class="glass-input px-2 py-2 rounded-lg text-sm w-full sm:w-16">
+              <select id="s2-selesai-bln" class="glass-input px-2 py-2 rounded-lg text-sm flex-1 min-w-0"><option value="">Bulan</option><option value="1">Muharram</option><option value="2">Safar</option><option value="3">Rabiul Awal</option><option value="4">Rabiul Akhir</option><option value="5">Jumadil Awal</option><option value="6">Jumadil Akhir</option><option value="7">Rajab</option><option value="8">Sya'ban</option><option value="9">Ramadhan</option><option value="10">Syawal</option><option value="11">Dzulqa'dah</option><option value="12">Dzulhijjah</option></select>
+              <input type="number" id="s2-selesai-thn" min="1300" max="1600" placeholder="Tahun H" class="glass-input px-2 py-2 rounded-lg text-sm w-full sm:w-24 font-mono">
             </div>
               </div>
             </div>

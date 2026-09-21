@@ -203,20 +203,20 @@ async function loadUsers() {
         ? `<span class="text-[10px] text-emerald-600 dark:text-emerald-400">✅ sudah ganti</span>`
         : `<span class="text-[10px] font-semibold text-amber-600 dark:text-amber-400">⚠️ wajib ganti</span>`;
       tr.innerHTML = `
-        <td class="px-4 py-3">
+        <td data-label="" class="px-4 py-3">
           <input type="checkbox" class="user-check w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
                  data-id="${u.id}" data-nama="${esc(u.nama || '')}" data-username="${esc(u.username)}" data-anak="${esc(u.anak_nama || '')}">
         </td>
-        <td class="px-4 py-3">
+        <td data-label="Nama" class="px-4 py-3">
           <div class="font-medium text-gray-900 dark:text-white">${esc(u.nama || '-')}</div>
           <div class="text-[10px] text-gray-400">${esc(u.username)}</div>
           <div class="mt-0.5">${pwBadge}</div>
         </td>
-        <td class="px-4 py-3">${anakCell}</td>
-        <td class="px-4 py-3">
+        <td data-label="Anak" class="px-4 py-3">${anakCell}</td>
+        <td data-label="Role" class="px-4 py-3">
           ${roleBadges}
         </td>
-        <td class="px-4 py-3 text-right whitespace-nowrap">
+        <td data-label="Aksi" class="px-4 py-3 text-right whitespace-nowrap">
           <button class="btn-reset-row text-amber-500 hover:text-amber-700 mr-3 transition-colors" data-id="${u.id}" data-nama="${esc(u.nama || '')}" data-username="${esc(u.username)}" data-anak="${esc(u.anak_nama || '')}" title="Reset sandi pengguna ini">🔑 Reset</button>
           <button class="btn-edit text-blue-500 hover:text-blue-700 mr-3 transition-colors" data-id="${u.id}" data-username="${u.username}" data-roles='${JSON.stringify(u.roles || [u.role]).replace(/'/g, "&#39;")}' data-nama="${u.nama || ''}" data-pengajar="${u.pengajar_id || ''}">Edit</button>
           <button class="btn-delete text-red-500 hover:text-red-700 transition-colors" data-id="${u.id}">Hapus</button>
