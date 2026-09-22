@@ -404,9 +404,9 @@ function renderRekapSiswaGrid() {
     html += '<tr>';
     html += `<td class="px-2 py-1.5 border text-center text-gray-400 text-xs">${String(idx + 1).padStart(2, '0')}</td>`;
     html += `<td class="px-3 py-1.5 border font-medium">${b.label}</td>`;
-    html += `<td class="px-3 py-1.5 border text-center font-bold text-blue-600 dark:text-blue-400">${d.s || '-'}</td>`;
-    html += `<td class="px-3 py-1.5 border text-center font-bold text-amber-600 dark:text-amber-400">${d.i || '-'}</td>`;
-    html += `<td class="px-3 py-1.5 border text-center font-bold text-red-600 dark:text-red-400">${d.a || '-'}</td>`;
+    html += `<td class="px-3 py-1.5 border text-center font-bold text-gray-700 dark:text-gray-300">${d.s || '-'}</td>`;
+    html += `<td class="px-3 py-1.5 border text-center font-bold text-gray-700 dark:text-gray-300">${d.i || '-'}</td>`;
+    html += `<td class="px-3 py-1.5 border text-center font-bold text-gray-700 dark:text-gray-300">${d.a || '-'}</td>`;
     const sit = (d.s || 0) + (d.i || 0) + (d.a || 0);
     html += `<td class="px-3 py-1.5 border text-center font-extrabold text-gray-700 dark:text-gray-300">${sit || '-'}</td>`;
     html += '</tr>';
