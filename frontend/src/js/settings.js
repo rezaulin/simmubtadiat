@@ -171,7 +171,7 @@ async function loadUsers() {
 
     tableUsers.innerHTML = '';
     if (users.length === 0) {
-      tableUsers.innerHTML = `<tr><td colspan="5" class="px-4 py-6 text-center text-gray-400">Tidak ada pengguna.</td></tr>`;
+      tableUsers.innerHTML = `<tr><td colspan="4" class="px-4 py-6 text-center text-gray-400">Tidak ada pengguna.</td></tr>`;
       updateUserPagination();
       return;
     }
@@ -212,7 +212,6 @@ async function loadUsers() {
           <div class="text-[10px] text-gray-400">${esc(u.username)}</div>
           <div class="mt-0.5">${pwBadge}</div>
         </td>
-        <td data-label="Anak" class="px-4 py-3">${anakCell}</td>
         <td data-label="Role" class="px-4 py-3">
           ${roleBadges}
         </td>
@@ -281,7 +280,7 @@ async function loadUsers() {
     updateUserPagination();
     updateBulkBar();
   } catch (err) {
-    tableUsers.innerHTML = `<tr><td colspan="5" class="px-4 py-4 text-center text-red-500">${esc(err.message)}</td></tr>`;
+    tableUsers.innerHTML = `<tr><td colspan="4" class="px-4 py-4 text-center text-red-500">${esc(err.message)}</td></tr>`;
   }
 }
 
