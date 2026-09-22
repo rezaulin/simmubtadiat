@@ -392,9 +392,9 @@ function renderRekapSiswaGrid() {
   html += '<table class="border-collapse text-sm w-full"><thead><tr>';
   html += '<th class="px-2 py-2 border text-center w-10">#</th>';
   html += '<th class="px-3 py-2 border text-left">BULAN</th>';
-  html += '<th class="px-3 py-2 border text-center w-16 text-blue-600 dark:text-blue-400">S</th>';
-  html += '<th class="px-3 py-2 border text-center w-16 text-amber-600 dark:text-amber-400">I</th>';
-  html += '<th class="px-3 py-2 border text-center w-16 text-red-600 dark:text-red-400">T</th>';
+  html += '<th class="px-3 py-2 border text-center w-16 text-gray-700 dark:text-gray-300">S</th>';
+  html += '<th class="px-3 py-2 border text-center w-16 text-gray-700 dark:text-gray-300">I</th>';
+  html += '<th class="px-3 py-2 border text-center w-16 text-gray-700 dark:text-gray-300">T</th>';
   html += '<th class="px-3 py-2 border text-center w-16 text-gray-600 dark:text-gray-400 font-extrabold">SIT</th>';
   html += '</tr></thead><tbody>';
 
