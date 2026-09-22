@@ -395,6 +395,7 @@ function renderRekapSiswaGrid() {
   html += '<th class="px-3 py-2 border text-center w-16 text-blue-600 dark:text-blue-400">S</th>';
   html += '<th class="px-3 py-2 border text-center w-16 text-amber-600 dark:text-amber-400">I</th>';
   html += '<th class="px-3 py-2 border text-center w-16 text-red-600 dark:text-red-400">T</th>';
+  html += '<th class="px-3 py-2 border text-center w-16 text-gray-600 dark:text-gray-400 font-extrabold">SIT</th>';
   html += '</tr></thead><tbody>';
 
   rekapBulanList.forEach((b, idx) => {
@@ -406,8 +407,29 @@ function renderRekapSiswaGrid() {
     html += `<td class="px-3 py-1.5 border text-center font-bold text-blue-600 dark:text-blue-400">${d.s || '-'}</td>`;
     html += `<td class="px-3 py-1.5 border text-center font-bold text-amber-600 dark:text-amber-400">${d.i || '-'}</td>`;
     html += `<td class="px-3 py-1.5 border text-center font-bold text-red-600 dark:text-red-400">${d.a || '-'}</td>`;
+    const sit = (d.s || 0) + (d.i || 0) + (d.a || 0);
+    html += `<td class="px-3 py-1.5 border text-center font-extrabold text-gray-700 dark:text-gray-300">${sit || '-'}</td>`;
     html += '</tr>';
   });
+
+  // Baris total selama setahun
+  let totalS = 0, totalI = 0, totalT = 0;
+  rekapBulanList.forEach(b => {
+    const key = `${b.tahun}:${b.bulan}`;
+    const d = data[key] || { s: 0, i: 0, a: 0 };
+    totalS += d.s || 0;
+    totalI += d.i || 0;
+    totalT += d.a || 0;
+  });
+  const totalSIT = totalS + totalI + totalT;
+  html += '<tr class="bg-gray-100 dark:bg-slate-700 font-extrabold">';
+  html += '<td class="px-2 py-1.5 border text-center text-xs" colspan="2">TOTAL SETAHUN</td>';
+  html += `<td class="px-3 py-1.5 border text-center text-blue-600 dark:text-blue-400">${totalS}</td>`;
+  html += `<td class="px-3 py-1.5 border text-center text-amber-600 dark:text-amber-400">${totalI}</td>`;
+  html += `<td class="px-3 py-1.5 border text-center text-red-600 dark:text-red-400">${totalT}</td>`;
+  html += `<td class="px-3 py-1.5 border text-center text-gray-700 dark:text-gray-300">${totalSIT}</td>`;
+  html += '</tr>';
+
   html += '</tbody></table>';
   html += '<p class="text-xs text-gray-400 mt-2">S = Sakit &nbsp;•&nbsp; I = Izin &nbsp;•&nbsp; T = Alpha (tanpa keterangan) &nbsp;•&nbsp; Tampilan rekap (baca saja)</p>';
 
