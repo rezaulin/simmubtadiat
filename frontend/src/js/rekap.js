@@ -42,7 +42,12 @@ if (localStorage.theme === 'dark') {
 
 // Tab Switching Logic
 tabSiswa.addEventListener('click', () => switchTab('siswa'));
-tabPengajar.addEventListener('click', () => switchTab('pengajar'));
+tabPengajar.addEventListener('click', () => {
+    switchTab('pengajar');
+    // Auto-load rekap pengajar dengan tahun ajaran aktif
+    const tahun = selTahunPengajar.value;
+    if (tahun) btnLoadPengajar.click();
+  });
 
 function switchTab(tab) {
     currentTab = tab;
@@ -469,17 +474,9 @@ function renderTablePengajar(data) {
 
   const list = data || [];
 
-  const totalK1 = list.reduce((a, u) => a + (u.kuartal_1 || 0), 0);
-  const totalK23 = list.reduce((a, u) => a + (u.kuartal_23 || 0), 0);
-  const totalK4 = list.reduce((a, u) => a + (u.kuartal_4 || 0), 0);
 
-  summaryPengajar.innerHTML = `
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-      ${summaryCard('Total Pengajar', list.length, 'Pengajar aktif')}
-      ${summaryCard('Jumlah Kuartal 1', totalK1, 'Total semua pengajar')}
-      ${summaryCard('Jumlah Kuartal 2 & 3', totalK23, 'Total semua pengajar')}
-      ${summaryCard('Jumlah Kuartal 4', totalK4, 'Total semua pengajar')}
-    </div>`;
+
+  summaryPengajar.innerHTML = '';
 
   if (list.length === 0) {
     tableHead.innerHTML = `<tr><th class="px-6 py-3">Data Kosong</th></tr>`;
@@ -502,7 +499,7 @@ function renderTablePengajar(data) {
         <td class="px-4 py-3 text-gray-500 text-center">${idx + 1}</td>
         <td class="px-4 py-3">
           <p class="font-medium text-gray-800 dark:text-gray-200 whitespace-nowrap">${u.pengajar_nama || '-'}</p>
-          ${u.kelas_nama ? `<span class="text-[10px] font-bold text-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:text-blue-300 px-2 py-0.5 rounded-md ml-1">${u.kelas_nama}</span>` : ''}
+          ${(u.tingkatan_nama || u.kelas_nama) ? `<span class="text-[10px] font-bold text-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:text-blue-300 px-2 py-0.5 rounded-md ml-1">${u.tingkatan_nama || ''} ${u.kelas_nama || ''}</span>` : ''}
         </td>
         <td class="px-4 py-3 text-center font-bold text-gray-800 dark:text-gray-200">${u.kuartal_1 || 0}</td>
         <td class="px-4 py-3 text-center font-bold text-gray-800 dark:text-gray-200">${u.kuartal_23 || 0}</td>
