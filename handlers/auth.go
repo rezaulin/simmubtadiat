@@ -192,7 +192,7 @@ func LoginWali(w http.ResponseWriter, r *http.Request) {
 		newHash, _ := bcrypt.GenerateFromPassword([]byte(req.Nik), 12)
 		err = config.DB.QueryRow(context.Background(),
 			`INSERT INTO users (username, password_hash, role, nama, is_password_changed, is_active)
-			 VALUES ($1, $2, 'wali_santri', $3, false, true) RETURNING id`,
+			 VALUES ($1, $2, 'wali_santri', $3, true, true) RETURNING id`,
 			req.Nik, string(newHash), "Wali "+santriNama).Scan(&userID)
 		if err != nil {
 			http.Error(w, "Internal server error creating wali account", http.StatusInternalServerError)
@@ -211,7 +211,7 @@ func LoginWali(w http.ResponseWriter, r *http.Request) {
 
 		hash = string(newHash)
 		role = "wali_santri"
-		isPasswordChanged = false
+		isPasswordChanged = true
 	}
 
 	// For first time, or if they haven't changed password, they login directly with NIK (or if they changed, they should use standard login instead, but let's allow LoginWali if password hasn't been changed)
