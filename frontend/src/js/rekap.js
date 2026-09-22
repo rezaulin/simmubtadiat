@@ -367,8 +367,8 @@ function renderRekapSiswaGrid() {
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
       ${summaryCard('Total Santri', rekapSiswaList.length, 'Siswa dalam kelas ini')}
       ${summaryCard('Sakit & Izin', totS + totI, `S: ${totS} • I: ${totI}`)}
-      ${summaryCard('Total Alpha', totA, `Akumulasi Alpha`, (totA ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-white'))}
-      ${summaryCard('Bersih Alpha', `${santriTanpaAlpha}/${rekapSiswaList.length}`, 'Santri nihil alpha', 'text-blue-600 dark:text-blue-400')}
+      ${summaryCard('Total Alpha', totA, 'Akumulasi Alpha')}
+      ${summaryCard('Bersih Alpha', `${santriTanpaAlpha}/${rekapSiswaList.length}`, 'Santri nihil alpha')}
     </div>`;
 
   if (!rekapSiswaList.length) {
