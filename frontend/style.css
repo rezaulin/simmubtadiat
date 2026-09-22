@@ -45,13 +45,11 @@
   body {
     font-family: var(--font-inter);
     background-color: var(--color-light-bg);
-    /* Latar seluruh halaman: ornamen Islami yang sama dengan hero,
-       dilapisi overlay tipis agar pattern tembus tapi konten tetap terbaca. */
+    /* Latar seluruh halaman: gradient teal lembut tanpa pattern image. */
     background-image:
       linear-gradient(135deg,
         rgba(241, 245, 249, 0.62),
-        rgba(241, 245, 249, 0.42)),
-      url('/hero-pattern.jpg');
+        rgba(241, 245, 249, 0.42));
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
@@ -64,8 +62,7 @@
     background-image:
       linear-gradient(135deg,
         rgba(15, 23, 42, 0.82),
-        rgba(15, 23, 42, 0.68)),
-      url('/hero-pattern.jpg');
+        rgba(15, 23, 42, 0.68));
     color: #f8fafc; /* slate-50 */
   }
 }
@@ -82,18 +79,13 @@
     );
   }
 
-  /* Lapisan pola ornamen Islami di belakang hero — gambar pattern biru-putih
-     dari kiriman user, dilapisi gradient teal semi-transparan agar teks
-     putih tetap kontras dan nuansa warna app tetap dominan. */
+  /* Layer depth tambahan untuk hero — radial gradient subtly menambah
+     dimensi tanpa pattern image. Digabung dengan .hero-gradient. */
   .hero-pattern {
     background-color: transparent;
     background-image:
-      linear-gradient(135deg,
-        rgba(15, 110, 119, 0.88),
-        rgba(18, 162, 168, 0.72)),
-      url('/hero-pattern.jpg');
-    background-size: cover;
-    background-position: center;
+      radial-gradient(ellipse at 20% 50%, rgba(255,255,255,0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, rgba(255,255,255,0.05) 0%, transparent 40%);
   }
 
   /* Kartu terpusat: setiap kartu pada seluruh halaman dirender dengan border
