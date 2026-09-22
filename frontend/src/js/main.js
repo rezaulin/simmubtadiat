@@ -1110,20 +1110,20 @@ async function loadKalenderAgenda(target, today) {
 // melainkan grid ikon menu sesuai role masing-masing pengguna — gaya
 // home-screen app. Menu yang tampil = MENU_ACCESS role (sama dengan sidebar).
 const DASH_MENU = {
-  '/santri.html':         { label: 'Santri',          icon: 'users',            grad: 'from-indigo-500 via-blue-500 to-cyan-400',       glow: 'shadow-indigo-500/30' },
-  '/penilaian.html':      { label: 'Penilaian',       icon: 'list-checks',      grad: 'from-teal-400 via-emerald-500 to-emerald-600',    glow: 'shadow-emerald-500/30' },
-  '/absensi-manual.html': { label: 'Absensi',         icon: 'clipboard-check',  grad: 'from-lime-400 via-green-500 to-emerald-600',      glow: 'shadow-green-500/30' },
-  '/rapot.html':          { label: 'Raport',          icon: 'scroll-text',      grad: 'from-amber-400 via-orange-500 to-orange-600',     glow: 'shadow-orange-500/30' },
-  '/catatan.html':        { label: 'Pelanggaran',     icon: 'shield-alert',     grad: 'from-red-500 via-rose-500 to-rose-600',           glow: 'shadow-rose-500/30' },
-  '/rekap.html':          { label: 'Rekap',           icon: 'bar-chart-3',      grad: 'from-cyan-400 via-sky-500 to-blue-500',           glow: 'shadow-sky-500/30' },
-  '/pengajar.html':       { label: 'Pengajar',        icon: 'book-open',        grad: 'from-violet-500 via-purple-500 to-fuchsia-500',   glow: 'shadow-purple-500/30' },
-  '/dewan-harian.html':  { label: 'Dewan Harian',    icon: 'crown',            grad: 'from-yellow-400 via-amber-500 to-amber-600',      glow: 'shadow-amber-500/30' },
-  '/alumni.html':         { label: 'Alumni',          icon: 'graduation-cap',   grad: 'from-pink-400 via-fuchsia-500 to-purple-500',     glow: 'shadow-fuchsia-500/30' },
-  '/arsip.html':          { label: 'Arsip',           icon: 'archive',          grad: 'from-slate-400 via-slate-500 to-slate-600',       glow: 'shadow-slate-500/25' },
-  '/pengajar-purna.html': { label: 'Pengajar Purna',  icon: 'history',          grad: 'from-stone-400 via-stone-500 to-stone-600',       glow: 'shadow-stone-500/25' },
-  '/kelas.html':          { label: 'Kelas',           icon: 'school',           grad: 'from-sky-400 via-blue-500 to-indigo-500',         glow: 'shadow-blue-500/30' },
-  '/perpindahan.html':    { label: 'Perpindahan',     icon: 'arrow-right-left', grad: 'from-lime-400 via-lime-500 to-green-500',         glow: 'shadow-lime-500/30' },
-  '/settings.html':       { label: 'Pengaturan',      icon: 'settings-2',       grad: 'from-gray-400 via-gray-500 to-slate-600',         glow: 'shadow-gray-500/25' },
+  '/santri.html':         { label: 'Santri',          icon: 'users',            grad: 'from-[#0F6E77] via-[#10919A] to-[#12A2A8]', glow: 'shadow-teal-500/25' },
+  '/penilaian.html':      { label: 'Penilaian',       icon: 'list-checks',      grad: 'from-[#0F6E77] via-[#10919A] to-[#12A2A8]', glow: 'shadow-teal-500/25' },
+  '/absensi-manual.html': { label: 'Absensi',         icon: 'clipboard-check',  grad: 'from-[#0F6E77] via-[#10919A] to-[#12A2A8]', glow: 'shadow-teal-500/25' },
+  '/rapot.html':          { label: 'Raport',          icon: 'scroll-text',      grad: 'from-[#0F6E77] via-[#10919A] to-[#12A2A8]', glow: 'shadow-teal-500/25' },
+  '/catatan.html':        { label: 'Pelanggaran',     icon: 'shield-alert',     grad: 'from-[#0F6E77] via-[#10919A] to-[#12A2A8]', glow: 'shadow-teal-500/25' },
+  '/rekap.html':          { label: 'Rekap',           icon: 'bar-chart-3',      grad: 'from-[#0F6E77] via-[#10919A] to-[#12A2A8]', glow: 'shadow-teal-500/25' },
+  '/pengajar.html':       { label: 'Pengajar',        icon: 'book-open',        grad: 'from-[#0F6E77] via-[#10919A] to-[#12A2A8]', glow: 'shadow-teal-500/25' },
+  '/dewan-harian.html':  { label: 'Dewan Harian',    icon: 'crown',            grad: 'from-[#0F6E77] via-[#10919A] to-[#12A2A8]', glow: 'shadow-teal-500/25' },
+  '/alumni.html':         { label: 'Alumni',          icon: 'graduation-cap',   grad: 'from-[#0F6E77] via-[#10919A] to-[#12A2A8]', glow: 'shadow-teal-500/25' },
+  '/arsip.html':          { label: 'Arsip',           icon: 'archive',          grad: 'from-[#0F6E77] via-[#10919A] to-[#12A2A8]', glow: 'shadow-teal-500/25' },
+  '/pengajar-purna.html': { label: 'Pengajar Purna',  icon: 'history',          grad: 'from-[#0F6E77] via-[#10919A] to-[#12A2A8]', glow: 'shadow-teal-500/25' },
+  '/kelas.html':          { label: 'Kelas',           icon: 'school',           grad: 'from-[#0F6E77] via-[#10919A] to-[#12A2A8]', glow: 'shadow-teal-500/25' },
+  '/perpindahan.html':    { label: 'Perpindahan',     icon: 'arrow-right-left', grad: 'from-[#0F6E77] via-[#10919A] to-[#12A2A8]', glow: 'shadow-teal-500/25' },
+  '/settings.html':       { label: 'Pengaturan',      icon: 'settings-2',       grad: 'from-[#0F6E77] via-[#10919A] to-[#12A2A8]', glow: 'shadow-teal-500/25' },
 };
 
 // Menu utama = 6 menu inti yang paling sering dipakai (fixed, keputusan owner
