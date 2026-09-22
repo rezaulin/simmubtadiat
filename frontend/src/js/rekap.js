@@ -502,6 +502,7 @@ function renderTablePengajar(data) {
         <td class="px-4 py-3 text-gray-500 text-center">${idx + 1}</td>
         <td class="px-4 py-3">
           <p class="font-medium text-gray-800 dark:text-gray-200 whitespace-nowrap">${u.pengajar_nama || '-'}</p>
+          ${u.kelas_nama ? `<span class="text-[10px] font-bold text-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:text-blue-300 px-2 py-0.5 rounded-md ml-1">${u.kelas_nama}</span>` : ''}
         </td>
         <td class="px-4 py-3 text-center font-bold text-gray-800 dark:text-gray-200">${u.kuartal_1 || 0}</td>
         <td class="px-4 py-3 text-center font-bold text-gray-800 dark:text-gray-200">${u.kuartal_23 || 0}</td>
