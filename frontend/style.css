@@ -45,11 +45,8 @@
   body {
     font-family: var(--font-inter);
     background-color: var(--color-light-bg);
-    /* Latar seluruh halaman: gradient teal lembut tanpa pattern image. */
-    background-image:
-      linear-gradient(135deg,
-        rgba(241, 245, 249, 0.62),
-        rgba(241, 245, 249, 0.42));
+    /* Latar belakang: foto gedung sebagai background paling belakang */
+    background-image: url('/hero-pattern.jpg');
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
@@ -59,10 +56,10 @@
 
   .dark body {
     background-color: var(--color-dark-bg);
-    background-image:
-      linear-gradient(135deg,
-        rgba(15, 23, 42, 0.82),
-        rgba(15, 23, 42, 0.68));
+    background-image: url('/hero-pattern.jpg');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
     color: #f8fafc; /* slate-50 */
   }
 }
