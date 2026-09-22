@@ -1170,7 +1170,7 @@ function renderMenuGrid(roles, target) {
         <span class="hidden text-[11px] text-white/60 md:block">${links.length} menu</span>
       </div>` : '';
     el.innerHTML = `
-      <div class="hero-gradient hero-pattern rounded-3xl p-4 shadow-xl shadow-teal-900/20 dark:shadow-none md:p-5">
+      <div class="hero-gradient rounded-3xl p-4 shadow-xl shadow-teal-900/20 dark:shadow-none md:p-5">
         ${tabsHtml}
         <div class="grid grid-cols-4 gap-y-5 gap-x-2 sm:grid-cols-5 lg:grid-cols-7">${tiles}</div>
       </div>`;

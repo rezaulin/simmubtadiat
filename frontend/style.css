@@ -79,14 +79,7 @@
     );
   }
 
-  /* Layer depth tambahan untuk hero — radial gradient subtly menambah
-     dimensi tanpa pattern image. Digabung dengan .hero-gradient. */
-  .hero-pattern {
-    background-color: transparent;
-    background-image:
-      radial-gradient(ellipse at 20% 50%, rgba(255,255,255,0.08) 0%, transparent 50%),
-      radial-gradient(ellipse at 80% 20%, rgba(255,255,255,0.05) 0%, transparent 40%);
-  }
+  /* hero-pattern dihapus — gradient bersih tanpa pattern image */
 
   /* Kartu terpusat: setiap kartu pada seluruh halaman dirender dengan border
      selebar 1px. Warna border merujuk token dengan fallback agar degradasi
