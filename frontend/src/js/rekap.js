@@ -423,10 +423,10 @@ function renderRekapSiswaGrid() {
   });
   const totalSIT = totalS + totalI + totalT;
   html += '<tr class="bg-gray-100 dark:bg-slate-700 font-extrabold">';
-  html += '<td class="px-2 py-1.5 border text-center text-xs" colspan="2">TOTAL SETAHUN</td>';
-  html += `<td class="px-3 py-1.5 border text-center text-blue-600 dark:text-blue-400">${totalS}</td>`;
-  html += `<td class="px-3 py-1.5 border text-center text-amber-600 dark:text-amber-400">${totalI}</td>`;
-  html += `<td class="px-3 py-1.5 border text-center text-red-600 dark:text-red-400">${totalT}</td>`;
+  html += '<td class="px-2 py-1.5 border text-center text-xs" colspan="2">TOTAL</td>';
+  html += `<td class="px-3 py-1.5 border text-center text-gray-700 dark:text-gray-300">${totalS}</td>`;
+  html += `<td class="px-3 py-1.5 border text-center text-gray-700 dark:text-gray-300">${totalI}</td>`;
+  html += `<td class="px-3 py-1.5 border text-center text-gray-700 dark:text-gray-300">${totalT}</td>`;
   html += `<td class="px-3 py-1.5 border text-center text-gray-700 dark:text-gray-300">${totalSIT}</td>`;
   html += '</tr>';
 
