@@ -1132,6 +1132,8 @@ const DASH_MENU = {
 const MAIN_MENU_LINKS = [
   '/santri.html', '/penilaian.html', '/absensi-manual.html',
   '/rapot.html', '/catatan.html', '/rekap.html',
+  '/pengajar.html', '/alumni.html', '/dewan-harian.html',
+  '/pengajar-purna.html', '/settings.html',
 ];
 
 function menuTileHtml(l) {
@@ -1154,7 +1156,7 @@ function renderMenuGrid(roles, target) {
   if (allLinks.length === 0) { el.innerHTML = ''; return; }
 
   const mainLinks = MAIN_MENU_LINKS.filter(l => allLinks.includes(l));
-  const useTabs = mainLinks.length >= 3 && mainLinks.length < allLinks.length;
+  const useTabs = mainLinks.length >= 2 && allLinks.length > 0;
 
   let currentTab = 'utama';
 
