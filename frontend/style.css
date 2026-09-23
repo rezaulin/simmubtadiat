@@ -44,7 +44,7 @@
 
   body {
     font-family: var(--font-inter);
-    background-color: #0a3d44;
+    background-color: #061e22;
     /* Latar belakang: foto gedung sebagai background paling belakang, redup */
     background-image: url('/hero-pattern.jpg');
     background-size: cover;
