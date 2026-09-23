@@ -186,6 +186,7 @@ const BOTTOM_NAV = {
     { href: '/rekap.html', icon: 'clipboard-list', label: 'Rekap' }
   ],
   admin: [
+    { href: '/index.html', icon: 'home', label: 'Beranda' },
     { href: '/santri.html', icon: 'users', label: 'Santri' },
     { href: '/alumni.html', icon: 'school', label: 'Alumni' },
     { href: '/pengajar.html', icon: 'graduation-cap', label: 'Pengajar' }
