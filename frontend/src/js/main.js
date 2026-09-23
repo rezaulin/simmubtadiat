@@ -16,11 +16,7 @@ function decodeEntities(str) {
     .replace(/&amp;/g, '&');
 }
 
-// Apply dark mode if preference exists
-if (localStorage.theme === 'dark') {
-  document.documentElement.classList.add('dark');
-}
-
+// Dark mode init moved to xss.js (runs on every page via module import)
 const themeToggle = document.getElementById('theme-toggle-main');
 if (themeToggle) {
   themeToggle.addEventListener('click', () => {

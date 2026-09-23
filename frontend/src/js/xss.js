@@ -1,5 +1,9 @@
 
 // Global XSS Sanitizer intercepting fetch JSON responses
+// Apply dark mode on every page (shared via localStorage)
+if (localStorage.theme === 'dark') {
+  document.documentElement.classList.add('dark');
+}
 const originalJson = Response.prototype.json;
 
 function escapeHTML(str) {
