@@ -188,8 +188,10 @@ const BOTTOM_NAV = {
   admin: [
     { href: '/index.html', icon: 'home', label: 'Beranda' },
     { href: '/santri.html', icon: 'users', label: 'Santri' },
-    { href: '/alumni.html', icon: 'graduation-cap', label: 'Alumni' },
-    { href: '/pengajar.html', icon: 'graduation-cap', label: 'Pengajar' }
+    { href: '/pengajar.html', icon: 'graduation-cap', label: 'Pengajar' },
+    { href: '/pengajar-purna.html', icon: 'user-check', label: 'Purna' },
+    { href: '/alumni.html', icon: 'school', label: 'Alumni' },
+    { href: '/dewan-harian.html', icon: 'users', label: 'Dewan' }
   ],
   tim_raport: [
     { href: '/index.html', icon: 'home', label: 'Beranda' },
