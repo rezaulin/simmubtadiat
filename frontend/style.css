@@ -44,12 +44,13 @@
 
   body {
     font-family: var(--font-inter);
-    background-color: var(--color-light-bg);
-    /* Latar belakang: foto gedung sebagai background paling belakang */
+    background-color: #0a3d44;
+    /* Latar belakang: foto gedung sebagai background paling belakang, redup */
     background-image: url('/hero-pattern.jpg');
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
+    background-blend-mode: multiply;
     color: #1f2937; /* gray-800 */
     transition: background-color 0.3s, color 0.3s;
   }
@@ -60,6 +61,7 @@
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
+    background-blend-mode: multiply;
     color: #f8fafc; /* slate-50 */
   }
 }
