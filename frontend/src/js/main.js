@@ -1171,7 +1171,7 @@ function renderMenuGrid(roles, target) {
       </div>` : '';
     el.innerHTML = `
       <div class="rounded-3xl p-4 shadow-xl shadow-teal-900/20 dark:shadow-none md:p-5 relative overflow-hidden" style="background-image: url('/hero-pattern.jpg'); background-size: cover; background-position: center;">
-        <div class="absolute inset-0 pointer-events-none rounded-3xl" style="background: linear-gradient(135deg, rgba(15,110,119,0.50), rgba(18,162,168,0.40))"></div>
+        <div class="absolute inset-0 pointer-events-none rounded-3xl" style="background: linear-gradient(135deg, rgba(15,110,119,0.80), rgba(18,162,168,0.75))"></div>
         ${tabsHtml}
         <div class="grid grid-cols-4 gap-y-5 gap-x-2 sm:grid-cols-5 lg:grid-cols-7">${tiles}</div>
       </div>`;
