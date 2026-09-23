@@ -153,53 +153,64 @@ function markActiveNav() {
 }
 
 const BOTTOM_NAV = {
-  // --- Per-role nav (3 items + optional action) ---
+  beranda: { href: '/index.html', icon: 'home', label: 'Beranda' },
+  // --- Per-role nav (Beranda + 2 role-specific) ---
   pimpinan: [
+    { href: '/index.html', icon: 'home', label: 'Beranda' },
     { href: '/santri.html', icon: 'users', label: 'Santri' },
     { href: '/alumni.html', icon: 'graduation-cap', label: 'Alumni' },
     { href: '/rekap.html', icon: 'clipboard-list', label: 'Rekap' }
   ],
   mufatisy: [
+    { href: '/index.html', icon: 'home', label: 'Beranda' },
     { href: '/santri.html', icon: 'users', label: 'Santri' },
     { href: '/absensi-manual.html', icon: 'clipboard-check', label: 'Absen' },
     { href: '/catatan.html', icon: 'alert-triangle', label: 'Pelanggaran' }
   ],
   mufatisy_mustahiq: [
+    { href: '/index.html', icon: 'home', label: 'Beranda' },
     { href: '/santri.html', icon: 'users', label: 'Santri' },
     { href: '/absensi-manual.html', icon: 'clipboard-check', label: 'Absen' },
     { href: '/penilaian.html', icon: 'award', label: 'Nilai' }
   ],
   mustahiq_keamanan: [
+    { href: '/index.html', icon: 'home', label: 'Beranda' },
     { href: '/santri.html', icon: 'users', label: 'Santri' },
     { href: '/penilaian.html', icon: 'award', label: 'Nilai' },
     { href: '/catatan.html', icon: 'alert-triangle', label: 'Pelanggaran' }
   ],
   mustahiq: [
+    { href: '/index.html', icon: 'home', label: 'Beranda' },
     { href: '/santri.html', icon: 'users', label: 'Santri' },
     { href: '/penilaian.html', icon: 'award', label: 'Nilai' },
     { href: '/rekap.html', icon: 'clipboard-list', label: 'Rekap' }
   ],
   admin: [
+    { href: '/index.html', icon: 'home', label: 'Beranda' },
     { href: '/santri.html', icon: 'users', label: 'Santri' },
     { href: '/alumni.html', icon: 'graduation-cap', label: 'Alumni' },
     { href: '/pengajar.html', icon: 'graduation-cap', label: 'Pengajar' }
   ],
   tim_raport: [
+    { href: '/index.html', icon: 'home', label: 'Beranda' },
     { href: '/santri.html', icon: 'users', label: 'Santri' },
     { href: '/penilaian.html', icon: 'award', label: 'Nilai' },
     { href: '/rapot.html', icon: 'file-text', label: 'Rapor' }
   ],
   muroqib: [
+    { href: '/index.html', icon: 'home', label: 'Beranda' },
     { href: '/santri.html', icon: 'users', label: 'Santri' },
     { href: '/absensi-manual.html', icon: 'clipboard-check', label: 'Absen' },
     { href: '/catatan.html', icon: 'alert-triangle', label: 'Pelanggaran' }
   ],
   wali_santri: [
+    { href: '/index.html', icon: 'home', label: 'Beranda' },
     { id: 'btn-mobile-logout', icon: 'log-out', label: 'Keluar', isAction: true }
   ],
 
-  // --- Fallback: no Beranda, just role-specific 3 items ---
+  // --- Fallback ---
   default: [
+    { href: '/index.html', icon: 'home', label: 'Beranda' },
     { href: '/santri.html', icon: 'users', label: 'Santri' },
     { href: '/penilaian.html', icon: 'award', label: 'Nilai' },
     { href: '/rekap.html', icon: 'clipboard-list', label: 'Rekap' }
