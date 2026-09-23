@@ -186,12 +186,9 @@ const BOTTOM_NAV = {
     { href: '/rekap.html', icon: 'clipboard-list', label: 'Rekap' }
   ],
   admin: [
-    { href: '/index.html', icon: 'home', label: 'Beranda' },
     { href: '/santri.html', icon: 'users', label: 'Santri' },
-    { href: '/pengajar.html', icon: 'graduation-cap', label: 'Pengajar' },
-    { href: '/pengajar-purna.html', icon: 'user-check', label: 'Purna' },
     { href: '/alumni.html', icon: 'school', label: 'Alumni' },
-    { href: '/dewan-harian.html', icon: 'users', label: 'Dewan' }
+    { href: '/pengajar.html', icon: 'graduation-cap', label: 'Pengajar' }
   ],
   tim_raport: [
     { href: '/index.html', icon: 'home', label: 'Beranda' },
