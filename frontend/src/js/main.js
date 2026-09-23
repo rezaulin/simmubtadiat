@@ -1137,7 +1137,7 @@ const MAIN_MENU_LINKS = [
 function menuTileHtml(l) {
   const m = DASH_MENU[l];
   return `
-    <a href="${l}" class="group flex flex-col items-center gap-2.5 rounded-2xl p-2 pt-3 transition-all active:scale-95 hover:bg-gray-50 dark:hover:bg-slate-700/30">
+    <a href="${l}" class="group flex flex-col items-center gap-2.5 rounded-2xl p-2 pt-3 transition-all active:scale-95 hover:bg-white/10 text-white">
       <div class="relative flex h-14 w-14 items-center justify-center rounded-[1.15rem] bg-gradient-to-br ${m.grad} text-white shadow-lg ${m.glow} ring-1 ring-inset ring-white/25 transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:scale-105">
         <span class="pointer-events-none absolute inset-x-1 top-0.5 h-[45%] rounded-t-[1rem] bg-gradient-to-b from-white/30 to-transparent"></span>
         <i data-lucide="${m.icon}" class="relative h-7 w-7" style="stroke-width:2.25"></i>
