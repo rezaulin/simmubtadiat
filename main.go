@@ -167,9 +167,9 @@ func main() {
 				// Santri
 				r.Route("/santri", func(r chi.Router) {
 					// Daftar lengkap santri: dibutuhkan untuk data santri & rapot.
-					// Munawwib (absensi saja) tidak perlu; wali_santri diblok.
+					// Munawwib (absensi saja) tidak perlu; wali_santri diblok; tim_rapot butuh baca untuk rapot.
 					r.Group(func(r chi.Router) {
-						r.Use(appMiddleware.RequireRoles("pimpinan", "admin", "mufatish", "mustahiq", "muroqib", "keamanan"))
+						r.Use(appMiddleware.RequireRoles("pimpinan", "admin", "mufatish", "mustahiq", "muroqib", "tim_rapot", "keamanan"))
 						r.Get("/", handlers.GetSantriAktif)
 					})
 
