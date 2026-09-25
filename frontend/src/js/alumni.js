@@ -964,7 +964,7 @@ inputImportFile?.addEventListener('change', async (e) => {
     alert('Error import: ' + err.message);
   } finally {
     btnImportAlumni.disabled = false;
-    btnImportAlumni.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"></path></svg><span class="hidden md:inline">Import Excel</span>';
+    btnImportAlumni.innerHTML = '<i data-lucide="arrow-up-from-line" class="w-4 h-4"></i><span class="hidden md:inline">Upload</span>';
     inputImportFile.value = '';
   }
 });

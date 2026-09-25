@@ -207,19 +207,22 @@
         </div>
         
         <button id="btn-export" class="hidden flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl font-medium text-sm transition-all shadow-sm">
-          <i data-lucide="download" class="w-4 h-4"></i>
-          <span class="hidden md:inline">Export Excel</span>
+          <i data-lucide="arrow-down-to-line" class="w-4 h-4"></i>
+          <span class="hidden md:inline">Download</span>
+        </button>
         
 
         <button id="btn-import" class="hidden flex items-center justify-center gap-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-700 px-4 py-2 rounded-xl font-medium text-sm transition-all shadow-sm">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-          <span class="hidden md:inline">Import Excel</span>
+          <i data-lucide="arrow-up-from-line" class="w-4 h-4"></i>
+          <span class="hidden md:inline">Upload</span>
+        </button>
         
 
         <button id="btn-tambah" class="hidden flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover dark:bg-accent-emerald dark:hover:bg-emerald-600 text-white px-4 py-2 rounded-xl font-medium text-sm transition-all shadow-md">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
           <span class="hidden md:inline">Tambah Santri</span>
-        
+        </button>
+
       </div>
     </div>
 
@@ -493,8 +496,8 @@
         <div id="import-result" class="hidden text-sm rounded-lg p-3"></div>
 
         <div class="flex justify-end gap-3 mt-2">
-          <button type="button" id="btn-import-cancel" class="px-4 py-2 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">Tutup
-          <button type="button" id="btn-import-submit" class="bg-primary hover:bg-primary-hover dark:bg-accent-emerald dark:hover:bg-emerald-600 text-white px-5 py-2 rounded-xl text-sm font-medium transition-all shadow-md">Unggah & Import
+          <button type="button" id="btn-import-cancel" class="px-4 py-2 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">Tutup</button>
+          <button type="button" id="btn-import-submit" class="bg-primary hover:bg-primary-hover dark:bg-accent-emerald dark:hover:bg-emerald-600 text-white px-5 py-2 rounded-xl text-sm font-medium transition-all shadow-md">Unggah & Import</button>
         </div>
       </div>
     </div>

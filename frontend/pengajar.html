@@ -246,14 +246,14 @@
 
           <button id="btn-export"
             class="hidden items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl font-medium text-sm transition-all shadow-md">
-            <i data-lucide="download" class="w-4 h-4"></i>
-            <span class="hidden md:inline">Export</span>
-          
-          
+            <i data-lucide="arrow-down-to-line" class="w-4 h-4"></i>
+            <span class="hidden md:inline">Download</span>
+          </button>
+
           <label id="btn-import-trigger" for="file-import"
             class="hidden items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl font-medium text-sm transition-all shadow-md cursor-pointer">
-            <i data-lucide="upload" class="w-4 h-4"></i>
-            <span class="hidden md:inline">Import</span>
+            <i data-lucide="arrow-up-from-line" class="w-4 h-4"></i>
+            <span class="hidden md:inline">Upload</span>
             <input type="file" id="file-import" accept=".xlsx" class="hidden">
           </label>
 
@@ -272,9 +272,11 @@
         <button id="tab-data"
           class="pb-3 text-sm font-semibold border-b-2 border-primary text-primary dark:text-accent-emerald dark:border-accent-emerald transition-colors">Daftar
           Pengajar
+        </button>
         <button id="tab-penugasan"
           class="pb-3 text-sm font-semibold border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors">Penugasan
           & Akses
+        </button>
       </div>
     </div>
 
