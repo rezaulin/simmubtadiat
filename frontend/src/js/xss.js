@@ -205,7 +205,6 @@ const BOTTOM_NAV = {
     { href: '/index.html', icon: 'home', label: 'Beranda' },
     { href: '/santri.html', icon: 'users', label: 'Santri' },
     { href: '/absensi-manual.html', icon: 'clipboard-check', label: 'Absen' },
-    { href: '/rekap.html', icon: 'table', label: 'Rekap' },
     { href: '/catatan.html', icon: 'alert-triangle', label: 'Pelanggaran' }
   ],
   wali_santri: [
