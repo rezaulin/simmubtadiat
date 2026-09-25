@@ -559,9 +559,9 @@ function renderMufatishTable() {
     });
 
     tr.innerHTML = `
-      <td class="px-6 py-4 text-gray-700 dark:text-gray-300 font-medium">${k.tingkatan}</td>
-      <td class="px-6 py-4 text-gray-700 dark:text-gray-300 font-medium">${k.kelas}</td>
-      <td class="px-6 py-4">
+      <td data-label="Tingkatan" class="px-6 py-4 text-gray-700 dark:text-gray-300 font-medium">${k.tingkatan}</td>
+      <td data-label="Kelas" class="px-6 py-4 text-gray-700 dark:text-gray-300 font-medium">${k.kelas}</td>
+      <td data-label="Nama Pengawas (Mufatish)" class="px-6 py-4">
         <div class="view-mode flex items-center">
           <span class="text-gray-900 dark:text-white">${assignedNama}</span>
         </div>
@@ -571,7 +571,7 @@ function renderMufatishTable() {
           </select>
         </div>
       </td>
-      <td class="px-6 py-4 text-right">
+      <td data-label="Aksi" class="px-6 py-4 text-right">
         ${window.isAdminRole(userRole) ? `
           <button type="button" class="btn-atur text-blue-500 hover:underline text-sm font-medium view-mode">${assignedId ? 'Edit' : 'Atur'}</button>
           <button type="button" class="btn-simpan text-green-500 hover:underline text-sm font-medium hidden edit-mode">Simpan</button>
@@ -648,9 +648,9 @@ function renderMustahiqTable() {
     });
 
     tr.innerHTML = `
-      <td class="px-6 py-4 text-gray-700 dark:text-gray-300 font-medium">${b.tingkatan} ${b.kelas}</td>
-      <td class="px-6 py-4 text-gray-700 dark:text-gray-300 font-medium">${b.nama_bagian}</td>
-      <td class="px-6 py-4">
+      <td data-label="Tingkatan & Kelas" class="px-6 py-4 text-gray-700 dark:text-gray-300 font-medium">${b.tingkatan} ${b.kelas}</td>
+      <td data-label="Ruang (Bagian)" class="px-6 py-4 text-gray-700 dark:text-gray-300 font-medium">${b.nama_bagian}</td>
+      <td data-label="Wali Kelas (Mustahiq)" class="px-6 py-4">
         <div class="view-mode flex items-center">
           <span class="text-gray-900 dark:text-white">${assignedNama}</span>
         </div>
@@ -660,17 +660,17 @@ function renderMustahiqTable() {
           </select>
         </div>
       </td>
-      <td class="px-6 py-4">
+      <td data-label="Munawwib" class="px-6 py-4">
         <div class="mb-2 flex flex-wrap max-w-[200px]">${munawwibHtml || '<span class="text-gray-500 dark:text-gray-400 text-xs">-</span>'}</div>
       </td>
-      <td class="px-6 py-4">
+      <td data-label="Aksi Mustahiq" class="px-6 py-4">
         ${window.isAdminRole(userRole) ? `
           <button type="button" class="btn-atur text-blue-500 hover:underline text-sm font-medium view-mode">${assignedId ? 'Edit Mustahiq' : 'Atur Mustahiq'}</button>
           <button type="button" class="btn-simpan text-green-500 hover:underline text-sm font-medium hidden edit-mode">Simpan</button>
           <button type="button" class="btn-batal text-gray-500 dark:text-gray-400 hover:underline text-sm font-medium hidden edit-mode ml-2">Batal</button>
         ` : ''}
       </td>
-      <td class="px-6 py-4">
+      <td data-label="Aksi Munawwib" class="px-6 py-4">
         ${window.isAdminRole(userRole) ? `
           <button type="button" class="text-indigo-500 hover:underline text-sm font-medium" onclick="openModalMunawwib(${b.id})">+ Tambah Munawwib</button>
         ` : ''}
