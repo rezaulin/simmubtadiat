@@ -90,13 +90,20 @@ async function checkAuth() {
       window.location.href = '/login.html';
       return;
     }
-    loadFilters();
+    const me = await res.json();
+    const roles = me.roles || [me.role];
+    // Hide "Log Absensi Pengajar" tab for muroqib (backend only allows pimpinan/mufatish/tim_rapot/mustahiq)
+    if (roles.includes('muroqib') && !roles.includes('pimpinan') && !roles.includes('admin')) {
+      tabPengajar.classList.add('hidden');
+      filterSectionPengajar.classList.add('hidden');
+    }
+    loadFilters(roles);
   } catch (err) {
     console.error(err);
   }
 }
 
-async function loadFilters() {
+async function loadFilters(roles = []) {
   try {
     const [resTingkatan, resTahun, resUmum, resBagian] = await Promise.all([
         fetch('/api/akademik/tingkatan'),
@@ -124,6 +131,17 @@ async function loadFilters() {
     if (opsiTingkatan.length === 1) {
         selTingkatanSiswa.value = String(opsiTingkatan[0].id);
         selTingkatanSiswa.dispatchEvent(new Event('change'));
+    }
+
+    // Auto-select for muroqib: pick first assigned tingkatan & kelas
+    if (roles.includes('muroqib') && !roles.includes('pimpinan') && !roles.includes('admin') && allBagian.length > 0) {
+        const firstBagian = allBagian[0];
+        selTingkatanSiswa.value = String(firstBagian.tingkatan_id);
+        selTingkatanSiswa.dispatchEvent(new Event('change'));
+        setTimeout(() => {
+            selKelasSiswa.value = firstBagian.kelas;
+            selKelasSiswa.dispatchEvent(new Event('change'));
+        }, 100);
     }
 
     let tahunData = resTahun.ok ? await resTahun.json() : [];
