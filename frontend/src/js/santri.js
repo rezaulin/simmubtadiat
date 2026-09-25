@@ -291,7 +291,8 @@ let cachedBagian = [];
 async function loadBagianOptions(roles = []) {
   try {
     const isMustahiqOnly = roles.includes('mustahiq') && !roles.includes('pimpinan') && !roles.includes('admin') && !roles.includes('keamanan');
-    const endpoint = isMustahiqOnly ? '/api/penilaian/bagian' : '/api/akademik/bagian';
+    const isMufatishOnly = roles.includes('mufatish') && !roles.includes('pimpinan') && !roles.includes('admin') && !roles.includes('keamanan');
+    const endpoint = (isMustahiqOnly || isMufatishOnly) ? '/api/penilaian/bagian' : '/api/akademik/bagian';
     const res = await fetch(endpoint);
     const data = await res.json();
     if (res.ok && Array.isArray(data)) {
@@ -302,6 +303,20 @@ async function loadBagianOptions(roles = []) {
         selectBagianAwal.innerHTML += `<option value="${b.id}">${b.tingkatan} - ${b.kelas} - ${b.nama_bagian}</option>`;
       });
       populateFilterTingkatan();
+      // Auto-select tingkatan & kelas pertama untuk mufatish
+      if (isMufatishOnly && data.length > 0) {
+        const firstTingkatan = data[0].tingkatan;
+        const firstKelas = data[0].kelas;
+        if (filterTingkatan) {
+          filterTingkatan.value = firstTingkatan;
+          populateFilterKelas();
+        }
+        if (filterKelas) {
+          filterKelas.value = firstKelas;
+          populateFilterBagian();
+        }
+        applyWilayahFilter();
+      }
     }
   } catch(e) { console.error(e); }
 }
