@@ -473,10 +473,10 @@ function renderTable(santriArray) {
         if (mobile) {
             // MOBILE: Compact row with letter buttons
             row.innerHTML = `
-                <td class="px-3 py-3 text-center text-xs text-gray-400">${index + 1}</td>
+                <td class="px-3 py-3 text-center text-xs text-gray-500 dark:text-gray-400">${index + 1}</td>
                 <td class="px-3 py-3">
                     <div class="font-semibold text-gray-800 dark:text-gray-200 text-sm">${s.nama}</div>
-                    <div class="text-[10px] text-gray-400 font-mono">${s.stambuk}</div>
+                    <div class="text-[10px] text-gray-500 dark:text-gray-400 font-mono">${s.stambuk}</div>
                 </td>
                 <td class="px-2 py-3">
                     <div class="flex gap-1" data-santri="${s.id}">

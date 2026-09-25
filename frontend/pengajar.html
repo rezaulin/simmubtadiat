@@ -77,7 +77,7 @@
     class="flex flex-col w-64 fixed inset-y-0 left-0 bg-white dark:bg-slate-800 border-r border-gray-100 dark:border-slate-700/60 z-[70] transition-transform duration-300 transform -translate-x-full md:translate-x-0 shadow-[4px_0_24px_rgba(0,0,0,0.02)] print:hidden">
     <!-- Close button (Mobile only) -->
     <button id="btn-close-sidebar"
-      class="tap-target md:hidden absolute top-4 right-4 p-2 bg-gray-50 dark:bg-slate-700 rounded-xl text-gray-500 hover:text-gray-700"
+      class="tap-target md:hidden absolute top-4 right-4 p-2 bg-gray-50 dark:bg-slate-700 rounded-xl text-gray-600 dark:text-gray-400 hover:text-gray-700"
       aria-label="Tutup menu">
       <i data-lucide="x" class="w-5 h-5"></i>
     </button>
@@ -229,7 +229,7 @@
 
         <div id="controls-pengajar" class="flex items-center gap-3">
           <div class="relative flex-1 md:w-64">
-            <svg class="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" fill="none"
+            <svg class="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400" fill="none"
               stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
@@ -298,7 +298,7 @@
             <tbody id="table-body" class="divide-y divide-gray-100 dark:divide-slate-700/50">
               <!-- Loading Skeleton -->
               <tr>
-                <td colspan="5" class="px-6 py-8 text-center text-gray-400">Memuat data pengajar...</td>
+                <td colspan="5" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Memuat data pengajar...</td>
               </tr>
             </tbody>
           </table>
@@ -317,7 +317,7 @@
           class="p-4 border-b border-gray-200 dark:border-slate-700 bg-gray-50/50 dark:bg-slate-900/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h3 class="font-semibold text-gray-800 dark:text-white">Pengawas Kelas (Mufatish)</h3>
-            <p class="text-xs text-gray-500">Pilih pengawas (mufatish) untuk menjadi penanggung jawab di tiap kelas (mencakup semua bagian/ruang).</p>
+            <p class="text-xs text-gray-600 dark:text-gray-400">Pilih pengawas (mufatish) untuk menjadi penanggung jawab di tiap kelas (mencakup semua bagian/ruang).</p>
           </div>
           <div class="flex gap-2">
             <select id="filter-tingkatan-mufatish"
@@ -333,7 +333,7 @@
         <div class="p-4">
           <div class="overflow-x-auto">
             <table class="w-full text-left text-sm text-gray-600 dark:text-gray-300">
-              <thead class="text-xs text-gray-400 uppercase border-b border-gray-200 dark:border-slate-700">
+              <thead class="text-xs text-gray-500 dark:text-gray-400 uppercase border-b border-gray-200 dark:border-slate-700">
                 <tr>
                   <th class="pb-2">Tingkatan</th>
                   <th class="pb-2">Kelas</th>
@@ -356,7 +356,7 @@
           class="p-4 border-b border-gray-200 dark:border-slate-700 bg-gray-50/50 dark:bg-slate-900/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h3 class="font-semibold text-gray-800 dark:text-white">Wali Kelas (Mustahiq) & Munawwib</h3>
-            <p class="text-xs text-gray-500">Pilih pengajar untuk menjadi wali kelas atau munawwib di tiap bagian/ruang.</p>
+            <p class="text-xs text-gray-600 dark:text-gray-400">Pilih pengajar untuk menjadi wali kelas atau munawwib di tiap bagian/ruang.</p>
           </div>
           <div class="flex gap-2">
             <select id="filter-tingkatan-mustahiq"
@@ -372,7 +372,7 @@
         <div class="p-4">
           <div class="overflow-x-auto">
             <table class="w-full text-left text-sm text-gray-600 dark:text-gray-300">
-              <thead class="text-xs text-gray-400 uppercase border-b border-gray-200 dark:border-slate-700">
+              <thead class="text-xs text-gray-500 dark:text-gray-400 uppercase border-b border-gray-200 dark:border-slate-700">
                 <tr>
                   <th class="pb-2">Tingkatan & Kelas</th>
                   <th class="pb-2">Ruang (Bagian)</th>
@@ -399,12 +399,12 @@
   <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl dark:bg-slate-900/90 border-t border-gray-100 dark:border-slate-800 z-50 px-2 py-2 pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.02)]">
     <div class="flex justify-between items-center relative h-14 w-full">
       
-      <a href="/index.html" data-nav class="w-1/5 flex flex-col items-center gap-1 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+      <a href="/index.html" data-nav class="w-1/5 flex flex-col items-center gap-1 text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
         <i data-lucide="home" class="w-5 h-5"></i>
         <span class="text-[10px] font-bold">Beranda</span>
       </a>
       
-      <a href="/santri.html" data-nav class="w-1/5 flex flex-col items-center gap-1 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+      <a href="/santri.html" data-nav class="w-1/5 flex flex-col items-center gap-1 text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
         <i data-lucide="users" class="w-5 h-5"></i>
         <span class="text-[10px] font-semibold">Santri</span>
       </a>
@@ -419,12 +419,12 @@
         
       </div>
 
-      <a href="/absensi-manual.html" data-nav class="w-1/5 flex flex-col items-center gap-1 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+      <a href="/absensi-manual.html" data-nav class="w-1/5 flex flex-col items-center gap-1 text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
         <i data-lucide="clipboard-check" class="w-5 h-5"></i>
         <span class="text-[10px] font-semibold">Absen</span>
       </a>
 
-      <a href="/penilaian.html" data-nav class="w-1/5 flex flex-col items-center gap-1 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+      <a href="/penilaian.html" data-nav class="w-1/5 flex flex-col items-center gap-1 text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
         <i data-lucide="file-check-2" class="w-5 h-5"></i>
         <span class="text-[10px] font-semibold">Nilai</span>
       </a>
@@ -441,7 +441,7 @@
       id="modal-content">
       <div class="px-6 py-4 border-b border-gray-200 dark:border-slate-700 flex justify-between items-center">
         <h3 class="text-lg font-bold dark:text-white">Tambah Pengajar</h3>
-        <button id="modal-close" class="tap-target text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+        <button id="modal-close" class="tap-target text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
           aria-label="Tutup">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -526,7 +526,7 @@
       <div class="p-6 border-b border-gray-100 dark:border-slate-700/60 flex items-center justify-between">
         <h3 class="text-lg font-bold dark:text-white">Pindah ke Pengajar Purna</h3>
         <button id="pindah-purna-close" type="button"
-          class="tap-target text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" aria-label="Tutup">
+          class="tap-target text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" aria-label="Tutup">
           <i data-lucide="x" class="w-5 h-5"></i>
         
       </div>
@@ -588,7 +588,7 @@
       <div class="px-6 py-4 border-b border-gray-200 dark:border-slate-700">
         <h3 class="text-xl font-bold text-gray-800 dark:text-white" id="detail-nama-pengajar">Nama Pengajar</h3>
         <button id="modal-detail-close"
-          class="tap-target absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+          class="tap-target absolute top-4 right-4 text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
           aria-label="Tutup">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -658,7 +658,7 @@
     <div class="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-md p-6 m-4 shadow-xl border border-gray-200 dark:border-slate-700">
       <div class="flex justify-between items-center mb-6">
         <h2 class="text-lg font-bold text-gray-900 dark:text-white">Tambah Munawwib</h2>
-        <button type="button" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" onclick="closeModalMunawwib()">
+        <button type="button" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-400 dark:text-gray-500" onclick="closeModalMunawwib()">
           <i data-lucide="x" class="w-5 h-5"></i>
         
       </div>

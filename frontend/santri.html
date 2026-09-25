@@ -73,7 +73,7 @@
   <!-- Sidebar / Navigation -->
     <aside id="app-sidebar" class="flex flex-col w-64 fixed inset-y-0 left-0 bg-white dark:bg-slate-800 border-r border-gray-100 dark:border-slate-700/60 z-[70] transition-transform duration-300 transform -translate-x-full md:translate-x-0 shadow-[4px_0_24px_rgba(0,0,0,0.02)] print:hidden">
     <!-- Close button (Mobile only) -->
-    <button id="btn-close-sidebar" class="tap-target md:hidden absolute top-4 right-4 p-2 bg-gray-50 dark:bg-slate-700 rounded-xl text-gray-500 hover:text-gray-700" aria-label="Tutup menu">
+    <button id="btn-close-sidebar" class="tap-target md:hidden absolute top-4 right-4 p-2 bg-gray-50 dark:bg-slate-700 rounded-xl text-gray-600 dark:text-gray-400 hover:text-gray-700" aria-label="Tutup menu">
       <i data-lucide="x" class="w-5 h-5"></i>
     </button>
     
@@ -202,7 +202,7 @@
       
       <div class="flex items-center gap-3">
         <div class="relative flex-1 md:w-64">
-          <svg class="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+          <svg class="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
           <input type="text" id="search-input" placeholder="Cari NIK / Nama..." class="glass-input w-full pl-10 pr-4 py-2 rounded-xl text-sm bg-white dark:bg-slate-800">
         </div>
         
@@ -284,7 +284,7 @@
             </thead>
             <tbody id="table-body" class="divide-y divide-gray-100 dark:divide-slate-700/50">
               <tr>
-                <td colspan="7" class="px-6 py-8 text-center text-gray-400">Memuat data santri...</td>
+                <td colspan="7" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Memuat data santri...</td>
               </tr>
             </tbody>
           </table>
@@ -322,7 +322,7 @@
   <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl dark:bg-slate-900/90 border-t border-gray-100 dark:border-slate-800 z-50 px-2 py-2 pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.02)]">
     <div class="flex justify-between items-center relative h-14 w-full">
       
-      <a href="/index.html" data-nav class="w-1/5 flex flex-col items-center gap-1 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+      <a href="/index.html" data-nav class="w-1/5 flex flex-col items-center gap-1 text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
         <i data-lucide="home" class="w-5 h-5"></i>
         <span class="text-[10px] font-bold">Beranda</span>
       </a>
@@ -342,12 +342,12 @@
         
       </div>
 
-      <a href="/absensi-manual.html" data-nav class="w-1/5 flex flex-col items-center gap-1 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+      <a href="/absensi-manual.html" data-nav class="w-1/5 flex flex-col items-center gap-1 text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
         <i data-lucide="clipboard-check" class="w-5 h-5"></i>
         <span class="text-[10px] font-semibold">Absen</span>
       </a>
 
-      <a href="/penilaian.html" data-nav class="w-1/5 flex flex-col items-center gap-1 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+      <a href="/penilaian.html" data-nav class="w-1/5 flex flex-col items-center gap-1 text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
         <i data-lucide="file-check-2" class="w-5 h-5"></i>
         <span class="text-[10px] font-semibold">Nilai</span>
       </a>
@@ -362,7 +362,7 @@
     <div class="glass dark:bg-slate-800 rounded-3xl w-full max-w-lg z-10 overflow-hidden shadow-2xl scale-95 opacity-0 transition-all duration-300 flex flex-col max-h-[90vh]" id="modal-content">
       <div class="px-6 py-4 border-b border-gray-200 dark:border-slate-700 flex justify-between items-center">
         <h3 class="text-lg font-bold dark:text-white">Tambah Santri Baru</h3>
-        <button id="modal-close" class="tap-target text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" aria-label="Tutup">
+        <button id="modal-close" class="tap-target text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" aria-label="Tutup">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
         
       </div>
@@ -466,7 +466,7 @@
     <div class="glass dark:bg-slate-800 rounded-3xl w-full max-w-lg z-10 overflow-hidden shadow-2xl scale-95 opacity-0 transition-all duration-300 flex flex-col max-h-[90vh]" id="modal-import-content">
       <div class="px-6 py-4 border-b border-gray-200 dark:border-slate-700 flex justify-between items-center">
         <h3 class="text-lg font-bold dark:text-white">Import Santri dari Excel</h3>
-        <button id="modal-import-close" class="tap-target text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" aria-label="Tutup">
+        <button id="modal-import-close" class="tap-target text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" aria-label="Tutup">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
         
       </div>
@@ -510,13 +510,13 @@
           <svg class="w-5 h-5 text-primary dark:text-accent-emerald" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
           Profil Santri
         </h3>
-        <button id="modal-detail-close" class="tap-target text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" aria-label="Tutup">
+        <button id="modal-detail-close" class="tap-target text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" aria-label="Tutup">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
         
       </div>
       
       <div class="p-6 overflow-y-auto flex-1">
-        <div id="detail-loading" class="text-center py-8 text-gray-500">Memuat detail santri...</div>
+        <div id="detail-loading" class="text-center py-8 text-gray-600 dark:text-gray-400">Memuat detail santri...</div>
         
         <div id="detail-body" class="hidden flex-col gap-0 h-full">
           <!-- Detail Header (Basic Info) -->
@@ -570,7 +570,7 @@
              
              <!-- Content Container for Tahun -->
              <div id="akademik-container" class="bg-gray-50 dark:bg-slate-900/50 p-4 rounded-xl border border-gray-100 dark:border-slate-700 min-h-[200px]">
-                <p class="text-center text-sm text-gray-500 mt-8">Pilih tahun ajaran...</p>
+                <p class="text-center text-sm text-gray-600 dark:text-gray-400 mt-8">Pilih tahun ajaran...</p>
              </div>
           </div>
         </div>

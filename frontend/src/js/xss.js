@@ -242,14 +242,14 @@ window.renderBottomNav = function(role) {
     
     if (item.isAction) {
       newHtml += `
-        <button id="${item.id}" class="w-1/5 flex flex-col items-center gap-1 text-gray-400 hover:text-red-600 transition-colors bg-transparent border-none p-0 cursor-pointer">
+        <button id="${item.id}" class="w-1/5 flex flex-col items-center gap-1 text-gray-500 dark:text-gray-400 hover:text-red-600 transition-colors bg-transparent border-none p-0 cursor-pointer">
           <i data-lucide="${item.icon}" class="w-5 h-5"></i>
           <span class="text-[10px] font-semibold">${item.label}</span>
         </button>
       `;
     } else {
       newHtml += `
-        <a href="${item.href}" data-nav class="w-1/5 flex flex-col items-center gap-1 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+        <a href="${item.href}" data-nav class="w-1/5 flex flex-col items-center gap-1 text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
           <i data-lucide="${item.icon}" class="w-5 h-5"></i>
           <span class="text-[10px] font-semibold">${item.label}</span>
         </a>
@@ -596,14 +596,14 @@ document.addEventListener('DOMContentLoaded', () => {
     <div class="absolute inset-0 bg-gray-900/40 dark:bg-black/60 backdrop-blur-sm" id="search-overlay"></div>
     <div class="w-full max-w-2xl bg-white dark:bg-slate-900 rounded-[2rem] shadow-2xl z-10 overflow-hidden flex flex-col scale-95 opacity-0 transition-all duration-300 h-[80vh] md:h-[600px]" id="search-content">
       <div class="p-4 md:p-6 border-b border-gray-100 dark:border-slate-800 relative flex items-center bg-white dark:bg-slate-900">
-        <i data-lucide="search" class="w-6 h-6 text-gray-400 absolute left-8"></i>
+        <i data-lucide="search" class="w-6 h-6 text-gray-500 dark:text-gray-400 absolute left-8"></i>
         <input type="text" id="global-search-input" class="w-full bg-transparent border-none focus:ring-0 text-lg md:text-xl pl-12 pr-12 text-gray-800 dark:text-white placeholder-gray-300 dark:placeholder-gray-600 font-medium" placeholder="Ketik NIK, Nama, atau Stambuk..." autocomplete="off">
-        <button id="search-close" class="tap-target absolute right-6 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors bg-gray-50 dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 p-2 rounded-full" aria-label="Tutup pencarian">
+        <button id="search-close" class="tap-target absolute right-6 text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors bg-gray-50 dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 p-2 rounded-full" aria-label="Tutup pencarian">
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>
       <div class="flex-1 overflow-y-auto p-3" id="search-results">
-        <div class="h-full flex flex-col items-center justify-center text-gray-400 p-8 text-center" id="search-empty">
+        <div class="h-full flex flex-col items-center justify-center text-gray-500 dark:text-gray-400 p-8 text-center" id="search-empty">
           <div class="w-20 h-20 rounded-3xl bg-gray-50 dark:bg-slate-800 flex items-center justify-center mb-6">
             <i data-lucide="search-x" class="w-10 h-10 text-gray-300 dark:text-slate-600"></i>
           </div>
@@ -682,7 +682,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (emptyState) emptyState.classList.add('hidden');
       if (resultsList) { resultsList.classList.remove('hidden'); resultsList.innerHTML = ''; }
       if (!data || data.length === 0) {
-        resultsList.innerHTML = `<div class="p-4 text-center text-gray-500 text-sm">Tidak ada hasil untuk "${query}"</div>`;
+        resultsList.innerHTML = `<div class="p-4 text-center text-gray-600 dark:text-gray-400 text-sm">Tidak ada hasil untuk "${query}"</div>`;
         return;
       }
       data.forEach(item => {
@@ -745,7 +745,7 @@ document.addEventListener('DOMContentLoaded', () => {
           '<p class="text-xs text-gray-500 dark:text-gray-400 leading-tight truncate">Buka langsung dari layar utama, lebih cepat.</p>' +
         '</div>' +
         '<button id="pwa-install-do" type="button" class="bg-teal-600 hover:bg-teal-700 text-white text-sm font-semibold px-4 py-2 rounded-xl shrink-0 transition-colors">Pasang</button>' +
-        '<button id="pwa-install-close" type="button" aria-label="Tutup" class="tap-target text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 shrink-0 p-1.5 rounded-lg">' +
+        '<button id="pwa-install-close" type="button" aria-label="Tutup" class="tap-target text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 shrink-0 p-1.5 rounded-lg">' +
           '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>' +
         '</button>' +
       '</div>';
@@ -905,7 +905,7 @@ document.addEventListener('DOMContentLoaded', () => {
     <div class="bg-white dark:bg-slate-800 rounded-3xl w-full max-w-2xl z-10 overflow-hidden shadow-2xl scale-95 opacity-0 transition-all duration-300 flex flex-col max-h-[90vh]" id="modal-detail-pengajar-global-content">
       <div class="px-6 py-4 border-b border-gray-200 dark:border-slate-700">
         <h3 class="text-xl font-bold text-gray-800 dark:text-white" id="global-detail-nama-pengajar">Nama Pengajar</h3>
-        <button id="modal-detail-pengajar-global-close" class="tap-target absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" aria-label="Tutup">
+        <button id="modal-detail-pengajar-global-close" class="tap-target absolute top-4 right-4 text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" aria-label="Tutup">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
         </button>
       </div>
@@ -961,8 +961,8 @@ window.openGlobalDetailPengajar = async function(id, nama) {
   const tbodyRiwayat = document.getElementById('global-tbody-riwayat-pengajar');
   
   document.getElementById('global-detail-nama-pengajar').textContent = nama;
-  infoContainer.innerHTML = '<div class="col-span-2 text-center text-gray-400">Memuat data...</div>';
-  tbodyRiwayat.innerHTML = '<tr><td colspan="3" class="px-4 py-8 text-center text-gray-400">Memuat riwayat penugasan...</td></tr>';
+  infoContainer.innerHTML = '<div class="col-span-2 text-center text-gray-500 dark:text-gray-400">Memuat data...</div>';
+  tbodyRiwayat.innerHTML = '<tr><td colspan="3" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">Memuat riwayat penugasan...</td></tr>';
   
   modal.classList.remove('hidden');
   setTimeout(() => {
@@ -996,7 +996,7 @@ window.openGlobalDetailPengajar = async function(id, nama) {
     const res2 = await fetch('/api/penugasan?pengajar_id=' + id);
     const data = await res2.json();
     if (!data || data.length === 0) {
-      tbodyRiwayat.innerHTML = '<tr><td colspan="3" class="px-4 py-8 text-center text-gray-400">Belum ada riwayat penugasan.</td></tr>';
+      tbodyRiwayat.innerHTML = '<tr><td colspan="3" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">Belum ada riwayat penugasan.</td></tr>';
       return;
     }
     tbodyRiwayat.innerHTML = '';
@@ -1004,7 +1004,7 @@ window.openGlobalDetailPengajar = async function(id, nama) {
       tbodyRiwayat.innerHTML += `
         <tr>
           <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">${p.nama_bagian}</td>
-          <td class="px-4 py-3 uppercase text-xs font-bold text-gray-500">${p.peran}</td>
+          <td class="px-4 py-3 uppercase text-xs font-bold text-gray-600 dark:text-gray-400">${p.peran}</td>
           <td class="px-4 py-3 text-center">${p.tahun_ajaran}</td>
         </tr>`;
     });

@@ -171,7 +171,7 @@ async function loadUsers() {
 
     tableUsers.innerHTML = '';
     if (users.length === 0) {
-      tableUsers.innerHTML = `<tr><td colspan="4" class="px-4 py-6 text-center text-gray-400">Tidak ada pengguna.</td></tr>`;
+      tableUsers.innerHTML = `<tr><td colspan="4" class="px-4 py-6 text-center text-gray-500 dark:text-gray-400">Tidak ada pengguna.</td></tr>`;
       updateUserPagination();
       return;
     }
@@ -194,7 +194,7 @@ async function loadUsers() {
       // Kolom konteks anak (khusus wali). Orphan = akun wali tanpa tautan santri.
       const anakCell = u.anak_nama
         ? `<div class="font-medium text-gray-800 dark:text-gray-100">${esc(u.anak_nama)}</div>
-           <div class="text-[10px] text-gray-400">${esc(u.anak_kelas || '-')}</div>`
+           <div class="text-[10px] text-gray-500 dark:text-gray-400">${esc(u.anak_kelas || '-')}</div>`
         : (u.role === 'wali_santri'
             ? `<span class="text-[10px] font-bold text-red-500 bg-red-50 dark:bg-red-900/30 px-2 py-1 rounded-md">🚫 ORPHAN</span>`
             : `<span class="text-gray-300 dark:text-slate-600">&mdash;</span>`);
@@ -209,7 +209,7 @@ async function loadUsers() {
         </td>
         <td data-label="Nama" class="px-4 py-3">
           <div class="font-medium text-gray-900 dark:text-white">${esc(u.nama || '-')}</div>
-          <div class="text-[10px] text-gray-400">${esc(u.username)}</div>
+          <div class="text-[10px] text-gray-500 dark:text-gray-400">${esc(u.username)}</div>
           <div class="mt-0.5">${pwBadge}</div>
         </td>
         <td data-label="Role" class="px-4 py-3">
@@ -484,13 +484,13 @@ function renderBulkResetResult(data) {
     </div>
     <div class="max-h-56 overflow-y-auto border border-gray-200 dark:border-slate-600 rounded-xl">
       <table class="w-full text-[11px] text-gray-700 dark:text-gray-300">
-        <thead class="bg-gray-50 dark:bg-slate-700/50 text-gray-500">
+        <thead class="bg-gray-50 dark:bg-slate-700/50 text-gray-600 dark:text-gray-400">
           <tr><th class="px-2 py-1 text-left">Wali / Anak</th><th class="px-2 py-1 text-left">Sandi Baru</th></tr>
         </thead>
         <tbody>${rows}</tbody>
       </table>
     </div>
-    <p class="text-[10px] text-gray-400 leading-relaxed">
+    <p class="text-[10px] text-gray-500 dark:text-gray-400 leading-relaxed">
       Catat sandi di atas lalu beritahukan ke wali. Wali wajib mengganti sendiri saat login.
     </p>
   `;
@@ -657,7 +657,7 @@ async function loadMudirTingkatan() {
                 <div class="flex items-center gap-3">
                     <div class="shrink-0 w-28 h-14 rounded-lg border border-dashed border-gray-300 dark:border-slate-600 flex items-center justify-center bg-white overflow-hidden">
                         <img data-ttd-preview="${t.tingkatan_id}" src="${ttd}" class="${ttd ? '' : 'hidden'} max-h-14 object-contain" alt="Tanda tangan">
-                        <span data-ttd-empty="${t.tingkatan_id}" class="${ttd ? 'hidden' : ''} text-[10px] text-gray-400">Belum ada TTD</span>
+                        <span data-ttd-empty="${t.tingkatan_id}" class="${ttd ? 'hidden' : ''} text-[10px] text-gray-500 dark:text-gray-400">Belum ada TTD</span>
                     </div>
                     <div class="flex flex-col gap-1 min-w-0">
                         <span class="text-[11px] font-medium text-gray-500 dark:text-gray-400">Tanda Tangan Mudir (PNG/JPG)</span>
@@ -832,7 +832,7 @@ loadMudirTingkatan();
       if (!res.ok) throw new Error('Gagal memuat agenda');
       const data = (await res.json()) || [];
       if (!Array.isArray(data) || data.length === 0) {
-        listEl.innerHTML = '<p class="text-gray-400 text-sm">Belum ada agenda mendatang.</p>';
+        listEl.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-sm">Belum ada agenda mendatang.</p>';
         return;
       }
       listEl.innerHTML = data.map((a) => `
@@ -840,7 +840,7 @@ loadMudirTingkatan();
           <div class="min-w-0">
             <div class="font-semibold text-gray-800 dark:text-gray-100 truncate">${a.judul || 'Agenda'}</div>
             <div class="text-xs text-gray-500 dark:text-gray-400">${fmtRange(a)}</div>
-            ${a.deskripsi ? `<div class="text-xs text-gray-400 mt-0.5 truncate">${a.deskripsi}</div>` : ''}
+            ${a.deskripsi ? `<div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">${a.deskripsi}</div>` : ''}
           </div>
           <div class="flex items-center gap-1 shrink-0">
             <button type="button" data-agenda-edit="${a.id}" class="p-1.5 rounded-lg text-primary hover:bg-primary/10" title="Edit"><i data-lucide="pencil" class="w-4 h-4"></i></button>

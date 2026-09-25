@@ -73,7 +73,7 @@
   <!-- Sidebar / Navigation -->
     <aside id="app-sidebar" class="flex flex-col w-64 fixed inset-y-0 left-0 bg-white dark:bg-slate-800 border-r border-gray-100 dark:border-slate-700/60 z-[70] transition-transform duration-300 transform -translate-x-full md:translate-x-0 shadow-[4px_0_24px_rgba(0,0,0,0.02)] print:hidden">
     <!-- Close button (Mobile only) -->
-    <button id="btn-close-sidebar" class="tap-target md:hidden absolute top-4 right-4 p-2 bg-gray-50 dark:bg-slate-700 rounded-xl text-gray-500 hover:text-gray-700" aria-label="Tutup menu">
+    <button id="btn-close-sidebar" class="tap-target md:hidden absolute top-4 right-4 p-2 bg-gray-50 dark:bg-slate-700 rounded-xl text-gray-600 dark:text-gray-400 hover:text-gray-700" aria-label="Tutup menu">
       <i data-lucide="x" class="w-5 h-5"></i>
     </button>
     
@@ -202,7 +202,7 @@
       
       <div class="flex items-center gap-3">
         <div class="relative flex-1 md:w-64">
-          <svg class="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+          <svg class="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
           <input type="text" id="search-input" placeholder="Cari NIK / Nama..." class="glass-input w-full pl-10 pr-4 py-2 rounded-xl text-sm bg-white dark:bg-slate-800">
         </div>
         
@@ -243,7 +243,7 @@
     <!-- Kontainer daftar santri pengabdian. Isi & modal "Selesai Khidmah" ditambahkan pada task 10.2. -->
     <div id="content-pengabdian" class="hidden px-6 pb-6 flex-1">
       <div class="glass dark:bg-slate-800/80 rounded-2xl border border-gray-200 dark:border-slate-700 overflow-hidden shadow-sm flex flex-col">
-        <div id="pengabdian-list" class="p-6 text-center text-gray-400">
+        <div id="pengabdian-list" class="p-6 text-center text-gray-500 dark:text-gray-400">
           Memuat data pengabdian...
         </div>
       </div>
@@ -296,7 +296,7 @@
               <tbody id="table-body" class="divide-y divide-gray-100 dark:divide-slate-700/50">
                 <!-- Loading Skeleton -->
                 <tr>
-                  <td colspan="6" class="px-6 py-8 text-center text-gray-400">Memuat data alumni...</td>
+                  <td colspan="6" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Memuat data alumni...</td>
                 </tr>
               </tbody>
             </table>
@@ -314,12 +314,12 @@
   <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl dark:bg-slate-900/90 border-t border-gray-100 dark:border-slate-800 z-50 px-2 py-2 pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.02)]">
     <div class="flex justify-between items-center relative h-14 w-full">
       
-      <a href="/index.html" data-nav class="w-1/5 flex flex-col items-center gap-1 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+      <a href="/index.html" data-nav class="w-1/5 flex flex-col items-center gap-1 text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
         <i data-lucide="home" class="w-5 h-5"></i>
         <span class="text-[10px] font-bold">Beranda</span>
       </a>
       
-      <a href="/santri.html" data-nav class="w-1/5 flex flex-col items-center gap-1 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+      <a href="/santri.html" data-nav class="w-1/5 flex flex-col items-center gap-1 text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
         <i data-lucide="users" class="w-5 h-5"></i>
         <span class="text-[10px] font-semibold">Santri</span>
       </a>
@@ -334,12 +334,12 @@
         
       </div>
 
-      <a href="/absensi-manual.html" data-nav class="w-1/5 flex flex-col items-center gap-1 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+      <a href="/absensi-manual.html" data-nav class="w-1/5 flex flex-col items-center gap-1 text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
         <i data-lucide="clipboard-check" class="w-5 h-5"></i>
         <span class="text-[10px] font-semibold">Absen</span>
       </a>
 
-      <a href="/penilaian.html" data-nav class="w-1/5 flex flex-col items-center gap-1 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+      <a href="/penilaian.html" data-nav class="w-1/5 flex flex-col items-center gap-1 text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
         <i data-lucide="file-check-2" class="w-5 h-5"></i>
         <span class="text-[10px] font-semibold">Nilai</span>
       </a>
@@ -354,7 +354,7 @@
     <div class="glass dark:bg-slate-800 rounded-3xl w-full max-w-lg z-10 overflow-hidden shadow-2xl scale-95 opacity-0 transition-all duration-300" id="modal-content">
       <div class="px-6 py-4 border-b border-gray-200 dark:border-slate-700 flex justify-between items-center">
         <h3 class="text-lg font-bold dark:text-white">Proses Santri Keluar</h3>
-        <button id="modal-close" class="tap-target text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" aria-label="Tutup">
+        <button id="modal-close" class="tap-target text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" aria-label="Tutup">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
         
       </div>
@@ -439,7 +439,7 @@
     <div class="glass dark:bg-slate-800 rounded-3xl w-full max-w-lg z-10 overflow-hidden shadow-2xl scale-95 opacity-0 transition-all duration-300 max-h-[90vh] overflow-y-auto" id="modal-tambah-alumni-content">
       <div class="px-6 py-4 border-b border-gray-200 dark:border-slate-700 flex justify-between items-center sticky top-0 bg-white dark:bg-slate-800 z-10">
         <h3 class="text-lg font-bold dark:text-white">Tambah Data Alumni</h3>
-        <button id="modal-tambah-alumni-close" class="tap-target text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" aria-label="Tutup">
+        <button id="modal-tambah-alumni-close" class="tap-target text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" aria-label="Tutup">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
         
       </div>
@@ -447,62 +447,62 @@
         <form id="form-tambah-alumni" class="flex flex-col gap-3">
           <div class="flex gap-3">
             <div class="flex-1 flex flex-col gap-1">
-              <label class="text-xs font-semibold text-gray-500">Nama <span class="text-red-500">*</span></label>
+              <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">Nama <span class="text-red-500">*</span></label>
               <input type="text" name="nama" required class="glass-input px-3 py-2 rounded-lg text-sm w-full">
             </div>
           </div>
           <div class="flex gap-3">
             <div class="flex-1 flex flex-col gap-1">
-              <label class="text-xs font-semibold text-gray-500">Stambuk <span class="text-red-500">*</span></label>
+              <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">Stambuk <span class="text-red-500">*</span></label>
               <input type="text" name="stambuk" required class="glass-input px-3 py-2 rounded-lg text-sm w-full">
             </div>
             <div class="flex-1 flex flex-col gap-1">
-              <label class="text-xs font-semibold text-gray-500">NISN</label>
+              <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">NISN</label>
               <input type="text" name="nisn" class="glass-input px-3 py-2 rounded-lg text-sm w-full">
             </div>
           </div>
           <div class="flex gap-3">
             <div class="flex-1 flex flex-col gap-1">
-              <label class="text-xs font-semibold text-gray-500">TTL</label>
+              <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">TTL</label>
               <input type="text" name="ttl" class="glass-input px-3 py-2 rounded-lg text-sm w-full" placeholder="Kediri, 21 Juli 2000">
             </div>
             <div class="flex-1 flex flex-col gap-1">
-              <label class="text-xs font-semibold text-gray-500">Wali</label>
+              <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">Wali</label>
               <input type="text" name="wali" class="glass-input px-3 py-2 rounded-lg text-sm w-full">
             </div>
           </div>
           <div class="flex gap-3">
             <div class="flex-1 flex flex-col gap-1">
-              <label class="text-xs font-semibold text-gray-500">Alamat</label>
+              <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">Alamat</label>
               <input type="text" name="alamat" class="glass-input px-3 py-2 rounded-lg text-sm w-full">
             </div>
             <div class="flex-1 flex flex-col gap-1">
-              <label class="text-xs font-semibold text-gray-500">No HP WS</label>
+              <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">No HP WS</label>
               <input type="text" name="no_hp" class="glass-input px-3 py-2 rounded-lg text-sm w-full">
             </div>
           </div>
           <div class="flex gap-3">
             <div class="flex-1 flex flex-col gap-1">
-              <label class="text-xs font-semibold text-gray-500">Kamar</label>
+              <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">Kamar</label>
               <input type="text" name="kamar" class="glass-input px-3 py-2 rounded-lg text-sm w-full" placeholder="Nama / Nomor Kamar">
             </div>
           </div>
           <div class="flex gap-3">
             <div class="flex-1 flex flex-col gap-1">
-              <label class="text-xs font-semibold text-gray-500">Khidmah</label>
+              <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">Khidmah</label>
               <select name="khidmah" class="glass-input px-3 py-2 rounded-lg text-sm w-full">
                 <option value="tidak_khidmah">Tidak Khidmah</option>
                 <option value="selesai">Khidmah (Selesai)</option>
               </select>
             </div>
             <div class="flex-1 flex flex-col gap-1">
-              <label class="text-xs font-semibold text-gray-500">Tempat Khidmah</label>
+              <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">Tempat Khidmah</label>
               <input type="text" name="tempat_khidmah" class="glass-input px-3 py-2 rounded-lg text-sm w-full" placeholder="Ustadzah, Kebersihan, dll">
             </div>
           </div>
           <div class="flex gap-3">
             <div class="flex-1 flex flex-col gap-1">
-              <label class="text-xs font-semibold text-gray-500">Pengambilan Ijazah</label>
+              <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">Pengambilan Ijazah</label>
               <select name="status_ijazah" class="glass-input px-3 py-2 rounded-lg text-sm w-full">
                 <option value="belum">Belum</option>
                 <option value="sudah">Sudah</option>
@@ -510,17 +510,17 @@
               </select>
             </div>
             <div class="flex-1 flex flex-col gap-1">
-              <label class="text-xs font-semibold text-gray-500">Keterangan</label>
+              <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">Keterangan</label>
               <input type="text" name="keterangan" class="glass-input px-3 py-2 rounded-lg text-sm w-full" placeholder="Menikah, Tidak Lulus UBK, dll">
             </div>
           </div>
           <div class="flex gap-3">
             <div class="flex-1 flex flex-col gap-1">
-              <label class="text-xs font-semibold text-gray-500">Tahun Masuk</label>
+              <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">Tahun Masuk</label>
               <input type="text" name="tahun_masuk" class="glass-input px-3 py-2 rounded-lg text-sm w-full" placeholder="2020">
             </div>
             <div class="flex-1 flex flex-col gap-1">
-              <label class="text-xs font-semibold text-gray-500">Tahun Keluar</label>
+              <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">Tahun Keluar</label>
               <input type="text" name="tahun_keluar" class="glass-input px-3 py-2 rounded-lg text-sm w-full" placeholder="2025">
             </div>
           </div>
@@ -541,7 +541,7 @@
     <div class="glass dark:bg-slate-800 rounded-3xl w-full max-w-lg z-10 overflow-hidden shadow-2xl scale-95 opacity-0 transition-all duration-300 max-h-[90vh] overflow-y-auto" id="modal-detail-content">
       <div class="px-6 py-4 border-b border-gray-200 dark:border-slate-700 flex justify-between items-center sticky top-0 bg-white dark:bg-slate-800 z-10">
         <h3 class="text-lg font-bold dark:text-white">Detail Alumni</h3>
-        <button id="modal-detail-close" class="tap-target text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" aria-label="Tutup">
+        <button id="modal-detail-close" class="tap-target text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" aria-label="Tutup">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
         
       </div>
@@ -550,7 +550,7 @@
         <!-- Info Header -->
         <div class="mb-6">
           <h4 id="detail-nama" class="font-bold text-lg dark:text-white">Nama Alumni</h4>
-          <p id="detail-stambuk" class="text-sm text-gray-500">Stambuk: -</p>
+          <p id="detail-stambuk" class="text-sm text-gray-600 dark:text-gray-400">Stambuk: -</p>
           <div class="flex gap-2 mt-2 flex-wrap">
             <span id="detail-status" class="inline-block px-2.5 py-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 rounded-full text-xs font-semibold">LULUS</span>
             <span id="detail-khidmah-badge" class="inline-block px-2.5 py-1 rounded-full text-xs font-semibold"></span>
@@ -560,11 +560,11 @@
         <!-- Info Grid (read-only computed) -->
         <div class="grid grid-cols-2 gap-3 mb-4 text-sm">
           <div>
-            <span class="text-xs font-semibold text-gray-400 uppercase">Asal Daerah</span>
+            <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Asal Daerah</span>
             <p id="detail-asal" class="text-gray-800 dark:text-gray-200 font-medium">-</p>
           </div>
           <div>
-            <span class="text-xs font-semibold text-gray-400 uppercase">Tingkatan Akhir</span>
+            <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Tingkatan Akhir</span>
             <p id="detail-tingkatan" class="text-gray-800 dark:text-gray-200 font-medium">-</p>
           </div>
         </div>
@@ -585,7 +585,7 @@
     <div class="glass dark:bg-slate-800 rounded-3xl w-full max-w-lg z-10 overflow-hidden shadow-2xl scale-95 opacity-0 transition-all duration-300 max-h-[90vh] overflow-y-auto" id="modal-edit-content">
       <div class="px-6 py-4 border-b border-gray-200 dark:border-slate-700 flex justify-between items-center sticky top-0 bg-white dark:bg-slate-800 z-10">
         <h3 class="text-lg font-bold dark:text-white">Edit Alumni</h3>
-        <button id="modal-edit-close" type="button" class="tap-target text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" aria-label="Tutup">
+        <button id="modal-edit-close" type="button" class="tap-target text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" aria-label="Tutup">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
         
       </div>
@@ -595,7 +595,7 @@
         <form id="form-update-alumni" class="flex flex-col gap-4 border-t border-gray-200 dark:border-slate-700 pt-4">
           <input type="hidden" id="detail-id" name="santri_id">
 
-          <p class="text-xs font-bold text-gray-400 uppercase tracking-wide">Biodata</p>
+          <p class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Biodata</p>
 
           <div class="flex flex-col gap-1">
             <label class="text-xs font-semibold text-gray-500 dark:text-gray-400">Nama Lengkap</label>
@@ -646,7 +646,7 @@
             <input type="text" id="edit-alumni-tempat-khidmah" name="tempat_khidmah" class="glass-input px-3 py-2 rounded-lg text-sm w-full" placeholder="Nama pondok/lembaga khidmah">
           </div>
 
-          <p class="text-xs font-bold text-gray-400 uppercase tracking-wide border-t border-gray-100 dark:border-slate-700 pt-3">Status & Ijazah</p>
+          <p class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide border-t border-gray-100 dark:border-slate-700 pt-3">Status & Ijazah</p>
 
           <div class="flex flex-col gap-1">
             <label class="text-xs font-semibold text-gray-500 dark:text-gray-400">Status Khidmah</label>
@@ -700,7 +700,7 @@
     <div class="glass dark:bg-slate-800 rounded-3xl w-full max-w-md z-10 overflow-hidden shadow-2xl scale-95 opacity-0 transition-all duration-300" id="modal-selesai-content">
       <div class="px-6 py-4 border-b border-gray-200 dark:border-slate-700 flex justify-between items-center">
         <h3 class="text-lg font-bold dark:text-white">Selesai Khidmah</h3>
-        <button id="modal-selesai-close" class="tap-target text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" aria-label="Tutup">
+        <button id="modal-selesai-close" class="tap-target text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" aria-label="Tutup">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
         
       </div>

@@ -82,7 +82,7 @@ function populateCatatan(list, canWrite) {
       : 'border-green-200 dark:border-green-800';
     const kategori = c.kategori ? ` · ${c.kategori}` : '';
     const pencatat = c.pencatat
-      ? `<div class="mt-1 text-xs text-gray-400">Dicatat oleh: ${c.pencatat}</div>`
+      ? `<div class="mt-1 text-xs text-gray-500 dark:text-gray-400">Dicatat oleh: ${c.pencatat}</div>`
       : '';
     const aksi = canWrite
       ? `<button data-del-catatan="${c.id}" class="text-red-500 hover:text-red-700 text-xs font-semibold ml-auto transition-colors">Hapus</button>`
@@ -459,11 +459,11 @@ function populateRiwayat(riwayatArr, bulanListByTA = {}) {
         const d = absensiMapBulan[key] || { s: 0, i: 0, t: 0 };
         absensiRows += `
             <tr class="${d.t ? 'bg-red-50/60 dark:bg-red-900/10' : ''}">
-              <td class="px-2 py-1.5 border border-gray-200 dark:border-gray-700 text-center text-xs text-gray-400">${String(i + 1).padStart(2, '0')}</td>
+              <td class="px-2 py-1.5 border border-gray-200 dark:border-gray-700 text-center text-xs text-gray-500 dark:text-gray-400">${String(i + 1).padStart(2, '0')}</td>
               <td class="px-3 py-1.5 border border-gray-200 dark:border-gray-700 font-medium text-gray-800 dark:text-gray-200">${nama} ${th} H</td>
               <td class="px-2 py-1.5 border border-gray-200 dark:border-gray-700 text-center font-bold text-blue-600 dark:text-blue-400">${d.s || 0}</td>
               <td class="px-2 py-1.5 border border-gray-200 dark:border-gray-700 text-center font-bold text-amber-600 dark:text-amber-400">${d.i || 0}</td>
-              <td class="px-2 py-1.5 border border-gray-200 dark:border-gray-700 text-center font-bold ${d.t ? 'text-red-600 dark:text-red-400' : 'text-gray-400'}">${d.t || 0}</td>
+              <td class="px-2 py-1.5 border border-gray-200 dark:border-gray-700 text-center font-bold ${d.t ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'}">${d.t || 0}</td>
             </tr>`;
       });
       absensiRows += `
@@ -471,11 +471,11 @@ function populateRiwayat(riwayatArr, bulanListByTA = {}) {
           <td colspan="2" class="px-3 py-2 border border-gray-200 dark:border-gray-700 text-right text-gray-700 dark:text-gray-300 uppercase text-xs tracking-wide">Total</td>
           <td class="px-2 py-2 border border-gray-200 dark:border-gray-700 text-center text-blue-700 dark:text-blue-300">${totS}</td>
           <td class="px-2 py-2 border border-gray-200 dark:border-gray-700 text-center text-amber-700 dark:text-amber-300">${totI}</td>
-          <td class="px-2 py-2 border border-gray-200 dark:border-gray-700 text-center ${totA ? 'text-red-600 dark:text-red-400' : 'text-gray-500'}">${totA}</td>
+          <td class="px-2 py-2 border border-gray-200 dark:border-gray-700 text-center ${totA ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'}">${totA}</td>
         </tr>`;
     }
     const absensiTable = bulanList.length === 0
-      ? '<p class="text-sm text-gray-400 italic py-4">Belum ada data absensi di tahun ini.</p>'
+      ? '<p class="text-sm text-gray-500 dark:text-gray-400 italic py-4">Belum ada data absensi di tahun ini.</p>'
       : `
         <div class="overflow-x-auto">
           <table class="w-full text-sm border-collapse max-w-lg">
@@ -491,7 +491,7 @@ function populateRiwayat(riwayatArr, bulanListByTA = {}) {
             <tbody>${absensiRows}</tbody>
           </table>
         </div>
-        <p class="text-xs text-gray-400 mt-2">S = Sakit &nbsp;•&nbsp; I = Izin &nbsp;•&nbsp; T = Alpha (tanpa keterangan)</p>`;
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">S = Sakit &nbsp;•&nbsp; I = Izin &nbsp;•&nbsp; T = Alpha (tanpa keterangan)</p>`;
 
     // Bangun tabel raport per mapel dengan 6 kolom nilai
     const raportArr = Array.isArray(taData.raport) ? taData.raport : [];
@@ -515,7 +515,7 @@ function populateRiwayat(riwayatArr, bulanListByTA = {}) {
       const mapelTitle  = rawMapel && rawMapel !== mapelDisplay ? ` title="${escapeHtml(rawMapel)}"` : '';
       raportRows += `
         <tr class="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750">
-          <td class="px-3 py-2 text-center text-xs text-gray-500">${idx + 1}</td>
+          <td class="px-3 py-2 text-center text-xs text-gray-600 dark:text-gray-400">${idx + 1}</td>
           <td class="px-3 py-2 text-sm font-medium text-gray-800 dark:text-gray-200"${mapelTitle}>${escapeHtml(mapelDisplay)}</td>
           <td class="px-2 py-2 text-center text-sm">${cell(r.tamrin_k1)}</td>
           <td class="px-2 py-2 text-center text-sm">${cell(r.ujian_k2)}</td>
@@ -528,7 +528,7 @@ function populateRiwayat(riwayatArr, bulanListByTA = {}) {
     });
 
     const raportTable = raportArr.length === 0
-      ? '<p class="text-sm text-gray-400 italic py-4">Belum ada nilai raport di tahun ini.</p>'
+      ? '<p class="text-sm text-gray-500 dark:text-gray-400 italic py-4">Belum ada nilai raport di tahun ini.</p>'
       : `
         <div class="overflow-x-auto border border-gray-200 dark:border-gray-700 rounded-lg">
           <table class="w-full text-sm">
@@ -540,12 +540,12 @@ function populateRiwayat(riwayatArr, bulanListByTA = {}) {
                 <th colspan="3" class="px-2 py-2 text-center text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase border-b">Semester 2 (Genap)</th>
               </tr>
               <tr class="border-t border-gray-200 dark:border-gray-700">
-                <th class="px-2 py-2 text-center text-[10px] font-bold text-gray-500 uppercase w-16">Tamrin K1</th>
-                <th class="px-2 py-2 text-center text-[10px] font-bold text-gray-500 uppercase w-16">Ujian K2</th>
-                <th class="px-2 py-2 text-center text-[10px] font-bold text-gray-500 uppercase w-16 border-r border-gray-200 dark:border-gray-700 bg-indigo-50/50 dark:bg-indigo-900/10">Raport</th>
-                <th class="px-2 py-2 text-center text-[10px] font-bold text-gray-500 uppercase w-16">Tamrin K3</th>
-                <th class="px-2 py-2 text-center text-[10px] font-bold text-gray-500 uppercase w-16">Ujian K4</th>
-                <th class="px-2 py-2 text-center text-[10px] font-bold text-gray-500 uppercase w-16 bg-indigo-50/50 dark:bg-indigo-900/10">Raport</th>
+                <th class="px-2 py-2 text-center text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase w-16">Tamrin K1</th>
+                <th class="px-2 py-2 text-center text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase w-16">Ujian K2</th>
+                <th class="px-2 py-2 text-center text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase w-16 border-r border-gray-200 dark:border-gray-700 bg-indigo-50/50 dark:bg-indigo-900/10">Raport</th>
+                <th class="px-2 py-2 text-center text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase w-16">Tamrin K3</th>
+                <th class="px-2 py-2 text-center text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase w-16">Ujian K4</th>
+                <th class="px-2 py-2 text-center text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase w-16 bg-indigo-50/50 dark:bg-indigo-900/10">Raport</th>
               </tr>
             </thead>
             <tbody>${raportRows}</tbody>

@@ -215,7 +215,7 @@ function applyRuangFilter() {
 
 function renderGrid(bagianArray) {
   if (!bagianArray || bagianArray.length === 0) {
-    gridKelas.innerHTML = `<div class="col-span-full p-8 text-center text-gray-400 glass rounded-3xl">Belum ada ruang kelas.</div>`;
+    gridKelas.innerHTML = `<div class="col-span-full p-8 text-center text-gray-500 dark:text-gray-400 glass rounded-3xl">Belum ada ruang kelas.</div>`;
     return;
   }
   
@@ -339,7 +339,7 @@ btnLoadKurikulum?.addEventListener('click', () => {
 });
 
 async function loadMapelKurikulum() {
-  tableKelolaMapel.innerHTML = '<tr><td colspan="4" class="px-4 py-8 text-center text-gray-400">Memuat data...</td></tr>';
+  tableKelolaMapel.innerHTML = '<tr><td colspan="4" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">Memuat data...</td></tr>';
   try {
     const res = await fetch(`/api/akademik/mapel?tingkatan_id=${currentKuriTingkatanId}&kelas_id=${currentKuriKelasId}`);
     const data = await res.json();
@@ -353,7 +353,7 @@ async function loadMapelKurikulum() {
 
 function renderMapelKurikulum() {
   if (!cachedMapel || cachedMapel.length === 0) {
-    tableKelolaMapel.innerHTML = `<tr><td colspan="4" class="px-4 py-8 text-center text-gray-400">Belum ada mata pelajaran di kurikulum ini.</td></tr>`;
+    tableKelolaMapel.innerHTML = `<tr><td colspan="4" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">Belum ada mata pelajaran di kurikulum ini.</td></tr>`;
     return;
   }
   
@@ -522,8 +522,8 @@ function switchTabKelola(tab) {
   const btnSantri = tabKelolaSantri;
   const btnJadwal = tabKelolaJadwal;
   
-  btnSantri.className = "pb-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors";
-  btnJadwal.className = "pb-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors";
+  btnSantri.className = "pb-3 text-sm font-medium border-b-2 border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-700 transition-colors";
+  btnJadwal.className = "pb-3 text-sm font-medium border-b-2 border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-700 transition-colors";
   contentKelolaSantri.classList.add('hidden');
   contentKelolaJadwal.classList.add('hidden');
   
@@ -569,7 +569,7 @@ function renderUnassignedSantri() {
 
   listAssignSantri.innerHTML = '';
   if (unassigned.length === 0) {
-    listAssignSantri.innerHTML = '<div class="text-gray-500 italic text-center py-4">Tidak ada santri yang belum dikelas</div>';
+    listAssignSantri.innerHTML = '<div class="text-gray-600 dark:text-gray-400 italic text-center py-4">Tidak ada santri yang belum dikelas</div>';
     if (chkAssignAll) { chkAssignAll.disabled = true; chkAssignAll.checked = false; }
     if (countAssignSantri) countAssignSantri.textContent = '';
     return;
@@ -577,7 +577,7 @@ function renderUnassignedSantri() {
   if (chkAssignAll) chkAssignAll.disabled = false;
 
   if (shown.length === 0) {
-    listAssignSantri.innerHTML = '<div class="text-gray-400 italic text-center py-4">Tidak ada yang cocok dengan pencarian</div>';
+    listAssignSantri.innerHTML = '<div class="text-gray-500 dark:text-gray-400 italic text-center py-4">Tidak ada yang cocok dengan pencarian</div>';
   } else {
     listAssignSantri.innerHTML = shown.map(s => `
       <label class="flex items-center gap-2 p-2 hover:bg-gray-50 dark:hover:bg-slate-600 rounded-lg cursor-pointer transition-colors">
@@ -606,7 +606,7 @@ chkAssignAll?.addEventListener('change', (e) => {
 });
 
 async function loadSantriByBagian() {
-  tableKelolaSantri.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-gray-400">Memuat data...</td></tr>';
+  tableKelolaSantri.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">Memuat data...</td></tr>';
   try {
     const res = await fetch('/api/santri');
     const data = await res.json();
@@ -617,7 +617,7 @@ async function loadSantriByBagian() {
     if (countEl) countEl.textContent = assigned.length;
 
     if (assigned.length === 0) {
-      tableKelolaSantri.innerHTML = '<tr><td colspan="4" class="px-4 py-8 text-center text-gray-400">Belum ada santri di ruang ini.</td></tr>';
+      tableKelolaSantri.innerHTML = '<tr><td colspan="4" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">Belum ada santri di ruang ini.</td></tr>';
       return;
     }
 
@@ -629,7 +629,7 @@ async function loadSantriByBagian() {
       const stambuk = s.stambuk || '-';
       html += `
         <tr class="hover:bg-gray-50/50 dark:hover:bg-slate-800/50 transition-colors">
-          <td data-label="No" class="px-4 py-3 text-center text-gray-500">${idx+1}</td>
+          <td data-label="No" class="px-4 py-3 text-center text-gray-600 dark:text-gray-400">${idx+1}</td>
           <td data-label="Nama Santri" class="px-4 py-3 font-medium text-gray-800 dark:text-gray-200">${s.nama}</td>
           <td data-label="Stambuk" class="px-4 py-3 font-mono font-bold text-indigo-600 dark:text-indigo-400">${stambuk}</td>
           <td data-label="Aksi" class="px-4 py-3 text-center">
@@ -759,14 +759,14 @@ async function loadPengajar() {
 }
 
 async function loadJadwal() {
-  tableKelolaJadwal.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-gray-400">Memuat data...</td></tr>';
+  tableKelolaJadwal.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">Memuat data...</td></tr>';
   try {
     const res = await fetch(`/api/akademik/jadwal?bagian_id=${currentBagianId}`);
     const data = await res.json();
     if (!res.ok) throw new Error("Gagal memuat jadwal");
     
     if (!data || data.length === 0) {
-      tableKelolaJadwal.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-gray-400">Belum ada jadwal.</td></tr>';
+      tableKelolaJadwal.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">Belum ada jadwal.</td></tr>';
       return;
     }
     
@@ -882,7 +882,7 @@ async function loadSetupData() {
       dataTingkat.forEach(t => {
         listTingkatan.innerHTML += `<li class="flex justify-between items-center px-2 py-1 border-b border-gray-100 dark:border-slate-700">
           <div>
-            <span>${t.nama}</span> <span class="text-xs text-gray-400 ml-2">Urutan: ${t.urutan}</span>
+            <span>${t.nama}</span> <span class="text-xs text-gray-500 dark:text-gray-400 ml-2">Urutan: ${t.urutan}</span>
           </div>
           <div class="flex gap-2">
             <button onclick="editTingkatan(${t.id}, '${t.nama.replace(/'/g, "\\'")}', ${t.urutan})" class="text-blue-500 hover:text-blue-700 text-xs font-medium">Edit</button>

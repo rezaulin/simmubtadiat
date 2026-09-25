@@ -154,7 +154,7 @@ function formatKelas(s) {
 }
 
 async function loadSantriAktif(query = '') {
-  tableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-gray-400">Memuat data...</td></tr>`;
+  tableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Memuat data...</td></tr>`;
   try {
     const response = await fetch('/api/santri');
     const data = await response.json();
@@ -205,7 +205,7 @@ function renderSantriAktif(allData, query = '') {
   }
   
   if (filtered.length === 0) {
-    tableBody.innerHTML = `<tr><td colspan="7" class="px-6 py-8 text-center text-gray-400">Tidak ada data${query ? ' untuk pencarian "' + query + '"' : ''}.</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="7" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Tidak ada data${query ? ' untuk pencarian "' + query + '"' : ''}.</td></tr>`;
     return;
   }
   
@@ -242,7 +242,7 @@ function renderSantriAktif(allData, query = '') {
 }
 
 async function loadSantriBelum(query = '') {
-  tableBelumBody.innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-gray-400">Memuat data...</td></tr>`;
+  tableBelumBody.innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Memuat data...</td></tr>`;
   try {
     const response = await fetch('/api/santri');
     const data = await response.json();
@@ -256,7 +256,7 @@ async function loadSantriBelum(query = '') {
     }
     
     if (unassigned.length === 0) {
-      tableBelumBody.innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-gray-400">Tidak ada santri yang belum dikelas.</td></tr>`;
+      tableBelumBody.innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Tidak ada santri yang belum dikelas.</td></tr>`;
       return;
     }
     
@@ -514,7 +514,7 @@ function renderTahunTabs() {
     const c = document.getElementById('tabs-tahun-ajaran');
     c.innerHTML = '';
     if(!currentRiwayat || currentRiwayat.length === 0) {
-        document.getElementById('akademik-container').innerHTML = '<p class="text-center text-sm text-gray-500 mt-8">Belum ada data riwayat akademik.</p>';
+        document.getElementById('akademik-container').innerHTML = '<p class="text-center text-sm text-gray-600 dark:text-gray-400 mt-8">Belum ada data riwayat akademik.</p>';
         return;
     }
     
@@ -575,7 +575,7 @@ function renderAkademikContent(mode) {
     } else if(mode === 'raport') {
         let rows = '';
         if(data.raport.length === 0) {
-            rows = `<tr><td colspan="3" class="py-4 text-center text-gray-400">Belum ada nilai di tahun ini</td></tr>`;
+            rows = `<tr><td colspan="3" class="py-4 text-center text-gray-500 dark:text-gray-400">Belum ada nilai di tahun ini</td></tr>`;
         } else {
             data.raport.forEach((r, idx) => {
                 rows += `
@@ -657,7 +657,7 @@ function bindTypeahead({ input, hidden, list, getUrl, onSelect, onClear }) {
       if (!res.ok) { closeList(); return; }
       const items = await res.json();
       if (!items || items.length === 0) {
-        list.innerHTML = `<li class="px-3 py-2 text-gray-400">Tidak ada hasil</li>`;
+        list.innerHTML = `<li class="px-3 py-2 text-gray-500 dark:text-gray-400">Tidak ada hasil</li>`;
         list.classList.remove('hidden');
         return;
       }

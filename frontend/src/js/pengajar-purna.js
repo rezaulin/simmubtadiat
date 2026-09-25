@@ -169,7 +169,7 @@ async function loadKabupatenInto(selectEl, provinsiKode, placeholder) {
 
 // ==================== LOAD & RENDER ====================
 async function loadData() {
-  tableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-gray-400">Memuat data pengajar purna...</td></tr>`;
+  tableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Memuat data pengajar purna...</td></tr>`;
   syncExportLink();
 
   try {
@@ -205,7 +205,7 @@ function statusBadge(status) {
 
 function renderTable(list) {
   if (!list || list.length === 0) {
-    tableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-gray-400">Tidak ada data pengajar purna.</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Tidak ada data pengajar purna.</td></tr>`;
     return;
   }
   const canWrite = window.isAdminRole(currentRole);
@@ -259,7 +259,7 @@ function ensureDetailModal() {
       <div class="relative bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-lg z-10 max-h-[90vh] overflow-y-auto p-6">
         <div class="flex items-center justify-between mb-4">
           <h3 class="text-lg font-bold text-gray-800 dark:text-white">Detail Pengajar Purna</h3>
-          <button id="modal-detail-purna-close" class="tap-target text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1" aria-label="Tutup">
+          <button id="modal-detail-purna-close" class="tap-target text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1" aria-label="Tutup">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
           </button>
         </div>

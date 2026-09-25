@@ -340,7 +340,7 @@ function summaryCard(label, value, sub, accent) {
     <div class="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-gray-100 dark:border-slate-700/60 shadow-sm">
       <p class="text-xs font-medium text-gray-500 dark:text-gray-400">${label}</p>
       <p class="text-2xl font-bold mt-1 ${accent || 'text-gray-900 dark:text-white'}">${value}</p>
-      ${sub ? `<p class="text-xs text-gray-400 mt-0.5">${sub}</p>` : ''}
+      ${sub ? `<p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">${sub}</p>` : ''}
     </div>`;
 }
 
@@ -372,7 +372,7 @@ function renderRekapSiswaGrid() {
     </div>`;
 
   if (!rekapSiswaList.length) {
-    rekapSiswaView.innerHTML = '<p class="text-center text-gray-400 py-6">Tidak ada santri di bagian ini.</p>';
+    rekapSiswaView.innerHTML = '<p class="text-center text-gray-500 dark:text-gray-400 py-6">Tidak ada santri di bagian ini.</p>';
     return;
   }
 
@@ -386,7 +386,7 @@ function renderRekapSiswaGrid() {
   html += `<span class="text-sm font-bold text-gray-800 dark:text-white whitespace-nowrap">${String(rekapSiswaIdx + 1).padStart(2, '0')}. ${s.nama}</span>`;
   html += `<button onclick="moveRekapSiswa(1)" class="tap-target px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-200 text-sm font-bold hover:bg-gray-200 dark:hover:bg-slate-600" aria-label="Santri berikutnya">▶</button>`;
   html += '</div>';
-  html += `<span class="text-xs text-gray-400">${rekapSiswaIdx + 1}/${rekapSiswaList.length}</span>`;
+  html += `<span class="text-xs text-gray-500 dark:text-gray-400">${rekapSiswaIdx + 1}/${rekapSiswaList.length}</span>`;
   html += '</div>';
 
   html += '<table class="border-collapse text-sm w-full"><thead><tr>';
@@ -402,7 +402,7 @@ function renderRekapSiswaGrid() {
     const key = `${b.tahun}:${b.bulan}`;
     const d = data[key] || { s: 0, i: 0, a: 0 };
     html += '<tr>';
-    html += `<td class="px-2 py-1.5 border text-center text-gray-400 text-xs">${String(idx + 1).padStart(2, '0')}</td>`;
+    html += `<td class="px-2 py-1.5 border text-center text-gray-500 dark:text-gray-400 text-xs">${String(idx + 1).padStart(2, '0')}</td>`;
     html += `<td class="px-3 py-1.5 border font-medium">${b.label}</td>`;
     html += `<td class="px-3 py-1.5 border text-center font-bold text-gray-700 dark:text-gray-300">${d.s || '-'}</td>`;
     html += `<td class="px-3 py-1.5 border text-center font-bold text-gray-700 dark:text-gray-300">${d.i || '-'}</td>`;
@@ -431,7 +431,7 @@ function renderRekapSiswaGrid() {
   html += '</tr>';
 
   html += '</tbody></table>';
-  html += '<p class="text-xs text-gray-400 mt-2">S = Sakit &nbsp;•&nbsp; I = Izin &nbsp;•&nbsp; T = Alpha (tanpa keterangan) &nbsp;•&nbsp; Tampilan rekap (baca saja)</p>';
+  html += '<p class="text-xs text-gray-500 dark:text-gray-400 mt-2">S = Sakit &nbsp;•&nbsp; I = Izin &nbsp;•&nbsp; T = Alpha (tanpa keterangan) &nbsp;•&nbsp; Tampilan rekap (baca saja)</p>';
 
   rekapSiswaView.innerHTML = html;
 }
@@ -502,7 +502,7 @@ function renderTablePengajar(data) {
 
   if (list.length === 0) {
     tableHead.innerHTML = `<tr><th class="px-6 py-3">Data Kosong</th></tr>`;
-    tableBody.innerHTML = '<tr><td class="px-6 py-8 text-center text-gray-500">Tidak ada pengajar untuk filter ini.</td></tr>';
+    tableBody.innerHTML = '<tr><td class="px-6 py-8 text-center text-gray-600 dark:text-gray-400">Tidak ada pengajar untuk filter ini.</td></tr>';
     return;
   }
 
@@ -518,7 +518,7 @@ function renderTablePengajar(data) {
   tableBody.innerHTML = list.map((u, idx) => {
     return `
       <tr class="hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors">
-        <td class="px-4 py-3 text-gray-500 text-center">${idx + 1}</td>
+        <td class="px-4 py-3 text-gray-600 dark:text-gray-400 text-center">${idx + 1}</td>
         <td class="px-4 py-3">
           <p class="font-medium text-gray-800 dark:text-gray-200 whitespace-nowrap">${u.pengajar_nama || '-'}</p>
           ${(u.tingkatan_nama || u.kelas_nama) ? `<span class="text-[10px] font-bold text-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:text-blue-300 px-2 py-0.5 rounded-md ml-1">${u.tingkatan_nama || ''} ${u.kelas_nama || ''}</span>` : ''}

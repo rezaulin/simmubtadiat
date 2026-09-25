@@ -109,7 +109,7 @@ if (btnResetFilter) {
 }
 
 async function loadCatatan() {
-  tableBody.innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-gray-400">Memuat data...</td></tr>`;
+  tableBody.innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Memuat data...</td></tr>`;
   try {
     const res = await fetch(`/api/catatan`);
     if (!res.ok) throw new Error('Gagal memuat catatan');
@@ -137,7 +137,7 @@ function filterCatatan() {
 
 function renderRows(list) {
   if (!list || list.length === 0) {
-    tableBody.innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-gray-400">Belum ada catatan.</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Belum ada catatan.</td></tr>`;
     return;
   }
   tableBody.innerHTML = '';
@@ -148,7 +148,7 @@ function renderRows(list) {
     if (c.bagian_nama) infoArr.push(c.bagian_nama);
     
     const bagian = infoArr.length > 0 
-      ? `<div class="text-xs font-medium text-gray-500 mt-0.5">${infoArr.join(' - ')}</div>` 
+      ? `<div class="text-xs font-medium text-gray-600 dark:text-gray-400 mt-0.5">${infoArr.join(' - ')}</div>` 
       : '';
     const btnRiwayat = `<button data-riwayat="${c.santri_id}" data-nama="${c.santri_nama}" class="px-3 py-1 bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-200 rounded-lg text-xs font-semibold transition-colors">Riwayat</button>`;
     tableBody.innerHTML += `
@@ -190,7 +190,7 @@ tableBody.addEventListener('click', (e) => {
 async function openRiwayatModal(santriId, santriNama) {
   if (!modalDetail) return;
   detailSantriName.textContent = santriNama;
-  detailTableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-gray-400">Memuat data...</td></tr>`;
+  detailTableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Memuat data...</td></tr>`;
   modalDetail.classList.remove('hidden');
 
   try {
@@ -205,7 +205,7 @@ async function openRiwayatModal(santriId, santriNama) {
 
 function renderDetailRows(list, santriId) {
   if (!list || list.length === 0) {
-    detailTableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-gray-400">Belum ada catatan.</td></tr>`;
+    detailTableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Belum ada catatan.</td></tr>`;
     return;
   }
   detailTableBody.innerHTML = '';

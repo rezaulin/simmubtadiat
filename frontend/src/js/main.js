@@ -728,7 +728,7 @@ function renderKalenderAgenda(kuartalList, jadwalHariIni, today, agendaList) {
           <span class="mt-1 w-1.5 h-1.5 rounded-full bg-accent-gold shrink-0"></span>
           <div class="min-w-0">
             <div class="font-semibold text-gray-800 dark:text-gray-100 truncate">${escapeHTML(String(a && a.judul != null ? a.judul : 'Agenda'))}</div>
-            <div class="text-gray-400">${escapeHTML(formatAgendaRange(a))}</div>
+            <div class="text-gray-500 dark:text-gray-400">${escapeHTML(formatAgendaRange(a))}</div>
           </div>
         </div>`).join('')}
       </div>`
@@ -1229,7 +1229,7 @@ function initRoleAwareDashboard(role) {
     if (region) {
       region.innerHTML = `
         <div data-role-unavailable class="bg-white dark:bg-slate-800 rounded-2xl p-8 border border-gray-100 dark:border-slate-700/60 shadow-sm text-center">
-          <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gray-100 dark:bg-slate-700 text-gray-400 mb-4">
+          <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-gray-400 mb-4">
             <i data-lucide="lock" class="w-7 h-7"></i>
           </div>
           <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Konten dashboard tidak tersedia untuk peran ini.</p>
@@ -1368,7 +1368,7 @@ async function renderWaliHome() {
   if (quick) quick.classList.add('hidden');
   if (!home) return;
   home.classList.remove('hidden');
-  home.innerHTML = `<div class="text-center py-10 text-gray-400 text-sm">Memuat data anak...</div>`;
+  home.innerHTML = `<div class="text-center py-10 text-gray-500 dark:text-gray-400 text-sm">Memuat data anak...</div>`;
 
   try {
     const res = await fetch('/api/wali/anak');
@@ -1412,7 +1412,7 @@ async function renderWaliHome() {
 async function loadAnakDetail(santriId) {
   const home = document.getElementById('wali-home');
   if (!home) return;
-  home.innerHTML = `<div class="text-center py-10 text-gray-400 text-sm">Memuat detail anak...</div>`;
+  home.innerHTML = `<div class="text-center py-10 text-gray-500 dark:text-gray-400 text-sm">Memuat detail anak...</div>`;
 
   try {
     const [resS, resR, resC] = await Promise.all([
@@ -1439,7 +1439,7 @@ function buildCatatanAnak(catatan) {
       '<h3 class="text-lg font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2">' +
       '<i data-lucide="clipboard-list" class="w-5 h-5"></i>' +
       'Catatan Pelanggaran & Prestasi</h3></div>' +
-      '<div class="p-4 text-center text-sm text-gray-400 italic">Belum ada catatan pelanggaran atau prestasi.</div></div>';
+      '<div class="p-4 text-center text-sm text-gray-500 dark:text-gray-400 italic">Belum ada catatan pelanggaran atau prestasi.</div></div>';
   }
 
   const pelanggaran = catatan.filter(c => c.jenis === 'pelanggaran');
@@ -1615,7 +1615,7 @@ function buildRiwayatAkademik(riwayat) {
 
     const rows = (ta.raport || []).map((m, i) => `
       <tr class="border-b border-gray-100 dark:border-slate-700">
-        <td class="px-2 py-1.5 text-center text-gray-400 text-xs">${i + 1}</td>
+        <td class="px-2 py-1.5 text-center text-gray-500 dark:text-gray-400 text-xs">${i + 1}</td>
         <td class="px-2 py-1.5 font-medium text-gray-800 dark:text-gray-200 text-xs">${waliEscape((m.nama_indo && m.nama_indo.trim()) ? m.nama_indo.trim() : m.mapel)}</td>
         <td class="px-2 py-1.5 text-center font-bold text-xs">${waliFmtNilaiRed(m.tamrin_k1)}</td>
         <td class="px-2 py-1.5 text-center font-bold text-xs">${waliFmtNilaiRed(m.ujian_k2)}</td>
@@ -1648,7 +1648,7 @@ function buildRiwayatAkademik(riwayat) {
             <table class="min-w-full text-xs">
               <thead class="bg-gray-50 dark:bg-slate-900/40">
                 <tr>
-                  <th class="px-2 py-1.5 text-center text-xs font-bold text-gray-500 uppercase">Bulan</th>
+                  <th class="px-2 py-1.5 text-center text-xs font-bold text-gray-600 dark:text-gray-400 uppercase">Bulan</th>
                   <th class="px-2 py-1.5 text-center text-xs font-bold text-blue-600 uppercase">Sakit</th>
                   <th class="px-2 py-1.5 text-center text-xs font-bold text-amber-600 uppercase">Izin</th>
                   <th class="px-2 py-1.5 text-center text-xs font-bold text-red-600 uppercase">Alpha</th>
@@ -1673,7 +1673,7 @@ function buildRiwayatAkademik(riwayat) {
               </tfoot>
             </table>
           </div>` : `
-          <div class="bg-gray-50 dark:bg-slate-900/20 rounded-xl p-4 text-center text-sm text-gray-400 italic mb-6">
+          <div class="bg-gray-50 dark:bg-slate-900/20 rounded-xl p-4 text-center text-sm text-gray-500 dark:text-gray-400 italic mb-6">
             Belum ada data absensi untuk tahun ajaran ini.
           </div>`}
           <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Transkrip Nilai (Tamrin, Ujian & Raport)</h4>
@@ -1682,18 +1682,18 @@ function buildRiwayatAkademik(riwayat) {
             <table class="min-w-full text-xs">
               <thead class="bg-gray-50 dark:bg-slate-900/40">
                 <tr>
-                  <th rowspan="2" class="px-2 py-2 text-center text-xs font-bold text-gray-500 uppercase w-8 border-r border-gray-200 dark:border-gray-700">No</th>
-                  <th rowspan="2" class="px-2 py-2 text-left text-xs font-bold text-gray-500 uppercase border-r border-gray-200 dark:border-gray-700">Mata Pelajaran</th>
+                  <th rowspan="2" class="px-2 py-2 text-center text-xs font-bold text-gray-600 dark:text-gray-400 uppercase w-8 border-r border-gray-200 dark:border-gray-700">No</th>
+                  <th rowspan="2" class="px-2 py-2 text-left text-xs font-bold text-gray-600 dark:text-gray-400 uppercase border-r border-gray-200 dark:border-gray-700">Mata Pelajaran</th>
                   <th colspan="3" class="px-2 py-2 text-center text-xs font-bold text-blue-600 dark:text-blue-400 uppercase border-r border-gray-200 dark:border-gray-700 border-b">Semester 1 (Ganjil)</th>
                   <th colspan="3" class="px-2 py-2 text-center text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase border-b">Semester 2 (Genap)</th>
                 </tr>
                 <tr class="border-t border-gray-200 dark:border-gray-700">
-                  <th class="px-2 py-2 text-center text-[10px] font-bold text-gray-500 uppercase w-16">Tamrin K1</th>
-                  <th class="px-2 py-2 text-center text-[10px] font-bold text-gray-500 uppercase w-16">Ujian K2</th>
-                  <th class="px-2 py-2 text-center text-[10px] font-bold text-gray-500 uppercase w-16 border-r border-gray-200 dark:border-gray-700 bg-indigo-50/50 dark:bg-indigo-900/10">Raport</th>
-                  <th class="px-2 py-2 text-center text-[10px] font-bold text-gray-500 uppercase w-16">Tamrin K3</th>
-                  <th class="px-2 py-2 text-center text-[10px] font-bold text-gray-500 uppercase w-16">Ujian K4</th>
-                  <th class="px-2 py-2 text-center text-[10px] font-bold text-gray-500 uppercase w-16 bg-indigo-50/50 dark:bg-indigo-900/10">Raport</th>
+                  <th class="px-2 py-2 text-center text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase w-16">Tamrin K1</th>
+                  <th class="px-2 py-2 text-center text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase w-16">Ujian K2</th>
+                  <th class="px-2 py-2 text-center text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase w-16 border-r border-gray-200 dark:border-gray-700 bg-indigo-50/50 dark:bg-indigo-900/10">Raport</th>
+                  <th class="px-2 py-2 text-center text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase w-16">Tamrin K3</th>
+                  <th class="px-2 py-2 text-center text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase w-16">Ujian K4</th>
+                  <th class="px-2 py-2 text-center text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase w-16 bg-indigo-50/50 dark:bg-indigo-900/10">Raport</th>
                 </tr>
               </thead>
               <tbody>${rows}</tbody>
@@ -1718,7 +1718,7 @@ function buildRiwayatAkademik(riwayat) {
                 </tr>
               </tfoot>
             </table>
-          </div>` : `<p class="text-sm text-gray-400 italic">Belum ada nilai untuk tahun ajaran ini.</p>`}
+          </div>` : `<p class="text-sm text-gray-500 dark:text-gray-400 italic">Belum ada nilai untuk tahun ajaran ini.</p>`}
           ${bayaanBadge}
         </div>
       </div>`;

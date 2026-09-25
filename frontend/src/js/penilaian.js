@@ -108,7 +108,7 @@ async function loadSpreadsheet() {
   const bagianId = selBagian.value;
   if (!bagianId) { alert('Pilih bagian terlebih dahulu'); return; }
 
-  container.innerHTML = '<p class="text-center text-gray-400 py-8">Memuat data...</p>';
+  container.innerHTML = '<p class="text-center text-gray-500 dark:text-gray-400 py-8">Memuat data...</p>';
 
   try {
     const res = await fetch(`/api/penilaian/spreadsheet?bagian_id=${bagianId}&tahun_ajaran=${encodeURIComponent(tahunAjaran)}`);
@@ -123,13 +123,13 @@ async function loadSpreadsheet() {
 // === RENDER ===
 function renderSpreadsheet() {
   if (!currentData || !currentData.mapels || !currentData.santri) {
-    container.innerHTML = '<p class="text-center text-gray-400 py-4">Tidak ada data.</p>';
+    container.innerHTML = '<p class="text-center text-gray-500 dark:text-gray-400 py-4">Tidak ada data.</p>';
     return;
   }
 
   const { mapels, santri, nilai_kuartal, nilai_khos, nilai_bayan, absensi, absensi_bayan } = currentData;
   if (santri.length === 0) {
-    container.innerHTML = '<p class="text-center text-gray-400 py-4">Tidak ada santri di bagian ini.</p>';
+    container.innerHTML = '<p class="text-center text-gray-500 dark:text-gray-400 py-4">Tidak ada santri di bagian ini.</p>';
     return;
   }
 
@@ -303,7 +303,7 @@ function renderSection(title, mapels, santri, nilaiMap, kuartal, canEdit) {
   santri.forEach((s, idx) => {
     html += `<tr data-mark-row><td class="px-2 py-1 border text-center sticky left-0 bg-white dark:bg-slate-800 z-10">${idx + 1}</td>`;
     html += `<td data-nama class="px-2 py-1 border font-medium sticky left-[30px] bg-white dark:bg-slate-800 z-10 truncate max-w-[140px]">${s.nama}</td>`;
-    html += `<td class="px-2 py-1 border text-center text-gray-500">${s.stambuk}</td>`;
+    html += `<td class="px-2 py-1 border text-center text-gray-600 dark:text-gray-400">${s.stambuk}</td>`;
     let sum = 0, count = 0;
     mapels.forEach(m => {
       const key = `${s.id}_${m.id}`;
@@ -320,7 +320,7 @@ function renderSection(title, mapels, santri, nilaiMap, kuartal, canEdit) {
       }
       // data-excl="1" menandai mapel yang tidak dihitung ke Jml/Rata² (mis. Quran, Akhlaq).
       if (isDisabled) {
-        html += `<td class="px-0 py-0 border text-center bg-gray-100 dark:bg-slate-800"><input type="text" disabled value="-" class="w-full text-center text-xs py-1 bg-transparent border-0 outline-none text-gray-400"></td>`;
+        html += `<td class="px-0 py-0 border text-center bg-gray-100 dark:bg-slate-800"><input type="text" disabled value="-" class="w-full text-center text-xs py-1 bg-transparent border-0 outline-none text-gray-500 dark:text-gray-400"></td>`;
       } else if (!canEdit) {
         html += `<td class="px-0 py-0 border text-center bg-gray-50 dark:bg-slate-800"><input type="text" disabled value="${val}" class="w-full text-center text-xs py-1 bg-transparent border-0 outline-none text-gray-600 dark:text-gray-300"></td>`;
       } else {
@@ -493,7 +493,7 @@ function renderRaportSection(title, mapels, santri, khosMap, absensiMap, semeste
       }
       
       if (isDisabled) {
-        html += `<td class="px-0 py-0 border border-indigo-200 dark:border-indigo-800 text-center bg-gray-100 dark:bg-slate-800"><input type="text" disabled value="-" class="w-full text-center text-xs font-semibold text-gray-400 py-1 bg-transparent border-0 outline-none"></td>`;
+        html += `<td class="px-0 py-0 border border-indigo-200 dark:border-indigo-800 text-center bg-gray-100 dark:bg-slate-800"><input type="text" disabled value="-" class="w-full text-center text-xs font-semibold text-gray-500 dark:text-gray-400 py-1 bg-transparent border-0 outline-none"></td>`;
       } else if (!canEdit) {
         html += `<td class="px-0 py-0 border border-indigo-200 dark:border-indigo-800 text-center bg-gray-50 dark:bg-slate-800"><input type="text" disabled data-nilai-display value="${valDisplay}" class="w-full text-center text-xs font-semibold text-gray-600 dark:text-gray-300 py-1 bg-transparent border-0 outline-none"></td>`;
       } else {
@@ -531,8 +531,8 @@ function renderRaportSection(title, mapels, santri, khosMap, absensiMap, semeste
   const amAvgRounded = totalRoundedCount > 0 ? Math.floor(amAvg + 0.5) : '-';
   
   html += `<td class="px-1 py-1.5 border text-center font-bold text-indigo-950 dark:text-indigo-100 bg-blue-100 dark:bg-blue-900/40">${totalRoundedCount > 0 ? totalRoundedSum : '-'}</td>`;
-  html += '<td class="px-1 py-1.5 border text-center text-gray-400">-</td>';
-  html += '<td class="px-1 py-1.5 border text-center text-gray-400">-</td>';
+  html += '<td class="px-1 py-1.5 border text-center text-gray-500 dark:text-gray-400">-</td>';
+  html += '<td class="px-1 py-1.5 border text-center text-gray-500 dark:text-gray-400">-</td>';
   html += '</tr>';
 
   html += '</tbody></table></div>';
@@ -601,7 +601,7 @@ function renderBayanSection(santri, nilaiKhos, nilaiBayan, absensiMap, totalMape
     html += `<td class="px-2 py-1 border text-center">${idx + 1}</td>`;
     html += `<td data-nama data-absensi="${markTh.level}" data-absensi-title="${markTh.title}"${markTh.title ? ` title="${markTh.title}"` : ''} class="px-2 py-1 border font-medium ${markTh.cls}">${s.nama}</td>`;
     html += `<td class="px-2 py-1 border text-center font-bold">${bayanAsli}</td>`;
-    html += `<td class="px-2 py-1 border text-center ${koreksi < 0 && !overridden ? 'text-red-600 dark:text-red-400' : 'text-gray-400'}">${ketKoreksi}</td>`;
+    html += `<td class="px-2 py-1 border text-center ${koreksi < 0 && !overridden ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'}">${ketKoreksi}</td>`;
     
     const labelAkhir = hasilAkhir !== '-' ? bayanLabel(hasilAkhir) : '';
     if (!canEdit) {

@@ -34,7 +34,7 @@ async function loadArsip() {
   const bagianId = filterBagian ? filterBagian.value : "";
   const tahunAjaran = filterTahun ? filterTahun.value : "";
 
-  tableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-gray-400">Memuat arsip santri...</td></tr>`;
+  tableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Memuat arsip santri...</td></tr>`;
   
   try {
     let url = "/api/santri/arsip?";
@@ -99,7 +99,7 @@ async function loadArsip() {
 // Render Table
 function renderTable(santriArray) {
   if (!santriArray || santriArray.length === 0) {
-    tableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-gray-400">Tidak ada data arsip santri ditemukan.</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Tidak ada data arsip santri ditemukan.</td></tr>`;
     return;
   }
   

@@ -345,14 +345,14 @@ function resolveStatusSantriId(inputVal) {
 selBagianAsal.addEventListener('change', () => {
   const bgId = parseInt(selBagianAsal.value);
   if (!bgId) {
-    tableBodyMutasi.innerHTML = `<tr><td colspan="3" class="px-6 py-8 text-center text-gray-400">Pilih Bagian Asal terlebih dahulu...</td></tr>`;
+    tableBodyMutasi.innerHTML = `<tr><td colspan="3" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Pilih Bagian Asal terlebih dahulu...</td></tr>`;
     btnProsesMutasi.disabled = true;
     return;
   }
   
   const filtered = allSantri.filter(s => s.bagian_id === bgId);
   if (filtered.length === 0) {
-    tableBodyMutasi.innerHTML = `<tr><td colspan="3" class="px-6 py-8 text-center text-gray-400">Tidak ada santri di bagian ini.</td></tr>`;
+    tableBodyMutasi.innerHTML = `<tr><td colspan="3" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Tidak ada santri di bagian ini.</td></tr>`;
     btnProsesMutasi.disabled = true;
     return;
   }
@@ -768,7 +768,7 @@ stambukLoadBtn?.addEventListener('click', async () => {
       tr.className = 'hover:bg-gray-50/50 dark:hover:bg-slate-800/50 transition-colors';
       tr.innerHTML = `
         <td class="px-4 py-2 font-semibold text-indigo-600 dark:text-indigo-400">${s.nama_bagian}</td>
-        <td class="px-4 py-2 text-center text-gray-500">${noPerBagian}</td>
+        <td class="px-4 py-2 text-center text-gray-600 dark:text-gray-400">${noPerBagian}</td>
         <td class="px-4 py-2 font-medium text-gray-800 dark:text-gray-200">${s.nama}</td>
         <td class="px-2 py-1">
           <input type="text" data-santri-id="${s.santri_id}" value="${s.stambuk || ''}"

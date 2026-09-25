@@ -288,7 +288,7 @@ function renderPengabdianRow(item, canWrite = false) {
     <tr class="hover:bg-gray-50/50 dark:hover:bg-slate-800/50 transition-colors">
       <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900 dark:text-white">
         ${nama}
-        <div class="text-xs text-gray-400 font-normal">Stambuk: ${stambuk}</div>
+        <div class="text-xs text-gray-500 dark:text-gray-400 font-normal">Stambuk: ${stambuk}</div>
       </td>
       <td class="px-6 py-4 text-gray-700 dark:text-gray-300">${tempat}</td>
       <td class="px-6 py-4 text-gray-700 dark:text-gray-300 whitespace-nowrap">${mulai}</td>
@@ -300,7 +300,7 @@ function renderPengabdianRow(item, canWrite = false) {
 // Muat daftar santri pengabdian dari GET /api/pengabdian dan render ke tab.
 async function loadPengabdian() {
   if (!pengabdianList) return;
-  pengabdianList.innerHTML = `<div class="p-6 text-center text-gray-400">Memuat data pengabdian...</div>`;
+  pengabdianList.innerHTML = `<div class="p-6 text-center text-gray-500 dark:text-gray-400">Memuat data pengabdian...</div>`;
 
   try {
     const response = await fetch('/api/pengabdian');
@@ -316,7 +316,7 @@ async function loadPengabdian() {
 
     const list = Array.isArray(data) ? data : [];
     if (list.length === 0) {
-      pengabdianList.innerHTML = `<div class="p-6 text-center text-gray-400">Tidak ada santri yang sedang berkhidmah.</div>`;
+      pengabdianList.innerHTML = `<div class="p-6 text-center text-gray-500 dark:text-gray-400">Tidak ada santri yang sedang berkhidmah.</div>`;
       return;
     }
 
@@ -430,7 +430,7 @@ if (formSelesai) {
 
 // 3. Fetch Data Alumni
 async function loadAlumni(query = '') {
-  tableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-gray-400">Memuat data alumni...</td></tr>`;
+  tableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Memuat data alumni...</td></tr>`;
   
   try {
     // Bangun query string filter wilayah (backend mendukung ?provinsi= & ?kabupaten=)
@@ -550,7 +550,7 @@ if (btnResetFilter) {
 // 4. Render Table
 function renderTable(alumniArray) {
   if (!alumniArray || alumniArray.length === 0) {
-    tableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-gray-400">Tidak ada data alumni ditemukan.</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Tidak ada data alumni ditemukan.</td></tr>`;
     return;
   }
   

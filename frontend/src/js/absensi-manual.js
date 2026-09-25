@@ -107,11 +107,13 @@ function switchTab(name) {
   tabSantri.classList.toggle('border-primary', isSantri);
   tabSantri.classList.toggle('text-primary', isSantri);
   tabSantri.classList.toggle('border-transparent', !isSantri);
-  tabSantri.classList.toggle('text-gray-500', !isSantri);
+  tabSantri.classList.toggle('text-gray-600', !isSantri);
+  tabSantri.classList.toggle('dark:text-gray-400', !isSantri);
   tabPengajar.classList.toggle('border-primary', !isSantri);
   tabPengajar.classList.toggle('text-primary', !isSantri);
   tabPengajar.classList.toggle('border-transparent', isSantri);
-  tabPengajar.classList.toggle('text-gray-500', isSantri);
+  tabPengajar.classList.toggle('text-gray-600', isSantri);
+  tabPengajar.classList.toggle('dark:text-gray-400', isSantri);
   panelSantri.classList.toggle('hidden', !isSantri);
   panelPengajar.classList.toggle('hidden', isSantri);
 }
@@ -325,7 +327,7 @@ window.moveSantri = moveSantri;
 // Hadir (H) dihapus dari input & rekap sesuai keputusan owner 2026-08.
 function renderGridSantri(canEdit = false) {
   if (!santriList.length) {
-    gridEl.innerHTML = '<p class="text-gray-400 text-center py-4">Tidak ada santri di bagian ini.</p>';
+    gridEl.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-center py-4">Tidak ada santri di bagian ini.</p>';
     return;
   }
 
@@ -339,7 +341,7 @@ function renderGridSantri(canEdit = false) {
   html += `<span class="text-sm font-bold text-gray-800 dark:text-white whitespace-nowrap">${String(currentSantriIdx + 1).padStart(2, '0')}. ${s.nama}</span>`;
   html += `<button onclick="moveSantri(1)" class="tap-target px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-200 text-sm font-bold hover:bg-gray-200 dark:hover:bg-slate-600" aria-label="Santri berikutnya">▶</button>`;
   html += '</div>';
-  html += `<span class="text-xs text-gray-400">${currentSantriIdx + 1}/${santriList.length}</span>`;
+  html += `<span class="text-xs text-gray-500 dark:text-gray-400">${currentSantriIdx + 1}/${santriList.length}</span>`;
   html += '</div>';
 
   html += '<table class="w-full border-collapse text-sm table-fixed">';
@@ -359,7 +361,7 @@ function renderGridSantri(canEdit = false) {
     const vi = d ? (d.i || '') : '';
     const va = d ? (d.a || '') : '';
     html += '<tr>';
-    html += `<td class="px-1 py-1.5 border text-center text-gray-400 text-xs">${String(idx + 1).padStart(2, '0')}</td>`;
+    html += `<td class="px-1 py-1.5 border text-center text-gray-500 dark:text-gray-400 text-xs">${String(idx + 1).padStart(2, '0')}</td>`;
     html += `<td class="px-2 py-1.5 border font-medium text-xs break-words">${b.label}</td>`;
     if (canEdit) {
       html += `<td class="px-0.5 py-1 border text-center"><input type="number" min="0" inputmode="numeric" data-bulan="${key}" data-type="s" value="${vs}" class="w-full text-center glass-input rounded px-0.5 py-1 text-sm"></td>`;
@@ -374,7 +376,7 @@ function renderGridSantri(canEdit = false) {
   });
   html += '</tbody></table>';
 
-  html += '<p class="text-xs text-gray-400 mt-2">S = Sakit &nbsp;•&nbsp; I = Izin &nbsp;•&nbsp; T = Alpha (tanpa keterangan)</p>';
+  html += '<p class="text-xs text-gray-500 dark:text-gray-400 mt-2">S = Sakit &nbsp;•&nbsp; I = Izin &nbsp;•&nbsp; T = Alpha (tanpa keterangan)</p>';
   if (!canEdit) {
     html += '<p class="text-xs text-red-500 mt-2 italic">* Anda tidak memiliki akses untuk mengedit absensi kelas ini.</p>';
   }
@@ -470,7 +472,7 @@ async function loadGridPengajar() {
 // Pengajar tanpa catatan tetap tampil (angka default 0).
 function renderGridPengajar(canEdit = false) {
   if (!pengajarKuartalList.length) {
-    gridElP.innerHTML = '<p class="text-gray-400 text-center py-4">Tidak ada pengajar untuk filter ini.</p>';
+    gridElP.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-center py-4">Tidak ada pengajar untuk filter ini.</p>';
     return;
   }
 
@@ -504,7 +506,7 @@ function renderGridPengajar(canEdit = false) {
     html += '</tr>';
   });
   html += '</tbody></table>';
-  html += '<p class="text-xs text-gray-400 mt-2">K1 = Kuartal 1 &nbsp;•&nbsp; K2&amp;3 = Kuartal 2 &amp; 3 &nbsp;•&nbsp; K4 = Kuartal 4</p>';
+  html += '<p class="text-xs text-gray-500 dark:text-gray-400 mt-2">K1 = Kuartal 1 &nbsp;•&nbsp; K2&amp;3 = Kuartal 2 &amp; 3 &nbsp;•&nbsp; K4 = Kuartal 4</p>';
 
   if (!canEdit) {
     html += '<p class="text-xs text-red-500 mt-2 italic">* Anda tidak memiliki akses untuk mengedit absensi pengajar.</p>';

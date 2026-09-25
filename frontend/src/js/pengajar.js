@@ -93,10 +93,10 @@ let userRole = '';
 if (tabData && tabPenugasan && contentData && contentPenugasan) {
   function switchTab(activeTab, inactiveTab, activeContent, inactiveContent) {
     activeTab.classList.add('text-primary', 'dark:text-accent-emerald', 'border-primary', 'dark:border-accent-emerald');
-    activeTab.classList.remove('text-gray-500', 'border-transparent');
+    activeTab.classList.remove('text-gray-600 dark:text-gray-400', 'border-transparent');
     
     inactiveTab.classList.remove('text-primary', 'dark:text-accent-emerald', 'border-primary', 'dark:border-accent-emerald');
-    inactiveTab.classList.add('text-gray-500', 'border-transparent');
+    inactiveTab.classList.add('text-gray-600 dark:text-gray-400', 'border-transparent');
 
     activeContent.classList.remove('hidden');
     inactiveContent.classList.add('hidden');
@@ -164,7 +164,7 @@ async function checkAuth() {
 
 // 3. Fetch Data Pengajar
 async function loadPengajar(query = '') {
-  tableBody.innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-gray-400">Memuat data pengajar...</td></tr>`;
+  tableBody.innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Memuat data pengajar...</td></tr>`;
 
   try {
     const response = await fetch('/api/pengajar');
@@ -199,7 +199,7 @@ async function loadPengajar(query = '') {
 // 4. Render Table
 function renderTable(pengajarArray) {
   if (!pengajarArray || pengajarArray.length === 0) {
-    tableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-gray-400">Tidak ada data pengajar ditemukan.</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Tidak ada data pengajar ditemukan.</td></tr>`;
     return;
   }
 
@@ -540,7 +540,7 @@ function renderMufatishTable() {
   if(filterK) filtered = filtered.filter(c => c.kelas_id == filterK);
 
   if (filtered.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-gray-500">Tidak ada data kelas.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-gray-600 dark:text-gray-400">Tidak ada data kelas.</td></tr>`;
     return;
   }
 
@@ -575,7 +575,7 @@ function renderMufatishTable() {
         ${window.isAdminRole(userRole) ? `
           <button type="button" class="btn-atur text-blue-500 hover:underline text-sm font-medium view-mode">${assignedId ? 'Edit' : 'Atur'}</button>
           <button type="button" class="btn-simpan text-green-500 hover:underline text-sm font-medium hidden edit-mode">Simpan</button>
-          <button type="button" class="btn-batal text-gray-400 hover:underline text-sm font-medium hidden edit-mode ml-2">Batal</button>
+          <button type="button" class="btn-batal text-gray-500 dark:text-gray-400 hover:underline text-sm font-medium hidden edit-mode ml-2">Batal</button>
         ` : ''}
       </td>
     `;
@@ -622,7 +622,7 @@ function renderMustahiqTable() {
   if(filterK) filtered = filtered.filter(b => b.kelas_id == filterK);
 
   if (filtered.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-gray-500">Tidak ada data bagian.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-gray-600 dark:text-gray-400">Tidak ada data bagian.</td></tr>`;
     return;
   }
 
@@ -661,13 +661,13 @@ function renderMustahiqTable() {
         </div>
       </td>
       <td class="px-6 py-4">
-        <div class="mb-2 flex flex-wrap max-w-[200px]">${munawwibHtml || '<span class="text-gray-400 text-xs">-</span>'}</div>
+        <div class="mb-2 flex flex-wrap max-w-[200px]">${munawwibHtml || '<span class="text-gray-500 dark:text-gray-400 text-xs">-</span>'}</div>
       </td>
       <td class="px-6 py-4">
         ${window.isAdminRole(userRole) ? `
           <button type="button" class="btn-atur text-blue-500 hover:underline text-sm font-medium view-mode">${assignedId ? 'Edit Mustahiq' : 'Atur Mustahiq'}</button>
           <button type="button" class="btn-simpan text-green-500 hover:underline text-sm font-medium hidden edit-mode">Simpan</button>
-          <button type="button" class="btn-batal text-gray-400 hover:underline text-sm font-medium hidden edit-mode ml-2">Batal</button>
+          <button type="button" class="btn-batal text-gray-500 dark:text-gray-400 hover:underline text-sm font-medium hidden edit-mode ml-2">Batal</button>
         ` : ''}
       </td>
       <td class="px-6 py-4">

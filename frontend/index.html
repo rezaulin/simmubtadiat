@@ -83,7 +83,7 @@
   <!-- ==================== SIDEBAR (drawer on mobile, fixed on desktop) ==================== -->
   <aside id="app-sidebar" class="flex flex-col w-64 fixed inset-y-0 left-0 bg-white dark:bg-slate-800 border-r border-gray-100 dark:border-slate-700/60 z-[70] transition-transform duration-300 transform -translate-x-full md:translate-x-0 shadow-[4px_0_24px_rgba(0,0,0,0.02)] print:hidden">
     <!-- Close button (Mobile only) -->
-    <button id="btn-close-sidebar" class="tap-target md:hidden absolute top-4 right-4 p-2 bg-gray-50 dark:bg-slate-700 rounded-xl text-gray-500 hover:text-gray-700" aria-label="Tutup menu">
+    <button id="btn-close-sidebar" class="tap-target md:hidden absolute top-4 right-4 p-2 bg-gray-50 dark:bg-slate-700 rounded-xl text-gray-600 dark:text-gray-400 hover:text-gray-700" aria-label="Tutup menu">
       <i data-lucide="x" class="w-5 h-5"></i>
     </button>
       <!-- Logo Area -->
@@ -307,7 +307,7 @@
         <span class="text-[10px] font-bold">Beranda</span>
       </a>
       
-      <a href="/santri.html" data-nav class="w-1/5 flex flex-col items-center gap-1 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+      <a href="/santri.html" data-nav class="w-1/5 flex flex-col items-center gap-1 text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
         <i data-lucide="users" class="w-5 h-5"></i>
         <span class="text-[10px] font-semibold">Santri</span>
       </a>
@@ -322,12 +322,12 @@
         </button>
       </div>
 
-      <a href="/absensi-manual.html" data-nav class="w-1/5 flex flex-col items-center gap-1 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+      <a href="/absensi-manual.html" data-nav class="w-1/5 flex flex-col items-center gap-1 text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
         <i data-lucide="clipboard-check" class="w-5 h-5"></i>
         <span class="text-[10px] font-semibold">Absen</span>
       </a>
 
-      <button id="btn-menu-sidebar" onclick="if(window.openSidebar)window.openSidebar()" class="tap-target w-1/5 flex flex-col items-center gap-1 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors bg-transparent border-none cursor-pointer" aria-label="Buka menu">
+      <button id="btn-menu-sidebar" onclick="if(window.openSidebar)window.openSidebar()" class="tap-target w-1/5 flex flex-col items-center gap-1 text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors bg-transparent border-none cursor-pointer" aria-label="Buka menu">
         <i data-lucide="menu" class="w-5 h-5"></i>
         <span class="text-[10px] font-semibold">Menu</span>
       </button>
@@ -342,16 +342,16 @@
     <div class="w-full max-w-2xl bg-white dark:bg-slate-900 rounded-[2rem] shadow-2xl z-10 overflow-hidden flex flex-col scale-95 opacity-0 transition-all duration-300 h-[80vh] md:h-[600px]" id="search-content">
       <!-- Search Input Header -->
       <div class="p-4 md:p-6 border-b border-gray-100 dark:border-slate-800 relative flex items-center bg-white dark:bg-slate-900">
-        <i data-lucide="search" class="w-6 h-6 text-gray-400 absolute left-8"></i>
+        <i data-lucide="search" class="w-6 h-6 text-gray-500 dark:text-gray-400 absolute left-8"></i>
         <input type="text" id="global-search-input" class="w-full bg-transparent border-none focus:ring-0 text-lg md:text-xl pl-12 pr-12 text-gray-800 dark:text-white placeholder-gray-300 dark:placeholder-gray-600 font-medium" placeholder="Ketik NIK, Nama, atau Stambuk..." autocomplete="off">
-        <button id="search-close" class="tap-target absolute right-6 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors bg-gray-50 dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 p-2 rounded-full" aria-label="Tutup pencarian">
+        <button id="search-close" class="tap-target absolute right-6 text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors bg-gray-50 dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 p-2 rounded-full" aria-label="Tutup pencarian">
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>
       
       <!-- Search Results -->
       <div class="flex-1 overflow-y-auto p-3" id="search-results">
-        <div class="h-full flex flex-col items-center justify-center text-gray-400 p-8 text-center" id="search-empty">
+        <div class="h-full flex flex-col items-center justify-center text-gray-500 dark:text-gray-400 p-8 text-center" id="search-empty">
           <div class="w-20 h-20 rounded-3xl bg-gray-50 dark:bg-slate-800 flex items-center justify-center mb-6">
             <i data-lucide="search-x" class="w-10 h-10 text-gray-300 dark:text-slate-600"></i>
           </div>

@@ -59,7 +59,7 @@ async function checkAuth() {
 
 // 3. Fetch Data Dewan Harian
 async function loadDewan(query = '') {
-  tableBody.innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-gray-400">Memuat data dewan harian...</td></tr>`;
+  tableBody.innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Memuat data dewan harian...</td></tr>`;
   
   try {
     const response = await fetch('/api/dewan-harian');
@@ -122,7 +122,7 @@ async function loadDewan(query = '') {
 // 4. Render Table
 function renderTable(dewanArray) {
   if (!dewanArray || dewanArray.length === 0) {
-    tableBody.innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-gray-400">Tidak ada data dewan harian ditemukan.</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Tidak ada data dewan harian ditemukan.</td></tr>`;
     return;
   }
   

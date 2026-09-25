@@ -73,7 +73,7 @@
   <!-- Sidebar / Navigation -->
     <aside id="app-sidebar" class="flex flex-col w-64 fixed inset-y-0 left-0 bg-white dark:bg-slate-800 border-r border-gray-100 dark:border-slate-700/60 z-[70] transition-transform duration-300 transform -translate-x-full md:translate-x-0 shadow-[4px_0_24px_rgba(0,0,0,0.02)] print:hidden">
     <!-- Close button (Mobile only) -->
-    <button id="btn-close-sidebar" class="tap-target md:hidden absolute top-4 right-4 p-2 bg-gray-50 dark:bg-slate-700 rounded-xl text-gray-500 hover:text-gray-700" aria-label="Tutup menu">
+    <button id="btn-close-sidebar" class="tap-target md:hidden absolute top-4 right-4 p-2 bg-gray-50 dark:bg-slate-700 rounded-xl text-gray-600 dark:text-gray-400 hover:text-gray-700" aria-label="Tutup menu">
       <i data-lucide="x" class="w-5 h-5"></i>
     </button>
     
@@ -272,7 +272,7 @@
               <input type="text" name="nama_kitab" placeholder="Contoh: Al-Jurumiyah..." class="glass-input px-3 py-2 rounded-lg text-sm w-full">
             </div>
             <div class="flex-1 flex flex-col gap-1">
-              <label class="text-xs font-semibold text-gray-500 dark:text-gray-400">Nama Indonesia <span class="text-gray-400 font-normal">(riwayat/penilaian)</span></label>
+              <label class="text-xs font-semibold text-gray-500 dark:text-gray-400">Nama Indonesia <span class="text-gray-500 dark:text-gray-400 font-normal">(riwayat/penilaian)</span></label>
               <input type="text" name="nama_indo" placeholder="Contoh: Nahwu, Fiqih..." class="glass-input px-3 py-2 rounded-lg text-sm w-full">
             </div>
             <div class="w-full sm:w-24 flex flex-col gap-1">
@@ -296,7 +296,7 @@
 
           <div class="overflow-x-auto">
           <table class="w-full text-left text-sm text-gray-600 dark:text-gray-300">
-            <thead class="bg-gray-50 text-gray-500 uppercase font-semibold text-xs border-b">
+            <thead class="bg-gray-50 text-gray-600 dark:text-gray-400 uppercase font-semibold text-xs border-b">
               <tr>
                 <th class="px-4 py-3 text-center">Urutan</th>
                 <th class="px-4 py-3">Nama Fann</th>
@@ -343,24 +343,24 @@
     <div class="glass dark:bg-slate-800 rounded-3xl w-full max-w-sm z-10 overflow-hidden shadow-2xl scale-95 opacity-0 transition-all duration-300" id="modal-content">
       <div class="px-6 py-4 border-b flex justify-between items-center">
         <h3 class="text-lg font-bold">Buat Ruang Kelas Fisik</h3>
-        <button id="modal-close" class="tap-target text-gray-400 hover:text-gray-600" aria-label="Tutup"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        <button id="modal-close" class="tap-target text-gray-500 dark:text-gray-400 hover:text-gray-600" aria-label="Tutup"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
       </div>
       <div class="p-6">
         <form id="form-kelas" class="flex flex-col gap-4">
           <div class="flex flex-col gap-1">
-            <label class="text-xs font-semibold text-gray-500">Tingkatan</label>
+            <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">Tingkatan</label>
             <select name="tingkatan_id" id="sel-tingkatan" required class="glass-input px-3 py-2.5 rounded-lg text-sm w-full">
               <option value="">-- Pilih Tingkatan --</option>
             </select>
           </div>
           <div class="flex flex-col gap-1">
-            <label class="text-xs font-semibold text-gray-500">Kelas</label>
+            <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">Kelas</label>
             <select name="kelas_id" id="sel-kelas" required class="glass-input px-3 py-2.5 rounded-lg text-sm w-full">
               <option value="">-- Pilih Kelas --</option>
             </select>
           </div>
           <div class="flex flex-col gap-1">
-            <label class="text-xs font-semibold text-gray-500">Nama Ruang (Contoh: A1, Putra 1)</label>
+            <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">Nama Ruang (Contoh: A1, Putra 1)</label>
             <input type="text" name="nama" required class="glass-input px-3 py-2 rounded-lg text-sm w-full">
           </div>
           <div id="modal-error" class="hidden text-sm text-red-500 bg-red-50 p-2 rounded-lg mt-2"></div>
@@ -378,7 +378,7 @@
     <div class="px-6 py-4 border-b border-gray-200 dark:border-slate-700 flex justify-between items-center bg-white dark:bg-slate-800 shadow-sm">
       <div>
         <h3 class="text-xl font-bold dark:text-white flex items-center gap-2">
-          <button id="modal-kelola-close" class="tap-target text-gray-400 hover:text-gray-800 p-1 mr-2 rounded-lg hover:bg-gray-100 transition-colors" aria-label="Tutup">
+          <button id="modal-kelola-close" class="tap-target text-gray-500 dark:text-gray-400 hover:text-gray-800 p-1 mr-2 rounded-lg hover:bg-gray-100 transition-colors" aria-label="Tutup">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
           
           <span id="kelola-title">Kelola Ruang A1</span>
@@ -390,7 +390,7 @@
     <!-- KELOLA TABS -->
     <div class="px-6 pt-4 flex gap-6 border-b border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800">
       <button id="tab-kelola-santri" class="pb-3 text-sm font-semibold border-b-2 border-primary text-primary transition-colors">Daftar Santri
-      <button id="tab-kelola-jadwal" class="pb-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors">Jadwal Pelajaran & Guru
+      <button id="tab-kelola-jadwal" class="pb-3 text-sm font-medium border-b-2 border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-700 transition-colors">Jadwal Pelajaran & Guru
     </div>
 
     <div class="p-6 overflow-y-auto flex-1 custom-scrollbar">
@@ -424,7 +424,7 @@
                 </tr>
               </thead>
               <tbody id="table-kelola-santri" class="divide-y divide-gray-100 dark:divide-slate-700/50">
-                <tr><td colspan="4" class="px-4 py-8 text-center text-gray-400">Memuat data...</td></tr>
+                <tr><td colspan="4" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">Memuat data...</td></tr>
               </tbody>
             </table>
           </div>
@@ -438,7 +438,7 @@
         <div class="glass dark:bg-slate-800 rounded-3xl w-full max-w-3xl z-10 overflow-hidden shadow-2xl scale-95 opacity-0 transition-all duration-300 flex flex-col max-h-[90vh]" id="modal-assign-content">
           <div class="px-6 py-4 border-b border-gray-200 dark:border-slate-700 flex justify-between items-center">
             <h3 class="text-lg font-bold dark:text-white">Tambah Santri ke Ruangan</h3>
-            <button id="modal-assign-close" class="tap-target text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" aria-label="Tutup">
+            <button id="modal-assign-close" class="tap-target text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" aria-label="Tutup">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             
           </div>
@@ -446,7 +446,7 @@
             <p class="text-sm text-gray-500 dark:text-gray-400">Pilih santri yang berstatus <b>"Belum Dikelas"</b>. Bisa pilih banyak sekaligus.</p>
 
             <div class="relative">
-              <i data-lucide="search" class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+              <i data-lucide="search" class="w-4 h-4 text-gray-500 dark:text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
               <input type="text" id="search-assign-santri" autocomplete="off" placeholder="Cari nama atau nomor stambuk..."
                 class="glass-input w-full pl-9 pr-3 py-2 rounded-lg text-sm bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 focus:ring-primary focus:border-primary">
             </div>
@@ -457,10 +457,10 @@
                   <input type="checkbox" id="chk-assign-all" class="rounded border-gray-300 text-primary focus:ring-primary w-4 h-4 cursor-pointer">
                   Pilih Semua
                 </label>
-                <span id="count-assign-santri" class="text-xs text-gray-400"></span>
+                <span id="count-assign-santri" class="text-xs text-gray-500 dark:text-gray-400"></span>
               </div>
               <div id="list-assign-santri" class="max-h-[400px] overflow-y-auto custom-scrollbar p-3 bg-white dark:bg-slate-700">
-                <p class="text-sm text-center text-gray-400 py-4">Memuat daftar santri...</p>
+                <p class="text-sm text-center text-gray-500 dark:text-gray-400 py-4">Memuat daftar santri...</p>
               </div>
             </div>
           </div>
@@ -476,13 +476,13 @@
         <div class="glass dark:bg-slate-800 rounded-2xl p-6 border border-gray-200 mb-6">
           <form id="form-kelola-jadwal" class="grid grid-cols-1 md:grid-cols-6 gap-3 items-end">
             <div class="flex flex-col gap-1 md:col-span-1">
-              <label class="text-xs font-semibold text-gray-500">Mata Pelajaran</label>
+              <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">Mata Pelajaran</label>
               <select name="mapel_id" id="sel-jadwal-mapel" required class="glass-input px-3 py-2 rounded-lg text-sm w-full">
                 <option value="">-- Pilih Mapel --</option>
               </select>
             </div>
             <div class="flex flex-col gap-1 md:col-span-1">
-              <label class="text-xs font-semibold text-gray-500">Hari</label>
+              <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">Hari</label>
               <select name="hari" required class="glass-input px-3 py-2 rounded-lg text-sm w-full">
                 <option value="Senin">Senin</option>
                 <option value="Selasa">Selasa</option>
@@ -494,7 +494,7 @@
               </select>
             </div>
             <div class="flex flex-col gap-1 md:col-span-2">
-              <label class="text-xs font-semibold text-gray-500">Jam (Mulai - Selesai)</label>
+              <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">Jam (Mulai - Selesai)</label>
               <div class="flex items-center gap-2">
                 <input type="time" lang="en-GB" name="jam_mulai" required class="glass-input px-2 py-2 rounded-lg text-sm w-full">
                 <span>-</span>
@@ -502,7 +502,7 @@
               </div>
             </div>
             <div class="flex flex-col gap-1 md:col-span-1">
-              <label class="text-xs font-semibold text-gray-500">Pengajar (Guru)</label>
+              <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">Pengajar (Guru)</label>
               <select name="pengajar_id" id="sel-jadwal-pengajar" class="glass-input px-3 py-2 rounded-lg text-sm w-full">
                 <option value="">-- Pilih Guru --</option>
               </select>
@@ -516,7 +516,7 @@
         <div class="border border-gray-200 rounded-xl overflow-hidden glass">
           <div class="overflow-x-auto">
           <table class="w-full text-left text-sm text-gray-600 table-responsive">
-            <thead class="bg-gray-50 text-gray-500 uppercase font-semibold text-xs border-b">
+            <thead class="bg-gray-50 text-gray-600 dark:text-gray-400 uppercase font-semibold text-xs border-b">
               <tr>
                 <th class="px-4 py-3">Hari</th>
                 <th class="px-4 py-3">Waktu</th>
@@ -526,7 +526,7 @@
               </tr>
             </thead>
             <tbody id="table-kelola-jadwal" class="divide-y divide-gray-100">
-              <tr><td colspan="5" class="px-4 py-8 text-center text-gray-400">Belum ada jadwal untuk ruang ini.</td></tr>
+              <tr><td colspan="5" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">Belum ada jadwal untuk ruang ini.</td></tr>
             </tbody>
           </table>
           </div>
@@ -540,12 +540,12 @@
   <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl dark:bg-slate-900/90 border-t border-gray-100 dark:border-slate-800 z-50 px-2 py-2 pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.02)]">
     <div class="flex justify-between items-center relative h-14 w-full">
       
-      <a href="/index.html" data-nav class="w-1/5 flex flex-col items-center gap-1 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+      <a href="/index.html" data-nav class="w-1/5 flex flex-col items-center gap-1 text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
         <i data-lucide="home" class="w-5 h-5"></i>
         <span class="text-[10px] font-bold">Beranda</span>
       </a>
       
-      <a href="/santri.html" data-nav class="w-1/5 flex flex-col items-center gap-1 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+      <a href="/santri.html" data-nav class="w-1/5 flex flex-col items-center gap-1 text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
         <i data-lucide="users" class="w-5 h-5"></i>
         <span class="text-[10px] font-semibold">Santri</span>
       </a>
@@ -560,12 +560,12 @@
         
       </div>
 
-      <a href="/absensi-manual.html" data-nav class="w-1/5 flex flex-col items-center gap-1 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+      <a href="/absensi-manual.html" data-nav class="w-1/5 flex flex-col items-center gap-1 text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
         <i data-lucide="clipboard-check" class="w-5 h-5"></i>
         <span class="text-[10px] font-semibold">Absen</span>
       </a>
 
-      <a href="/penilaian.html" data-nav class="w-1/5 flex flex-col items-center gap-1 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+      <a href="/penilaian.html" data-nav class="w-1/5 flex flex-col items-center gap-1 text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
         <i data-lucide="file-check-2" class="w-5 h-5"></i>
         <span class="text-[10px] font-semibold">Nilai</span>
       </a>
