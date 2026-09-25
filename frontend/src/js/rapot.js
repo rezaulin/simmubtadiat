@@ -328,12 +328,12 @@ function renderSantriList() {
 
   currentSantri.forEach((s, idx) => {
     const row = document.createElement('div');
-    row.className = 'flex justify-between items-center px-4 py-2 hover:bg-gray-50';
+    row.className = 'flex justify-between items-center px-4 py-2 hover:bg-gray-50 dark:hover:bg-slate-700/50';
     row.innerHTML = `
       <span class="text-sm">
         <span class="text-gray-500 dark:text-gray-400 mr-2">${idx + 1}.</span>
         <span class="font-mono text-xs text-gray-600 dark:text-gray-400 mr-2">${s.stambuk || '-'}</span>
-        <span class="font-semibold">${s.nama}</span>
+        <span class="font-semibold dark:text-gray-100">${s.nama}</span>
       </span>
       <button data-id="${s.id}" class="btn-print-single bg-blue-600 text-white px-4 py-1 rounded text-sm font-bold hover:bg-blue-700">Cetak</button>
     `;
