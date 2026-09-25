@@ -92,7 +92,7 @@ const MENU_ACCESS = {
   admin: ['/index.html', '/santri.html', '/pengajar.html', '/pengajar-purna.html', '/alumni.html', '/dewan-harian.html', '/settings.html'],
   mufatish: ['/index.html', '/santri.html', '/penilaian.html', '/absensi-manual.html', '/rapot.html', '/pengajar.html', '/dewan-harian.html', '/arsip.html', '/rekap.html', '/catatan.html'],
   mustahiq: ['/index.html', '/santri.html', '/perpindahan.html', '/penilaian.html', '/rapot.html', '/rekap.html', '/catatan.html', '/pengajar.html', '/dewan-harian.html'],
-  muroqib: ['/index.html', '/santri.html', '/absensi-manual.html', '/catatan.html', '/dewan-harian.html', '/pengajar.html'],
+  muroqib: ['/index.html', '/santri.html', '/absensi-manual.html', '/catatan.html', '/dewan-harian.html', '/pengajar.html', '/rekap.html'],
   tim_rapot: ['/index.html', '/santri.html', '/penilaian.html', '/rapot.html', '/rekap.html'],
   keamanan: ['/index.html', '/santri.html', '/arsip.html', '/alumni.html', '/catatan.html'],
   wali_santri: ['/index.html']
@@ -205,6 +205,7 @@ const BOTTOM_NAV = {
     { href: '/index.html', icon: 'home', label: 'Beranda' },
     { href: '/santri.html', icon: 'users', label: 'Santri' },
     { href: '/absensi-manual.html', icon: 'clipboard-check', label: 'Absen' },
+    { href: '/rekap.html', icon: 'table', label: 'Rekap' },
     { href: '/catatan.html', icon: 'alert-triangle', label: 'Pelanggaran' }
   ],
   wali_santri: [
