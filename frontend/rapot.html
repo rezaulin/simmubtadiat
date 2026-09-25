@@ -548,32 +548,32 @@
           <!-- Tahun Ajaran -->
           <div class="flex flex-col gap-1 w-full sm:w-auto">
             <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">Tahun Ajaran</label>
-            <select id="filter-tahun-ajaran" class="border p-2 rounded w-full sm:w-48 font-mono font-bold text-amber-700">
+            <select id="filter-tahun-ajaran" class="border p-2 rounded w-full sm:w-48 font-mono font-bold text-amber-700 dark:text-amber-400 dark:bg-slate-700 dark:border-slate-600">
               <!-- Diisi via JS -->
             </select>
           </div>
           <!-- Tingkatan -->
           <div class="flex flex-col gap-1 w-full sm:w-auto">
             <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">Tingkatan</label>
-            <select id="filter-tingkatan" class="border p-2 rounded w-full sm:w-48">
+            <select id="filter-tingkatan" class="border p-2 rounded w-full sm:w-48 dark:bg-slate-700 dark:border-slate-600 dark:text-gray-200">
             <option value="">Memuat...</option>
           </select>
         </div>
         <div class="flex flex-col w-full sm:w-auto">
           <label class="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Kelas</label>
-          <select id="filter-kelas" class="border p-2 rounded w-full sm:w-48" disabled>
+          <select id="filter-kelas" class="border p-2 rounded w-full sm:w-48 dark:bg-slate-700 dark:border-slate-600 dark:text-gray-200" disabled>
             <option value="">-- Pilih Kelas --</option>
           </select>
         </div>
         <div class="flex flex-col w-full sm:w-auto">
           <label class="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Bagian</label>
-          <select id="filter-bagian" class="border p-2 rounded w-full sm:w-48" disabled>
+          <select id="filter-bagian" class="border p-2 rounded w-full sm:w-48 dark:bg-slate-700 dark:border-slate-600 dark:text-gray-200" disabled>
             <option value="">-- Pilih Bagian --</option>
           </select>
         </div>
         <div class="flex flex-col w-full sm:w-auto">
           <label class="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Semester</label>
-          <select id="filter-semester" class="border p-2 rounded w-full sm:w-56">
+          <select id="filter-semester" class="border p-2 rounded w-full sm:w-56 dark:bg-slate-700 dark:border-slate-600 dark:text-gray-200">
             <option value="1">Semester 1 (الأول)</option>
             <option value="2">Semester 2 (الثاني)</option>
             <option value="1,2">Semester 1 &amp; 2 (Keduanya)</option>
@@ -581,7 +581,7 @@
         </div>
         <div class="flex flex-col w-full sm:w-auto">
           <label class="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Ukuran Kertas</label>
-          <select id="kertas-selector" class="border p-2 rounded w-full sm:w-28" onchange="updatePageSize()">
+          <select id="kertas-selector" class="border p-2 rounded w-full sm:w-28 dark:bg-slate-700 dark:border-slate-600 dark:text-gray-200" onchange="updatePageSize()">
             <option value="215.9mm 330.2mm" selected>F4</option>
             <option value="A4">A4</option>
           </select>
@@ -598,7 +598,7 @@
           <span id="santri-count" class="text-sm text-gray-600"></span>
           <button id="btn-print-bulk" class="bg-green-600 text-white px-6 py-2 rounded font-bold hover:bg-green-700">Cetak Semua (Bulk)
         </div>
-        <div id="santri-list" class="border rounded divide-y max-h-80 overflow-y-auto"></div>
+        <div id="santri-list" class="border rounded divide-y max-h-80 overflow-y-auto dark:border-slate-600 dark:divide-slate-600"></div>
         <p id="santri-empty" class="hidden text-red-500 text-sm py-4 text-center">Tidak ada santri di bagian ini.</p>
       </div>
     </div>
