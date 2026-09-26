@@ -196,6 +196,17 @@ async function loadFilters() {
     selTingkatan.innerHTML += `<option value="${t.id}">${t.nama}</option>`;
   });
 
+  // Auto-select for non-admin/pimpinan (mufattisy, mustahiq, etc.): pick first assigned tingkatan & kelas
+  if (!isAdminOrPimpinan && cachedBagian.length > 0) {
+    const firstBagian = cachedBagian[0];
+    selTingkatan.value = String(firstBagian.tingkatan_id);
+    selTingkatan.dispatchEvent(new Event('change'));
+    setTimeout(() => {
+      selKelas.value = String(firstBagian.kelas_id);
+      selKelas.dispatchEvent(new Event('change'));
+    }, 100);
+  }
+
   // Populate bulan Hijri dropdown (24 bulan: 2 tahun Hijri aktif).
   populateBulanDropdown(selBulanHijri);
 
