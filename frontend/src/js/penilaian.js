@@ -449,13 +449,13 @@ function refreshRendahMarks() {
 function renderRaportSection(title, mapels, santri, khosMap, absensiMap, semester, canEdit) {
   let html = `<h3 class="text-sm font-bold text-indigo-700 dark:text-indigo-400 mt-6 mb-2 px-1">${title}</h3>`;
   html += '<div class="overflow-x-auto border border-indigo-200 dark:border-indigo-800 rounded-xl mb-4"><table class="border-collapse text-xs w-full">';
-  html += '<thead class="bg-indigo-50 dark:bg-indigo-900/20"><tr><th class="px-2 py-2 border text-left sticky left-0 bg-indigo-50 dark:bg-indigo-900/20 z-10 min-w-[30px]">No</th><th class="px-2 py-2 border text-left sticky left-[30px] bg-indigo-50 dark:bg-indigo-900/20 z-10 min-w-[120px]">Nama</th>';
+  html += '<thead class="bg-indigo-50 dark:bg-indigo-900"><tr><th class="px-2 py-2 border text-left sticky left-0 bg-indigo-50 dark:bg-indigo-900 z-10 min-w-[30px]">No</th><th class="px-2 py-2 border text-left sticky left-[30px] bg-indigo-50 dark:bg-indigo-900 z-10 min-w-[120px]">Nama</th>';
   // Header mapel: nama kitab (Arab) di-translasi ke ejaan Latin. Arab asli jadi tooltip.
   mapels.forEach(m => { 
     const { display, tooltip } = mapelLabel(m); 
     const isExcl = isExcludedMapel(m, true); // true = ini bagian raport
     const exclMark = isExcl ? '<span class="text-red-500 font-bold ml-0.5" title="Tidak dihitung dalam Penjumlahan">*</span>' : '';
-    html += `<th class="px-1 py-2 border text-center min-w-[70px] max-w-[120px] whitespace-normal break-words leading-tight bg-indigo-50 dark:bg-indigo-900/20" title="${tooltip}${isExcl ? ' (Tidak dihitung)' : ''}">${display}${exclMark}</th>`; 
+    html += `<th class="px-1 py-2 border text-center min-w-[70px] max-w-[120px] whitespace-normal break-words leading-tight bg-indigo-50 dark:bg-indigo-900" title="${tooltip}${isExcl ? ' (Tidak dihitung)' : ''}">${display}${exclMark}</th>`; 
   });
   html += '<th class="px-2 py-2 border text-center min-w-[50px] bg-blue-50 dark:bg-blue-900/20">Jml</th>';
   html += '<th class="px-2 py-2 border text-center min-w-[40px] bg-yellow-50 dark:bg-yellow-900/20">Izin</th>';
@@ -508,7 +508,7 @@ function renderRaportSection(title, mapels, santri, khosMap, absensiMap, semeste
   });
 
   // Baris Rata-rata Kelas per Mapel (dibulatkan tanpa koma)
-  html += '<tr class="bg-indigo-100/70 dark:bg-indigo-900/50 font-bold border-t-2 border-indigo-300 dark:border-indigo-700">';
+  html += '<tr class="bg-indigo-100/70 dark:bg-indigo-900 font-bold border-t-2 border-indigo-300 dark:border-indigo-700">';
   html += '<td colspan="2" class="px-2 py-1.5 border text-center sticky left-0 bg-indigo-100 dark:bg-indigo-950 z-10 font-bold text-indigo-900 dark:text-indigo-200">Nilai \'Am</td>';
   
   let totalRoundedSum = 0;
@@ -519,11 +519,11 @@ function renderRaportSection(title, mapels, santri, khosMap, absensiMap, semeste
     if (st.count > 0) {
       const avg = st.sum / st.count;
       const roundedAvg = Math.floor(avg + 0.5);
-      html += `<td class="px-1 py-1.5 border text-center font-extrabold text-indigo-950 dark:text-indigo-100 bg-indigo-50 dark:bg-indigo-900/30">${roundedAvg}</td>`;
+      html += `<td class="px-1 py-1.5 border text-center font-extrabold text-indigo-950 dark:text-indigo-100 bg-indigo-50 dark:bg-indigo-900">${roundedAvg}</td>`;
       totalRoundedSum += roundedAvg;
       totalRoundedCount++;
     } else {
-      html += '<td class="px-1 py-1.5 border text-center font-extrabold text-indigo-950 dark:text-indigo-100 bg-indigo-50 dark:bg-indigo-900/30">-</td>';
+      html += '<td class="px-1 py-1.5 border text-center font-extrabold text-indigo-950 dark:text-indigo-100 bg-indigo-50 dark:bg-indigo-900">-</td>';
     }
   });
 
