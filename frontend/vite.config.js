@@ -3,9 +3,27 @@ import { defineConfig } from 'vite';
 import tailwindcss from '@tailwindcss/vite';
 import { resolve } from 'path';
 
+// Cache-bust plugin: append ?v=<unix-timestamp> to all /assets/*.js and
+// /assets/*.css references in the built HTML so Cloudflare (and any other
+// CDN) treats every deploy as a new file instead of serving stale cached
+// bundles.  The timestamp is baked into the HTML at build time.
+function cacheBustPlugin() {
+  const ts = Date.now();
+  return {
+    name: 'html-cache-bust',
+    transformIndexHtml(html) {
+      return html.replace(
+        /(src|href)(=["'])\/assets\/([^"']+\.(js|css))/g,
+        `$1$2/assets/$3?v=${ts}`
+      );
+    }
+  };
+}
+
 export default defineConfig({
   plugins: [
     tailwindcss(),
+    cacheBustPlugin(),
   ],
   test: {
     environment: 'jsdom',

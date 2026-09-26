@@ -517,11 +517,14 @@ func main() {
 
 		// If requesting HTML, the service worker, or the root path, prevent
 		// browser/CDN caching so new builds are immediately visible.
-		if filepath.Ext(r.URL.Path) == ".html" || r.URL.Path == "/" || r.URL.Path == "/sw.js" {
-			w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
-			w.Header().Set("Pragma", "no-cache")
-			w.Header().Set("Expires", "0")
-		}
+		// Also apply to hashed JS/CSS assets — Vite content-hash filenames
+		// already bust caches, but Cloudflare's default max-age=14400 can
+		// still serve stale bundles.  no-cache lets CF revalidate on every
+		// request while still allowing the browser to use local copy when
+		// the server responds 304.
+		w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+		w.Header().Set("Pragma", "no-cache")
+		w.Header().Set("Expires", "0")
 
 		if _, err := os.Stat(filePath); os.IsNotExist(err) || r.URL.Path == "/" {
 			w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
