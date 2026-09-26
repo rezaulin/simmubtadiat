@@ -36,7 +36,7 @@ func GetStatusPenilaian(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(res)
+	writeJSON(w, res)
 }
 
 // OpenKoreksiHandler membuka masa koreksi (admin/pimpinan).
@@ -51,7 +51,7 @@ func OpenKoreksiHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(map[string]string{"status": "success", "message": "Masa koreksi dibuka"})
+	writeJSON(w, map[string]string{"status": "success", "message": "Masa koreksi dibuka"})
 }
 
 // ForceLockHandler mengunci paksa (admin/pimpinan).
@@ -66,7 +66,7 @@ func ForceLockHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(map[string]string{"status": "success", "message": "Semester dikunci & nilai final digenerate"})
+	writeJSON(w, map[string]string{"status": "success", "message": "Semester dikunci & nilai final digenerate"})
 }
 
 // UnlockHandler membuka kunci (admin/pimpinan).
@@ -81,7 +81,7 @@ func UnlockHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(map[string]string{"status": "success", "message": "Kunci dibuka, kembali ke masa koreksi"})
+	writeJSON(w, map[string]string{"status": "success", "message": "Kunci dibuka, kembali ke masa koreksi"})
 }
 
 // ConfirmBagianHandler mencatat konfirmasi "sudah dikoreksi" untuk satu bagian.
@@ -137,5 +137,5 @@ func ConfirmBagianHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(res)
+	writeJSON(w, res)
 }

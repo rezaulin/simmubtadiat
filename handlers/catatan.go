@@ -25,7 +25,7 @@ func GetCatatan(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		json.NewEncoder(w).Encode(res)
+		writeJSON(w, res)
 		return
 	}
 
@@ -35,7 +35,7 @@ func GetCatatan(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(res)
+	writeJSON(w, res)
 }
 
 // CreateCatatan menambah catatan (pimpinan/admin/mustahiq).
@@ -50,7 +50,7 @@ func CreateCatatan(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusForbidden)
 		return
 	}
-	json.NewEncoder(w).Encode(map[string]string{"status": "success", "message": "Catatan tersimpan"})
+	writeJSON(w, map[string]string{"status": "success", "message": "Catatan tersimpan"})
 }
 
 // DeleteCatatan menghapus catatan (pimpinan/admin bebas; mustahiq hanya miliknya).
@@ -65,5 +65,5 @@ func DeleteCatatan(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusForbidden)
 		return
 	}
-	json.NewEncoder(w).Encode(map[string]string{"status": "success", "message": "Catatan dihapus"})
+	writeJSON(w, map[string]string{"status": "success", "message": "Catatan dihapus"})
 }

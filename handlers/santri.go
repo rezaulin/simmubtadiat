@@ -16,7 +16,9 @@ import (
 func writeJSONError(w http.ResponseWriter, message string, status int) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(map[string]string{"message": message})
+	enc := json.NewEncoder(w)
+	enc.SetEscapeHTML(false)
+	enc.Encode(map[string]string{"message": message})
 }
 
 // GetSantriAktif returns all active students
@@ -37,7 +39,7 @@ func GetSantriAktif(w http.ResponseWriter, r *http.Request) {
 		writeJSONError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(res)
+	writeJSON(w, res)
 }
 
 // GetSantriByBagian returns active students for a specific bagian, authorized
@@ -59,7 +61,7 @@ func GetSantriByBagian(w http.ResponseWriter, r *http.Request) {
 		writeJSONError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(res)
+	writeJSON(w, res)
 }
 
 func GetArsipSantri(w http.ResponseWriter, r *http.Request) {
@@ -88,7 +90,7 @@ func GetArsipSantri(w http.ResponseWriter, r *http.Request) {
 		writeJSONError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(res)
+	writeJSON(w, res)
 }
 
 // RegisterSantri creates a new student and automatically assigns them to their first Bagian
@@ -108,7 +110,7 @@ func RegisterSantri(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]string{"status": "success", "message": "Riwayat pendidikan berhasil ditambahkan"})
+	writeJSON(w, map[string]string{"status": "success", "message": "Riwayat pendidikan berhasil ditambahkan"})
 }
 
 func AssignBagian(w http.ResponseWriter, r *http.Request) {
@@ -124,7 +126,7 @@ func AssignBagian(w http.ResponseWriter, r *http.Request) {
 		writeJSONError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(map[string]string{"status": "success"})
+	writeJSON(w, map[string]string{"status": "success"})
 }
 
 func GetSantriByID(w http.ResponseWriter, r *http.Request) {
@@ -139,7 +141,7 @@ func GetSantriByID(w http.ResponseWriter, r *http.Request) {
 		writeJSONError(w, "Data santri tidak ditemukan", http.StatusNotFound)
 		return
 	}
-	json.NewEncoder(w).Encode(res)
+	writeJSON(w, res)
 }
 
 func UpdateSantri(w http.ResponseWriter, r *http.Request) {
@@ -170,7 +172,7 @@ func UpdateSantri(w http.ResponseWriter, r *http.Request) {
 		writeJSONError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(map[string]string{"status": "success", "message": "Data santri berhasil diperbarui"})
+	writeJSON(w, map[string]string{"status": "success", "message": "Data santri berhasil diperbarui"})
 }
 
 func DeleteSantri(w http.ResponseWriter, r *http.Request) {
@@ -184,7 +186,7 @@ func DeleteSantri(w http.ResponseWriter, r *http.Request) {
 		writeJSONError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(map[string]string{"status": "success", "message": "Data santri berhasil dihapus"})
+	writeJSON(w, map[string]string{"status": "success", "message": "Data santri berhasil dihapus"})
 }
 
 func FixStambukSantri(w http.ResponseWriter, r *http.Request) {
@@ -225,5 +227,5 @@ func FixStambukSantri(w http.ResponseWriter, r *http.Request) {
 		count++
 	}
 
-	json.NewEncoder(w).Encode(map[string]any{"status": "success", "message": "Stambuk berhasil diperbaiki", "jumlah_diperbaiki": count})
+	writeJSON(w, map[string]any{"status": "success", "message": "Stambuk berhasil diperbaiki", "jumlah_diperbaiki": count})
 }

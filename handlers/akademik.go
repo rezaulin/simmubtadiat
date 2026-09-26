@@ -17,7 +17,7 @@ func GetTingkatan(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(res)
+	writeJSON(w, res)
 }
 
 func CreateTingkatan(w http.ResponseWriter, r *http.Request) {
@@ -34,7 +34,7 @@ func CreateTingkatan(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(map[string]string{"status": "success"})
+	writeJSON(w, map[string]string{"status": "success"})
 }
 
 func UpdateTingkatan(w http.ResponseWriter, r *http.Request) {
@@ -53,7 +53,7 @@ func UpdateTingkatan(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(map[string]string{"status": "success"})
+	writeJSON(w, map[string]string{"status": "success"})
 }
 
 func DeleteTingkatan(w http.ResponseWriter, r *http.Request) {
@@ -62,7 +62,7 @@ func DeleteTingkatan(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(map[string]string{"status": "success"})
+	writeJSON(w, map[string]string{"status": "success"})
 }
 
 
@@ -73,7 +73,7 @@ func GetKelas(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(res)
+	writeJSON(w, res)
 }
 
 func CreateKelas(w http.ResponseWriter, r *http.Request) {
@@ -86,7 +86,7 @@ func CreateKelas(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(map[string]string{"status": "success"})
+	writeJSON(w, map[string]string{"status": "success"})
 }
 
 func UpdateKelas(w http.ResponseWriter, r *http.Request) {
@@ -104,7 +104,7 @@ func UpdateKelas(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(map[string]string{"status": "success"})
+	writeJSON(w, map[string]string{"status": "success"})
 }
 
 func DeleteKelas(w http.ResponseWriter, r *http.Request) {
@@ -113,7 +113,7 @@ func DeleteKelas(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(map[string]string{"status": "success"})
+	writeJSON(w, map[string]string{"status": "success"})
 }
 
 // --- Bagian ---
@@ -123,7 +123,7 @@ func GetBagian(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(res)
+	writeJSON(w, res)
 }
 
 func CreateBagian(w http.ResponseWriter, r *http.Request) {
@@ -137,7 +137,7 @@ func CreateBagian(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(map[string]string{"status": "success"})
+	writeJSON(w, map[string]string{"status": "success"})
 }
 
 func DeleteBagian(w http.ResponseWriter, r *http.Request) {
@@ -146,7 +146,7 @@ func DeleteBagian(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(map[string]string{"status": "success"})
+	writeJSON(w, map[string]string{"status": "success"})
 }
 
 // GetBagianSaya returns bagian assigned to the logged-in pengajar
@@ -163,5 +163,5 @@ func GetBagianSaya(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(res)
+	writeJSON(w, res)
 }

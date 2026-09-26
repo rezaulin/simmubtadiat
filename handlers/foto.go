@@ -1,8 +1,6 @@
 package handlers
 
-import (
-	"encoding/json"
-	"io"
+import (	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -74,7 +72,7 @@ func UploadFotoSantri(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]string{
+	writeJSON(w, map[string]string{
 		"status":   "success",
 		"foto_url": urlPath,
 	})

@@ -9,11 +9,18 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-
 	"github.com/mubtadiaat/app/config"
 	"github.com/mubtadiaat/app/handlers"
 	appMiddleware "github.com/mubtadiaat/app/middleware"
 )
+
+// writeJSON encodes v as JSON without HTML-escaping ' (apostrophe).
+func writeJSON(w http.ResponseWriter, v interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+	enc := json.NewEncoder(w)
+	enc.SetEscapeHTML(false)
+	enc.Encode(v)
+}
 
 func main() {
 	// Initialize Database
@@ -72,7 +79,7 @@ func main() {
 					if user.PengajarID != nil {
 						resp["pengajar_id"] = *user.PengajarID
 					}
-					json.NewEncoder(w).Encode(resp)
+					writeJSON(w, resp)
 				})
 
 				// Wali Santri: daftar anak yang tertaut ke akunnya

@@ -126,7 +126,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	})
 	w.Header().Set("X-CSRF-Token", csrfToken)
 
-	json.NewEncoder(w).Encode(AuthResponse{
+	writeJSON(w, AuthResponse{
 		Status:            "success",
 		Message:           "Login successful",
 		Role:              role,
@@ -154,7 +154,7 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 		Path:     "/",
 	})
 
-	json.NewEncoder(w).Encode(map[string]string{"status": "success", "message": "Logged out"})
+	writeJSON(w, map[string]string{"status": "success", "message": "Logged out"})
 }
 
 // LoginWali handles login for Wali Santri using NIK
@@ -274,7 +274,7 @@ func LoginWali(w http.ResponseWriter, r *http.Request) {
 	})
 	w.Header().Set("X-CSRF-Token", csrfToken)
 
-	json.NewEncoder(w).Encode(AuthResponse{
+	writeJSON(w, AuthResponse{
 		Status:            "success",
 		Message:           "Login successful",
 		Role:              role,
@@ -341,7 +341,7 @@ func ChangePassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]string{
+	writeJSON(w, map[string]string{
 		"status":  "success",
 		"message": "Password berhasil diubah",
 	})

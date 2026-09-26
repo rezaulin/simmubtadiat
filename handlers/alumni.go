@@ -20,7 +20,7 @@ func ProsesKeluar(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]string{"status": "success", "message": "Proses keluar/lulus berhasil dicatat"})
+	writeJSON(w, map[string]string{"status": "success", "message": "Proses keluar/lulus berhasil dicatat"})
 }
 
 func UpdateAlumni(w http.ResponseWriter, r *http.Request) {
@@ -86,7 +86,7 @@ func UpdateAlumni(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	json.NewEncoder(w).Encode(map[string]string{"status": "success", "message": "Data alumni berhasil diperbarui"})
+	writeJSON(w, map[string]string{"status": "success", "message": "Data alumni berhasil diperbarui"})
 }
 
 // TambahAlumniManual menangani POST /api/alumni/tambah-manual: input satu alumni manual.
@@ -126,7 +126,7 @@ func TambahAlumniManual(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"status": "success", "message": "Alumni berhasil ditambahkan"})
+	writeJSON(w, map[string]string{"status": "success", "message": "Alumni berhasil ditambahkan"})
 }
 
 func GetAlumni(w http.ResponseWriter, r *http.Request) {
@@ -142,7 +142,7 @@ func GetAlumni(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(res)
+	writeJSON(w, res)
 }
 
 // ImportAlumniExcel mengimpor data alumni dari file Excel (.xlsx).
@@ -162,5 +162,5 @@ func ImportAlumniExcel(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(result)
+	writeJSON(w, result)
 }

@@ -26,7 +26,7 @@ func GetPengajar(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(res)
+	writeJSON(w, res)
 }
 
 func CreatePengajar(w http.ResponseWriter, r *http.Request) {
@@ -41,7 +41,7 @@ func CreatePengajar(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]string{"status": "success", "message": "Pengajar berhasil ditambahkan"})
+	writeJSON(w, map[string]string{"status": "success", "message": "Pengajar berhasil ditambahkan"})
 }
 
 func UpdatePengajar(w http.ResponseWriter, r *http.Request) {
@@ -55,7 +55,7 @@ func UpdatePengajar(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(map[string]string{"status": "success", "message": "Pengajar berhasil diperbarui"})
+	writeJSON(w, map[string]string{"status": "success", "message": "Pengajar berhasil diperbarui"})
 }
 
 func DeletePengajar(w http.ResponseWriter, r *http.Request) {
@@ -64,7 +64,7 @@ func DeletePengajar(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(map[string]string{"status": "success", "message": "Pengajar berhasil dihapus"})
+	writeJSON(w, map[string]string{"status": "success", "message": "Pengajar berhasil dihapus"})
 }
 
 func GetDewanHarian(w http.ResponseWriter, r *http.Request) {
@@ -74,7 +74,7 @@ func GetDewanHarian(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(res)
+	writeJSON(w, res)
 }
 
 func AssignDewanHarian(w http.ResponseWriter, r *http.Request) {
@@ -88,7 +88,7 @@ func AssignDewanHarian(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(map[string]string{"status": "success", "message": "Jabatan dewan harian berhasil dicatat"})
+	writeJSON(w, map[string]string{"status": "success", "message": "Jabatan dewan harian berhasil dicatat"})
 }
 
 func UpdateDewanHarian(w http.ResponseWriter, r *http.Request) {
@@ -102,7 +102,7 @@ func UpdateDewanHarian(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(map[string]string{"status": "success", "message": "Dewan Harian berhasil diperbarui"})
+	writeJSON(w, map[string]string{"status": "success", "message": "Dewan Harian berhasil diperbarui"})
 }
 
 func DeleteDewanHarian(w http.ResponseWriter, r *http.Request) {
@@ -111,7 +111,7 @@ func DeleteDewanHarian(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(map[string]string{"status": "success", "message": "Dewan Harian berhasil dihapus"})
+	writeJSON(w, map[string]string{"status": "success", "message": "Dewan Harian berhasil dihapus"})
 }
 
 // Mufatish
@@ -121,7 +121,7 @@ func GetMufatish(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(res)
+	writeJSON(w, res)
 }
 
 func AssignMufatish(w http.ResponseWriter, r *http.Request) {
@@ -139,7 +139,7 @@ func AssignMufatish(w http.ResponseWriter, r *http.Request) {
 	} else {
 		models.AssignMufatish(r.Context(), req.PengajarID, req.KelasID, req.TingkatanID)
 	}
-	json.NewEncoder(w).Encode(map[string]string{"status": "success"})
+	writeJSON(w, map[string]string{"status": "success"})
 }
 
 // Mustahiq
@@ -149,7 +149,7 @@ func GetMustahiq(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(res)
+	writeJSON(w, res)
 }
 
 func AssignMustahiq(w http.ResponseWriter, r *http.Request) {
@@ -166,7 +166,7 @@ func AssignMustahiq(w http.ResponseWriter, r *http.Request) {
 	} else {
 		models.AssignMustahiq(r.Context(), req.PengajarID, req.BagianID)
 	}
-	json.NewEncoder(w).Encode(map[string]string{"status": "success"})
+	writeJSON(w, map[string]string{"status": "success"})
 }
 func GetPengajarByID(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
@@ -183,7 +183,7 @@ func GetPengajarByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(pengajar)
+	writeJSON(w, pengajar)
 }
 
 func AssignMunawwib(w http.ResponseWriter, r *http.Request) {
@@ -201,7 +201,7 @@ func AssignMunawwib(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(map[string]string{"status": "success"})
+	writeJSON(w, map[string]string{"status": "success"})
 }
 
 func GetMunawwib(w http.ResponseWriter, r *http.Request) {
@@ -210,7 +210,7 @@ func GetMunawwib(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(assignments)
+	writeJSON(w, assignments)
 }
 
 
@@ -229,6 +229,6 @@ func RemoveMunawwib(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(map[string]string{"status": "success"})
+	writeJSON(w, map[string]string{"status": "success"})
 }
 

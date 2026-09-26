@@ -30,7 +30,7 @@ func GetPengajarPurna(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(res)
+	writeJSON(w, res)
 }
 
 // CreatePengajarPurna: POST /api/pengajar-purna — tambah manual.
@@ -48,7 +48,7 @@ func CreatePengajarPurna(w http.ResponseWriter, r *http.Request) {
 		writeJSONError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(map[string]string{"status": "success", "message": "Pengajar purna berhasil ditambahkan"})
+	writeJSON(w, map[string]string{"status": "success", "message": "Pengajar purna berhasil ditambahkan"})
 }
 
 // UpdatePengajarPurna: PUT /api/pengajar-purna/{id}.
@@ -71,7 +71,7 @@ func UpdatePengajarPurna(w http.ResponseWriter, r *http.Request) {
 		writeJSONError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(map[string]string{"status": "success", "message": "Pengajar purna berhasil diperbarui"})
+	writeJSON(w, map[string]string{"status": "success", "message": "Pengajar purna berhasil diperbarui"})
 }
 
 // DeletePengajarPurna: DELETE /api/pengajar-purna/{id} — soft delete.
@@ -85,7 +85,7 @@ func DeletePengajarPurna(w http.ResponseWriter, r *http.Request) {
 		writeJSONError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(map[string]string{"status": "success", "message": "Pengajar purna berhasil dihapus"})
+	writeJSON(w, map[string]string{"status": "success", "message": "Pengajar purna berhasil dihapus"})
 }
 
 // ImportPengajarPurna: POST /api/pengajar-purna/import — impor massal dari Excel.
@@ -107,7 +107,7 @@ func ImportPengajarPurna(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(result)
+	writeJSON(w, result)
 }
 
 // ExportPengajarPurna: GET /api/pengajar-purna/export — unduh data (menghormati filter).
@@ -252,7 +252,7 @@ func PindahPengajarPurna(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	writeJSON(w, map[string]interface{}{
 		"status":  "success",
 		"message": fmt.Sprintf("%d pengajar dipindah ke purna, %d dilewati", res.Moved, res.Skipped),
 		"result":  res,

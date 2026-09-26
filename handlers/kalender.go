@@ -19,7 +19,7 @@ func GetKalenderKuartal(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(res)
+	writeJSON(w, res)
 }
 
 func SaveKalenderKuartal(w http.ResponseWriter, r *http.Request) {
@@ -48,7 +48,7 @@ func GetTahunAjaran(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(res)
+	writeJSON(w, res)
 }
 
 // GetKalenderSemesterHijri mengembalikan kalender semester Hijriyah suatu tahun ajaran.
@@ -63,7 +63,7 @@ func GetKalenderSemesterHijri(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(res)
+	writeJSON(w, res)
 }
 
 // SaveKalenderSemesterHijri menerima array kalender semester Hijriyah,

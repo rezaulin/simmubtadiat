@@ -32,7 +32,7 @@ func GetUsers(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	writeJSON(w, map[string]interface{}{
 		"items":  items,
 		"total":  total,
 		"limit":  limit,
@@ -53,7 +53,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(map[string]string{"status": "success", "message": "User berhasil dibuat"})
+	writeJSON(w, map[string]string{"status": "success", "message": "User berhasil dibuat"})
 }
 
 func UpdateUser(w http.ResponseWriter, r *http.Request) {
@@ -67,7 +67,7 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(map[string]string{"status": "success", "message": "User berhasil diperbarui"})
+	writeJSON(w, map[string]string{"status": "success", "message": "User berhasil diperbarui"})
 }
 
 func DeleteUser(w http.ResponseWriter, r *http.Request) {
@@ -76,7 +76,7 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(map[string]string{"status": "success", "message": "User berhasil dihapus"})
+	writeJSON(w, map[string]string{"status": "success", "message": "User berhasil dihapus"})
 }
 
 // ResetPassword — POST /api/settings/users/{id}/reset-password
@@ -104,7 +104,7 @@ func ResetPassword(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(map[string]string{"status": "success", "message": "Password user berhasil direset"})
+	writeJSON(w, map[string]string{"status": "success", "message": "Password user berhasil direset"})
 }
 
 // ResetPasswordBulk — POST /api/settings/users/reset-password-bulk
@@ -152,7 +152,7 @@ func ResetPasswordBulk(w http.ResponseWriter, r *http.Request) {
 			gagal++
 		}
 	}
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	writeJSON(w, map[string]interface{}{
 		"status":  "success",
 		"sukses":  sukses,
 		"gagal":   gagal,
@@ -168,7 +168,7 @@ func GetDynamicColumns(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(res)
+	writeJSON(w, res)
 }
 
 func CreateDynamicColumn(w http.ResponseWriter, r *http.Request) {
@@ -181,7 +181,7 @@ func CreateDynamicColumn(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(map[string]string{"status": "success", "message": "Kolom dinamis berhasil ditambahkan"})
+	writeJSON(w, map[string]string{"status": "success", "message": "Kolom dinamis berhasil ditambahkan"})
 }
 
 func UpdateDynamicColumn(w http.ResponseWriter, r *http.Request) {
@@ -195,7 +195,7 @@ func UpdateDynamicColumn(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(map[string]string{"status": "success", "message": "Kolom dinamis berhasil diperbarui"})
+	writeJSON(w, map[string]string{"status": "success", "message": "Kolom dinamis berhasil diperbarui"})
 }
 
 func DeleteDynamicColumn(w http.ResponseWriter, r *http.Request) {
@@ -204,5 +204,5 @@ func DeleteDynamicColumn(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(map[string]string{"status": "success", "message": "Kolom dinamis berhasil dihapus"})
+	writeJSON(w, map[string]string{"status": "success", "message": "Kolom dinamis berhasil dihapus"})
 }

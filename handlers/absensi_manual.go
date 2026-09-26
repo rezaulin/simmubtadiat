@@ -54,7 +54,7 @@ func GetAbsensiManualSantri(w http.ResponseWriter, r *http.Request) {
 		data = []models.AbsensiManualBulanan{}
 	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(data)
+	writeJSON(w, data)
 }
 
 // POST /api/absensi-manual/santri
@@ -82,7 +82,7 @@ func SaveAbsensiManualSantri(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]int{"saved": saved, "deleted": deleted})
+	writeJSON(w, map[string]int{"saved": saved, "deleted": deleted})
 }
 
 // GET /api/absensi-manual/pengajar?tahun_hijri=1447&bagian_id=X
@@ -105,7 +105,7 @@ func GetAbsensiManualPengajar(w http.ResponseWriter, r *http.Request) {
 		data = []models.AbsensiManualPengajarBulanan{}
 	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(data)
+	writeJSON(w, data)
 }
 
 // POST /api/absensi-manual/pengajar?bagian_id=X
@@ -128,5 +128,5 @@ func SaveAbsensiManualPengajar(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]int{"saved": saved, "deleted": deleted})
+	writeJSON(w, map[string]int{"saved": saved, "deleted": deleted})
 }

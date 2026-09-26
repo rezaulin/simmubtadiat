@@ -1,8 +1,6 @@
 package handlers
 
-import (
-	"encoding/json"
-	"net/http"
+import (	"net/http"
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
@@ -48,5 +46,5 @@ func GetRaport(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(res)
+	writeJSON(w, res)
 }

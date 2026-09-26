@@ -1,8 +1,6 @@
 package handlers
 
-import (
-	"encoding/json"
-	"net/http"
+import (	"net/http"
 
 	"github.com/mubtadiaat/app/models"
 )
@@ -21,5 +19,5 @@ func GetDataHealth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(report)
+	writeJSON(w, report)
 }

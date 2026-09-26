@@ -25,7 +25,7 @@ func AssignPengajar(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(map[string]string{"status": "success", "message": "Penugasan berhasil dicatat"})
+	writeJSON(w, map[string]string{"status": "success", "message": "Penugasan berhasil dicatat"})
 }
 
 func GetPenugasan(w http.ResponseWriter, r *http.Request) {
@@ -38,7 +38,7 @@ func GetPenugasan(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(res)
+	writeJSON(w, res)
 }
 
 func DeletePenugasan(w http.ResponseWriter, r *http.Request) {
@@ -49,5 +49,5 @@ func DeletePenugasan(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(map[string]string{"status": "success"})
+	writeJSON(w, map[string]string{"status": "success"})
 }

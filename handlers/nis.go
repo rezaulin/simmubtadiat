@@ -31,7 +31,7 @@ func GetNisKelas(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(data)
+	writeJSON(w, data)
 }
 
 // BulkUpdateNIS menangani POST /api/nis/bulk-update
@@ -48,7 +48,7 @@ func BulkUpdateNIS(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	writeJSON(w, map[string]interface{}{
 		"status":  "success",
 		"message": "NIS berhasil diperbarui",
 		"count":   len(items),

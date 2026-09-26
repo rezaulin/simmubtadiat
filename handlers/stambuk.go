@@ -26,7 +26,7 @@ func SusunUlangStambuk(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	writeJSON(w, map[string]interface{}{
 		"status":  "success",
 		"message": "Stambuk berhasil disusun ulang",
 		"count":   count,
@@ -56,7 +56,7 @@ func GetStambukKelas(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(data)
+	writeJSON(w, data)
 }
 
 // BulkUpdateStambuk menangani POST /api/stambuk/bulk-update
@@ -73,7 +73,7 @@ func BulkUpdateStambuk(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	writeJSON(w, map[string]interface{}{
 		"status":  "success",
 		"message": "Stambuk berhasil diperbarui",
 		"count":   len(items),

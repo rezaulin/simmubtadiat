@@ -31,7 +31,7 @@ func GetAbsensiPengajarKuartal(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(res)
+	writeJSON(w, res)
 }
 
 // SaveAbsensiPengajarKuartal upserts quarterly attendance numbers for a batch of teachers.
@@ -58,5 +58,5 @@ func SaveAbsensiPengajarKuartal(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(map[string]string{"status": "success", "message": "Absensi pengajar berhasil disimpan"})
+	writeJSON(w, map[string]string{"status": "success", "message": "Absensi pengajar berhasil disimpan"})
 }

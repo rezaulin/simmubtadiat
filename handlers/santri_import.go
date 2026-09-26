@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -265,7 +264,7 @@ func ImportSantri(w http.ResponseWriter, r *http.Request) {
 	// Jika ada error parsing/validasi, jangan sentuh DB. Laporkan dulu.
 	if len(parseErrors) > 0 {
 		w.WriteHeader(http.StatusUnprocessableEntity)
-		json.NewEncoder(w).Encode(models.ImportResult{
+		writeJSON(w, models.ImportResult{
 			Sukses: 0,
 			Gagal:  len(parseErrors),
 			Errors: parseErrors,
@@ -282,7 +281,7 @@ func ImportSantri(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		// Error tak terduga (bukan per-baris). Kembalikan detail yang ada.
 		w.WriteHeader(http.StatusUnprocessableEntity)
-		json.NewEncoder(w).Encode(res)
+		writeJSON(w, res)
 		return
 	}
 
@@ -292,7 +291,7 @@ func ImportSantri(w http.ResponseWriter, r *http.Request) {
 	if res.Gagal > 0 {
 		msg = fmt.Sprintf("%d santri berhasil, %d dilewati (data tidak sesuai)", res.Sukses, res.Gagal)
 	}
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	writeJSON(w, map[string]interface{}{
 		"status":  "success",
 		"message": msg,
 		"sukses":  res.Sukses,

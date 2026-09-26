@@ -71,7 +71,7 @@ func GetJadwalByBagian(w http.ResponseWriter, r *http.Request) {
 		jadwals = append(jadwals, j)
 	}
 
-	json.NewEncoder(w).Encode(jadwals)
+	writeJSON(w, jadwals)
 }
 
 func CreateJadwal(w http.ResponseWriter, r *http.Request) {
@@ -88,7 +88,7 @@ func CreateJadwal(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(j)
+	writeJSON(w, j)
 }
 
 func UpdateJadwal(w http.ResponseWriter, r *http.Request) {
@@ -106,7 +106,7 @@ func UpdateJadwal(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(map[string]string{"status": "success"})
+	writeJSON(w, map[string]string{"status": "success"})
 }
 
 func DeleteJadwal(w http.ResponseWriter, r *http.Request) {
@@ -116,7 +116,7 @@ func DeleteJadwal(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(map[string]string{"status": "success"})
+	writeJSON(w, map[string]string{"status": "success"})
 }
 
 // JadwalHariIni represents a schedule entry today for the logged-in pengajar,
@@ -199,7 +199,7 @@ func GetJadwalSayaHariIni(w http.ResponseWriter, r *http.Request) {
 
 	// A pengajar identity is required to resolve today's schedule.
 	if user.PengajarID == nil {
-		json.NewEncoder(w).Encode(resp)
+		writeJSON(w, resp)
 		return
 	}
 
@@ -212,5 +212,5 @@ func GetJadwalSayaHariIni(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp["jadwal"] = jadwals
-	json.NewEncoder(w).Encode(resp)
+	writeJSON(w, resp)
 }

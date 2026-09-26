@@ -103,7 +103,7 @@ func GetBagianPenilaian(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(res)
+	writeJSON(w, res)
 }
 
 // BulkInputKuartal saves an array of Kuartal scores
@@ -152,7 +152,7 @@ func BulkInputKuartal(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]string{"status": "success", "message": "Nilai Kuartal berhasil disimpan"})
+	writeJSON(w, map[string]string{"status": "success", "message": "Nilai Kuartal berhasil disimpan"})
 }
 
 // BulkInputKhos saves an array of Khos (Nilai Raport) scores
@@ -198,7 +198,7 @@ func BulkInputKhos(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]string{"status": "success", "message": "Nilai Raport berhasil disimpan"})
+	writeJSON(w, map[string]string{"status": "success", "message": "Nilai Raport berhasil disimpan"})
 }
 
 // GenerateKhos triggers the calculation of Nilai Khos for a student's semester
@@ -228,7 +228,7 @@ func GenerateKhos(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]string{"status": "success", "message": "Nilai Khos berhasil dikalkulasi"})
+	writeJSON(w, map[string]string{"status": "success", "message": "Nilai Khos berhasil dikalkulasi"})
 }
 
 // GetPenilaianSpreadsheet returns ALL grading data for one bagian in a single response.
@@ -265,7 +265,7 @@ func GetPenilaianSpreadsheet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(data)
+	writeJSON(w, data)
 }
 
 // BulkInputBayan handles bulk saving of Al-Bayan override
@@ -292,9 +292,9 @@ func BulkInputBayan(w http.ResponseWriter, r *http.Request) {
 	if err := models.BulkInputNilaiBayan(r.Context(), req, tahunAjaran); err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]string{"message": err.Error()})
+		writeJSON(w, map[string]string{"message": err.Error()})
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]string{"status": "success", "message": "Override Al-Bayan berhasil disimpan"})
+	writeJSON(w, map[string]string{"status": "success", "message": "Override Al-Bayan berhasil disimpan"})
 }

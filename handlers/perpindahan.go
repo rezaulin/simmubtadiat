@@ -32,7 +32,7 @@ func NaikKelas(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]string{"status": "success", "message": "Proses pindah bagian/naik kelas berhasil"})
+	writeJSON(w, map[string]string{"status": "success", "message": "Proses pindah bagian/naik kelas berhasil"})
 }
 
 func UbahStatusSantri(w http.ResponseWriter, r *http.Request) {
@@ -58,5 +58,5 @@ func UbahStatusSantri(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]string{"status": "success", "message": "Status santri berhasil diubah"})
+	writeJSON(w, map[string]string{"status": "success", "message": "Status santri berhasil diubah"})
 }

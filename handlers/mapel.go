@@ -55,7 +55,7 @@ func GetMapelByKelas(w http.ResponseWriter, r *http.Request) {
 		mapels = append(mapels, m)
 	}
 
-	json.NewEncoder(w).Encode(mapels)
+	writeJSON(w, mapels)
 }
 
 func CreateMapel(w http.ResponseWriter, r *http.Request) {
@@ -96,7 +96,7 @@ func CreateMapel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(m)
+	writeJSON(w, m)
 }
 
 func UpdateMapel(w http.ResponseWriter, r *http.Request) {
@@ -136,7 +136,7 @@ func UpdateMapel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]string{"status": "success"})
+	writeJSON(w, map[string]string{"status": "success"})
 }
 
 func DeleteMapel(w http.ResponseWriter, r *http.Request) {
@@ -149,5 +149,5 @@ func DeleteMapel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]string{"status": "success"})
+	writeJSON(w, map[string]string{"status": "success"})
 }

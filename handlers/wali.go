@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -62,7 +61,7 @@ func GetAnakWali(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(list)
+	writeJSON(w, list)
 }
 
 // GetCatatanAnakWali mengembalikan catatan (pelanggaran/prestasi) untuk anak wali yang login.
@@ -139,5 +138,5 @@ func GetCatatanAnakWali(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(list)
+	writeJSON(w, list)
 }

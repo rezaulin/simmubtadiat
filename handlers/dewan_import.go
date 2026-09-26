@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -185,7 +184,7 @@ func ImportDewanHarian(w http.ResponseWriter, r *http.Request) {
 
 	if len(errors) > 0 {
 		w.WriteHeader(http.StatusUnprocessableEntity)
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		writeJSON(w, map[string]interface{}{
 			"sukses": 0,
 			"gagal":  len(errors),
 			"errors": errors,
@@ -224,7 +223,7 @@ func ImportDewanHarian(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	writeJSON(w, map[string]interface{}{
 		"status":  "success",
 		"message": fmt.Sprintf("%d data dewan harian berhasil diimpor", len(entries)),
 		"sukses":  len(entries),

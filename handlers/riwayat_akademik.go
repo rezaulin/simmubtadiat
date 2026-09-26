@@ -1,8 +1,6 @@
 package handlers
 
-import (
-	"encoding/json"
-	"net/http"
+import (	"net/http"
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
@@ -38,5 +36,5 @@ func GetRiwayatAkademikSantri(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(res)
+	writeJSON(w, res)
 }

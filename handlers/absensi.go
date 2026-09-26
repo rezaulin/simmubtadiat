@@ -28,7 +28,7 @@ func InputAbsensi(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]string{"status": "success", "message": "Absensi berhasil disimpan"})
+	writeJSON(w, map[string]string{"status": "success", "message": "Absensi berhasil disimpan"})
 }
 
 // RecalculateRekap triggers summary recalculation for a student and a kuartal
@@ -48,5 +48,5 @@ func RecalculateRekap(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]string{"status": "success", "message": "Rekap absensi diperbarui"})
+	writeJSON(w, map[string]string{"status": "success", "message": "Rekap absensi diperbarui"})
 }

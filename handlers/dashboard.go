@@ -1,8 +1,6 @@
 package handlers
 
-import (
-	"encoding/json"
-	"net/http"
+import (	"net/http"
 
 	"github.com/mubtadiaat/app/middleware"
 	"github.com/mubtadiaat/app/models"
@@ -21,5 +19,5 @@ func GetDashboardStats(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(stats)
+	writeJSON(w, stats)
 }

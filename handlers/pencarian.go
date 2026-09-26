@@ -1,8 +1,6 @@
 package handlers
 
-import (
-	"encoding/json"
-	"net/http"
+import (	"net/http"
 
 	"github.com/mubtadiaat/app/middleware"
 	"github.com/mubtadiaat/app/models"
@@ -29,5 +27,5 @@ func Search(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(results)
+	writeJSON(w, results)
 }

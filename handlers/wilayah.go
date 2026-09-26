@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/mubtadiaat/app/models"
@@ -15,7 +14,7 @@ func GetProvinsi(w http.ResponseWriter, r *http.Request) {
 		writeJSONError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(res)
+	writeJSON(w, res)
 }
 
 // GetKabupaten mengembalikan kabupaten pada provinsi tertentu (?provinsi= wajib, ?q= opsional).
@@ -31,7 +30,7 @@ func GetKabupaten(w http.ResponseWriter, r *http.Request) {
 		writeJSONError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(res)
+	writeJSON(w, res)
 }
 
 // GetKecamatan mengembalikan kecamatan pada kabupaten tertentu (?kabupaten= wajib, ?q= opsional).
@@ -47,5 +46,5 @@ func GetKecamatan(w http.ResponseWriter, r *http.Request) {
 		writeJSONError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(res)
+	writeJSON(w, res)
 }

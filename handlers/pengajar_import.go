@@ -1,8 +1,6 @@
 package handlers
 
-import (
-	"encoding/json"
-	"net/http"
+import (	"net/http"
 	"strconv"
 
 	"github.com/mubtadiaat/app/models"
@@ -161,7 +159,7 @@ func ImportPengajar(w http.ResponseWriter, r *http.Request) {
 		count++
 	}
 
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	writeJSON(w, map[string]interface{}{
 		"status":  "success",
 		"message": "Berhasil mengimpor " + strconv.Itoa(count) + " pengajar",
 	})

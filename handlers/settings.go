@@ -16,7 +16,7 @@ func GetRaportSettings(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(settings)
+	writeJSON(w, settings)
 }
 
 // UpdateRaportSettings updates the default print settings for Raport
@@ -55,7 +55,7 @@ func UpdateRaportSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]string{"status": "success", "message": "Pengaturan raport berhasil diperbarui"})
+	writeJSON(w, map[string]string{"status": "success", "message": "Pengaturan raport berhasil diperbarui"})
 }
 
 // GetMudirTingkatan mengembalikan daftar tingkatan beserta nama mudirnya (untuk Settings).
@@ -65,7 +65,7 @@ func GetMudirTingkatan(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(list)
+	writeJSON(w, list)
 }
 
 // UpdateMudirTingkatan menyimpan nama mudir untuk satu tingkatan.
@@ -83,7 +83,7 @@ func UpdateMudirTingkatan(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(map[string]string{"status": "success", "message": "Nama mudir berhasil disimpan"})
+	writeJSON(w, map[string]string{"status": "success", "message": "Nama mudir berhasil disimpan"})
 }
 
 // UpdateMudirTandaTangan menyimpan/menghapus tanda tangan digital mudir (data URL PNG).
@@ -113,14 +113,14 @@ func UpdateMudirTandaTangan(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(map[string]string{"status": "success", "message": "Tanda tangan tersimpan"})
+	writeJSON(w, map[string]string{"status": "success", "message": "Tanda tangan tersimpan"})
 }
 
 // GetSettingsUmum retrieves general settings
 func GetSettingsUmum(w http.ResponseWriter, r *http.Request) {
 	ta := models.GetTahunAjaranAktif(r.Context())
 	th := models.GetTahunHijriAktif(r.Context())
-	json.NewEncoder(w).Encode(map[string]string{
+	writeJSON(w, map[string]string{
 		"tahun_ajaran_aktif": ta,
 		"tahun_hijri_aktif":  th,
 	})
@@ -158,5 +158,5 @@ func UpdateSettingsUmum(w http.ResponseWriter, r *http.Request) {
 		`, th)
 	}
 
-	json.NewEncoder(w).Encode(map[string]string{"status": "success", "message": "Pengaturan umum berhasil disimpan"})
+	writeJSON(w, map[string]string{"status": "success", "message": "Pengaturan umum berhasil disimpan"})
 }

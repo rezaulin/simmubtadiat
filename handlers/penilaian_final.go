@@ -34,7 +34,7 @@ func GenerateAm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]string{"status": "success", "message": "Nilai Am berhasil dikalkulasi"})
+	writeJSON(w, map[string]string{"status": "success", "message": "Nilai Am berhasil dikalkulasi"})
 }
 
 func GenerateBayan(w http.ResponseWriter, r *http.Request) {
@@ -62,5 +62,5 @@ func GenerateBayan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]string{"status": "success", "message": "Al-Bayan berhasil dikalkulasi"})
+	writeJSON(w, map[string]string{"status": "success", "message": "Al-Bayan berhasil dikalkulasi"})
 }

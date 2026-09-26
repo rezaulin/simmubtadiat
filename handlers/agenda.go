@@ -89,7 +89,7 @@ func GetAgenda(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(res)
+	writeJSON(w, res)
 }
 
 // CreateAgenda membuat agenda baru (pimpinan/admin). Pembuat diambil dari sesi.
@@ -116,7 +116,7 @@ func CreateAgenda(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(created)
+	writeJSON(w, created)
 }
 
 // UpdateAgenda memperbarui agenda berdasarkan id (pimpinan/admin).

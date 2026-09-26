@@ -23,7 +23,7 @@ func MulaiPengabdian(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"status": "success", "message": "Pengabdian berhasil dimulai"})
+	writeJSON(w, map[string]string{"status": "success", "message": "Pengabdian berhasil dimulai"})
 }
 
 // SelesaiPengabdian menangani POST /api/pengabdian/selesai: transisi santri
@@ -42,7 +42,7 @@ func SelesaiPengabdian(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"status": "success", "message": "Pengabdian berhasil diselesaikan"})
+	writeJSON(w, map[string]string{"status": "success", "message": "Pengabdian berhasil diselesaikan"})
 }
 
 // GetPengabdian menangani GET /api/pengabdian: daftar santri berstatus
@@ -53,5 +53,5 @@ func GetPengabdian(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(res)
+	writeJSON(w, res)
 }

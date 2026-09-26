@@ -1,8 +1,6 @@
 package handlers
 
-import (
-	"encoding/json"
-	"fmt"
+import (	"fmt"
 	"net/http"
 	"strconv"
 
@@ -40,7 +38,7 @@ func GetLogAbsensiPengajar(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(res)
+	writeJSON(w, res)
 }
 
 func GetRekapAbsensiSiswaRentang(w http.ResponseWriter, r *http.Request) {
@@ -64,6 +62,6 @@ func GetRekapAbsensiSiswaRentang(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(res)
+	writeJSON(w, res)
 }
 
