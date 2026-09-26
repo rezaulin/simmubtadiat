@@ -357,6 +357,12 @@ function populateBiodata(s) {
     pKelasNow.textContent = 'Tidak Ada Kelas';
     pKelasNow.className = 'px-3 py-1 text-sm rounded-full font-medium bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300';
   }
+
+  // Kelas info di Biodata tab & Pelanggaran tab
+  const elKelasInfo = document.getElementById('p-kelas-info');
+  if (elKelasInfo) elKelasInfo.textContent = kelasStr || '-';
+  const elKeteranganKelas = document.getElementById('keterangan-kelas-text');
+  if (elKeteranganKelas) elKeteranganKelas.textContent = kelasStr || '-';
 }
 
 // Format tanggal khidmah → "-" bila kosong (Requirement 7.4).
