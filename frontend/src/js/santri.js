@@ -217,7 +217,7 @@ function renderSantriAktif(allData, query = '') {
     const tr = document.createElement('tr');
     tr.className = 'hover:bg-gray-50/50 dark:hover:bg-slate-800/50 transition-colors';
     tr.innerHTML = `
-      <td data-label="Nama Lengkap" class="px-6 py-4 max-w-[200px] truncate font-medium text-gray-900 dark:text-white" title="${escapeHtml(s.nama)}">
+      <td data-label="Nama Lengkap" class="px-6 py-4 font-medium text-gray-900 dark:text-white">
         ${escapeHtml(s.nama)}
       </td>
       <td data-label="Asal Daerah" class="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
