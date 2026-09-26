@@ -455,7 +455,7 @@ function renderRaportSection(title, mapels, santri, khosMap, absensiMap, semeste
     const { display, tooltip } = mapelLabel(m); 
     const isExcl = isExcludedMapel(m, true); // true = ini bagian raport
     const exclMark = isExcl ? '<span class="text-red-500 font-bold ml-0.5" title="Tidak dihitung dalam Penjumlahan">*</span>' : '';
-    html += `<th class="px-1 py-2 border text-center min-w-[70px] max-w-[120px] whitespace-normal break-words leading-tight" title="${tooltip}${isExcl ? ' (Tidak dihitung)' : ''}">${display}${exclMark}</th>`; 
+    html += `<th class="px-1 py-2 border text-center min-w-[70px] max-w-[120px] whitespace-normal break-words leading-tight bg-indigo-50 dark:bg-indigo-900/20" title="${tooltip}${isExcl ? ' (Tidak dihitung)' : ''}">${display}${exclMark}</th>`; 
   });
   html += '<th class="px-2 py-2 border text-center min-w-[50px] bg-blue-50 dark:bg-blue-900/20">Jml</th>';
   html += '<th class="px-2 py-2 border text-center min-w-[40px] bg-yellow-50 dark:bg-yellow-900/20">Izin</th>';
