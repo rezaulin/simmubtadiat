@@ -782,6 +782,38 @@ function openDetailModal(alumni) {
 
   document.getElementById('detail-asal').textContent = alumni.asal_daerah || '-';
   document.getElementById('detail-tingkatan').textContent = alumni.tingkatan_akhir || '-';
+
+  // TTL
+  let ttlText = '-';
+  if (alumni.ttl_tempat || alumni.ttl_tanggal) {
+    const parts = [];
+    if (alumni.ttl_tempat) parts.push(alumni.ttl_tempat);
+    if (alumni.ttl_tanggal) {
+      const d = new Date(alumni.ttl_tanggal);
+      if (!Number.isNaN(d.getTime())) parts.push(d.toLocaleDateString('id-ID'));
+    }
+    ttlText = parts.join(', ');
+  }
+  document.getElementById('detail-ttl').textContent = ttlText;
+
+  // Wali & kontak
+  document.getElementById('detail-wali').textContent = alumni.nama_wali || '-';
+  document.getElementById('detail-nohp').textContent = alumni.no_hp_wali || '-';
+  document.getElementById('detail-alamat').textContent = alumni.alamat || '-';
+
+  // Riwayat
+  document.getElementById('detail-kamar').textContent = alumni.kamar || '-';
+  document.getElementById('detail-tahun-masuk').textContent = alumni.tahun_masuk || '-';
+  document.getElementById('detail-tahun-keluar').textContent = alumni.tahun_keluar || '-';
+  document.getElementById('detail-tempat-khidmah').textContent = alumni.tempat_khidmah || '-';
+
+  // Status & Ijazah
+  const keteranganMap = { 'menikah': 'Menikah', 'membantu_ortu': 'Membantu Orang Tua', 'bekerja': 'Bekerja', 'kuliah': 'Kuliah', 'lainnya': 'Lainnya' };
+  document.getElementById('detail-keterangan').textContent = keteranganMap[alumni.keterangan] || alumni.keterangan || '-';
+  const ijazahMap = { 'belum': 'Belum', 'sudah': 'Sudah', 'tidak': 'Tidak (Tidak Diambil)' };
+  document.getElementById('detail-ijazah-status').textContent = ijazahMap[alumni.status_ijazah] || alumni.status_ijazah || '-';
+  document.getElementById('detail-alasan-ijazah').textContent = alumni.alasan_ijazah_belum_diambil || '-';
+  document.getElementById('detail-no-ijazah').textContent = alumni.no_ijazah || '-';
 }
 
 function openEditModal(alumni) {

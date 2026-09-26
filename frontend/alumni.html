@@ -551,7 +551,7 @@
       
       <div class="p-6">
         <!-- Info Header -->
-        <div class="mb-6">
+        <div class="mb-4">
           <h4 id="detail-nama" class="font-bold text-lg dark:text-white">Nama Alumni</h4>
           <p id="detail-stambuk" class="text-sm text-gray-600 dark:text-gray-400">Stambuk: -</p>
           <div class="flex gap-2 mt-2 flex-wrap">
@@ -560,20 +560,77 @@
           </div>
         </div>
 
-        <!-- Info Grid (read-only computed) -->
+        <!-- Biodata -->
+        <p class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide border-t border-gray-100 dark:border-slate-700 pt-3 mb-2">Biodata</p>
         <div class="grid grid-cols-2 gap-3 mb-4 text-sm">
+          <div>
+            <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Tempat, Tanggal Lahir</span>
+            <p id="detail-ttl" class="text-gray-800 dark:text-gray-200 font-medium">-</p>
+          </div>
           <div>
             <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Asal Daerah</span>
             <p id="detail-asal" class="text-gray-800 dark:text-gray-200 font-medium">-</p>
           </div>
           <div>
-            <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Tingkatan Akhir</span>
-            <p id="detail-tingkatan" class="text-gray-800 dark:text-gray-200 font-medium">-</p>
+            <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Nama Wali</span>
+            <p id="detail-wali" class="text-gray-800 dark:text-gray-200 font-medium">-</p>
+          </div>
+          <div>
+            <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">No HP Wali</span>
+            <p id="detail-nohp" class="text-gray-800 dark:text-gray-200 font-medium">-</p>
+          </div>
+          <div class="col-span-2">
+            <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Alamat</span>
+            <p id="detail-alamat" class="text-gray-800 dark:text-gray-200 font-medium">-</p>
           </div>
         </div>
 
-        <!-- Editable Form -->
-        
+        <!-- Riwayat -->
+        <p class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide border-t border-gray-100 dark:border-slate-700 pt-3 mb-2">Riwayat</p>
+        <div class="grid grid-cols-3 gap-3 mb-4 text-sm">
+          <div>
+            <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Kamar</span>
+            <p id="detail-kamar" class="text-gray-800 dark:text-gray-200 font-medium">-</p>
+          </div>
+          <div>
+            <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Tahun Masuk</span>
+            <p id="detail-tahun-masuk" class="text-gray-800 dark:text-gray-200 font-medium">-</p>
+          </div>
+          <div>
+            <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Tahun Keluar</span>
+            <p id="detail-tahun-keluar" class="text-gray-800 dark:text-gray-200 font-medium">-</p>
+          </div>
+          <div>
+            <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Tingkatan Akhir</span>
+            <p id="detail-tingkatan" class="text-gray-800 dark:text-gray-200 font-medium">-</p>
+          </div>
+          <div class="col-span-2">
+            <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Tempat Khidmah</span>
+            <p id="detail-tempat-khidmah" class="text-gray-800 dark:text-gray-200 font-medium">-</p>
+          </div>
+        </div>
+
+        <!-- Status & Ijazah -->
+        <p class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide border-t border-gray-100 dark:border-slate-700 pt-3 mb-2">Status & Ijazah</p>
+        <div class="grid grid-cols-2 gap-3 mb-4 text-sm">
+          <div>
+            <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Keterangan</span>
+            <p id="detail-keterangan" class="text-gray-800 dark:text-gray-200 font-medium">-</p>
+          </div>
+          <div>
+            <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Status Ijazah</span>
+            <p id="detail-ijazah-status" class="text-gray-800 dark:text-gray-200 font-medium">-</p>
+          </div>
+          <div>
+            <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Alasan Belum Diambil</span>
+            <p id="detail-alasan-ijazah" class="text-gray-800 dark:text-gray-200 font-medium">-</p>
+          </div>
+          <div>
+            <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Nomor Ijazah</span>
+            <p id="detail-no-ijazah" class="text-gray-800 dark:text-gray-200 font-medium">-</p>
+          </div>
+        </div>
+
         <div class="mt-6 flex justify-end">
           <button type="button" class="btn-tutup-detail px-5 py-2 rounded-xl text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-slate-700 dark:text-gray-300 dark:hover:bg-slate-600 transition-colors">Tutup
         </div>
