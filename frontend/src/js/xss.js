@@ -14,13 +14,12 @@ function escapeHTML(str) {
   // gagal dan filter (mis. tingkatan "I'dadiyah") tidak menemukan data apa pun.
   // Karena semua atribut template memakai kutip ganda, apostrof di dalam value
   // atribut tetap aman.
-  return str.replace(/[&<>'"]/g, 
+  return str.replace(/[&<>"]/g, 
     tag => ({
       '&': '&amp;',
       '<': '&lt;',
       '>': '&gt;',
       '"': '&quot;',
-      "'": '&#39;'
     }[tag] || tag)
   );
 }
