@@ -818,6 +818,9 @@ if (container) {
         if (!inp) return; // lewati kolom non-input (Jml/Rata²/dll)
         const v = raw.trim().replace(',', '.');
         if (v === '') return;
+        // Validate: only set numeric values on type="number" inputs to avoid
+        // DOMException "The string did not match the expected pattern".
+        if (inp.type === 'number' && v !== '' && isNaN(Number(v))) return;
         inp.value = v;
         // Picu 'input' agar dirty-tracking & recalc Jml/Rata² ikut jalan.
         inp.dispatchEvent(new Event('input', { bubbles: true }));

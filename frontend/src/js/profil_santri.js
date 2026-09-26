@@ -473,7 +473,7 @@ function populateRiwayat(riwayatArr, bulanListByTA = {}) {
             </tr>`;
       });
       absensiRows += `
-        <tr class="bg-gray-50 dark:bg-gray-750 font-bold">
+        <tr class="bg-gray-50 dark:bg-gray-800 font-bold">
           <td colspan="2" class="px-3 py-2 border border-gray-200 dark:border-gray-700 text-right text-gray-700 dark:text-gray-300 uppercase text-xs tracking-wide">Total</td>
           <td class="px-2 py-2 border border-gray-200 dark:border-gray-700 text-center text-blue-700 dark:text-blue-300">${totS}</td>
           <td class="px-2 py-2 border border-gray-200 dark:border-gray-700 text-center text-amber-700 dark:text-amber-300">${totI}</td>
@@ -520,7 +520,7 @@ function populateRiwayat(riwayatArr, bulanListByTA = {}) {
       const mapelDisplay = (r.nama_indo && r.nama_indo.trim()) ? r.nama_indo.trim() : (rawMapel || '-');
       const mapelTitle  = rawMapel && rawMapel !== mapelDisplay ? ` title="${escapeHtml(rawMapel)}"` : '';
       raportRows += `
-        <tr class="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750">
+        <tr class="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800">
           <td class="px-3 py-2 text-center text-xs text-gray-600 dark:text-gray-400">${idx + 1}</td>
           <td class="px-3 py-2 text-sm font-medium text-gray-800 dark:text-gray-200"${mapelTitle}>${escapeHtml(mapelDisplay)}</td>
           <td class="px-2 py-2 text-center text-sm">${cell(r.tamrin_k1)}</td>
@@ -630,7 +630,7 @@ function populateRiwayat(riwayatArr, bulanListByTA = {}) {
 
     const cardHtml = `
       <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden mb-8">
-         <div class="bg-gray-50 dark:bg-gray-750 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex flex-col md:flex-row md:justify-between md:items-center">
+         <div class="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex flex-col md:flex-row md:justify-between md:items-center">
             <div>
               <h3 class="text-lg font-bold text-gray-900 dark:text-white">Kelas: ${escapeHtml(taData.nama_bagian || '-')}</h3>
               <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">TA ${escapeHtml(taData.tahun_ajaran)}</p>
