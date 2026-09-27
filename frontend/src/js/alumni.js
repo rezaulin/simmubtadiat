@@ -1,4 +1,5 @@
 // frontend/src/js/alumni.js
+import ExcelJS from 'exceljs';
 
 // 1. Initial State & Elements
 const tableBody = document.getElementById('table-body');
@@ -112,6 +113,10 @@ async function checkAuth() {
       const btnTemplate = document.getElementById('btn-template-alumni');
       if (btnTemplate) btnTemplate.classList.remove('hidden');
     }
+
+    // Tombol Download: semua role yang bisa akses alumni
+    const btnDownloadAlumni = document.getElementById('btn-download-alumni');
+    if (btnDownloadAlumni) btnDownloadAlumni.classList.remove('hidden');
 
     
     // Load Data
@@ -1091,3 +1096,198 @@ formTambahAlumni?.addEventListener('submit', async (e) => {
 });
 
 console.log('Cache bust 1');
+
+// === EXPORT ALUMNI & PENGABDIAN KE EXCEL (ExcelJS) ===
+const BORDER_THIN = { style: 'thin', color: { argb: 'FFCCCCCC' } };
+const FILL_TEAL   = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0E7C86' } };
+
+function dlBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function safe(s) { return (s || '').replace(/[^a-zA-Z0-9-_ ]/g, '').trim().replace(/\s+/g, '_'); }
+
+const _htmlMap = { '&amp;': '&', '&lt;': '<', '&gt;': '>', '&quot;': '"', '&#39;': "'", '&nbsp;': ' ' };
+function dh(v) {
+  if (typeof v !== 'string') return v;
+  return v.replace(/&amp;|&lt;|&gt;|&quot;|&#39;|&nbsp;/g, m => _htmlMap[m] || m);
+}
+
+function formatTgl(val) {
+  if (!val) return '';
+  const d = new Date(val);
+  if (Number.isNaN(d.getTime())) return String(val);
+  return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+async function buildWorkbook(title, headers, dataRows) {
+  const wb = new ExcelJS.Workbook();
+  wb.creator = 'SIM Mubtadiat';
+  const ws = wb.addWorksheet('Data');
+  const colCount = headers.length;
+
+  // Row 1: Title
+  const titleRow = ws.getRow(1);
+  titleRow.getCell(1).value = dh(title);
+  titleRow.getCell(1).font = { bold: true, size: 14 };
+  titleRow.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
+  titleRow.height = 28;
+  ws.mergeCells(1, 1, 1, colCount);
+
+  // Row 2: Info
+  const infoRow = ws.getRow(2);
+  infoRow.getCell(1).value = `Total: ${dataRows.length} data  |  Diunduh: ${new Date().toLocaleDateString('id-ID')}`;
+  infoRow.getCell(1).font = { size: 10, color: { argb: 'FF444444' } };
+
+  // Row 3: blank
+
+  // Row 4: Headers
+  const hdrRow = ws.getRow(4);
+  headers.forEach((h, i) => {
+    const cell = hdrRow.getCell(i + 1);
+    cell.value = dh(h);
+    cell.font = { bold: true, size: 10, color: { argb: 'FFFFFFFF' } };
+    cell.fill = FILL_TEAL;
+    cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+    cell.border = { top: BORDER_THIN, bottom: BORDER_THIN, left: BORDER_THIN, right: BORDER_THIN };
+  });
+  hdrRow.height = 22;
+
+  // Data rows
+  dataRows.forEach(row => {
+    const r = ws.addRow(row);
+    r.eachCell({ includeEmpty: true }, (cell, colNum) => {
+      cell.border = { top: BORDER_THIN, bottom: BORDER_THIN, left: BORDER_THIN, right: BORDER_THIN };
+      cell.alignment = { horizontal: (colNum <= 2 ? 'left' : 'center'), vertical: 'middle' };
+      cell.font = { size: 10 };
+      if (typeof cell.value === 'string') cell.value = dh(cell.value);
+    });
+  });
+
+  // Column widths
+  ws.columns.forEach((col, i) => {
+    col.width = i === 0 ? 5 : (i === 1 ? 25 : (i === 2 ? 15 : 16));
+  });
+
+  ws.views = [{ state: 'frozen', ySplit: 4 }];
+  return wb;
+}
+
+async function doExport(title, headers, dataRows, filename) {
+  const wb = await buildWorkbook(title, headers, dataRows);
+  const buf = await wb.xlsx.writeBuffer();
+  const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  dlBlob(blob, filename);
+}
+
+// === DOWNLOAD ALUMNI ===
+async function downloadAlumni() {
+  const btn = document.getElementById('btn-download-alumni');
+  if (btn) { btn.disabled = true; btn.textContent = 'Memproses...'; }
+  try {
+    const params = new URLSearchParams();
+    if (filterProvinsi && filterProvinsi.value) params.set('provinsi', filterProvinsi.value);
+    if (filterKabupaten && filterKabupaten.value) params.set('kabupaten', filterKabupaten.value);
+    const qs = params.toString();
+    const url = qs ? `/api/alumni?${qs}` : '/api/alumni';
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Gagal memuat data alumni');
+    let data = await res.json();
+    if (!Array.isArray(data)) data = [];
+
+    // Apply same filters as table
+    const tm = filterTahunMasuk && filterTahunMasuk.value ? filterTahunMasuk.value.trim() : '';
+    const tk = filterTahunKeluar && filterTahunKeluar.value ? filterTahunKeluar.value.trim() : '';
+    if (tm || tk) {
+      data = data.filter(a => {
+        if (tm && a.tahun_masuk !== tm) return false;
+        if (tk && a.tahun_keluar !== tk) return false;
+        return true;
+      });
+    }
+
+    const headers = ['No', 'Nama', 'Stambuk', 'NISN', 'TTL', 'Tingkatan Akhir', 'Status Keluar', 'Kamar', 'Asal Daerah', 'Provinsi', 'Kabupaten', 'Tahun Masuk', 'Tahun Keluar', 'Nama Wali', 'No. HP Wali', 'Alamat', 'Tempat Khidmah', 'Status Ijazah', 'No. Ijazah', 'Keterangan', 'Alasan Ijazah'];
+    const statusMap = { lulus: 'Lulus', boyong: 'Boyong', keluar: 'Keluar' };
+    const ijazahMap = { belum: 'Belum', sudah: 'Sudah', tidak: 'Tidak' };
+    const keteranganMap = { menikah: 'Menikah', membantu_ortu: 'Membantu Orang Tua', bekerja: 'Bekerja', kuliah: 'Kuliah', lainnya: 'Lainnya' };
+
+    const dataRows = data.map((a, idx) => {
+      let ttl = '';
+      if (a.ttl_tempat || a.ttl_tanggal) {
+        const parts = [];
+        if (a.ttl_tempat) parts.push(a.ttl_tempat);
+        if (a.ttl_tanggal) parts.push(formatTgl(a.ttl_tanggal));
+        ttl = parts.join(', ');
+      }
+      return [
+        idx + 1,
+        a.nama || '-',
+        a.stambuk || '-',
+        a.nisn || '-',
+        ttl || '-',
+        a.tingkatan_akhir || '-',
+        statusMap[a.status_akhir] || a.status_akhir || '-',
+        a.kamar || '-',
+        a.asal_daerah || '-',
+        a.provinsi_nama || '-',
+        a.kabupaten_nama || '-',
+        a.tahun_masuk || '-',
+        a.tahun_keluar || '-',
+        a.nama_wali || '-',
+        a.no_hp_wali || '-',
+        a.alamat || '-',
+        a.tempat_khidmah || '-',
+        ijazahMap[a.status_ijazah] || a.status_ijazah || '-',
+        a.no_ijazah || '-',
+        keteranganMap[a.keterangan] || a.keterangan || '-',
+        a.alasan_ijazah_belum_diambil || '-'
+      ];
+    });
+
+    const now = new Date();
+    const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+    await doExport('Data Alumni', headers, dataRows, `Data_Alumni_${dateStr}.xlsx`);
+  } catch (err) {
+    alert('Gagal download alumni: ' + err.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i data-lucide="arrow-down-to-line" class="w-4 h-4"></i><span class="hidden md:inline">Download</span>'; if (window.lucide) lucide.createIcons(); }
+  }
+}
+
+// === DOWNLOAD PENGABDIAN ===
+async function downloadPengabdian() {
+  const btn = document.getElementById('btn-download-pengabdian');
+  if (btn) { btn.disabled = true; btn.textContent = 'Memproses...'; }
+  try {
+    const res = await fetch('/api/pengabdian');
+    if (!res.ok) throw new Error('Gagal memuat data pengabdian');
+    let data = await res.json();
+    if (!Array.isArray(data)) data = [];
+
+    const headers = ['No', 'Nama', 'Stambuk', 'Tempat Khidmah', 'Mulai Khidmah'];
+    const dataRows = data.map((item, idx) => [
+      idx + 1,
+      item.nama || '-',
+      item.stambuk || '-',
+      item.khidmah_tempat || '-',
+      item.khidmah_mulai ? formatTgl(item.khidmah_mulai) : '-'
+    ]);
+
+    const now = new Date();
+    const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+    await doExport('Data Pengabdian (Khidmah)', headers, dataRows, `Data_Pengabdian_${dateStr}.xlsx`);
+  } catch (err) {
+    alert('Gagal download pengabdian: ' + err.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i data-lucide="arrow-down-to-line" class="w-4 h-4"></i><span class="hidden md:inline">Download</span>'; if (window.lucide) lucide.createIcons(); }
+  }
+}
+
+// Wire download buttons
+const btnDownloadAlumni = document.getElementById('btn-download-alumni');
+const btnDownloadPengabdian = document.getElementById('btn-download-pengabdian');
+if (btnDownloadAlumni) btnDownloadAlumni.addEventListener('click', downloadAlumni);
+if (btnDownloadPengabdian) btnDownloadPengabdian.addEventListener('click', downloadPengabdian);

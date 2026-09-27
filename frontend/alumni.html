@@ -226,6 +226,11 @@
           <span class="hidden md:inline">Template</span>
         </a>
         <input type="file" id="input-import-file" accept=".xlsx,.xls" class="hidden">
+
+        <button id="btn-download-alumni" class="hidden flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl font-medium text-sm transition-all shadow-md">
+          <i data-lucide="arrow-down-to-line" class="w-4 h-4"></i>
+          <span class="hidden md:inline">Download</span>
+        </button>
         
       </div>
     </div>
@@ -246,6 +251,13 @@
     <!-- Kontainer daftar santri pengabdian. Isi & modal "Selesai Khidmah" ditambahkan pada task 10.2. -->
     <div id="content-pengabdian" class="hidden px-6 pb-6 flex-1">
       <div class="glass dark:bg-slate-800/80 rounded-2xl border border-gray-200 dark:border-slate-700 overflow-hidden shadow-sm flex flex-col">
+        <div class="flex items-center justify-between px-6 pt-4 pb-2">
+          <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200">Data Santri Pengabdian</h3>
+          <button id="btn-download-pengabdian" class="flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl font-medium text-sm transition-all shadow-md">
+            <i data-lucide="arrow-down-to-line" class="w-4 h-4"></i>
+            <span class="hidden md:inline">Download</span>
+          </button>
+        </div>
         <div id="pengabdian-list" class="p-6 text-center text-gray-500 dark:text-gray-400">
           Memuat data pengabdian...
         </div>
