@@ -2,7 +2,6 @@
 // Pilih Bagian + Tahun Ajaran → muncul tabel besar (Tamrin, Ujian, Raport, Al-Bayan).
 
 import { translateKitab } from './kitab-translate.js';
-import * as XLSX from 'xlsx';
 
 // Ambil label yang dipakai di header kolom: nama kitab (Arab) → Latin.
 // Fallback ke nama mapel bila kitab kosong. Tooltip menampilkan versi Arab
@@ -188,13 +187,13 @@ function renderSpreadsheet() {
     btn.addEventListener('click', () => {
       const type = btn.dataset.export;
       const exportMap = {
-        'tamrin-k1':    () => doExport('Tamrin_Kuartal_1', buildTamrinSheet(1, 'Tamrin K1')),
-        'ujian-smt1':   () => doExport('Ujian_Semester_Ganjil_K2', buildUjianSheet(2, 1, 'Ujian Smt Ganjil')),
-        'tamrin-k3':    () => doExport('Tamrin_Kuartal_3', buildTamrinSheet(3, 'Tamrin K3')),
-        'ujian-smt2':   () => doExport('Ujian_Semester_Genap_K4', buildUjianSheet(4, 2, 'Ujian Smt Genap')),
-        'raport-smt1':  () => doExport('Raport_Semester_1', buildRaportSheet(1, 'Raport Smt 1')),
-        'raport-smt2':  () => doExport('Raport_Semester_2', buildRaportSheet(2, 'Raport Smt 2')),
-        'bayan':        () => doExport('Al_Bayan', buildBayanSheet()),
+        'tamrin-k1':    async () => { const d = buildTamrinData(1, 'Tamrin K1'); if (d) await doExport(d.title, d.headers, d.dataRows); },
+        'ujian-smt1':   async () => { const d = buildUjianData(2, 1, 'Ujian Semester Ganjil (Semester 1)'); if (d) await doExport(d.title, d.headers, d.dataRows); },
+        'tamrin-k3':    async () => { const d = buildTamrinData(3, 'Tamrin K3'); if (d) await doExport(d.title, d.headers, d.dataRows); },
+        'ujian-smt2':   async () => { const d = buildUjianData(4, 2, 'Ujian Semester Genap (Semester 2)'); if (d) await doExport(d.title, d.headers, d.dataRows); },
+        'raport-smt1':  async () => { const d = buildRaportData(1, 'Raport Semester 1'); if (d) await doExport(d.title, d.headers, d.dataRows, { avgRow: true }); },
+        'raport-smt2':  async () => { const d = buildRaportData(2, 'Raport Semester 2'); if (d) await doExport(d.title, d.headers, d.dataRows, { avgRow: true }); },
+        'bayan':        async () => { const d = buildBayanData(); if (d) await doExport(d.title, d.headers, d.dataRows); },
       };
       if (exportMap[type]) exportMap[type]();
     });
@@ -806,109 +805,108 @@ async function saveAll() {
   }
 }
 
-// === EXPORT KE EXCEL (FORMATTED) ===
-function downloadWorkbook(wb, filename) {
-  XLSX.writeFile(wb, filename, { bookType: 'xlsx' });
+// === EXPORT KE EXCEL (ExcelJS — full styling support) ===
+import ExcelJS from 'exceljs';
+
+const BORDER_THIN = { style: 'thin', color: { argb: 'FFCCCCCC' } };
+const FILL_TEAL   = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0E7C86' } };
+const FILL_GREEN  = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE8F5E9' } };
+
+function dlBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
 }
 
-// Border helper
-const thin = { style: 'thin', color: { rgb: 'CCCCCC' } };
-
-// Style constants
-const STYLE_TITLE  = { font: { bold: true, sz: 14 }, alignment: { horizontal: 'center' } };
-const STYLE_INFO   = { font: { sz: 10, color: { rgb: '444444' } } };
-const STYLE_HDR    = { font: { bold: true, sz: 10, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '0E7C86' } }, alignment: { horizontal: 'center', wrapText: true }, border: { top: thin, bottom: thin, left: thin, right: thin } };
-const STYLE_DATA_C = { font: { sz: 10 }, alignment: { horizontal: 'center' }, border: { top: thin, bottom: thin, left: thin, right: thin } };
-const STYLE_DATA_L = { font: { sz: 10 }, alignment: { horizontal: 'left' }, border: { top: thin, bottom: thin, left: thin, right: thin } };
-const STYLE_AVG    = { font: { sz: 10, bold: true, color: { rgb: '0E7C86' } }, alignment: { horizontal: 'center' }, border: { top: thin, bottom: thin, left: thin, right: thin }, fill: { fgColor: { rgb: 'E8F5E9' } } };
-
-// Decode HTML entities from API responses (xss.js sanitizer encodes & < > etc.)
-const _htmlEntityMap = { '&amp;': '&', '&lt;': '<', '&gt;': '>', '&quot;': '"', '&#39;': "'", '&nbsp;': ' ' };
-function decodeHtml(v) {
-  if (typeof v !== 'string') return v;
-  return v.replace(/&amp;|&lt;|&gt;|&quot;|&#39;|&nbsp;/g, m => _htmlEntityMap[m] || m);
-}
-
-// Build info row data
 function getInfoRow() {
   const t = selTingkatan.options[selTingkatan.selectedIndex]?.text || '';
   const k = selKelas.options[selKelas.selectedIndex]?.text || '';
   const b = selBagian.options[selBagian.selectedIndex]?.text || '';
-  return [`Tingkatan: ${t}`, `Kelas: ${k}`, `Bagian: ${b}`, `Tahun Ajaran: ${tahunAjaran}`];
+  return `Tingkatan: ${t}  |  Kelas: ${k}  |  Bagian: ${b}  |  Tahun Ajaran: ${tahunAjaran}`;
 }
 
-// Apply styles to a finished worksheet
-function styleSheet(ws, opts) {
-  const { colCount, dataStartRow, numCols, excludeLast } = opts;
-  const range = XLSX.utils.decode_range(ws['!ref']);
+function safe(s) { return (s || '').replace(/[^a-zA-Z0-9-_ ]/g, '').trim().replace(/\s+/g, '_'); }
 
-  for (let r = range.s.r; r <= range.e.r; r++) {
-    for (let c = range.s.c; c <= range.e.c; c++) {
-      const addr = XLSX.utils.encode_cell({ r, c });
-      const cell = ws[addr];
-      if (!cell) continue;
-
-      // Title row (r=0)
-      if (r === 0) {
-        cell.s = STYLE_TITLE;
-      }
-      // Info row (r=1)
-      else if (r === 1) {
-        cell.s = STYLE_INFO;
-      }
-      // Table header row (r = dataStartRow)
-      else if (r === dataStartRow) {
-        cell.s = { ...STYLE_HDR };
-      }
-      // Last row = average row (excludeLast)
-      else if (excludeLast && r === range.e.r) {
-        cell.s = STYLE_AVG;
-      }
-      // Data rows
-      else if (r > dataStartRow) {
-        // Nama column (c=1) → left
-        if (c === 1) {
-          cell.s = STYLE_DATA_L;
-        }
-        // Everything else → center
-        else {
-          cell.s = STYLE_DATA_C;
-        }
-      }
-    }
-  }
-  return ws;
+// Decode HTML entities from API responses
+const _htmlMap = { '&amp;': '&', '&lt;': '<', '&gt;': '>', '&quot;': '"', '&#39;': "'", '&nbsp;': ' ' };
+function dh(v) {
+  if (typeof v !== 'string') return v;
+  return v.replace(/&amp;|&lt;|&gt;|&quot;|&#39;|&nbsp;/g, m => _htmlMap[m] || m);
 }
 
-// Generic sheet builder
-function buildFormattedSheet(title, headers, dataRows, opts = {}) {
-  const allRows = [
-    [title],
-    getInfoRow(),
-    [],  // blank separator
-    headers.map(decodeHtml),
-    ...dataRows.map(row => row.map(decodeHtml)),
-  ];
-  const ws = XLSX.utils.aoa_to_sheet(allRows);
+// Build styled workbook from title, headers, rows
+async function buildWorkbook(title, headers, dataRows, opts = {}) {
+  const wb = new ExcelJS.Workbook();
+  wb.creator = 'SIM Mubtadiat';
+  const ws = wb.addWorksheet('Data');
 
-  // Merge title row
   const colCount = headers.length;
-  ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: colCount - 1 } }];
+  ws.columns = headers.map((h, i) => ({ width: (i <= 2 ? [5,22,12][i] : opts.colWidth || 14) }));
 
-  // Style everything
-  styleSheet(ws, {
-    colCount,
-    dataStartRow: 3,  // row index 3 = header row (0=title,1=info,2=blank,3=header)
-    numCols: colCount,
-    excludeLast: !!opts.excludeLastRow,
+  // Row 1: Title (merged)
+  const titleRow = ws.getRow(1);
+  titleRow.getCell(1).value = dh(title);
+  titleRow.getCell(1).font = { bold: true, size: 14 };
+  titleRow.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
+  titleRow.height = 28;
+  ws.mergeCells(1, 1, 1, colCount);
+
+  // Row 2: Info
+  const infoRow = ws.getRow(2);
+  infoRow.getCell(1).value = getInfoRow();
+  infoRow.getCell(1).font = { size: 10, color: { argb: 'FF444444' } };
+
+  // Row 3: blank
+
+  // Row 4: Headers (teal bg, white bold, borders, center)
+  const hdrRow = ws.getRow(4);
+  headers.forEach((h, i) => {
+    const cell = hdrRow.getCell(i + 1);
+    cell.value = dh(h);
+    cell.font = { bold: true, size: 10, color: { argb: 'FFFFFFFF' } };
+    cell.fill = FILL_TEAL;
+    cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+    cell.border = { top: BORDER_THIN, bottom: BORDER_THIN, left: BORDER_THIN, right: BORDER_THIN };
+  });
+  hdrRow.height = 22;
+
+  // Data rows (row 5+)
+  dataRows.forEach(row => {
+    const r = ws.addRow(row);
+    r.eachCell({ includeEmpty: true }, (cell, colNum) => {
+      cell.border = { top: BORDER_THIN, bottom: BORDER_THIN, left: BORDER_THIN, right: BORDER_THIN };
+      cell.alignment = { horizontal: (colNum === 2 ? 'left' : 'center'), vertical: 'middle' };
+      cell.font = { size: 10 };
+      // Decode HTML entities in string cells
+      if (typeof cell.value === 'string') cell.value = dh(cell.value);
+    });
   });
 
-  // Column widths
-  ws['!cols'] = opts.colWidths || [];
-  return ws;
+  // Last row = average row styling (for raport)
+  if (opts.avgRow) {
+    const lastRow = ws.getRow(4 + dataRows.length);
+    lastRow.eachCell({ includeEmpty: true }, cell => {
+      cell.font = { bold: true, size: 10, color: { argb: 'FF0E7C86' } };
+      cell.fill = FILL_GREEN;
+    });
+  }
+
+  // Freeze header row
+  ws.views = [{ state: 'frozen', ySplit: 4 }];
+
+  return wb;
 }
 
-function buildTamrinSheet(kuartal, label) {
+async function doExport(title, headers, dataRows, opts = {}) {
+  const wb = await buildWorkbook(title, headers, dataRows, opts);
+  const bagianName = selBagian.options[selBagian.selectedIndex]?.text || 'Bagian';
+  const buf = await wb.xlsx.writeBuffer();
+  const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  dlBlob(blob, `${safe(title)}_${safe(bagianName)}_${tahunAjaran.replace('/', '-')}.xlsx`);
+}
+
+function buildTamrinData(kuartal, label) {
   if (!currentData) return null;
   const { mapels, santri, nilai_kuartal } = currentData;
   const data = nilai_kuartal[String(kuartal)] || {};
@@ -933,11 +931,10 @@ function buildTamrinSheet(kuartal, label) {
     row.push(count > 0 ? fmtNum(sum / count) : '');
     dataRows.push(row);
   });
-  const cw = [{ wch: 5 }, { wch: 22 }, { wch: 12 }].concat(mapels.map(() => ({ wch: 14 })), [{ wch: 8 }, { wch: 8 }]);
-  return buildFormattedSheet(label, headers, dataRows, { colWidths: cw });
+  return { headers, dataRows, title: label };
 }
 
-function buildUjianSheet(kuartal, semester, label) {
+function buildUjianData(kuartal, semester, label) {
   if (!currentData) return null;
   const { mapels, santri, nilai_kuartal } = currentData;
   const data = nilai_kuartal[String(kuartal)] || {};
@@ -962,11 +959,10 @@ function buildUjianSheet(kuartal, semester, label) {
     row.push(count > 0 ? fmtNum(sum / count) : '');
     dataRows.push(row);
   });
-  const cw = [{ wch: 5 }, { wch: 22 }, { wch: 12 }].concat(mapels.map(() => ({ wch: 14 })), [{ wch: 8 }, { wch: 8 }]);
-  return buildFormattedSheet(label, headers, dataRows, { colWidths: cw });
+  return { headers, dataRows, title: label };
 }
 
-function buildRaportSheet(semester, label) {
+function buildRaportData(semester, label) {
   if (!currentData) return null;
   const { mapels, santri, nilai_khos, absensi } = currentData;
   const khosData = nilai_khos[String(semester)] || {};
@@ -1011,11 +1007,10 @@ function buildRaportSheet(semester, label) {
   });
   avgRow.push('', '', '');
   dataRows.push(avgRow);
-  const cw = [{ wch: 5 }, { wch: 22 }, { wch: 12 }].concat(mapels.map(() => ({ wch: 14 })), [{ wch: 8 }, { wch: 6 }, { wch: 6 }]);
-  return buildFormattedSheet(label, headers, dataRows, { colWidths: cw, excludeLastRow: true });
+  return { headers, dataRows, title: label, avgRow: true };
 }
 
-function buildBayanSheet() {
+function buildBayanData() {
   if (!currentData) return null;
   const { santri, nilai_bayan, absensi_bayan } = currentData;
   const bayanLabels = { 9: 'JAYYID AWAL', 8: 'JAYYID TSANI', 7: 'MUTAWASSIT AWAL', 6: 'MUTAWASSIT TSANI' };
@@ -1033,17 +1028,7 @@ function buildBayanSheet() {
       ab.izin || 0, ab.alpha || 0
     ]);
   });
-  const cw = [{ wch: 5 }, { wch: 22 }, { wch: 12 }, { wch: 15 }, { wch: 20 }, { wch: 6 }, { wch: 6 }];
-  return buildFormattedSheet('AL-BAYAN (Prestasi Tahunan)', headers, dataRows, { colWidths: cw });
-}
-
-function doExport(title, ws) {
-  if (!ws) { alert('Tidak ada data untuk di-export.'); return; }
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Data');
-  const bagianName = selBagian.options[selBagian.selectedIndex]?.text || 'Bagian';
-  const safe = (s) => s.replace(/[^a-zA-Z0-9-_ ]/g, '').trim().replace(/\s+/g, '_');
-  downloadWorkbook(wb, `${safe(title)}_${safe(bagianName)}_${tahunAjaran.replace('/', '-')}.xlsx`);
+  return { headers, dataRows, title: 'AL-BAYAN (Prestasi Tahunan)' };
 }
 
 // === PASTE DARI EXCEL ===
