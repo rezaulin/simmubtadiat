@@ -290,6 +290,10 @@ function populateBiodata(s) {
   if (elNisnHeader) elNisnHeader.textContent = s.nisn || '-';
   pTtl.textContent = `${s.ttl_tempat || '-'}, ${s.ttl_tanggal ? new Date(s.ttl_tanggal).toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'}) : '-'}`;
   pWali.textContent = s.nama_wali || '-';
+  const elAyah = document.getElementById('p-ayah');
+  if (elAyah) elAyah.textContent = s.nama_ayah || '-';
+  const elIbu = document.getElementById('p-ibu');
+  if (elIbu) elIbu.textContent = s.nama_ibu || '-';
   pNoHp.textContent = s.no_hp_wali || '-';
   if (pKamar) pKamar.textContent = s.kamar || '-';
 
@@ -693,6 +697,8 @@ function openEditModal() {
   }
 
   f.nama_wali.value = currentSantriData.nama_wali || '';
+  if (f.nama_ayah) f.nama_ayah.value = currentSantriData.nama_ayah || '';
+  if (f.nama_ibu) f.nama_ibu.value = currentSantriData.nama_ibu || '';
   f.no_hp.value = currentSantriData.no_hp_wali || '';
   f.desa.value = currentSantriData.desa || '';
   f.alamat.value = currentSantriData.alamat || '';
@@ -785,6 +791,8 @@ if (formEditSantri) {
       ttl_tempat: t_tempat,
       ttl_tanggal: t_tanggal,
       nama_wali: formData.get('nama_wali'),
+      nama_ayah: formData.get('nama_ayah'),
+      nama_ibu: formData.get('nama_ibu'),
       no_hp_wali: formData.get('no_hp'),
       provinsi_kode: formData.get('provinsi_kode'),
       provinsi_nama: formData.get('provinsi_nama'),

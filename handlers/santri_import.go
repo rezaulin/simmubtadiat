@@ -17,6 +17,8 @@ var templateHeaders = []string{
 	"NISN",            // opsional
 	"Nama",            // wajib
 	"Nama Wali",       // opsional
+	"Nama Ayah",       // opsional
+	"Nama Ibu",        // opsional
 	"Tempat, Tanggal Lahir", // opsional (Misal: Surabaya, 12-10-2005)
 	"No HP Wali",      // opsional
 	"Provinsi",        // opsional (nama), harus sesuai referensi
@@ -25,6 +27,7 @@ var templateHeaders = []string{
 	"Desa/Kelurahan",  // opsional (teks bebas)
 	"Alamat Tambahan", // opsional (jalan/RT/RW/dusun)
 	"Kamar",           // opsional (nama/nomor kamar asrama)
+	"Tahun Masuk",     // opsional (misal: 2024). Kosong = tahun saat input
 }
 
 // DownloadTemplateSantri menghasilkan file .xlsx template impor santri.
@@ -61,8 +64,9 @@ func DownloadTemplateSantri(w http.ResponseWriter, r *http.Request) {
 	// Baris contoh
 	contoh := []interface{}{
 		"3201234567890001", "5747", "0123456789", "Ahmad Fulan", "Bapak Fulan",
+		"Bapak Ahmad", "Ibu Siti",
 		"Bogor, 2010-05-17", "081234567890", "Jawa Barat", "Kabupaten Bogor",
-		"Cibinong", "Pakansari", "Jl. Mawar No. 10 RT 01 RW 02", "Kamar A1",
+		"Cibinong", "Pakansari", "Jl. Mawar No. 10 RT 01 RW 02", "Kamar A1", "2024",
 	}
 	for i, v := range contoh {
 		cell, _ := excelize.CoordinatesToCellName(i+1, 2)
@@ -78,11 +82,13 @@ func DownloadTemplateSantri(w http.ResponseWriter, r *http.Request) {
 		{"1. Jangan mengubah baris header (baris pertama)."},
 		{"2. Hapus baris contoh sebelum mengunggah."},
 		{"3. Kolom wajib: NIK, Nama."},
-		{"4. Tempat, Tanggal Lahir dipisah koma (Misal: Surabaya, 12-10-2005 atau Bogor, 2010-05-17)."},
-		{"5. Provinsi, Kabupaten/Kota, dan Kecamatan harus ditulis sesuai nama resmi."},
+		{"4. Nama Ayah dan Nama Ibu bersifat opsional."},
+		{"5. Tempat, Tanggal Lahir dipisah koma (Misal: Surabaya, 12-10-2005 atau Bogor, 2010-05-17)."},
+		{"6. Provinsi, Kabupaten/Kota, dan Kecamatan harus ditulis sesuai nama resmi."},
 		{"   Kabupaten harus berada di dalam Provinsi yang ditulis, begitu pula Kecamatan."},
-		{"6. Desa/Kelurahan dan Alamat Tambahan boleh diisi bebas."},
-		{"7. Jika satu baris gagal, seluruh impor dibatalkan. Perbaiki lalu unggah ulang."},
+		{"7. Desa/Kelurahan dan Alamat Tambahan boleh diisi bebas."},
+		{"8. Tahun Masuk diisi angka tahun (misal: 2024). Kosong = tahun saat impor."},
+		{"9. Jika satu baris gagal, seluruh impor dibatalkan. Perbaiki lalu unggah ulang."},
 	}
 	for i, row := range guide {
 		cell, _ := excelize.CoordinatesToCellName(1, i+1)
@@ -176,8 +182,10 @@ func ImportSantri(w http.ResponseWriter, r *http.Request) {
 		s.Stambuk = optStr(get(1))
 		s.NISN = optStr(get(2))
 		s.NamaWali = optStr(get(4))
-		
-		ttlInput := get(5)
+		s.NamaAyah = optStr(get(5))
+		s.NamaIbu = optStr(get(6))
+	
+		ttlInput := get(7)
 		if ttlInput != "" {
 			parts := strings.Split(ttlInput, ",")
 			if len(parts) >= 2 {
@@ -209,12 +217,12 @@ func ImportSantri(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		s.NoHPWali = optStr(get(6))
+		s.NoHPWali = optStr(get(8))
 
 		// Resolusi wilayah berdasarkan nama (berjenjang).
-		provNama := get(7)
-		kabNama := get(8)
-		kecNama := get(9)
+		provNama := get(9)
+		kabNama := get(10)
+		kecNama := get(11)
 
 		if provNama != "" {
 			prov, err := models.FindProvinsiByNama(ctx, provNama)
@@ -253,9 +261,18 @@ func ImportSantri(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		s.Desa = optStr(get(10))
-		s.Alamat = optStr(get(11))
-		s.Kamar = optStr(get(12))
+		s.Desa = optStr(get(12))
+		s.Alamat = optStr(get(13))
+		s.Kamar = optStr(get(14))
+
+		// Tahun masuk: kosong = gunakan tahun saat input
+		tahunMasuk := optStr(get(15))
+		if tahunMasuk == nil || *tahunMasuk == "" {
+			year := time.Now().Format("2006")
+			s.TahunMasuk = &year
+		} else {
+			s.TahunMasuk = tahunMasuk
+		}
 
 		list = append(list, s)
 		rowNumbers = append(rowNumbers, baris)

@@ -205,18 +205,28 @@ function renderSantriAktif(allData, query = '') {
   }
   
   if (filtered.length === 0) {
-    tableBody.innerHTML = `<tr><td colspan="7" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Tidak ada data${query ? ' untuk pencarian "' + query + '"' : ''}.</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="8" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Tidak ada data${query ? ' untuk pencarian "' + query + '"' : ''}.</td></tr>`;
+    const totalEl = document.getElementById('total-count');
+    if (totalEl) totalEl.textContent = `Total: 0 siswi`;
     return;
   }
   
   tableBody.innerHTML = '';
-  filtered.forEach(s => {
+
+  // Update total count
+  const totalEl = document.getElementById('total-count');
+  if (totalEl) totalEl.textContent = `Total: ${filtered.length} siswi`;
+
+  filtered.forEach((s, idx) => {
     const kelasInfo = formatKelas(s);
     const stambukDinamis = s.stambuk || (s.stambuk_urut ? String(s.stambuk_urut) : '-');
     
     const tr = document.createElement('tr');
     tr.className = 'hover:bg-gray-50/50 dark:hover:bg-slate-800/50 transition-colors';
     tr.innerHTML = `
+      <td data-label="No" class="px-4 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
+        ${idx + 1}
+      </td>
       <td data-label="Nama Lengkap" class="px-6 py-4 font-medium text-gray-900 dark:text-white">
         ${escapeHtml(s.nama)}
       </td>
@@ -438,6 +448,8 @@ formSantri.addEventListener('submit', async (e) => {
     nisn: orNull(formData.get('nisn')),
     nama: formData.get('nama'),
     nama_wali: orNull(formData.get('nama_wali')),
+    nama_ayah: orNull(formData.get('nama_ayah')),
+    nama_ibu: orNull(formData.get('nama_ibu')),
     ttl_tempat: t_tempat,
     ttl_tanggal: t_tanggal,
     alamat: orNull(formData.get('alamat')),
@@ -451,6 +463,7 @@ formSantri.addEventListener('submit', async (e) => {
     kecamatan_kode: orNull(formData.get('kecamatan_kode')),
     kecamatan_nama: orNull(formData.get('kecamatan_nama')),
     desa: orNull(formData.get('desa')),
+    tahun_masuk: orNull(formData.get('tahun_masuk')),
     status: "aktif",
     // Kirim bagian_awal_id agar backend CreateSantri langsung set bagian_id +
     // insert riwayat_bagian dalam satu transaksi → santri langsung masuk kelas

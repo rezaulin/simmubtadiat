@@ -50,7 +50,11 @@ type Santri struct {
 	KhidmahMulai   *time.Time `json:"khidmah_mulai"`
 	KhidmahSelesai *time.Time `json:"khidmah_selesai"`
 
-	// Tahun masuk/keluar — otomatis terisi.
+	// Data orang tua
+	NamaAyah *string `json:"nama_ayah"`
+	NamaIbu  *string `json:"nama_ibu"`
+
+	// Tahun masuk/keluar — diisi dari input, bukan otomatis.
 	TahunMasuk  *string `json:"tahun_masuk"`
 	TahunKeluar *string `json:"tahun_keluar"`
 
@@ -76,9 +80,10 @@ type SantriArsipFilter struct {
 
 // santriSelectCols adalah daftar kolom lengkap yang dipakai bersama beberapa query.
 const santriSelectCols = `s.id, s.nik, s.stambuk, s.nisn, s.nama, s.nama_wali, s.ttl_tempat, s.ttl_tanggal, s.alamat, s.no_hp_wali, s.bagian_id, s.status, s.tanggal_status, s.foto_url, s.extra, s.created_at, s.updated_at,
-	s.provinsi_kode, s.provinsi_nama, s.kabupaten_kode, s.kabupaten_nama, s.kecamatan_kode, s.kecamatan_nama, s.desa,
-	s.khidmah_tempat, s.khidmah_mulai, s.khidmah_selesai,
-	s.tahun_masuk, s.tahun_keluar, s.nomor_stambuk_urut, s.kamar, s.last_bagian_id, s.last_tahun_ajaran`
+s.provinsi_kode, s.provinsi_nama, s.kabupaten_kode, s.kabupaten_nama, s.kecamatan_kode, s.kecamatan_nama, s.desa,
+s.khidmah_tempat, s.khidmah_mulai, s.khidmah_selesai,
+s.nama_ayah, s.nama_ibu,
+s.tahun_masuk, s.tahun_keluar, s.nomor_stambuk_urut, s.kamar, s.last_bagian_id, s.last_tahun_ajaran`
 
 // scanSantriFull memindai baris dengan seluruh kolom santri termasuk wilayah dan
 // (opsional) kolom nama tingkatan/bagian/kelas ketika withAkademik true.
@@ -88,6 +93,7 @@ func scanSantriFull(rows scanner, withAkademik bool) (Santri, error) {
 		&s.ID, &s.NIK, &s.Stambuk, &s.NISN, &s.Nama, &s.NamaWali, &s.TTLTempat, &s.TTLTanggal, &s.Alamat, &s.NoHPWali, &s.BagianID, &s.Status, &s.TanggalStatus, &s.FotoURL, &s.Extra, &s.CreatedAt, &s.UpdatedAt,
 		&s.ProvinsiKode, &s.ProvinsiNama, &s.KabupatenKode, &s.KabupatenNama, &s.KecamatanKode, &s.KecamatanNama, &s.Desa,
 		&s.KhidmahTempat, &s.KhidmahMulai, &s.KhidmahSelesai,
+		&s.NamaAyah, &s.NamaIbu,
 		&s.TahunMasuk, &s.TahunKeluar, &s.NomorStambukUrut, &s.Kamar, &s.LastBagianID, &s.LastTahunAjaran,
 	}
 	if withAkademik {
@@ -368,10 +374,11 @@ func CreateSantri(ctx context.Context, s Santri, bagianAwalID int) error {
 
 	err = tx.QueryRow(ctx,
 		`INSERT INTO santri (nik, stambuk, nisn, nama, nama_wali, ttl_tempat, ttl_tanggal, alamat, no_hp_wali, kamar, bagian_id, status,
-			provinsi_kode, provinsi_nama, kabupaten_kode, kabupaten_nama, kecamatan_kode, kecamatan_nama, desa, tahun_masuk)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'aktif', $12, $13, $14, $15, $16, $17, $18, EXTRACT(YEAR FROM CURRENT_DATE)::TEXT) RETURNING id`,
+			provinsi_kode, provinsi_nama, kabupaten_kode, kabupaten_nama, kecamatan_kode, kecamatan_nama, desa, nama_ayah, nama_ibu, tahun_masuk)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'aktif', $12, $13, $14, $15, $16, $17, $18, $19, $20, $21) RETURNING id`,
 		s.NIK, s.Stambuk, s.NISN, s.Nama, s.NamaWali, s.TTLTempat, s.TTLTanggal, s.Alamat, s.NoHPWali, s.Kamar, bagianIDPtr,
-		s.ProvinsiKode, s.ProvinsiNama, s.KabupatenKode, s.KabupatenNama, s.KecamatanKode, s.KecamatanNama, s.Desa).Scan(&santriID)
+		s.ProvinsiKode, s.ProvinsiNama, s.KabupatenKode, s.KabupatenNama, s.KecamatanKode, s.KecamatanNama, s.Desa,
+		s.NamaAyah, s.NamaIbu, s.TahunMasuk).Scan(&santriID)
 
 	if err != nil {
 		return err
@@ -410,12 +417,12 @@ func UpdateSantri(ctx context.Context, id int, s Santri) error {
 		 SET nik = $1, stambuk = $2, nisn = $3, nama = $4, nama_wali = $5, 
 		     ttl_tempat = $6, ttl_tanggal = $7, alamat = $8, no_hp_wali = $9, kamar = $10,
 		     provinsi_kode = $11, provinsi_nama = $12, kabupaten_kode = $13, kabupaten_nama = $14,
-		     kecamatan_kode = $15, kecamatan_nama = $16, desa = $17
-		 WHERE id = $18`,
+		     kecamatan_kode = $15, kecamatan_nama = $16, desa = $17, nama_ayah = $18, nama_ibu = $19
+		 WHERE id = $20`,
 		s.NIK, s.Stambuk, s.NISN, s.Nama, s.NamaWali,
 		s.TTLTempat, s.TTLTanggal, s.Alamat, s.NoHPWali, s.Kamar,
 		s.ProvinsiKode, s.ProvinsiNama, s.KabupatenKode, s.KabupatenNama,
-		s.KecamatanKode, s.KecamatanNama, s.Desa, id)
+		s.KecamatanKode, s.KecamatanNama, s.Desa, s.NamaAyah, s.NamaIbu, id)
 	return err
 }
 
@@ -467,10 +474,11 @@ func ImportSantriBatch(ctx context.Context, list []Santri, rowNumbers []int) (Im
 
 		_, err = tx.Exec(ctx,
 			`INSERT INTO santri (nik, stambuk, nisn, nama, nama_wali, ttl_tempat, ttl_tanggal, alamat, no_hp_wali, kamar, status,
-				provinsi_kode, provinsi_nama, kabupaten_kode, kabupaten_nama, kecamatan_kode, kecamatan_nama, desa, tahun_masuk)
-			 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'aktif', $11, $12, $13, $14, $15, $16, $17, EXTRACT(YEAR FROM CURRENT_DATE)::TEXT)`,
+				provinsi_kode, provinsi_nama, kabupaten_kode, kabupaten_nama, kecamatan_kode, kecamatan_nama, desa, nama_ayah, nama_ibu, tahun_masuk)
+			 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'aktif', $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)`,
 			s.NIK, s.Stambuk, s.NISN, s.Nama, s.NamaWali, s.TTLTempat, s.TTLTanggal, s.Alamat, s.NoHPWali, s.Kamar,
-			s.ProvinsiKode, s.ProvinsiNama, s.KabupatenKode, s.KabupatenNama, s.KecamatanKode, s.KecamatanNama, s.Desa)
+			s.ProvinsiKode, s.ProvinsiNama, s.KabupatenKode, s.KabupatenNama, s.KecamatanKode, s.KecamatanNama, s.Desa,
+			s.NamaAyah, s.NamaIbu, s.TahunMasuk)
 
 		if err != nil {
 			tx.Rollback(ctx)
