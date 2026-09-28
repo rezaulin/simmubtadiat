@@ -18,10 +18,10 @@ type NilaiKuartalInput struct {
 }
 
 // maxNilaiKuartal mengembalikan batas atas nilai kuartal berdasarkan kategori mapel.
-// Al-Qur'an & Akhlaq maksimal 8, mapel lain maksimal 10.
+// Akhlaq maksimal 8, Al-Qur'an & mapel lain maksimal 10.
 func maxNilaiKuartal(kategori string) float64 {
 	switch kategori {
-	case "al_quran", "akhlaq", "akhlaq_perilaku":
+	case "akhlaq", "akhlaq_perilaku":
 		return 8.0
 	default:
 		return 10.0

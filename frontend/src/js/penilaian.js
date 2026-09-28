@@ -171,6 +171,21 @@ function renderSpreadsheet() {
 
   container.innerHTML = html;
 
+  // Wire bayan label filter dropdown
+  const bayanFilter = document.getElementById('bayan-label-filter');
+  if (bayanFilter) {
+    bayanFilter.addEventListener('change', () => {
+      const val = bayanFilter.value;
+      container.querySelectorAll('tr[data-label]').forEach(tr => {
+        if (!val || tr.dataset.label === val) {
+          tr.style.display = '';
+        } else {
+          tr.style.display = 'none';
+        }
+      });
+    });
+  }
+
   // Clear dirty tracking on fresh render (data just loaded from server).
   dirtyKhos.clear();
   dirtyBayan.clear();
@@ -383,10 +398,10 @@ function fmtNum(n) {
 }
 
 // Batas atas nilai kuartal per kategori mapel (sinkron dengan backend
-// maxNilaiKuartal di models/penilaian_dasar.go): Quran & Akhlaq = 8, lainnya 10.
+// maxNilaiKuartal di models/penilaian_dasar.go): Akhlaq = 8, lainnya 10.
 function maxNilaiKuartalMapel(m) {
   const kat = (m.kategori || '').toLowerCase();
-  if (kat === 'al_quran' || kat === 'akhlaq' || kat === 'akhlaq_perilaku') return 8;
+  if (kat === 'akhlaq' || kat === 'akhlaq_perilaku') return 8;
   return 10;
 }
 
@@ -586,12 +601,23 @@ function renderBayanSection(santri, nilaiKhos, nilaiBayan, absensiMap, totalMape
   const bayanLabel = (v) => bayanLabels[v] || "RODI'";
 
   let html = `<h3 class="text-sm font-bold text-emerald-700 dark:text-emerald-400 mt-8 mb-2 px-1">AL-BAYAN (Prestasi Tahunan)</h3>`;
+  html += '<div class="flex items-center gap-2 mb-2 px-1">';
+  html += '<label class="text-xs font-medium text-gray-600 dark:text-gray-400">Filter Label:</label>';
+  html += '<select id="bayan-label-filter" class="text-xs border border-emerald-300 dark:border-emerald-700 rounded-lg px-2 py-1 bg-white dark:bg-slate-800 text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">';
+  html += '<option value="">Semua</option>';
+  html += '<option value="JAYYID AWAL">JAYYID AWAL</option>';
+  html += '<option value="JAYYID TSANI">JAYYID TSANI</option>';
+  html += '<option value="MUTAWASSIT AWAL">MUTAWASSIT AWAL</option>';
+  html += '<option value="MUTAWASSIT TSANI">MUTAWASSIT TSANI</option>';
+  html += '<option value="RODI\'">RODI\'</option>';
+  html += '</select></div>';
   html += '<div class="overflow-x-auto border border-emerald-200 dark:border-emerald-800 rounded-xl mb-4"><table class="border-collapse text-xs w-full">';
   html += '<thead class="bg-emerald-50 dark:bg-emerald-900/20"><tr>';
   html += '<th class="px-2 py-2 border">No</th><th class="px-2 py-2 border text-left min-w-[120px]">Nama</th>';
   html += '<th class="px-2 py-2 border text-center">Al-Bayan Asli</th>';
   html += '<th class="px-2 py-2 border text-center min-w-[160px]">Keterangan</th>';
   html += '<th class="px-2 py-2 border text-center bg-emerald-100 dark:bg-emerald-800/30">Al-Bayan Akhir</th>';
+  html += '<th class="px-2 py-2 border text-center">Label</th>';
   html += '</tr></thead><tbody>';
 
   santri.forEach((s, idx) => {
@@ -617,11 +643,18 @@ function renderBayanSection(santri, nilaiKhos, nilaiBayan, absensiMap, totalMape
     koreksi -= potonganAbsensi(ab.alpha, 5);
     let hasilAkhir = bayanAsli !== '-' ? Math.min(9, bayanAsli + koreksi) : '-';
 
-    // Override from DB if exists
+    // Override from DB if exists — tapi bandingkan dengan kalkulasi frontend.
+    // Kalau DB value SAMA dengan hasil kalkulasi → bukan manual override.
+    // Kalau BERBEDA → admin ubah sendiri → "Override manual".
     let overridden = false;
-    if (bayan.hasil_akhir != null) { hasilAkhir = bayan.hasil_akhir; overridden = true; }
+    if (bayan.hasil_akhir != null) {
+      overridden = (bayan.hasil_akhir !== hasilAkhir);
+      hasilAkhir = bayan.hasil_akhir;
+    }
 
-    // Keterangan: alasan pengurangan kelipatan (izin per 15 hari / alpha per 5 hari).
+    // Keterangan: tampilkan berdasarkan KONDISI SEBENARNYA (bukan overridden).
+    // Keterangan selalu tampil: "Dikurangi X", "Tidak ada pengurangan", atau
+    // "Override manual" hanya jika admin benar-benar ubah nilai sendiri.
     let ketKoreksi;
     if (overridden) {
       ketKoreksi = 'Override manual';
@@ -638,7 +671,8 @@ function renderBayanSection(santri, nilaiKhos, nilaiBayan, absensiMap, totalMape
 
     const alasanTh = alasanAbsensi(ab, ABSENSI_AMBANG.tahunan, 'Al-Bayan');
     const markTh = markNamaDariAlasan(alasanTh);
-    html += `<tr data-mark-row>`;
+    const labelAkhirForTr = hasilAkhir !== '-' ? bayanLabel(hasilAkhir) : '';
+    html += `<tr data-mark-row data-label="${labelAkhirForTr}">`;
     html += `<td class="px-2 py-1 border text-center">${idx + 1}</td>`;
     html += `<td data-nama data-absensi="${markTh.level}" data-absensi-title="${markTh.title}"${markTh.title ? ` title="${markTh.title}"` : ''} class="px-2 py-1 border font-medium ${markTh.cls}">${s.nama}</td>`;
     html += `<td class="px-2 py-1 border text-center font-bold">${bayanAsli}</td>`;
@@ -650,6 +684,7 @@ function renderBayanSection(santri, nilaiKhos, nilaiBayan, absensiMap, totalMape
     } else {
       html += `<td class="px-0 py-0 border text-center bg-emerald-50 dark:bg-emerald-900/20"><input type="number" min="0" max="9" data-bayan="${s.id}" data-bayan-cell value="${hasilAkhir !== '-' ? hasilAkhir : ''}" class="w-full text-center text-xs py-1 bg-transparent border-0 focus:bg-emerald-100 dark:focus:bg-emerald-900/40 text-emerald-800 dark:text-emerald-200 outline-none font-bold" title="${labelAkhir}"></td>`;
     }
+    html += `<td class="px-2 py-1 border text-center text-xs font-semibold">${labelAkhir || '-'}</td>`;
     html += '</tr>';
   });
   html += '</tbody></table></div>';
