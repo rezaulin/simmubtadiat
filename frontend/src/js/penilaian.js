@@ -233,6 +233,7 @@ function renderSpreadsheet() {
     inp.addEventListener('input', () => {
       clampNilaiInput(inp);
       recalcSectionRow(inp.dataset.k, inp.dataset.s);
+      recalcRaportAkhlaq(inp.dataset.s);
       refreshRendahMarks();
     });
   });
@@ -273,6 +274,68 @@ function recalcSectionRow(kuartal, santriId) {
   }
   // Update nama merah berdasarkan rata-rata terbaru
   refreshRendahMarks();
+}
+
+// Hitung ulang nilai Akhlaq Perilaku di Raport secara LIVE dari input
+// kuartal (tamrin/ujian) + absensi. Formula sinkron backend GenerateNilaiKhos:
+//   - Aktif Q1+Q2 → (nQ1+nQ2)/2 ; Hanya Q1 → nQ1 ; Hanya Q2 → nQ2
+//   - Koreksi: izin ≥ 20/semester → -floor(izin/20), alpha ≥ 6 → -floor(alpha/6)
+//   - Bulatkan, clamp 4–9
+function recalcRaportAkhlaq(santriId) {
+  if (!currentData) return;
+  const { mapels, absensi } = currentData;
+  const akhlaqMapels = mapels.filter(m => (m.kategori || '').toLowerCase() === 'akhlaq_perilaku');
+  if (!akhlaqMapels.length) return;
+
+  [1, 2].forEach(semester => {
+    const semKuartals = semester === 1 ? [1, 2] : [3, 4];
+    const ab = (absensi && absensi[String(semester)] && absensi[String(semester)][String(santriId)]) || { izin: 0, alpha: 0 };
+
+    akhlaqMapels.forEach(m => {
+      if (!m.aktif_kuartal || !semKuartals.some(k => m.aktif_kuartal.includes(k))) return;
+
+      // Baca nilai kuartal dari input live
+      const q1 = semKuartals[0], q2 = semKuartals[1];
+      const aktifQ1 = m.aktif_kuartal.includes(q1);
+      const aktifQ2 = m.aktif_kuartal.includes(q2);
+
+      let rawKhos = null;
+      if (aktifQ1 && aktifQ2) {
+        const inp1 = container.querySelector(`input[data-k="${q1}"][data-s="${santriId}"][data-m="${m.id}"]`);
+        const inp2 = container.querySelector(`input[data-k="${q2}"][data-s="${santriId}"][data-m="${m.id}"]`);
+        const v1 = inp1 ? parseFloat(inp1.value) : null;
+        const v2 = inp2 ? parseFloat(inp2.value) : null;
+        if (v2 == null) return; // ujian belum ada → skip
+        rawKhos = v1 != null ? (v1 + v2) / 2.0 : v2 / 2.0;
+      } else if (aktifQ1) {
+        const inp1 = container.querySelector(`input[data-k="${q1}"][data-s="${santriId}"][data-m="${m.id}"]`);
+        const v1 = inp1 ? parseFloat(inp1.value) : null;
+        if (v1 == null) return;
+        rawKhos = v1;
+      } else if (aktifQ2) {
+        const inp2 = container.querySelector(`input[data-k="${q2}"][data-s="${santriId}"][data-m="${m.id}"]`);
+        const v2 = inp2 ? parseFloat(inp2.value) : null;
+        if (v2 == null) return;
+        rawKhos = v2;
+      }
+      if (rawKhos == null) return;
+
+      // Koreksi absensi
+      let finalKhos = rawKhos;
+      finalKhos -= potonganAbsensi(ab.izin, ABSENSI_AMBANG.semester.izin);
+      finalKhos -= potonganAbsensi(ab.alpha, ABSENSI_AMBANG.semester.alpha);
+      finalKhos = Math.floor(finalKhos + 0.5);
+      if (finalKhos < 4) finalKhos = 4;
+      else if (finalKhos > 9) finalKhos = 9;
+
+      // Update input raport
+      const raportInp = container.querySelector(`input[data-khos-sem="${semester}"][data-s="${santriId}"][data-m="${m.id}"]`);
+      if (raportInp) {
+        raportInp.value = finalKhos;
+        raportInp.dataset.nilaiDisplay = finalKhos;
+      }
+    });
+  });
 }
 
 const EXCLUDED_KATEGORI = new Set([
@@ -533,12 +596,16 @@ function renderRaportSection(title, mapels, santri, khosMap, absensiMap, semeste
     mapels.forEach(m => {
       const key = `${s.id}_${m.id}`;
       const val = khosMap?.[key];
-      const valDisplay = val != null ? val : '';
       const excl = isExcludedMapel(m, true); // true = ini bagian raport
       
       const semKuartals = semester === 1 ? [1,2] : [3,4];
       const isDisabled = !m.aktif_kuartal || !semKuartals.some(k => m.aktif_kuartal.includes(k));
       
+      // khosMap sudah berisi nilai KOREKSI dari backend (GenerateNilaiKhos).
+      // Tampilkan langsung tanpa double-koreksi. Live recalc via recalcRaportAkhlaq.
+      const isAkhlaq = (m.kategori || '').toLowerCase() === 'akhlaq_perilaku';
+      const valDisplay = val != null ? val : '';
+
       if (val != null && !isNaN(val) && !isDisabled) {
         if (!excl) {
           mapelStats[m.id].sum += val;
