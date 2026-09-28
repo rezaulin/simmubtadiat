@@ -22,7 +22,7 @@ func GetPenilaianSpreadsheet(ctx context.Context, bagianID int, tahunAjaran stri
 
 	// 2. Fetch all mata_pelajaran for this kelas+tingkatan
 	rowsMapel, err := config.DB.Query(ctx,
-		"SELECT id, nama_mapel, nama_kitab, kategori, aktif_kuartal FROM mata_pelajaran WHERE kelas_id = $1 AND tingkatan_id = $2 ORDER BY urutan ASC",
+		"SELECT id, nama_mapel, nama_kitab, nama_indo, kategori, aktif_kuartal FROM mata_pelajaran WHERE kelas_id = $1 AND tingkatan_id = $2 ORDER BY urutan ASC",
 		kelasID, tingkatanID)
 	if err != nil {
 		return nil, fmt.Errorf("gagal mendapatkan mapel: %v", err)
@@ -33,15 +33,19 @@ func GetPenilaianSpreadsheet(ctx context.Context, bagianID int, tahunAjaran stri
 	for rowsMapel.Next() {
 		var id int
 		var nama, kategori string
-		var namaKitab *string
+		var namaKitab, namaIndo *string
 		var aktifJSON []byte
-		if err := rowsMapel.Scan(&id, &nama, &namaKitab, &kategori, &aktifJSON); err != nil {
+		if err := rowsMapel.Scan(&id, &nama, &namaKitab, &namaIndo, &kategori, &aktifJSON); err != nil {
 			return nil, err
 		}
 		
 		nk := ""
 		if namaKitab != nil {
 			nk = *namaKitab
+		}
+		ni := ""
+		if namaIndo != nil {
+			ni = *namaIndo
 		}
 
 		var aktifKuartal []int
@@ -53,6 +57,7 @@ func GetPenilaianSpreadsheet(ctx context.Context, bagianID int, tahunAjaran stri
 			"id":             id,
 			"nama":           nama,
 			"nama_kitab":     nk,
+			"nama_indo":      ni,
 			"kategori":       kategori,
 			"aktif_kuartal":  aktifKuartal,
 		})

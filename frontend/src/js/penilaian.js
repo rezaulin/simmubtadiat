@@ -1,15 +1,13 @@
 // penilaian.js — Spreadsheet-style grading interface.
 // Pilih Bagian + Tahun Ajaran → muncul tabel besar (Tamrin, Ujian, Raport, Al-Bayan).
 
-import { translateKitab } from './kitab-translate.js';
-
-// Ambil label yang dipakai di header kolom: nama kitab (Arab) → Latin.
-// Fallback ke nama mapel bila kitab kosong. Tooltip menampilkan versi Arab
-// asli agar informasi tidak hilang.
+// Ambil label nama mapel: prioritaskan nama_indo (Latin dari admin), fallback ke Arabic.
+// Sama dengan pendekatan di profil-santri.js — tanpa transliterasi.
 function mapelLabel(m) {
+  const namaIndo = (m.nama_indo || '').trim();
   const kitab = (m.nama_kitab || '').trim();
   const mapel = (m.nama || m.nama_mapel || '').trim();
-  const display = translateKitab(kitab) || translateKitab(mapel) || kitab || mapel || '-';
+  const display = namaIndo || kitab || mapel || '-';
   const tooltip = kitab || mapel || display;
   return { display, tooltip };
 }
