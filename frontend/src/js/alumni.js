@@ -1324,7 +1324,7 @@ if (inputImportPengabdian) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Gagal import');
       alert(`Import selesai: ${data.success} berhasil, ${data.failed} gagal dari ${data.total} total.${data.errors?.length ? '\n\nDetail:\n' + data.errors.join('\n') : ''}`);
-      loadPengabdianList();
+      loadPengabdian();
     } catch (err) {
       alert('Gagal import pengabdian: ' + err.message);
     } finally {
@@ -1401,7 +1401,7 @@ if (formTambahPengabdian) {
       setTimeout(() => {
         modalTambahPengabdian?.classList.add('hidden');
         modalTambahPengabdian?.classList.remove('flex');
-        loadPengabdianList();
+        loadPengabdian();
       }, 1500);
     } catch (err) {
       pengabdianError.textContent = err.message;
