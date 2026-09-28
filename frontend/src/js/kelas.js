@@ -339,7 +339,7 @@ btnLoadKurikulum?.addEventListener('click', () => {
 });
 
 async function loadMapelKurikulum() {
-  tableKelolaMapel.innerHTML = '<tr><td colspan="4" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">Memuat data...</td></tr>';
+  tableKelolaMapel.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">Memuat data...</td></tr>';
   try {
     const res = await fetch(`/api/akademik/mapel?tingkatan_id=${currentKuriTingkatanId}&kelas_id=${currentKuriKelasId}`);
     const data = await res.json();
@@ -347,13 +347,13 @@ async function loadMapelKurikulum() {
     cachedMapel = data || [];
     renderMapelKurikulum();
   } catch (err) {
-    tableKelolaMapel.innerHTML = `<tr><td colspan="4" class="px-4 py-4 text-center text-red-500">${err.message}</td></tr>`;
+    tableKelolaMapel.innerHTML = `<tr><td colspan="5" class="px-4 py-4 text-center text-red-500">${err.message}</td></tr>`;
   }
 }
 
 function renderMapelKurikulum() {
   if (!cachedMapel || cachedMapel.length === 0) {
-    tableKelolaMapel.innerHTML = `<tr><td colspan="4" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">Belum ada mata pelajaran di kurikulum ini.</td></tr>`;
+    tableKelolaMapel.innerHTML = `<tr><td colspan="5" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">Belum ada mata pelajaran di kurikulum ini.</td></tr>`;
     return;
   }
   
@@ -371,11 +371,18 @@ function renderMapelKurikulum() {
       kwBadge = '<span class="px-2 py-1 rounded bg-red-50 text-red-700 text-xs font-semibold">Nonaktif</span>';
     }
 
+    // Badge kategori
+    const katLabels = { umum: 'Umum', al_quran: "Al-Qur'an", al_khot_imla: "Al-Khot Imla'", qiroah_kutub: 'Qiroatul Kutub', muhafadhoh: 'Muhafadhoh', akhlaq: 'Akhlaq (ilmu)', akhlaq_perilaku: 'Akhlaq Perilaku' };
+    const katColors = { umum: 'bg-gray-100 text-gray-600', al_quran: 'bg-emerald-50 text-emerald-700', al_khot_imla: 'bg-blue-50 text-blue-700', qiroah_kutub: 'bg-purple-50 text-purple-700', muhafadhoh: 'bg-amber-50 text-amber-700', akhlaq: 'bg-teal-50 text-teal-700', akhlaq_perilaku: 'bg-rose-50 text-rose-700' };
+    const kat = m.kategori || 'umum';
+    const katBadge = `<span class="px-2 py-1 rounded ${katColors[kat] || katColors.umum} text-xs font-semibold">${katLabels[kat] || kat}</span>`;
+
     html += `
       <tr>
         <td class="px-4 py-3 text-center">${m.urutan}</td>
         <td class="px-4 py-3 font-medium text-gray-800 dark:text-gray-200">${m.nama_mapel}</td>
         <td class="px-4 py-3 text-gray-600 dark:text-gray-300">${m.nama_kitab || '-'}</td>
+        <td class="px-4 py-3">${katBadge}</td>
         <td class="px-4 py-3 text-center">${kwBadge}</td>
         <td class="px-4 py-3 text-center flex items-center justify-center gap-2">
           <button onclick="editMapel(${m.id})" class="text-blue-500 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/40 p-1.5 rounded-lg transition-colors">
@@ -423,7 +430,7 @@ formKelolaMapel?.addEventListener('submit', async (e) => {
         nama_mapel: data.nama_mapel,
         nama_kitab: data.nama_kitab || '',
         nama_indo: data.nama_indo || '',
-        kategori: 'umum',
+        kategori: data.kategori || 'umum',
         urutan: parseInt(data.urutan),
         aktif_kuartal: aktif_kuartal
       })
@@ -468,6 +475,9 @@ window.editMapel = function(id) {
   const indoInput = formKelolaMapel.querySelector('[name="nama_indo"]');
   if (indoInput) indoInput.value = decodeEntities(m.nama_indo || '');
   formKelolaMapel.querySelector('[name="urutan"]').value = m.urutan;
+  // Populate kategori dropdown
+  const katSelect = formKelolaMapel.querySelector('[name="kategori"]');
+  if (katSelect) katSelect.value = m.kategori || 'umum';
   
   formKelolaMapel.querySelector('[name="kuartal_1"]').checked = m.aktif_kuartal?.includes(1) || false;
   formKelolaMapel.querySelector('[name="kuartal_2"]').checked = m.aktif_kuartal?.includes(2) || false;

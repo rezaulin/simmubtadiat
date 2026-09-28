@@ -279,6 +279,18 @@
               <label class="text-xs font-semibold text-gray-500 dark:text-gray-400">Urutan</label>
               <input type="number" name="urutan" value="1" required class="glass-input px-3 py-2 rounded-lg text-sm w-full text-center">
             </div>
+            <div class="w-full sm:w-40 flex flex-col gap-1">
+              <label class="text-xs font-semibold text-gray-500 dark:text-gray-400">Kategori</label>
+              <select name="kategori" class="glass-input px-3 py-2 rounded-lg text-sm w-full dark:bg-slate-700 dark:border-slate-600 dark:text-gray-200">
+                <option value="umum">Umum</option>
+                <option value="al_quran">Al-Qur'an</option>
+                <option value="al_khot_imla">Al-Khot Imla'</option>
+                <option value="qiroah_kutub">Qiroatul Kutub</option>
+                <option value="muhafadhoh">Muhafadhoh</option>
+                <option value="akhlaq">Akhlaq (ilmu)</option>
+                <option value="akhlaq_perilaku">Akhlaq Perilaku</option>
+              </select>
+            </div>
             <div class="w-full sm:w-64 flex flex-col gap-1">
               <label class="text-xs font-semibold text-gray-500 dark:text-gray-400">Kwartal Aktif</label>
               <div class="flex items-center gap-3 h-[38px] px-2">
@@ -301,6 +313,7 @@
                 <th class="px-4 py-3 text-center">Urutan</th>
                 <th class="px-4 py-3">Nama Fann</th>
                 <th class="px-4 py-3">Nama Kitab</th>
+                <th class="px-4 py-3">Kategori</th>
                 <th class="px-4 py-3 text-center">Semester</th>
                 <th class="px-4 py-3 text-center">Aksi</th>
               </tr>
