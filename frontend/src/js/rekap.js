@@ -241,6 +241,20 @@ const BULAN_HIJRI = [
   'Ramadhan', 'Syawwal', "Dzulqa'dah", 'Dzulhijjah'
 ];
 
+// Kuartal akademik berdasarkan bulan Hijri
+// KQ1: Syawwal–Dzulhijjah (10,11,12)
+// KQ2: Muharram–Rabiul Awal (1,2,3)
+// KQ3: Rabiul Akhir–Jumadil Awal (4,5)
+// KQ4: Jumadil Akhir–Sya'ban (6,7,8)
+// Ramadhan (9) = libur, tidak masuk kuartal
+const KUARTAL_MAP = { 10: 1, 11: 1, 12: 1, 1: 2, 2: 2, 3: 2, 4: 3, 5: 3, 6: 4, 7: 4, 8: 4 };
+const KUARTAL_LABELS = {
+  1: 'KQ1 (Syawwal–Dzulhijjah)',
+  2: 'KQ2 (Muharram–Rabiul Awal)',
+  3: 'KQ3 (Rabiul Awal–Jumadil Ula)',
+  4: 'KQ4 (Jumadil Tsani–Sya\'ban)'
+};
+
 let rekapKalenderRange = null;
 
 function hijriOrd(y, m, d) { return y * 360 + m * 30 + d; }
@@ -353,6 +367,19 @@ btnLoadSiswa.addEventListener('click', async () => {
 
 // ==================== REKAP ABSENSI SISWA (redesign manual) ====================
 
+function renderKuartalSubtotal(kq, s, i, t) {
+  const label = KUARTAL_LABELS[kq] || `Kuartal ${kq}`;
+  const sit = s + i + t;
+  let h = '<tr class="bg-blue-50 dark:bg-blue-900/20 font-bold text-sm">';
+  h += `<td class="px-2 py-1.5 border text-center text-xs" colspan="2">${label}</td>`;
+  h += `<td class="px-3 py-1.5 border text-center text-blue-700 dark:text-blue-300">${s}</td>`;
+  h += `<td class="px-3 py-1.5 border text-center text-blue-700 dark:text-blue-300">${i}</td>`;
+  h += `<td class="px-3 py-1.5 border text-center text-blue-700 dark:text-blue-300">${t}</td>`;
+  h += `<td class="px-3 py-1.5 border text-center font-extrabold text-blue-700 dark:text-blue-300">${sit}</td>`;
+  h += '</tr>';
+  return h;
+}
+
 function summaryCard(label, value, sub, accent) {
   return `
     <div class="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-gray-100 dark:border-slate-700/60 shadow-sm">
@@ -416,9 +443,32 @@ function renderRekapSiswaGrid() {
   html += '<th class="px-3 py-2 border text-center w-16 text-gray-600 dark:text-gray-400 font-extrabold">SIT</th>';
   html += '</tr></thead><tbody>';
 
+  // --- Kuartal subtotal tracking ---
+  let currentKuartal = 0, kqS = 0, kqI = 0, kqT = 0;
+
   rekapBulanList.forEach((b, idx) => {
     const key = `${b.tahun}:${b.bulan}`;
     const d = data[key] || { s: 0, i: 0, a: 0 };
+
+    // --- Kuartal subtotal: insert row saat kuartal berubah ---
+    const kuartal = KUARTAL_MAP[b.bulan] || 0;
+    if (kuartal > 0 && kuartal !== currentKuartal) {
+      if (currentKuartal > 0) {
+        // Render subtotal kuartal sebelumnya
+        html += renderKuartalSubtotal(currentKuartal, kqS, kqI, kqT);
+      }
+      // Mulai akumulasi kuartal baru
+      currentKuartal = kuartal;
+      kqS = 0; kqI = 0; kqT = 0;
+    }
+    // Akumulasi untuk subtotal kuartal (hanya jika masuk kuartal)
+    if (kuartal > 0) {
+      kqS += d.s || 0;
+      kqI += d.i || 0;
+      kqT += d.a || 0;
+    }
+
+    // --- Render baris bulan ---
     html += '<tr>';
     html += `<td class="px-2 py-1.5 border text-center text-gray-500 dark:text-gray-400 text-xs">${String(idx + 1).padStart(2, '0')}</td>`;
     html += `<td class="px-3 py-1.5 border font-medium">${b.label}</td>`;
@@ -430,7 +480,12 @@ function renderRekapSiswaGrid() {
     html += '</tr>';
   });
 
-  // Baris total selama setahun
+  // --- Subtotal kuartal terakhir ---
+  if (currentKuartal > 0) {
+    html += renderKuartalSubtotal(currentKuartal, kqS, kqI, kqT);
+  }
+
+  // --- Baris total selama setahun ---
   let totalS = 0, totalI = 0, totalT = 0;
   rekapBulanList.forEach(b => {
     const key = `${b.tahun}:${b.bulan}`;
@@ -441,7 +496,7 @@ function renderRekapSiswaGrid() {
   });
   const totalSIT = totalS + totalI + totalT;
   html += '<tr class="bg-gray-100 dark:bg-slate-700 font-extrabold">';
-  html += '<td class="px-2 py-1.5 border text-center text-xs" colspan="2">TOTAL</td>';
+  html += '<td class="px-2 py-1.5 border text-center text-xs" colspan="2">TOTAL SETAHUN</td>';
   html += `<td class="px-3 py-1.5 border text-center text-gray-700 dark:text-gray-300">${totalS}</td>`;
   html += `<td class="px-3 py-1.5 border text-center text-gray-700 dark:text-gray-300">${totalI}</td>`;
   html += `<td class="px-3 py-1.5 border text-center text-gray-700 dark:text-gray-300">${totalT}</td>`;
