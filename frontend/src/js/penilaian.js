@@ -237,6 +237,7 @@ function renderSpreadsheet() {
 // Hitung ulang Jml & Rata² untuk satu santri pada satu section (kuartal).
 // Mapel dengan data-excl="1" tidak diikutkan (mis. Quran, Akhlaq).
 function recalcSectionRow(kuartal, santriId) {
+  const AVG_AMBANG = 4.4;
   const inputs = container.querySelectorAll(`input[data-k="${kuartal}"][data-s="${santriId}"]`);
   let sum = 0, count = 0;
   inputs.forEach(inp => {
@@ -247,7 +248,16 @@ function recalcSectionRow(kuartal, santriId) {
   const sumCell = container.querySelector(`[data-sum-cell="${kuartal}_${santriId}"]`);
   const avgCell = container.querySelector(`[data-avg-cell="${kuartal}_${santriId}"]`);
   if (sumCell) sumCell.textContent = count > 0 ? fmtNum(sum) : '-';
-  if (avgCell) avgCell.textContent = count > 0 ? fmtNum(sum / count) : '-';
+  if (avgCell) {
+    const avgVal = count > 0 ? sum / count : null;
+    avgCell.textContent = avgVal !== null ? fmtNum(avgVal) : '-';
+    // Toggle merah jika rata-rata ≤ 4.4
+    avgCell.classList.toggle('text-red-600', avgVal !== null && avgVal <= AVG_AMBANG);
+    avgCell.classList.toggle('dark:text-red-400', avgVal !== null && avgVal <= AVG_AMBANG);
+    avgCell.classList.toggle('text-primary', avgVal === null || avgVal > AVG_AMBANG);
+  }
+  // Update nama merah berdasarkan rata-rata terbaru
+  refreshRendahMarks();
 }
 
 const EXCLUDED_KATEGORI = new Set([
@@ -352,11 +362,14 @@ function renderSection(title, mapels, santri, nilaiMap, kuartal, canEdit) {
       }
     });
     const sumStr = count > 0 ? fmtNum(sum) : '-';
-    const avgStr = count > 0 ? fmtNum(sum / count) : '-';
+    const avgVal = count > 0 ? sum / count : null;
+    const avgStr = avgVal !== null ? fmtNum(avgVal) : '-';
+    const avgRed = avgVal !== null && avgVal <= 4.4;
+    const avgClass = avgRed ? 'text-red-600 dark:text-red-400' : 'text-primary';
     // data-sum-row menandai baris agar Jml & Rata² bisa dihitung ulang saat
     // pengguna mengubah nilai (recalculateSectionRow). data-k membedakan section.
     html += `<td class="px-1 py-1 border text-center font-bold bg-gray-50 dark:bg-slate-800/50" data-sum-cell="${kuartal}_${s.id}">${sumStr}</td>`;
-    html += `<td class="px-1 py-1 border text-center font-bold text-primary bg-gray-50 dark:bg-slate-800/50" data-avg-cell="${kuartal}_${s.id}">${avgStr}</td>`;
+    html += `<td class="px-1 py-1 border text-center font-bold ${avgClass} bg-gray-50 dark:bg-slate-800/50" data-avg-cell="${kuartal}_${s.id}">${avgStr}</td>`;
     html += '</tr>';
   });
   html += '</tbody></table></div>';
@@ -441,29 +454,33 @@ function clampNilaiInput(inp) {
 }
 
 // Tandai sel nilai < ambang dengan .nilai-rendah; nama siswi di baris yang sama
-// diberi .nama-rendah selama masih ada nilai rendah di baris tersebut.
+// diberi .nama-rendah jika RATA-RATA kuartal ≤ 4.4 atau absensi merah.
+// Threshold: cell ≤ 4.4 = merah; rata-rata ≤ 4.4 = nama merah; Bayan ≤ 5 = merah.
 function refreshRendahMarks() {
+  const AVG_AMBANG = 4.4;
   container.querySelectorAll('tr[data-mark-row]').forEach(tr => {
-    let anyLow = false;
+    // 1. Cell individual: merah jika ≤ 4.4 (atau ≤ 5 untuk Bayan).
     tr.querySelectorAll('input[data-k], input[data-khos-sem], input[data-nilai-display], input[data-bayan-cell]').forEach(inp => {
       const v = parseFloat(inp.value);
       if (isNaN(v)) return;
-      // Al-Bayan (data-bayan-cell): merah mulai 5 KE BAWAH (<=5, zona RODI).
-      // Tamrin / semester / raport (khos & kuartal): merah mulai 4 KE BAWAH (<=4).
       const isBayan = inp.hasAttribute('data-bayan-cell');
-      const low = isBayan ? v <= NILAI_RENDAH_AMBANG : v <= 4;
+      const low = isBayan ? v <= NILAI_RENDAH_AMBANG : v <= AVG_AMBANG;
       inp.classList.toggle('nilai-rendah', low);
-      if (low) anyLow = true;
     });
+    // 2. Nama siswi: merah jika RATA-RATA salah satu kuartal ≤ 4.4 atau absensi merah.
     const namaTd = tr.querySelector('td[data-nama]');
     if (namaTd) {
-      // Merah dipertahankan baik karena nilai rendah maupun absensi merah.
       const absensiMerah = namaTd.dataset.absensi === 'red';
-      namaTd.classList.toggle('nama-rendah', anyLow || absensiMerah);
-      // Tooltip gabungan: alasan absensi + info nilai rendah (jika ada).
+      let avgLow = false;
+      tr.querySelectorAll('td[data-avg-cell]').forEach(avgTd => {
+        const v = parseFloat(avgTd.textContent);
+        if (!isNaN(v) && v <= AVG_AMBANG) avgLow = true;
+      });
+      namaTd.classList.toggle('nama-rendah', avgLow || absensiMerah);
+      // Tooltip
       const parts = [];
       if (namaTd.dataset.absensiTitle) parts.push(namaTd.dataset.absensiTitle);
-      if (anyLow) parts.push('memiliki nilai rendah (Al-Bayan ≤5; tamrin/semester/raport ≤4)');
+      if (avgLow) parts.push('rata-rata ≤ 4.4');
       if (parts.length) namaTd.setAttribute('title', parts.join(' • '));
       else namaTd.removeAttribute('title');
     }
