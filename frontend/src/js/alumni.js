@@ -112,6 +112,11 @@ async function checkAuth() {
       if (btnImport) btnImport.classList.remove('hidden');
       const btnTemplate = document.getElementById('btn-template-alumni');
       if (btnTemplate) btnTemplate.classList.remove('hidden');
+      // Tombol Import/Template Pengabdian (pimpinan only)
+      const btnTemplateP = document.getElementById('btn-template-pengabdian');
+      if (btnTemplateP) btnTemplateP.classList.remove('hidden');
+      const btnImportP = document.getElementById('btn-import-pengabdian');
+      if (btnImportP) btnImportP.classList.remove('hidden');
     }
 
     // Tombol Download: semua role yang bisa akses alumni
@@ -435,7 +440,7 @@ if (formSelesai) {
 
 // 3. Fetch Data Alumni
 async function loadAlumni(query = '') {
-  tableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Memuat data alumni...</td></tr>`;
+  tableBody.innerHTML = `<tr><td colspan="8" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Memuat data alumni...</td></tr>`;
   
   try {
     // Bangun query string filter wilayah (backend mendukung ?provinsi= & ?kabupaten=)
@@ -476,7 +481,7 @@ async function loadAlumni(query = '') {
     renderTable(data);
     
   } catch (err) {
-    tableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-red-500">Terjadi kesalahan: ${err.message}</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="8" class="px-6 py-8 text-center text-red-500">Terjadi kesalahan: ${err.message}</td></tr>`;
   }
 }
 
@@ -554,8 +559,12 @@ if (btnResetFilter) {
 
 // 4. Render Table
 function renderTable(alumniArray) {
+  // Update total count
+  const totalEl = document.getElementById('total-count');
+  if (totalEl) totalEl.textContent = `Total: ${alumniArray.length} alumni`;
+
   if (!alumniArray || alumniArray.length === 0) {
-    tableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Tidak ada data alumni ditemukan.</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="8" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Tidak ada data alumni ditemukan.</td></tr>`;
     return;
   }
   
@@ -601,6 +610,12 @@ function renderTable(alumniArray) {
       </td>
       <td data-label="Asal Daerah" class="px-6 py-4 text-gray-700 dark:text-gray-300 whitespace-nowrap">
         ${asalDaerah}
+      </td>
+      <td data-label="Tahun Masuk" class="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
+        ${a.tahun_masuk || '-'}
+      </td>
+      <td data-label="Tahun Lulus" class="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
+        ${a.tahun_keluar || '-'}
       </td>
       <td data-label="Status Keluar" class="px-6 py-4">
         <span class="px-2.5 py-1 text-xs font-semibold rounded-full ${statusClass}">
@@ -1210,7 +1225,7 @@ async function downloadAlumni() {
     }
 
     const headers = ['No', 'Nama', 'Stambuk', 'NISN', 'TTL', 'Tingkatan Akhir', 'Status Keluar', 'Kamar', 'Asal Daerah', 'Provinsi', 'Kabupaten', 'Tahun Masuk', 'Tahun Keluar', 'Nama Wali', 'No. HP Wali', 'Alamat', 'Tempat Khidmah', 'Status Ijazah', 'No. Ijazah', 'Keterangan', 'Alasan Ijazah'];
-    const statusMap = { lulus: 'Lulus', boyong: 'Boyong', keluar: 'Keluar' };
+    const statusMap = { lulus: 'Lulus', boyong: 'Boyong', keluar: 'Dikeluarkan', dikeluarkan: 'Dikeluarkan' };
     const ijazahMap = { belum: 'Belum', sudah: 'Sudah', tidak: 'Tidak' };
     const keteranganMap = { menikah: 'Menikah', membantu_ortu: 'Membantu Orang Tua', bekerja: 'Bekerja', kuliah: 'Kuliah', lainnya: 'Lainnya' };
 
@@ -1291,3 +1306,109 @@ const btnDownloadAlumni = document.getElementById('btn-download-alumni');
 const btnDownloadPengabdian = document.getElementById('btn-download-pengabdian');
 if (btnDownloadAlumni) btnDownloadAlumni.addEventListener('click', downloadAlumni);
 if (btnDownloadPengabdian) btnDownloadPengabdian.addEventListener('click', downloadPengabdian);
+
+// === UPLOAD / IMPORT PENGABDIAN ===
+const btnImportPengabdian = document.getElementById('btn-import-pengabdian');
+const inputImportPengabdian = document.getElementById('input-import-pengabdian');
+if (btnImportPengabdian) btnImportPengabdian.addEventListener('click', () => inputImportPengabdian?.click());
+if (inputImportPengabdian) {
+  inputImportPengabdian.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const fd = new FormData();
+    fd.append('file', file);
+    try {
+      btnImportPengabdian.disabled = true;
+      btnImportPengabdian.textContent = 'Mengupload...';
+      const res = await fetch('/api/pengabdian/import', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Gagal import');
+      alert(`Import selesai: ${data.success} berhasil, ${data.failed} gagal dari ${data.total} total.${data.errors?.length ? '\n\nDetail:\n' + data.errors.join('\n') : ''}`);
+      loadPengabdianList();
+    } catch (err) {
+      alert('Gagal import pengabdian: ' + err.message);
+    } finally {
+      btnImportPengabdian.disabled = false;
+      btnImportPengabdian.innerHTML = '<i data-lucide="upload" class="w-4 h-4"></i><span class="hidden md:inline">Upload</span>';
+      if (window.lucide) lucide.createIcons();
+      inputImportPengabdian.value = '';
+    }
+  });
+}
+
+// === TAMBAH PENGABDIAN MANUAL ===
+const modalTambahPengabdian = document.getElementById('modal-tambah-pengabdian');
+const btnTambahPengabdian = document.getElementById('btn-tambah-pengabdian');
+const btnPengabdianCancel = document.getElementById('btn-pengabdian-cancel');
+const formTambahPengabdian = document.getElementById('form-tambah-pengabdian');
+const pengabdianError = document.getElementById('pengabdian-error');
+const pengabdianSuccess = document.getElementById('pengabdian-success');
+
+if (btnTambahPengabdian) {
+  btnTambahPengabdian.addEventListener('click', () => {
+    modalTambahPengabdian?.classList.remove('hidden');
+    modalTambahPengabdian?.classList.add('flex');
+    pengabdianError?.classList.add('hidden');
+    pengabdianSuccess?.classList.add('hidden');
+  });
+}
+if (btnPengabdianCancel) {
+  btnPengabdianCancel.addEventListener('click', () => {
+    modalTambahPengabdian?.classList.add('hidden');
+    modalTambahPengabdian?.classList.remove('flex');
+    formTambahPengabdian?.reset();
+  });
+}
+
+if (formTambahPengabdian) {
+  formTambahPengabdian.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    pengabdianError?.classList.add('hidden');
+    pengabdianSuccess?.classList.add('hidden');
+    const fd = new FormData(formTambahPengabdian);
+    const nama = document.getElementById('input-pengabdian-nama')?.value || '';
+
+    // Resolve santri_id from name
+    const pool = allSantri || [];
+    const match = pool.find(s => s.nama && s.nama.toLowerCase() === nama.toLowerCase());
+    if (!match) {
+      pengabdianError.textContent = 'Santri tidak ditemukan. Pilih dari daftar.';
+      pengabdianError.classList.remove('hidden');
+      return;
+    }
+
+    const payload = {
+      santri_id: match.id,
+      khidmah_tempat: fd.get('khidmah_tempat'),
+      khidmah_mulai: fd.get('khidmah_mulai')
+    };
+
+    const btn = formTambahPengabdian.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.textContent = 'Menyimpan...';
+
+    try {
+      const res = await fetch('/api/pengabdian/mulai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Gagal menambah pengabdian');
+      pengabdianSuccess.textContent = data.message || 'Pengabdian berhasil ditambahkan';
+      pengabdianSuccess.classList.remove('hidden');
+      formTambahPengabdian.reset();
+      setTimeout(() => {
+        modalTambahPengabdian?.classList.add('hidden');
+        modalTambahPengabdian?.classList.remove('flex');
+        loadPengabdianList();
+      }, 1500);
+    } catch (err) {
+      pengabdianError.textContent = err.message;
+      pengabdianError.classList.remove('hidden');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Simpan';
+    }
+  });
+}

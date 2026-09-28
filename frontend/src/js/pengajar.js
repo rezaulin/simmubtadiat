@@ -198,6 +198,10 @@ async function loadPengajar(query = '') {
 
 // 4. Render Table
 function renderTable(pengajarArray) {
+  // Update total count
+  const totalEl = document.getElementById('total-count');
+  if (totalEl) totalEl.textContent = `Total: ${pengajarArray.length} pengajar`;
+
   if (!pengajarArray || pengajarArray.length === 0) {
     tableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Tidak ada data pengajar ditemukan.</td></tr>`;
     return;

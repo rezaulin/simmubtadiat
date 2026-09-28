@@ -376,6 +376,8 @@ func main() {
 						r.Use(appMiddleware.RequireRoles("pimpinan"))
 						r.Post("/mulai", handlers.MulaiPengabdian)
 						r.Post("/selesai", handlers.SelesaiPengabdian)
+						r.Post("/import", handlers.ImportPengabdianExcel)
+						r.Get("/template", handlers.DownloadTemplatePengabdian)
 					})
 					r.Group(func(r chi.Router) {
 						r.Use(appMiddleware.RequireRoles("pimpinan", "mufatish", "keamanan", "admin"))

@@ -115,9 +115,11 @@ function renderTable(santriArray) {
       statusClass = "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400";
     } else if (status === "lulus") {
       statusClass = "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400";
-    } else if (status === "boyong" || status === "keluar") {
+    } else if (status === "boyong" || status === "keluar" || status === "dikeluarkan") {
       statusClass = "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400";
     }
+    // Label tampilan: "keluar" → "DIKELUARKAN"
+    const statusLabel = status === "keluar" ? "DIKELUARKAN" : status.toUpperCase();
     
     const tr = document.createElement("tr");
     tr.className = "hover:bg-gray-50/50 dark:hover:bg-slate-800/50 transition-colors";
@@ -133,7 +135,7 @@ function renderTable(santriArray) {
       </td>
       <td data-label="Status" class="px-6 py-4">
         <span class="px-2.5 py-1 text-xs font-semibold rounded-full ${statusClass}">
-          ${status.toUpperCase()}
+          ${statusLabel}
         </span>
       </td>
       <td data-label="Tgl. Perubahan" class="px-6 py-4 text-gray-600 dark:text-gray-400 whitespace-nowrap">${formatTanggalStatus(s.tanggal_status)}</td>

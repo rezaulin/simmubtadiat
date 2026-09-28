@@ -139,7 +139,7 @@
         </a>
         <a href="/arsip.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
           <i data-lucide="archive" class="w-5 h-5"></i>
-          Arsip & Keluar
+          Arsip & Dikeluarkan
         </a>
         <a href="/alumni.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
           <i data-lucide="medal" class="w-5 h-5"></i>
@@ -253,10 +253,25 @@
       <div class="glass dark:bg-slate-800/80 rounded-2xl border border-gray-200 dark:border-slate-700 overflow-hidden shadow-sm flex flex-col">
         <div class="flex items-center justify-between px-6 pt-4 pb-2">
           <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200">Data Santri Pengabdian</h3>
-          <button id="btn-download-pengabdian" class="flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl font-medium text-sm transition-all shadow-md">
-            <i data-lucide="arrow-down-to-line" class="w-4 h-4"></i>
-            <span class="hidden md:inline">Download</span>
-          </button>
+          <div class="flex items-center gap-2">
+            <button id="btn-tambah-pengabdian" class="flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover dark:bg-accent-emerald dark:hover:bg-emerald-600 text-white px-4 py-2 rounded-xl font-medium text-sm transition-all shadow-md">
+              <i data-lucide="plus" class="w-4 h-4"></i>
+              <span class="hidden md:inline">Tambah</span>
+            </button>
+            <a href="/api/pengabdian/template" id="btn-template-pengabdian" class="hidden flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-xl font-medium text-sm transition-all">
+              <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+              <span class="hidden md:inline">Template</span>
+            </a>
+            <button id="btn-import-pengabdian" class="hidden flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl font-medium text-sm transition-all shadow-md">
+              <i data-lucide="upload" class="w-4 h-4"></i>
+              <span class="hidden md:inline">Upload</span>
+            </button>
+            <input type="file" id="input-import-pengabdian" accept=".xlsx,.xls" class="hidden">
+            <button id="btn-download-pengabdian" class="flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl font-medium text-sm transition-all shadow-md">
+              <i data-lucide="arrow-down-to-line" class="w-4 h-4"></i>
+              <span class="hidden md:inline">Download</span>
+            </button>
+          </div>
         </div>
         <div id="pengabdian-list" class="p-6 text-center text-gray-500 dark:text-gray-400">
           Memuat data pengabdian...
@@ -294,6 +309,9 @@
 
       <!-- TABLE AREA -->
       <div class="px-6 pb-6 flex-1">
+        <div class="px-2 pt-2 pb-1">
+          <p id="total-count" class="text-sm font-medium text-gray-500 dark:text-gray-400"></p>
+        </div>
         <div class="glass dark:bg-slate-800/80 rounded-2xl border border-gray-200 dark:border-slate-700 overflow-hidden shadow-sm flex flex-col">
 
           <div class="overflow-x-auto">
@@ -303,6 +321,8 @@
                   <th class="px-6 py-4">Nama Lengkap</th>
                   <th class="px-6 py-4">Kamar</th>
                   <th class="px-6 py-4">Asal Daerah</th>
+                  <th class="px-6 py-4">Tahun Masuk</th>
+                  <th class="px-6 py-4">Tahun Lulus</th>
                   <th class="px-6 py-4">Status Keluar</th>
                   <th class="px-6 py-4">Tingkatan Akhir</th>
                   <th class="px-6 py-4 text-right">Aksi</th>
@@ -797,6 +817,34 @@
           </div>
         </form>
       </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Tambah Pengabdian Manual -->
+  <div id="modal-tambah-pengabdian" class="fixed inset-0 z-[80] hidden items-center justify-center bg-black/50 backdrop-blur-sm">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-md mx-4 p-6">
+      <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-4">Tambah Pengabdian</h3>
+      <form id="form-tambah-pengabdian" class="flex flex-col gap-4">
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-semibold text-gray-600 dark:text-gray-300">Nama Santri</label>
+          <input type="text" id="input-pengabdian-nama" list="pengabdian-santri-datalist" autocomplete="off" required class="glass-input px-4 py-2.5 rounded-xl text-sm w-full" placeholder="Ketik nama santri...">
+          <datalist id="pengabdian-santri-datalist"></datalist>
+        </div>
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-semibold text-gray-600 dark:text-gray-300">Tempat Khidmah</label>
+          <input type="text" name="khidmah_tempat" required class="glass-input px-4 py-2.5 rounded-xl text-sm w-full" placeholder="Contoh: Pondok Pesantren">
+        </div>
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-semibold text-gray-600 dark:text-gray-300">Tanggal Mulai</label>
+          <input type="date" name="khidmah_mulai" required class="glass-input px-4 py-2.5 rounded-xl text-sm w-full">
+        </div>
+        <div id="pengabdian-error" class="hidden text-sm text-red-500 bg-red-50 dark:bg-red-900/30 p-3 rounded-xl"></div>
+        <div id="pengabdian-success" class="hidden text-sm text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30 p-3 rounded-xl"></div>
+        <div class="flex justify-end gap-3 mt-2">
+          <button type="button" id="btn-pengabdian-cancel" class="px-4 py-2 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">Batal</button>
+          <button type="submit" class="bg-primary hover:bg-primary-hover dark:bg-accent-emerald dark:hover:bg-emerald-600 text-white px-5 py-2 rounded-xl text-sm font-medium transition-all shadow-md">Simpan</button>
+        </div>
+      </form>
     </div>
   </div>
 
