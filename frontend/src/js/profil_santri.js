@@ -44,7 +44,8 @@ const statusMap = {
   pengabdian: { label: 'Pengabdian',       cls: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' },
   keluar:     { label: 'Keluar',           cls: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' },
   boyong:     { label: 'Boyong / Pindah',  cls: 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200' },
-  cuti:       { label: 'Cuti',             cls: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200' }
+  cuti:       { label: 'Cuti',             cls: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200' },
+  dikeluarkan:{ label: 'Dikeluarkan',      cls: 'bg-red-100 text-red-900 dark:bg-red-900 dark:text-red-100' }
 };
 
 // Fungsi murni: pemetaan Status_Santri → label badge pada detail profil.
@@ -306,7 +307,19 @@ function populateBiodata(s) {
   if (elTahunMasuk) elTahunMasuk.textContent = s.tahun_masuk || '-';
   if (elTahunKeluar) elTahunKeluar.textContent = s.tahun_keluar || '-';
 
-  // Status santri (nilai DB: aktif, cuti, pengabdian, lulus, boyong, keluar).
+  // Alasan perubahan status (boyong/keluar/dikeluarkan)
+  const alasanWrapper = document.getElementById('p-alasan-wrapper');
+  const elAlasan = document.getElementById('p-alasan');
+  if (alasanWrapper && elAlasan) {
+    if (s.alasan && s.status !== 'aktif') {
+      alasanWrapper.style.display = '';
+      elAlasan.textContent = s.alasan;
+    } else {
+      alasanWrapper.style.display = 'none';
+    }
+  }
+
+  // Status santri (nilai DB: aktif, cuti, pengabdian, lulus, boyong, keluar, dikeluarkan).
   const st = statusMap[s.status] || { label: s.status || '-', cls: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200' };
   pStatus.textContent = st.label;
   pStatus.className = 'px-3 py-1 text-sm rounded-full font-medium ' + st.cls;

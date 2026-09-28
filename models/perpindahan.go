@@ -110,7 +110,7 @@ func PindahBagian(ctx context.Context, bagianAsalID int, santriIDs []int, bagian
 
 // UbahStatusStatusSantri mengubah status santri (cuti, dll)
 // Jika status bukan 'aktif', riwayat kelas berjalan akan ditutup.
-func UbahStatusStatusSantri(ctx context.Context, santriID int, status string, tanggalStatus string, roles []string, userID int) error {
+func UbahStatusStatusSantri(ctx context.Context, santriID int, status string, tanggalStatus string, alasan string, roles []string, userID int) error {
 	tx, err := config.DB.Begin(ctx)
 	if err != nil {
 		return err
@@ -159,7 +159,7 @@ func UbahStatusStatusSantri(ctx context.Context, santriID int, status string, ta
 		}
 	}
 
-	_, err = tx.Exec(ctx, "UPDATE santri SET status = $1, tanggal_status = $2, last_tahun_ajaran = COALESCE(NULLIF($4, ''), last_tahun_ajaran) WHERE id = $3", status, tanggal, santriID, ta)
+	_, err = tx.Exec(ctx, "UPDATE santri SET status = $1, tanggal_status = $2, alasan = $5, last_tahun_ajaran = COALESCE(NULLIF($4, ''), last_tahun_ajaran) WHERE id = $3", status, tanggal, santriID, ta, alasan)
 	if err != nil {
 		return err
 	}

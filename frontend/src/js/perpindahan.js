@@ -276,23 +276,24 @@ async function loadSantri() {
   loadReactivatableSantri();
 }
 
-// Isi datalist nama santri untuk form Ubah Status (Cuti/Boyong/Reaktivasi)
+// Isi datalist nama santri untuk form Ubah Status (Cuti/Boyong/Dikeluarkan/Reaktivasi)
 const statusSantriDatalist = document.getElementById('status-santri-datalist');
 const inputStatusSantriNama = document.getElementById('input-status-santri-nama');
 const selStatusTarget = formStatus ? formStatus.querySelector('select[name="status"]') : null;
+const alasanWrapper = document.getElementById('alasan-wrapper');
+const inputAlasan = document.getElementById('input-alasan');
 
-// Santri yang dapat direaktivasi: berstatus cuti atau boyong (dari arsip).
+// Santri yang dapat direaktivasi: berstatus cuti, boyong, atau dikeluarkan (dari arsip).
 let reactivatableSantri = [];
 
-// Muat daftar santri cuti/boyong untuk kebutuhan reaktivasi. Endpoint arsip
-// mengembalikan santri non-aktif; kita saring ke cuti & boyong saja.
+// Muat daftar santri cuti/boyong/dikeluarkan untuk kebutuhan reaktivasi.
 async function loadReactivatableSantri() {
   try {
     const res = await fetch('/api/santri/arsip');
     if (!res.ok) { reactivatableSantri = []; return; }
     const data = await res.json();
     reactivatableSantri = (Array.isArray(data) ? data : []).filter(
-      s => s.status === 'cuti' || s.status === 'boyong'
+      s => s.status === 'cuti' || s.status === 'boyong' || s.status === 'dikeluarkan'
     );
   } catch (_) {
     reactivatableSantri = [];
@@ -320,10 +321,18 @@ function populateStatusSantriDatalist() {
 }
 
 // Perbarui datalist saat status tujuan berubah (mis. pilih Reaktivasi).
+// Tampilkan/sembunyikan field alasan untuk boyong/keluar/dikeluarkan.
 if (selStatusTarget) {
   selStatusTarget.addEventListener('change', () => {
     if (inputStatusSantriNama) inputStatusSantriNama.value = '';
     populateStatusSantriDatalist();
+    // Tampilkan alasan hanya untuk boyong, dikeluarkan (bukan cuti atau aktif)
+    const needsAlasan = selStatusTarget.value === 'boyong' || selStatusTarget.value === 'dikeluarkan';
+    if (alasanWrapper) {
+      alasanWrapper.classList.toggle('hidden', !needsAlasan);
+      alasanWrapper.classList.toggle('flex', needsAlasan);
+    }
+    if (inputAlasan) inputAlasan.value = '';
   });
 }
 
@@ -657,8 +666,18 @@ formStatus.addEventListener('submit', async (e) => {
   const payload = {
     santri_id: santriId,
     status: formData.get('status'),
-    tanggal_status: formData.get('tanggal_status')
+    tanggal_status: formData.get('tanggal_status'),
+    alasan: formData.get('alasan') || ''
   };
+
+  // Validasi: alasan wajib untuk boyong/dikeluarkan
+  if ((payload.status === 'boyong' || payload.status === 'dikeluarkan') && !payload.alasan.trim()) {
+    statusError.textContent = 'Alasan wajib diisi untuk status Boyong/Dikeluarkan.';
+    statusError.classList.remove('hidden');
+    btnSubmit.disabled = false;
+    btnSubmit.textContent = "Simpan Perubahan Status";
+    return;
+  }
   
   const btnSubmit = formStatus.querySelector('button');
 

@@ -319,11 +319,18 @@
           
           <div class="flex flex-col gap-2">
             <label class="text-sm font-semibold text-gray-600 dark:text-gray-300">Ubah Status Menjadi</label>
-            <select name="status" required class="glass-input px-4 py-2.5 rounded-xl text-sm w-full">
+            <select name="status" id="select-status-target" required class="glass-input px-4 py-2.5 rounded-xl text-sm w-full">
+              <option value="">-- Pilih Status --</option>
               <option value="cuti">Cuti</option>
               <option value="boyong">Boyong</option>
+              <option value="dikeluarkan">Dikeluarkan</option>
               <option value="aktif">Aktif Kembali (Reaktivasi)</option>
             </select>
+          </div>
+
+          <div id="alasan-wrapper" class="hidden flex-col gap-2">
+            <label class="text-sm font-semibold text-gray-600 dark:text-gray-300">Alasan <span class="text-red-500">*</span></label>
+            <textarea name="alasan" id="input-alasan" rows="3" class="glass-input px-4 py-2.5 rounded-xl text-sm w-full" placeholder="Tuliskan alasan perubahan status..."></textarea>
           </div>
 
           <div class="flex flex-col gap-2">

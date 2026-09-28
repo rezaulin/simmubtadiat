@@ -58,6 +58,9 @@ type Santri struct {
 	TahunMasuk  *string `json:"tahun_masuk"`
 	TahunKeluar *string `json:"tahun_keluar"`
 
+	// Alasan perubahan status (boyong/keluar/dikeluarkan)
+	Alasan *string `json:"alasan"`
+
 	LastBagianID    *int    `json:"last_bagian_id"`
 	LastTahunAjaran *string `json:"last_tahun_ajaran"`
 }
