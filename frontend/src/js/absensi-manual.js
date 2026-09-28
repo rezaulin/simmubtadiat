@@ -328,11 +328,28 @@ async function loadGridSantri() {
 // Navigasi santri (◀ ▶)
 function moveSantri(delta) {
   if (!santriList.length) return;
+  // Sync DOM input values ke santriGridData supaya edit tidak hilang saat navigasi
+  syncSantriGridFromDOM();
   currentSantriIdx = (currentSantriIdx + delta + santriList.length) % santriList.length;
   const activeBagian = cachedBagian.find(b => b.id == currentBagianId);
   renderGridSantri(activeBagian ? activeBagian.can_edit_absensi : false);
 }
 window.moveSantri = moveSantri;
+
+// Sync input values dari DOM ke santriGridData (tanpa save ke server)
+function syncSantriGridFromDOM() {
+  if (!santriList.length || !gridEl) return;
+  const sid = String(santriList[currentSantriIdx].id);
+  if (!santriGridData[sid]) santriGridData[sid] = {};
+  gridEl.querySelectorAll('input[data-bulan]').forEach(inp => {
+    const [th, bl] = inp.dataset.bulan.split(':').map(Number);
+    const type = inp.dataset.type;
+    const val = parseInt(inp.value) || 0;
+    const key = `${th}:${bl}`;
+    if (!santriGridData[sid][key]) santriGridData[sid][key] = { s: 0, i: 0, a: 0 };
+    santriGridData[sid][key][type] = val;
+  });
+}
 
 // Render grid: seluruh bulan TA ke bawah × 3 kolom (S/I/T) untuk 1 santri.
 // Hadir (H) dihapus dari input & rekap sesuai keputusan owner 2026-08.
@@ -425,6 +442,16 @@ btnSaveSantri?.addEventListener('click', async () => {
     if (!res.ok) throw new Error(await res.text());
     const result = await res.json();
     alert(`Tersimpan! ${result.saved} disimpan, ${result.deleted} dihapus.`);
+
+    // Sync DOM values back to santriGridData supaya navigasi ◀/▶ tidak kehilangan edit
+    const sid = String(santriList[currentSantriIdx].id);
+    if (!santriGridData[sid]) santriGridData[sid] = {};
+    entries.forEach(e => {
+      santriGridData[sid][`${e.tahun_hijri}:${e.bulan_hijri}`] = {
+        s: e.total_sakit || 0, i: e.total_izin || 0, a: e.total_alpha || 0
+      };
+    });
+
     // Lanjut otomatis ke santri berikutnya (loop kembali ke awal di akhir).
     if (santriList.length > 1) moveSantri(1);
   } catch (err) {
