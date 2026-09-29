@@ -33,6 +33,7 @@ const summaryPengajar = document.getElementById('summary-pengajar');
 const rekapPengajarView = document.getElementById('rekap-pengajar-view');
 
 let allBagian = [];
+let userRolesRekap = []; // role login — membatasi filter tab pengajar (angkatan/dibawahi)
 let currentTab = 'siswa';
 
 // Apply Theme
@@ -104,6 +105,7 @@ async function checkAuth() {
 }
 
 async function loadFilters(roles = []) {
+  userRolesRekap = roles;
   try {
     const [resTingkatan, resTahun, resUmum, resBagian] = await Promise.all([
         fetch('/api/akademik/tingkatan'),
@@ -176,6 +178,13 @@ async function loadFilters(roles = []) {
     opsiTingkatan.forEach(t => {
         selTingkatanPengajar.innerHTML += `<option value="${t.id}">${t.nama}</option>`;
     });
+    // Cakupan terbatas (mustahiq/mufatish) + hanya satu tingkatan: pilih
+    // otomatis lalu isi kelasnya, agar filter langsung menunjuk angkatannya.
+    const terbatasPengajar = userRolesRekap.includes('mustahiq') || userRolesRekap.includes('mufatish');
+    if (terbatasPengajar && opsiTingkatan.length === 1) {
+        selTingkatanPengajar.value = String(opsiTingkatan[0].id);
+        selTingkatanPengajar.dispatchEvent(new Event('change'));
+    }
 
     // tahun_hijri_aktif bisa berupa pasangan "1447/1448"; prefill hanya jika angka tunggal.
     const prefHijri = /^\d+$/.test(String(tahunHijriAktif || '')) ? tahunHijriAktif : '';
@@ -513,17 +522,26 @@ function renderRekapSiswaGrid() {
 function renderSiswa(data) { renderRekapSiswaGrid(); }
 
 // Cascade tingkatan → kelas untuk tab pengajar.
+// Untuk mustahiq/mufatish opsi "-- Semua Kelas --" disembunyikan: tanpa
+// kelas_id, /api/absensi-pengajar-kuartal mengembalikan SELURUH kelas pada
+// tingkatan itu, padahal yang boleh dilihat hanya angkatan (tingkatan + kelas
+// penugasannya) atau kelas yang dibawahi.
 selTingkatanPengajar.addEventListener('change', () => {
     const t = selTingkatanPengajar.value;
-    selKelasPengajar.innerHTML = '<option value="">-- Semua Kelas --</option>';
+    const terbatas = userRolesRekap.includes('mustahiq') || userRolesRekap.includes('mufatish');
+    selKelasPengajar.innerHTML = terbatas ? '' : '<option value="">-- Semua Kelas --</option>';
     if (!t) return;
     const availableClasses = new Set();
     allBagian.filter(b => b.tingkatan_id == t).forEach(b => {
         if (b.kelas) availableClasses.add(b.kelas);
     });
-    Array.from(availableClasses).sort().forEach(k => {
+    const kelasList = Array.from(availableClasses).sort();
+    kelasList.forEach(k => {
         selKelasPengajar.insertAdjacentHTML('beforeend', `<option value="${k}">Kelas ${k}</option>`);
     });
+    if (terbatas && kelasList.length === 1) {
+        selKelasPengajar.value = kelasList[0];
+    }
 });
 
 // Load Rekap Absensi Pengajar (kuartal: K1 | K2&3 | K4)

@@ -88,6 +88,7 @@ const contentPenugasan = document.getElementById('content-penugasan');
 let allPengajar = [];
 let editId = null;
 let userRole = '';
+let userRoles = []; // daftar role lengkap (untuk filter cakupan di loadPengajar)
 
 // Tab Event Listeners
 if (tabData && tabPenugasan && contentData && contentPenugasan) {
@@ -127,6 +128,7 @@ async function checkAuth() {
     // yang ditampilkan.
     userRole = data.role;
     const roles = data.roles || [data.role];
+    userRoles = roles;
     if (window.isPimpinanRole(userRole)) {
       btnTambah.classList.remove('hidden');
       const btnExport = document.getElementById('btn-export');
@@ -165,14 +167,55 @@ async function checkAuth() {
 
 
 // 3. Fetch Data Pengajar
+// Cakupan per role (permintaan role menu): mustahiq hanya melihat pengajar
+// SE-ANGKATANNYA (tingkatan + kelas penugasannya — "angkatan = kelas",
+// seluruh bagiannya); mufatish hanya pengajar yang DIBAWAHI (kelas yang
+// ditugaskan kepadanya). Role ganda (mufatish + mustahiq) = gabungan keduanya.
+//
+// Tanpa mengubah backend: /api/penilaian/bagian sudah dibatasi backend per
+// role (mustahiq → mustahiq_bagian, mufatish → mufatish_kelas) dan
+// /api/pengajar mendukung ?tingkatan_id=&kelas_id= yang memfilter persis
+// pengajar dengan mustahiq_bagian / pengajar_bagian(peran=munawwib) di
+// tingkatan + kelas tersebut.
+async function fetchPengajarCakupan() {
+  const terbatas = userRoles.includes('mustahiq') || userRoles.includes('mufatish');
+  if (!terbatas) {
+    const response = await fetch('/api/pengajar');
+    const body = await response.json();
+    if (!response.ok) throw new Error((body && body.message) || 'Gagal memuat data');
+    return body || [];
+  }
+
+  const resBagian = await fetch('/api/penilaian/bagian');
+  const bagianBody = await resBagian.json();
+  if (!resBagian.ok) throw new Error('Gagal memuat cakupan bagian');
+  const bagian = bagianBody || [];
+
+  // Pasangan (tingkatan_id, kelas_id) unik = angkatan / kelas yang dibawahi.
+  const pasangan = [...new Map(
+    bagian.map(b => [`${b.tingkatan_id}-${b.kelas_id}`, b])
+  ).values()];
+
+  const hasil = [];
+  const sudah = new Set();
+  for (const b of pasangan) {
+    const r = await fetch(`/api/pengajar?tingkatan_id=${b.tingkatan_id}&kelas_id=${b.kelas_id}`);
+    if (!r.ok) continue;
+    const daftar = (await r.json()) || [];
+    for (const p of daftar) {
+      if (p.id == null || sudah.has(p.id)) continue;
+      sudah.add(p.id);
+      hasil.push(p);
+    }
+  }
+  return hasil;
+}
+
 async function loadPengajar(query = '') {
   tableBody.innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Memuat data pengajar...</td></tr>`;
 
   try {
-    const response = await fetch('/api/pengajar');
-    let data = await response.json();
-
-    if (!response.ok) throw new Error((data && data.message) || 'Gagal memuat data');
+    let data = await fetchPengajarCakupan();
 
     data = data || []; // Handle null response from Go API
     allPengajar = data;
