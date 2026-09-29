@@ -287,7 +287,7 @@ func main() {
 				r.Route("/penilaian", func(r chi.Router) {
 					r.Group(func(r chi.Router) {
 						// Mustahiq (and pimpinan, tim_rapot) can handle grades
-						r.Use(appMiddleware.RequireRoles("pimpinan", "mustahiq", "tim_rapot"))
+						r.Use(appMiddleware.RequireRoles("pimpinan", "admin", "mustahiq", "tim_rapot"))
 						r.Post("/kuartal", handlers.BulkInputKuartal)
 						r.Post("/khos", handlers.BulkInputKhos)
 						r.Post("/bayan", handlers.BulkInputBayan)
@@ -296,9 +296,9 @@ func main() {
 						r.Post("/generate-bayan", handlers.GenerateBayan)
 					})
 
-					// Spreadsheet: read-only aggregate view for pimpinan/mustahiq/mufatish/tim_rapot
+					// Spreadsheet: read-only aggregate view for pimpinan/admin/mustahiq/mufatish/tim_rapot
 					r.Group(func(r chi.Router) {
-						r.Use(appMiddleware.RequireRoles("pimpinan", "mustahiq", "mufatish", "tim_rapot", "muroqib"))
+						r.Use(appMiddleware.RequireRoles("pimpinan", "admin", "mustahiq", "mufatish", "tim_rapot", "muroqib"))
 						r.Get("/spreadsheet", handlers.GetPenilaianSpreadsheet)
 						// Daftar bagian sesuai cakupan (mustahiq dibatasi kelas+tingkatannya).
 						r.Get("/bagian", handlers.GetBagianPenilaian)
@@ -306,9 +306,9 @@ func main() {
 
 					// Alur kunci & verifikasi nilai (per tahun_ajaran + semester).
 					r.Route("/lock", func(r chi.Router) {
-						// Baca status: pimpinan + mustahiq + mufatish + tim_rapot.
+						// Baca status: pimpinan + admin + mustahiq + mufatish + tim_rapot.
 						r.Group(func(r chi.Router) {
-							r.Use(appMiddleware.RequireRoles("pimpinan", "mustahiq", "mufatish", "tim_rapot", "muroqib"))
+							r.Use(appMiddleware.RequireRoles("pimpinan", "admin", "mustahiq", "mufatish", "tim_rapot", "muroqib"))
 							r.Get("/status", handlers.GetStatusPenilaian)
 						})
 						// Konfirmasi bagian: mustahiq + tim_rapot (dan pimpinan override).

@@ -248,6 +248,12 @@ function renderSpreadsheet() {
 
   // Penanda awal: nilai < 5 yang tersimpan langsung merah saat tabel dirender.
   refreshRendahMarks();
+
+  // Sinkronkan nilai raport Akhlaq dengan data kuartal + absensi TERKINI saat
+  // halaman dimuat. Tanpa ini, tampilan menampilkan nilai_khos basi dari DB
+  // dan "berkurang mendadak" setelah klik Simpan (generate-khos backend
+  // menghitung ulang dengan absensi terbaru). Tampilan kini konsisten sejak awal.
+  santri.forEach(s => recalcRaportAkhlaq(s.id));
 }
 
 // Hitung ulang Jml & Rata² untuk satu santri pada satu section (kuartal).
