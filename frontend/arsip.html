@@ -139,7 +139,7 @@
         </a>
         <a href="/arsip.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
           <i data-lucide="archive" class="w-5 h-5"></i>
-          Arsip
+          Arsip & Keluar
         </a>
         <a href="/alumni.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
           <i data-lucide="medal" class="w-5 h-5"></i>
@@ -210,7 +210,7 @@
             <option value="cuti">Cuti</option>
             <option value="boyong">Boyong</option>
             <option value="lulus">Lulus</option>
-            <option value="keluar">Dikeluarkan</option>
+            <option value="dikeluarkan">Dikeluarkan</option>
           </select>
         </div>
       </div>
@@ -257,16 +257,23 @@
                 <th class="px-6 py-4">Kamar</th>
                 <th class="px-6 py-4">Status</th>
                 <th class="px-6 py-4">Tgl. Perubahan</th>
+                <th class="px-6 py-4">Alasan</th>
                 <th class="px-6 py-4 text-right">Aksi</th>
               </tr>
             </thead>
             <tbody id="table-body" class="divide-y divide-gray-100 dark:divide-slate-700/50">
               <!-- Loading Skeleton -->
               <tr>
-                <td colspan="6" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Memuat data santri...</td>
+                <td colspan="7" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Memuat data santri...</td>
               </tr>
             </tbody>
           </table>
+        </div>
+
+        <!-- TOTAL DATA SESUAI FILTER (isu A5) -->
+        <div class="px-6 py-3 border-t border-gray-200 dark:border-slate-700 bg-gray-50/50 dark:bg-slate-900/40 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+          <span>Total data: <strong id="total-count" class="text-gray-700 dark:text-gray-200">0</strong></span>
+          <span id="total-caption" class="hidden md:inline">sesuai filter yang dipilih</span>
         </div>
 
       </div>

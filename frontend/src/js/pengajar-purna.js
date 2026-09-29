@@ -187,9 +187,17 @@ async function loadData() {
 
     currentData = data;
     renderTable(data);
+    setTotal(data.length);
   } catch (err) {
+    setTotal(0);
     tableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-red-500">Terjadi kesalahan: ${escapeHtml(err.message)}</td></tr>`;
   }
+}
+
+// Perbarui counter total data sesuai filter yang dipilih (isu P1).
+function setTotal(n) {
+  const el = document.getElementById('total-count');
+  if (el) el.textContent = String(n);
 }
 
 function statusBadge(status) {

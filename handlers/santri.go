@@ -64,6 +64,19 @@ func GetSantriByBagian(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, res)
 }
 
+// normalizeArsipStatus menyamakan dua istilah untuk santri yang dikeluarkan.
+// Di DB ada dua nilai yang sama-sama sah: 'keluar' (ditulis oleh
+// ProsesKeluarSantri) dan 'dikeluarkan' (ditulis oleh UbahStatusStatusSantri).
+// Filter lama memakai 'keluar' sehingga santri berstatus 'dikeluarkan' tidak
+// pernah muncul — keduanya dipetakan ke 'keluar' agar OR-nya query menangkap
+// keduanya.
+func normalizeArsipStatus(status string) string {
+	if status == "dikeluarkan" {
+		return "keluar"
+	}
+	return status
+}
+
 func GetArsipSantri(w http.ResponseWriter, r *http.Request) {
 
 	user, ok := r.Context().Value(appMiddleware.UserContextKey).(appMiddleware.UserSession)
@@ -78,7 +91,7 @@ func GetArsipSantri(w http.ResponseWriter, r *http.Request) {
 	tahunAjaran := r.URL.Query().Get("tahun_ajaran")
 
 	filter := models.SantriArsipFilter{
-		Status:      status,
+		Status:      normalizeArsipStatus(status),
 		TingkatanID: tingkatanID,
 		KelasID:     kelasID,
 		BagianID:    bagianID,

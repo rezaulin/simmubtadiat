@@ -86,7 +86,8 @@ const santriSelectCols = `s.id, s.nik, s.stambuk, s.nisn, s.nama, s.nama_wali, s
 s.provinsi_kode, s.provinsi_nama, s.kabupaten_kode, s.kabupaten_nama, s.kecamatan_kode, s.kecamatan_nama, s.desa,
 s.khidmah_tempat, s.khidmah_mulai, s.khidmah_selesai,
 s.nama_ayah, s.nama_ibu,
-s.tahun_masuk, s.tahun_keluar, s.nomor_stambuk_urut, s.kamar, s.last_bagian_id, s.last_tahun_ajaran`
+s.tahun_masuk, s.tahun_keluar, s.nomor_stambuk_urut, s.kamar, s.last_bagian_id, s.last_tahun_ajaran,
+s.alasan`
 
 // scanSantriFull memindai baris dengan seluruh kolom santri termasuk wilayah dan
 // (opsional) kolom nama tingkatan/bagian/kelas ketika withAkademik true.
@@ -98,6 +99,7 @@ func scanSantriFull(rows scanner, withAkademik bool) (Santri, error) {
 		&s.KhidmahTempat, &s.KhidmahMulai, &s.KhidmahSelesai,
 		&s.NamaAyah, &s.NamaIbu,
 		&s.TahunMasuk, &s.TahunKeluar, &s.NomorStambukUrut, &s.Kamar, &s.LastBagianID, &s.LastTahunAjaran,
+		&s.Alasan,
 	}
 	if withAkademik {
 		dest = append(dest, &s.TingkatanNama, &s.BagianNama, &s.KelasNama)
@@ -250,11 +252,25 @@ func GetSantriByBagian(ctx context.Context, bagianID int, userRoles []string, us
 	}
 	return result, nil
 }
-
 func GetArsipSantri(ctx context.Context, userRoles []string, userID int, filter SantriArsipFilter) ([]Santri, error) {
 
-	baseQuery := `SELECT ` + santriSelectCols + `
-			  FROM santri s WHERE 1=1`
+	// Untuk arsip, kolom alasan diambil dari santri.alasan dengan fallback ke
+	// proses_keluar.alasan (jalur Alumni/ProsesKeluarSantri menulis alasan ke
+	// tabel itu, bukan ke santri.alasan). Tanpa fallback ini, kolom Alasan
+	// kosong untuk santri lulus/boyong/keluar yang diproses lewat menu Alumni.
+	arsipCols := santriSelectCols
+	if i := strings.LastIndex(arsipCols, "s.alasan"); i >= 0 {
+		arsipCols = arsipCols[:i] + "COALESCE(s.alasan, pk.alasan) AS alasan"
+	}
+
+	baseQuery := `SELECT ` + arsipCols + `
+			  FROM santri s
+			  LEFT JOIN LATERAL (
+				SELECT p.alasan FROM proses_keluar p
+				WHERE p.santri_id = s.id
+				ORDER BY p.id DESC LIMIT 1
+			  ) pk ON TRUE
+			  WHERE 1=1`
 	args := []interface{}{}
 
 	isGlobal := false
@@ -286,8 +302,14 @@ func GetArsipSantri(ctx context.Context, userRoles []string, userID int, filter 
 	}
 
 	if filter.Status != "" {
-		baseQuery += " AND s.status = $" + strconv.Itoa(len(args)+1)
-		args = append(args, filter.Status)
+		if filter.Status == "keluar" {
+			// Dua istilah untuk santri dikeluarkan: 'keluar' (ProsesKeluarSantri)
+			// dan 'dikeluarkan' (UbahStatusStatusSantri). Keduanya harus terbaca.
+			baseQuery += " AND s.status IN ('keluar', 'dikeluarkan')"
+		} else {
+			baseQuery += " AND s.status = $" + strconv.Itoa(len(args)+1)
+			args = append(args, filter.Status)
+		}
 	} else {
 		// By default show all non-active
 		baseQuery += " AND s.status != 'aktif'"

@@ -25,6 +25,39 @@ function formatTanggalStatus(val) {
   return d.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
 }
 
+// Nama bulan Hijriyah (transliterasi Indonesia).
+const HIJRI_MONTHS = ["Muharram", "Safar", "Rabiul Awal", "Rabiul Akhir", "Jumadil Awal", "Jumadil Akhir", "Rajab", "Sya'ban", "Ramadhan", "Syawal", "Dzulqa'dah", "Dzulhijjah"];
+
+// Konversi tanggal Masehi -> Hijriyah (mis. "23 Muharram 1447 H") memakai
+// kalender islamic-umalqura bawaan browser. Nilai di DB tetap Masehi;
+// ini hanya padanan tampilan untuk kolom Tgl. Perubahan (isu A4).
+function formatHijri(val) {
+  if (!val) return null;
+  const d = new Date(val);
+  if (Number.isNaN(d.getTime())) return null;
+  try {
+    const parts = new Intl.DateTimeFormat("en-US-u-ca-islamic-umalqura", {
+      day: "numeric", month: "numeric", year: "numeric"
+    }).formatToParts(d);
+    let dd, mm, yy;
+    parts.forEach(p => {
+      if (p.type === "day") dd = parseInt(p.value, 10);
+      else if (p.type === "month") mm = parseInt(p.value, 10);
+      else if (p.type === "year") yy = parseInt(p.value, 10);
+    });
+    if (!dd || !mm || !yy) return null;
+    return `${dd} ${HIJRI_MONTHS[mm - 1] || ""} ${yy} H`;
+  } catch (e) {
+    return null;
+  }
+}
+
+// Perbarui counter total data sesuai filter yang dipilih (isu A5).
+function setTotal(n) {
+  const el = document.getElementById("total-count");
+  if (el) el.textContent = String(n);
+}
+
 // Fetch Data Arsip
 async function loadArsip() {
   const query = searchInput.value;
@@ -34,7 +67,7 @@ async function loadArsip() {
   const bagianId = filterBagian ? filterBagian.value : "";
   const tahunAjaran = filterTahun ? filterTahun.value : "";
 
-  tableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Memuat arsip santri...</td></tr>`;
+  tableBody.innerHTML = `<tr><td colspan="7" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Memuat arsip santri...</td></tr>`;
   
   try {
     let url = "/api/santri/arsip?";
@@ -92,14 +125,15 @@ async function loadArsip() {
     renderTable(data);
     
   } catch (err) {
-    tableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-red-500">Terjadi kesalahan: ${err.message}</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="7" class="px-6 py-8 text-center text-red-500">Terjadi kesalahan: ${err.message}</td></tr>`;
   }
 }
 
 // Render Table
 function renderTable(santriArray) {
+  setTotal(santriArray && santriArray.length ? santriArray.length : 0);
   if (!santriArray || santriArray.length === 0) {
-    tableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Tidak ada data arsip santri ditemukan.</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="7" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Tidak ada data arsip santri ditemukan.</td></tr>`;
     return;
   }
   
@@ -118,8 +152,15 @@ function renderTable(santriArray) {
     } else if (status === "boyong" || status === "keluar" || status === "dikeluarkan") {
       statusClass = "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400";
     }
-    // Label tampilan: "keluar" → "DIKELUARKAN"
-    const statusLabel = status === "keluar" ? "DIKELUARKAN" : status.toUpperCase();
+    // Label tampilan: "keluar" / "dikeluarkan" -> "DIKELUARKAN"
+    const statusLabel = (status === "keluar" || status === "dikeluarkan") ? "DIKELUARKAN" : status.toUpperCase();
+
+    // Padanan Hijriyah dari Tgl. Perubahan (isu A4).
+    const tglMasehi = formatTanggalStatus(s.tanggal_status);
+    const tglHijri = formatHijri(s.tanggal_status);
+
+    // Alasan perubahan status (isu A3): dari kolom santri.alasan.
+    const alasan = (s.alasan && String(s.alasan).trim()) ? s.alasan : "-";
     
     const tr = document.createElement("tr");
     tr.className = "hover:bg-gray-50/50 dark:hover:bg-slate-800/50 transition-colors";
@@ -138,7 +179,13 @@ function renderTable(santriArray) {
           ${statusLabel}
         </span>
       </td>
-      <td data-label="Tgl. Perubahan" class="px-6 py-4 text-gray-600 dark:text-gray-400 whitespace-nowrap">${formatTanggalStatus(s.tanggal_status)}</td>
+      <td data-label="Tgl. Perubahan" class="px-6 py-4 text-gray-600 dark:text-gray-400 whitespace-nowrap">
+        <div>${tglMasehi}</div>
+        ${tglHijri ? `<div class="text-[11px] text-gray-400 dark:text-gray-500">${tglHijri}</div>` : ""}
+      </td>
+      <td data-label="Alasan" class="px-6 py-4 text-sm text-gray-600 dark:text-gray-400 max-w-[220px]">
+        ${alasan}
+      </td>
       <td data-label="Aksi" class="px-6 py-4 text-right">
         <a href="/profil-santri.html?id=${s.id}" class="text-primary dark:text-accent-emerald hover:underline text-sm font-medium">Detail</a>
       </td>
