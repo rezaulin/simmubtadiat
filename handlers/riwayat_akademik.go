@@ -31,7 +31,7 @@ func GetRiwayatAkademikSantri(w http.ResponseWriter, r *http.Request) {
 
 	res, err := models.GetRiwayatAkademik(r.Context(), id)
 	if err != nil {
-		writeJSONError(w, err.Error(), http.StatusInternalServerError)
+		writeJSONError(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 

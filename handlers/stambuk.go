@@ -22,7 +22,7 @@ func SusunUlangStambuk(w http.ResponseWriter, r *http.Request) {
 
 	count, err := models.SusunUlangStambuk(r.Context(), req.TingkatanID, req.KelasID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 
@@ -51,7 +51,7 @@ func GetStambukKelas(w http.ResponseWriter, r *http.Request) {
 
 	data, err := models.GetStambukKelas(r.Context(), tingkatanID, kelasID)
 	if err != nil {
-		writeJSONError(w, err.Error(), http.StatusInternalServerError)
+		writeJSONError(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 
@@ -68,7 +68,7 @@ func BulkUpdateStambuk(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := models.BulkUpdateStambuk(r.Context(), items); err != nil {
-		writeJSONError(w, err.Error(), http.StatusInternalServerError)
+		writeJSONError(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 

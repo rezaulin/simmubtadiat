@@ -44,7 +44,7 @@ func GetAnakWali(w http.ResponseWriter, r *http.Request) {
 		 WHERE wl.user_id = $1
 		 ORDER BY s.nama`, user.ID)
 	if err != nil {
-		writeJSONError(w, err.Error(), http.StatusInternalServerError)
+		writeJSONError(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
@@ -54,7 +54,7 @@ func GetAnakWali(w http.ResponseWriter, r *http.Request) {
 		var a AnakWali
 		if err := rows.Scan(&a.ID, &a.Nama, &a.Stambuk, &a.NIK, &a.Status, &a.FotoURL,
 			&a.Tingkatan, &a.Kelas, &a.Bagian); err != nil {
-			writeJSONError(w, err.Error(), http.StatusInternalServerError)
+			writeJSONError(w, internalError("", err), http.StatusInternalServerError)
 			return
 		}
 		list = append(list, a)
@@ -102,7 +102,7 @@ func GetCatatanAnakWali(w http.ResponseWriter, r *http.Request) {
 		 WHERE santri_id = $1
 		 ORDER BY tanggal DESC`, santriID)
 	if err != nil {
-		writeJSONError(w, err.Error(), http.StatusInternalServerError)
+		writeJSONError(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()

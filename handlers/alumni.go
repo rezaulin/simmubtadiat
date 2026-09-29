@@ -16,7 +16,7 @@ func ProsesKeluar(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := models.ProsesKeluarSantri(r.Context(), req); err != nil {
-		writeJSONError(w, err.Error(), http.StatusInternalServerError)
+		writeJSONError(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 
@@ -54,7 +54,7 @@ func UpdateAlumni(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := models.UpdateAlumniDetail(r.Context(), req.SantriID, req.StatusIjazah, req.NoIjazah, req.Khidmah, req.Keterangan, req.AsalDaerah, req.TingkatanAkhir, req.AlasanIjazah, req.TahunLulus); err != nil {
-		writeJSONError(w, err.Error(), http.StatusInternalServerError)
+		writeJSONError(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 
@@ -82,7 +82,7 @@ func UpdateAlumni(w http.ResponseWriter, r *http.Request) {
 			KhidmahTempat: req.TempatKhidmah,
 		}
 		if err := models.UpdateAlumniBiodata(r.Context(), req.SantriID, bio); err != nil {
-			writeJSONError(w, err.Error(), http.StatusInternalServerError)
+			writeJSONError(w, internalError("", err), http.StatusInternalServerError)
 			return
 		}
 	}
@@ -123,7 +123,7 @@ func TambahAlumniManual(w http.ResponseWriter, r *http.Request) {
 		req.Alamat, req.NoHP, req.Khidmah, req.TempatKhidmah, req.StatusIjazah, req.Keterangan,
 		req.TahunMasuk, req.TahunKeluar, req.TahunLulus)
 	if err != nil {
-		writeJSONError(w, err.Error(), http.StatusInternalServerError)
+		writeJSONError(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 
@@ -140,7 +140,7 @@ func GetAlumni(w http.ResponseWriter, r *http.Request) {
 
 	res, err := models.GetAllAlumni(r.Context(), filter)
 	if err != nil {
-		writeJSONError(w, err.Error(), http.StatusInternalServerError)
+		writeJSONError(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -161,7 +161,7 @@ func ImportAlumniExcel(w http.ResponseWriter, r *http.Request) {
 
 	result, err := models.ImportAlumniFromExcel(r.Context(), file)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	writeJSON(w, result)

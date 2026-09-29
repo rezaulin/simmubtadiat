@@ -45,18 +45,20 @@ func CSRFProtect(next http.Handler) http.Handler {
 				"https://127.0.0.1:8080",
 				"https://localhost:8080",
 			}
-			// Also allow same-origin (Origin matches Host)
+			// HARUS exact match. Prefix match (strings.HasPrefix) membuat
+			// https://reviewtechno.me.attacker.com diterima sebagai sah.
 			originAllowed := false
 			for _, a := range allowed {
-				if strings.HasPrefix(origin, a) {
+				if origin == a {
 					originAllowed = true
 					break
 				}
 			}
-			// Same-origin: Origin host == Request host
+			// Same-origin: bandingkan HOST persis, bukan prefix.
+			// sebelumnya: strings.HasPrefix(originHost, host) — menerima
+			// subdomain penyerang yang berawalan sama.
 			if !originAllowed && host != "" {
-				originHost := strings.TrimPrefix(strings.TrimPrefix(origin, "https://"), "http://")
-				if strings.HasPrefix(originHost, host) || strings.HasPrefix(host, originHost) {
+				if originHostOf(origin) != "" && originHostOf(origin) == hostOf(host) {
 					originAllowed = true
 				}
 			}
@@ -66,17 +68,17 @@ func CSRFProtect(next http.Handler) http.Handler {
 			}
 		}
 
-		// CSRF token validation
+		// CSRF token validation — WAJIB, bukan fail-open.
+		// Sebelumnya kedua kondisi di bawah ini memanggil next.ServeHTTP()
+		// (lolos) sehingga token CSRF praktis tidak pernah diperiksa.
 		csrfCookie, err := r.Cookie("csrf_token")
 		if err != nil || csrfCookie.Value == "" {
-			// No CSRF cookie — likely first request or cookie cleared, pass through
-			next.ServeHTTP(w, r)
+			http.Error(w, "Forbidden: CSRF token missing", http.StatusForbidden)
 			return
 		}
 		csrfHeader := r.Header.Get("X-CSRF-Token")
 		if csrfHeader == "" {
-			// No header sent — frontend belum support, pass through for now
-			next.ServeHTTP(w, r)
+			http.Error(w, "Forbidden: CSRF token missing", http.StatusForbidden)
 			return
 		}
 		if subtle.ConstantTimeCompare([]byte(csrfCookie.Value), []byte(csrfHeader)) != 1 {
@@ -86,6 +88,28 @@ func CSRFProtect(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r)
 	})
+}
+
+// hostOf menormalkan host (URL/Origin/host header) menjadi hostname+port
+// opsional tanpa skema, dan membuang port default 80/443.
+func hostOf(s string) string {
+	s = strings.TrimPrefix(strings.TrimPrefix(s, "https://"), "http://")
+	if i := strings.IndexAny(s, "/?#"); i >= 0 {
+		s = s[:i]
+	}
+	s = strings.TrimSuffix(s, ":443")
+	s = strings.TrimSuffix(s, ":80")
+	return strings.ToLower(s)
+}
+
+// originHostOf mengambil host dari header Origin. Mengembalikan string kosong
+// bila Origin tidak valid (mis. "null" dari sandboxed iframe) sehingga tidak
+// pernah dianggap cocok.
+func originHostOf(origin string) string {
+	if origin == "" || origin == "null" {
+		return ""
+	}
+	return hostOf(origin)
 }
 
 // ── Rate Limiter ────────────────────────────────────────────────────

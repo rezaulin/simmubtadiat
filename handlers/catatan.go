@@ -22,7 +22,7 @@ func GetCatatan(w http.ResponseWriter, r *http.Request) {
 		}
 		res, err := models.GetCatatanBySantri(r.Context(), santriID)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(w, internalError("", err), http.StatusInternalServerError)
 			return
 		}
 		writeJSON(w, res)
@@ -32,7 +32,7 @@ func GetCatatan(w http.ResponseWriter, r *http.Request) {
 	user, _ := r.Context().Value(appMiddleware.UserContextKey).(appMiddleware.UserSession)
 	res, err := models.GetRekapCatatan(r.Context(), r.URL.Query().Get("q"), user.Roles, user.PengajarID, user.ID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	writeJSON(w, res)

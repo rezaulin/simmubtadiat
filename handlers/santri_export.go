@@ -23,7 +23,7 @@ func ExportSantri(w http.ResponseWriter, r *http.Request) {
 	// Admin asked for "data santri dan pengajar aktif"
 	data, err := models.GetSantriAktif(r.Context(), user.Roles, user.ID, filter)
 	if err != nil {
-		http.Error(w, "Gagal mengambil data: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("Gagal mengambil data", err), http.StatusInternalServerError)
 		return
 	}
 

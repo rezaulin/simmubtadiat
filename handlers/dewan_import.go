@@ -200,7 +200,7 @@ func ImportDewanHarian(w http.ResponseWriter, r *http.Request) {
 	// Batch insert dalam satu transaksi
 	tx, err := config.DB.Begin(r.Context())
 	if err != nil {
-		writeJSONError(w, err.Error(), http.StatusInternalServerError)
+		writeJSONError(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	defer tx.Rollback(r.Context())
@@ -218,7 +218,7 @@ func ImportDewanHarian(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := tx.Commit(r.Context()); err != nil {
-		writeJSONError(w, err.Error(), http.StatusInternalServerError)
+		writeJSONError(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 

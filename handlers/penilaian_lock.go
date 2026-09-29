@@ -33,7 +33,7 @@ func GetStatusPenilaian(w http.ResponseWriter, r *http.Request) {
 	}
 	res, err := models.GetPenilaianStatus(r.Context(), ta, sem)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	writeJSON(w, res)
@@ -48,7 +48,7 @@ func OpenKoreksiHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	user, _ := r.Context().Value(appMiddleware.UserContextKey).(appMiddleware.UserSession)
 	if err := models.OpenKoreksi(r.Context(), ta, sem, user.ID); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	writeJSON(w, map[string]string{"status": "success", "message": "Masa koreksi dibuka"})
@@ -63,7 +63,7 @@ func ForceLockHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	user, _ := r.Context().Value(appMiddleware.UserContextKey).(appMiddleware.UserSession)
 	if err := models.ForceLock(r.Context(), ta, sem, user.ID); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	writeJSON(w, map[string]string{"status": "success", "message": "Semester dikunci & nilai final digenerate"})
@@ -78,7 +78,7 @@ func UnlockHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	user, _ := r.Context().Value(appMiddleware.UserContextKey).(appMiddleware.UserSession)
 	if err := models.Unlock(r.Context(), ta, sem, user.ID); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	writeJSON(w, map[string]string{"status": "success", "message": "Kunci dibuka, kembali ke masa koreksi"})
@@ -118,7 +118,7 @@ func ConfirmBagianHandler(w http.ResponseWriter, r *http.Request) {
 			`SELECT COUNT(1) FROM mustahiq_bagian WHERE bagian_id = $1 AND pengajar_id = $2`,
 			req.BagianID, *user.PengajarID).Scan(&cnt)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(w, internalError("", err), http.StatusInternalServerError)
 			return
 		}
 		if cnt == 0 {
@@ -128,13 +128,13 @@ func ConfirmBagianHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := models.ConfirmBagian(r.Context(), ta, sem, req.BagianID, pengajarID, user.ID); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	// Kembalikan status terbaru agar frontend tahu apakah sudah auto-terkunci.
 	res, err := models.GetPenilaianStatus(r.Context(), ta, sem)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	writeJSON(w, res)

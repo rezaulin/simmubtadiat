@@ -15,7 +15,7 @@ func GetDataHealth(w http.ResponseWriter, r *http.Request) {
 	}
 	report, err := models.GetDataHealthReport(r.Context(), ta)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")

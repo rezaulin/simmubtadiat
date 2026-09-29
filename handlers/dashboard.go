@@ -15,7 +15,7 @@ func GetDashboardStats(w http.ResponseWriter, r *http.Request) {
 
 	stats, err := models.GetDashboardStats(r.Context(), user.Roles, user.PengajarID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 

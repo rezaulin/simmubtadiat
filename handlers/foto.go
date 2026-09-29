@@ -68,7 +68,7 @@ func UploadFotoSantri(w http.ResponseWriter, r *http.Request) {
 	urlPath := "/uploads/foto-santri/" + filename
 	err = models.UpdateFotoSantri(r.Context(), idStr, urlPath)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 

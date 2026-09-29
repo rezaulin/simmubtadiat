@@ -53,7 +53,7 @@ func SelesaiPengabdian(w http.ResponseWriter, r *http.Request) {
 func GetPengabdian(w http.ResponseWriter, r *http.Request) {
 	res, err := models.GetSantriPengabdian(r.Context())
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	writeJSON(w, res)
@@ -100,7 +100,7 @@ func ImportPengabdianExcel(w http.ResponseWriter, r *http.Request) {
 	// Load all santri for name/stambuk resolution
 	allSantri, err := models.GetSantriAktif(r.Context(), []string{"pimpinan"}, 0, models.SantriFilter{})
 	if err != nil {
-		http.Error(w, "Gagal memuat data santri: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("Gagal memuat data santri", err), http.StatusInternalServerError)
 		return
 	}
 

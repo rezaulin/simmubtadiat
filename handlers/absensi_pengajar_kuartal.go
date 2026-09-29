@@ -28,7 +28,7 @@ func GetAbsensiPengajarKuartal(w http.ResponseWriter, r *http.Request) {
 
 	res, err := models.GetAbsensiPengajarKuartal(r.Context(), tingkatanID, kelasID, tahunAjaran)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	writeJSON(w, res)
@@ -55,7 +55,7 @@ func SaveAbsensiPengajarKuartal(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := models.SaveAbsensiPengajarKuartal(r.Context(), req.TahunAjaran, req.Data); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	writeJSON(w, map[string]string{"status": "success", "message": "Absensi pengajar berhasil disimpan"})

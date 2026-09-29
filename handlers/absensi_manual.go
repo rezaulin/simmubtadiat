@@ -27,7 +27,7 @@ func absensiScopeGuardBagianEdit(w http.ResponseWriter, r *http.Request, bagianI
 	}
 	allowed, err := models.CanEditAbsensiBagian(r.Context(), user.Roles, user.PengajarID, bagianID)
 	if err != nil {
-		writeJSONError(w, err.Error(), http.StatusInternalServerError)
+		writeJSONError(w, internalError("", err), http.StatusInternalServerError)
 		return true
 	}
 	if !allowed {
@@ -47,7 +47,7 @@ func GetAbsensiManualSantri(w http.ResponseWriter, r *http.Request) {
 	}
 	data, err := models.GetAbsensiManualBulanan(r.Context(), bagianID, tahunHijri)
 	if err != nil {
-		writeJSONError(w, err.Error(), http.StatusInternalServerError)
+		writeJSONError(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	if data == nil {
@@ -78,7 +78,7 @@ func SaveAbsensiManualSantri(w http.ResponseWriter, r *http.Request) {
 
 	saved, deleted, err := models.SaveAbsensiManualBulanan(r.Context(), entries)
 	if err != nil {
-		writeJSONError(w, err.Error(), http.StatusInternalServerError)
+		writeJSONError(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -98,7 +98,7 @@ func GetAbsensiManualPengajar(w http.ResponseWriter, r *http.Request) {
 	}
 	data, err := models.GetAbsensiManualPengajarBulanan(r.Context(), tahunHijri, bagianID, tingkatanID, kelasID)
 	if err != nil {
-		writeJSONError(w, err.Error(), http.StatusInternalServerError)
+		writeJSONError(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	if data == nil {
@@ -124,7 +124,7 @@ func SaveAbsensiManualPengajar(w http.ResponseWriter, r *http.Request) {
 	}
 	saved, deleted, err := models.SaveAbsensiManualPengajarBulanan(r.Context(), entries)
 	if err != nil {
-		writeJSONError(w, err.Error(), http.StatusInternalServerError)
+		writeJSONError(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")

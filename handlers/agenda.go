@@ -84,7 +84,7 @@ func GetAgenda(w http.ResponseWriter, r *http.Request) {
 		res, err = models.GetUpcomingAgenda(r.Context(), today, 100)
 	}
 	if err != nil {
-		writeJSONError(w, err.Error(), http.StatusInternalServerError)
+		writeJSONError(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 
@@ -111,7 +111,7 @@ func CreateAgenda(w http.ResponseWriter, r *http.Request) {
 
 	created, err := models.CreateAgenda(r.Context(), agenda)
 	if err != nil {
-		writeJSONError(w, err.Error(), http.StatusInternalServerError)
+		writeJSONError(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -137,7 +137,7 @@ func UpdateAgenda(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := models.UpdateAgenda(r.Context(), id, agenda); err != nil {
-		writeJSONError(w, err.Error(), http.StatusInternalServerError)
+		writeJSONError(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -152,7 +152,7 @@ func DeleteAgenda(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := models.DeleteAgenda(r.Context(), id); err != nil {
-		writeJSONError(w, err.Error(), http.StatusInternalServerError)
+		writeJSONError(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")

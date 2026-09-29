@@ -23,7 +23,7 @@ func GetPengajar(w http.ResponseWriter, r *http.Request) {
 
 	res, err := models.GetAllPengajar(r.Context(), user.Roles, user.PengajarID, bagianID, tingkatanID, kelasID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	writeJSON(w, res)
@@ -37,7 +37,7 @@ func CreatePengajar(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := models.CreatePengajar(r.Context(), p); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 
@@ -52,7 +52,7 @@ func UpdatePengajar(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := models.UpdatePengajar(r.Context(), id, p); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	writeJSON(w, map[string]string{"status": "success", "message": "Pengajar berhasil diperbarui"})
@@ -61,7 +61,7 @@ func UpdatePengajar(w http.ResponseWriter, r *http.Request) {
 func DeletePengajar(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
 	if err := models.DeletePengajar(r.Context(), id); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	writeJSON(w, map[string]string{"status": "success", "message": "Pengajar berhasil dihapus"})
@@ -71,7 +71,7 @@ func GetDewanHarian(w http.ResponseWriter, r *http.Request) {
 	tahun := r.URL.Query().Get("tahun_ajaran")
 	res, err := models.GetDewanHarian(r.Context(), tahun)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	writeJSON(w, res)
@@ -85,7 +85,7 @@ func AssignDewanHarian(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := models.AssignDewanHarian(r.Context(), req); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	writeJSON(w, map[string]string{"status": "success", "message": "Jabatan dewan harian berhasil dicatat"})
@@ -99,7 +99,7 @@ func UpdateDewanHarian(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := models.UpdateDewanHarian(r.Context(), id, dh); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	writeJSON(w, map[string]string{"status": "success", "message": "Dewan Harian berhasil diperbarui"})
@@ -108,7 +108,7 @@ func UpdateDewanHarian(w http.ResponseWriter, r *http.Request) {
 func DeleteDewanHarian(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
 	if err := models.DeleteDewanHarian(r.Context(), id); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	writeJSON(w, map[string]string{"status": "success", "message": "Dewan Harian berhasil dihapus"})
@@ -118,7 +118,7 @@ func DeleteDewanHarian(w http.ResponseWriter, r *http.Request) {
 func GetMufatish(w http.ResponseWriter, r *http.Request) {
 	res, err := models.GetMufatishAssignments(r.Context())
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	writeJSON(w, res)
@@ -146,7 +146,7 @@ func AssignMufatish(w http.ResponseWriter, r *http.Request) {
 func GetMustahiq(w http.ResponseWriter, r *http.Request) {
 	res, err := models.GetMustahiqAssignments(r.Context())
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	writeJSON(w, res)
@@ -198,7 +198,7 @@ func AssignMunawwib(w http.ResponseWriter, r *http.Request) {
 	
 	err := models.AssignMunawwibs(r.Context(), req.BagianID, req.PengajarIDs)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	writeJSON(w, map[string]string{"status": "success"})
@@ -207,7 +207,7 @@ func AssignMunawwib(w http.ResponseWriter, r *http.Request) {
 func GetMunawwib(w http.ResponseWriter, r *http.Request) {
 	assignments, err := models.GetMunawwibAssignments(r.Context())
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	writeJSON(w, assignments)
@@ -226,7 +226,7 @@ func RemoveMunawwib(w http.ResponseWriter, r *http.Request) {
 	
 	err := models.RemoveMunawwib(r.Context(), req.BagianID, req.PengajarID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	writeJSON(w, map[string]string{"status": "success"})

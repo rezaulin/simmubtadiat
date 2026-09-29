@@ -26,7 +26,7 @@ func pengajarPurnaFilterFromQuery(r *http.Request) models.PengajarPurnaFilter {
 func GetPengajarPurna(w http.ResponseWriter, r *http.Request) {
 	res, err := models.GetAllPengajarPurna(r.Context(), pengajarPurnaFilterFromQuery(r))
 	if err != nil {
-		writeJSONError(w, err.Error(), http.StatusInternalServerError)
+		writeJSONError(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -45,7 +45,7 @@ func CreatePengajarPurna(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := models.CreatePengajarPurna(r.Context(), p); err != nil {
-		writeJSONError(w, err.Error(), http.StatusInternalServerError)
+		writeJSONError(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	writeJSON(w, map[string]string{"status": "success", "message": "Pengajar purna berhasil ditambahkan"})
@@ -68,7 +68,7 @@ func UpdatePengajarPurna(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := models.UpdatePengajarPurna(r.Context(), id, p); err != nil {
-		writeJSONError(w, err.Error(), http.StatusInternalServerError)
+		writeJSONError(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	writeJSON(w, map[string]string{"status": "success", "message": "Pengajar purna berhasil diperbarui"})
@@ -82,7 +82,7 @@ func DeletePengajarPurna(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := models.DeletePengajarPurna(r.Context(), id); err != nil {
-		writeJSONError(w, err.Error(), http.StatusInternalServerError)
+		writeJSONError(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	writeJSON(w, map[string]string{"status": "success", "message": "Pengajar purna berhasil dihapus"})
@@ -103,7 +103,7 @@ func ImportPengajarPurna(w http.ResponseWriter, r *http.Request) {
 
 	result, err := models.ImportPengajarPurnaFromExcel(r.Context(), file)
 	if err != nil {
-		writeJSONError(w, err.Error(), http.StatusInternalServerError)
+		writeJSONError(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -114,7 +114,7 @@ func ImportPengajarPurna(w http.ResponseWriter, r *http.Request) {
 func ExportPengajarPurna(w http.ResponseWriter, r *http.Request) {
 	data, err := models.GetAllPengajarPurna(r.Context(), pengajarPurnaFilterFromQuery(r))
 	if err != nil {
-		http.Error(w, "Gagal mengambil data: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("Gagal mengambil data", err), http.StatusInternalServerError)
 		return
 	}
 
@@ -152,7 +152,7 @@ func ExportPengajarPurna(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 	w.Header().Set("Content-Disposition", "attachment; filename=Data_Pengajar_Purna.xlsx")
 	if err := f.Write(w); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 	}
 }
 
@@ -210,7 +210,7 @@ func DownloadTemplatePengajarPurna(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 	w.Header().Set("Content-Disposition", `attachment; filename="template_import_pengajar_purna.xlsx"`)
 	if err := f.Write(w); err != nil {
-		http.Error(w, "Gagal membuat template: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("Gagal membuat template", err), http.StatusInternalServerError)
 	}
 }
 
@@ -248,7 +248,7 @@ func PindahPengajarPurna(w http.ResponseWriter, r *http.Request) {
 	res, err := models.PindahPengajarKePurna(r.Context(), req.IDs,
 		req.TahunKeluar, req.ProvinsiKode, req.ProvinsiNama, req.KabupatenKode, req.KabupatenNama)
 	if err != nil {
-		writeJSONError(w, err.Error(), http.StatusInternalServerError)
+		writeJSONError(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")

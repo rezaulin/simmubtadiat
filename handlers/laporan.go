@@ -42,7 +42,7 @@ func GetRaport(w http.ResponseWriter, r *http.Request) {
 
 	res, err := models.GetRaportSantri(r.Context(), santriID, semester, tahunAjaran)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 

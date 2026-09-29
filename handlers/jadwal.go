@@ -53,7 +53,7 @@ func GetJadwalByBagian(w http.ResponseWriter, r *http.Request) {
 	          WHERE j.bagian_id=$1 ORDER BY j.hari, j.jam_mulai`
 	rows, err := config.DB.Query(context.Background(), query, bagianIDStr)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
@@ -85,7 +85,7 @@ func CreateJadwal(w http.ResponseWriter, r *http.Request) {
 		"INSERT INTO jadwal_pelajaran (bagian_id, mapel_id, pengajar_id, hari, jam_mulai, jam_selesai) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id",
 		j.BagianID, j.MapelID, j.PengajarID, j.Hari, j.JamMulai, j.JamSelesai).Scan(&j.ID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	writeJSON(w, j)
@@ -103,7 +103,7 @@ func UpdateJadwal(w http.ResponseWriter, r *http.Request) {
 		"UPDATE jadwal_pelajaran SET mapel_id=$1, pengajar_id=$2, hari=$3, jam_mulai=$4, jam_selesai=$5 WHERE id=$6",
 		j.MapelID, j.PengajarID, j.Hari, j.JamMulai, j.JamSelesai, id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	writeJSON(w, map[string]string{"status": "success"})
@@ -113,7 +113,7 @@ func DeleteJadwal(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
 	_, err := config.DB.Exec(context.Background(), "DELETE FROM jadwal_pelajaran WHERE id=$1", id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	writeJSON(w, map[string]string{"status": "success"})
@@ -207,7 +207,7 @@ func GetJadwalSayaHariIni(w http.ResponseWriter, r *http.Request) {
 
 	jadwals, err := fetchJadwalHariIni(context.Background(), *user.PengajarID, hari)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 

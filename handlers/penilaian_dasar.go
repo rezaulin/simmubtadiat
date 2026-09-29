@@ -28,7 +28,7 @@ func penilaianScopeGuardSantriEdit(w http.ResponseWriter, r *http.Request, santr
 	for _, sid := range santriIDs {
 		allowed, err := models.CanEditSantriPenilaian(r.Context(), user.Roles, user.PengajarID, sid)
 		if err != nil {
-			writeJSONError(w, err.Error(), http.StatusInternalServerError)
+			writeJSONError(w, internalError("", err), http.StatusInternalServerError)
 			return true
 		}
 		if !allowed {
@@ -56,7 +56,7 @@ func penilaianScopeGuardBagianEdit(w http.ResponseWriter, r *http.Request, bagia
 	}
 	allowed, err := models.CanEditBagianPenilaian(r.Context(), user.Roles, user.PengajarID, bagianID)
 	if err != nil {
-		writeJSONError(w, err.Error(), http.StatusInternalServerError)
+		writeJSONError(w, internalError("", err), http.StatusInternalServerError)
 		return true
 	}
 	if !allowed {
@@ -83,7 +83,7 @@ func penilaianScopeGuardBagianView(w http.ResponseWriter, r *http.Request, bagia
 	}
 	allowed, err := models.CanViewBagianPenilaian(r.Context(), user.Roles, user.PengajarID, bagianID)
 	if err != nil {
-		writeJSONError(w, err.Error(), http.StatusInternalServerError)
+		writeJSONError(w, internalError("", err), http.StatusInternalServerError)
 		return true
 	}
 	if !allowed {
@@ -99,7 +99,7 @@ func GetBagianPenilaian(w http.ResponseWriter, r *http.Request) {
 	user, _ := r.Context().Value(appMiddleware.UserContextKey).(appMiddleware.UserSession)
 	res, err := models.GetBagianForPenilaian(r.Context(), user.Roles, user.PengajarID)
 	if err != nil {
-		writeJSONError(w, err.Error(), http.StatusInternalServerError)
+		writeJSONError(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -138,7 +138,7 @@ func BulkInputKuartal(w http.ResponseWriter, r *http.Request) {
 		semesterDicek[sem] = true
 		locked, err := models.IsSemesterLocked(r.Context(), tahunAjaran, sem)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(w, internalError("", err), http.StatusInternalServerError)
 			return
 		}
 		if locked {
@@ -148,7 +148,7 @@ func BulkInputKuartal(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := models.BulkInputNilaiKuartal(r.Context(), req, tahunAjaran); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 
@@ -184,7 +184,7 @@ func BulkInputKhos(w http.ResponseWriter, r *http.Request) {
 		semesterDicek[it.Semester] = true
 		locked, err := models.IsSemesterLocked(r.Context(), tahunAjaran, it.Semester)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(w, internalError("", err), http.StatusInternalServerError)
 			return
 		}
 		if locked {
@@ -194,7 +194,7 @@ func BulkInputKhos(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := models.BulkInputNilaiKhos(r.Context(), req, tahunAjaran); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 
@@ -224,7 +224,7 @@ func GenerateKhos(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := models.GenerateNilaiKhos(r.Context(), req.SantriID, req.Semester, tahunAjaran); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 
@@ -260,7 +260,7 @@ func GetPenilaianSpreadsheet(w http.ResponseWriter, r *http.Request) {
 
 	data, err := models.GetPenilaianSpreadsheet(r.Context(), bagianID, tahunAjaran)
 	if err != nil {
-		writeJSONError(w, err.Error(), http.StatusInternalServerError)
+		writeJSONError(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 

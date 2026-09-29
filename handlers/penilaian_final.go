@@ -30,7 +30,7 @@ func GenerateAm(w http.ResponseWriter, r *http.Request) {
 
 	// Nilai 'Am adalah rata-rata kelas per mapel, jadi dihitung per BAGIAN, bukan per siswi.
 	if err := models.GenerateNilaiAm(r.Context(), req.BagianID, req.Semester, tahunAjaran); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 
@@ -58,7 +58,7 @@ func GenerateBayan(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := models.GenerateAlBayan(r.Context(), req.SantriID, tahunAjaran); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 

@@ -70,6 +70,6 @@ func DownloadTemplateAlumni(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Disposition", `attachment; filename="template_import_alumni.xlsx"`)
 
 	if err := f.Write(w); err != nil {
-		http.Error(w, "Gagal membuat template: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("Gagal membuat template", err), http.StatusInternalServerError)
 	}
 }

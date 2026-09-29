@@ -11,7 +11,7 @@ func GetProvinsi(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query().Get("q")
 	res, err := models.SearchProvinsi(r.Context(), q)
 	if err != nil {
-		writeJSONError(w, err.Error(), http.StatusInternalServerError)
+		writeJSONError(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	writeJSON(w, res)
@@ -27,7 +27,7 @@ func GetKabupaten(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query().Get("q")
 	res, err := models.SearchKabupaten(r.Context(), provinsi, q)
 	if err != nil {
-		writeJSONError(w, err.Error(), http.StatusInternalServerError)
+		writeJSONError(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	writeJSON(w, res)
@@ -43,7 +43,7 @@ func GetKecamatan(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query().Get("q")
 	res, err := models.SearchKecamatan(r.Context(), kabupaten, q)
 	if err != nil {
-		writeJSONError(w, err.Error(), http.StatusInternalServerError)
+		writeJSONError(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	writeJSON(w, res)

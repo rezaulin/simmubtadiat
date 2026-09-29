@@ -22,7 +22,7 @@ func AssignPengajar(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := models.AssignPengajarToBagian(r.Context(), req.PengajarID, req.BagianID, req.TahunAjaran, req.Peran); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	writeJSON(w, map[string]string{"status": "success", "message": "Penugasan berhasil dicatat"})
@@ -35,7 +35,7 @@ func GetPenugasan(w http.ResponseWriter, r *http.Request) {
 
 	res, err := models.GetPengajarBagian(r.Context(), tahunAjaran, bagianID, pengajarID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	writeJSON(w, res)
@@ -46,7 +46,7 @@ func DeletePenugasan(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.Atoi(idStr)
 
 	if err := models.DeletePengajarBagian(r.Context(), id); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	writeJSON(w, map[string]string{"status": "success"})

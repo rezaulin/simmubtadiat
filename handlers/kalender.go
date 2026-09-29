@@ -14,7 +14,7 @@ func GetKalenderKuartal(w http.ResponseWriter, r *http.Request) {
 
 	res, err := models.GetKalenderByTahun(r.Context(), tahunAjaran)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 
@@ -31,7 +31,7 @@ func SaveKalenderKuartal(w http.ResponseWriter, r *http.Request) {
 
 	for _, k := range input {
 		if err := models.UpsertKalender(r.Context(), k); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(w, internalError("", err), http.StatusInternalServerError)
 			return
 		}
 	}
@@ -43,7 +43,7 @@ func SaveKalenderKuartal(w http.ResponseWriter, r *http.Request) {
 func GetTahunAjaran(w http.ResponseWriter, r *http.Request) {
 	res, err := models.GetTahunAjaran(r.Context())
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 
@@ -59,7 +59,7 @@ func GetKalenderSemesterHijri(w http.ResponseWriter, r *http.Request) {
 	}
 	res, err := models.GetKalenderSemesterHijri(r.Context(), tahunAjaran)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -86,7 +86,7 @@ func SaveKalenderSemesterHijri(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if err := models.SaveKalenderSemesterHijri(r.Context(), entries); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")

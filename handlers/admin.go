@@ -29,7 +29,7 @@ func GetUsers(w http.ResponseWriter, r *http.Request) {
 
 	items, total, err := models.GetAllUsers(r.Context(), role, keyword, limit, offset)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	writeJSON(w, map[string]interface{}{
@@ -50,7 +50,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := models.CreateUser(r.Context(), req.User, req.Password); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	writeJSON(w, map[string]string{"status": "success", "message": "User berhasil dibuat"})
@@ -64,7 +64,7 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := models.UpdateUser(r.Context(), id, u); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	writeJSON(w, map[string]string{"status": "success", "message": "User berhasil diperbarui"})
@@ -73,7 +73,7 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 func DeleteUser(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
 	if err := models.DeleteUser(r.Context(), id); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	writeJSON(w, map[string]string{"status": "success", "message": "User berhasil dihapus"})
@@ -101,7 +101,7 @@ func ResetPassword(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "User tidak ditemukan", http.StatusNotFound)
 			return
 		}
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	writeJSON(w, map[string]string{"status": "success", "message": "Password user berhasil direset"})
@@ -140,7 +140,7 @@ func ResetPasswordBulk(w http.ResponseWriter, r *http.Request) {
 
 	results, err := models.ResetPasswordBulk(r.Context(), req.IDs, pw)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 
@@ -165,7 +165,7 @@ func GetDynamicColumns(w http.ResponseWriter, r *http.Request) {
 	table := r.URL.Query().Get("table")
 	res, err := models.GetDynamicColumns(r.Context(), table)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	writeJSON(w, res)
@@ -178,7 +178,7 @@ func CreateDynamicColumn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := models.CreateDynamicColumn(r.Context(), dc); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	writeJSON(w, map[string]string{"status": "success", "message": "Kolom dinamis berhasil ditambahkan"})
@@ -192,7 +192,7 @@ func UpdateDynamicColumn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := models.UpdateDynamicColumn(r.Context(), id, dc); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	writeJSON(w, map[string]string{"status": "success", "message": "Kolom dinamis berhasil diperbarui"})
@@ -201,7 +201,7 @@ func UpdateDynamicColumn(w http.ResponseWriter, r *http.Request) {
 func DeleteDynamicColumn(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
 	if err := models.DeleteDynamicColumn(r.Context(), id); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	writeJSON(w, map[string]string{"status": "success", "message": "Kolom dinamis berhasil dihapus"})

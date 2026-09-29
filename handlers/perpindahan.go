@@ -29,7 +29,7 @@ func NaikKelas(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := models.PindahBagian(r.Context(), req.BagianAsalID, req.SantriIDs, req.BagianBaruID, req.PindahMustahiq, user.Roles, user.ID); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 
@@ -67,7 +67,7 @@ func UbahStatusSantri(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := models.UbahStatusStatusSantri(r.Context(), req.SantriID, req.Status, req.TanggalStatus, req.Alasan, user.Roles, user.ID); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 

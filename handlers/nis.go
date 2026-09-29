@@ -26,7 +26,7 @@ func GetNisKelas(w http.ResponseWriter, r *http.Request) {
 
 	data, err := models.GetNisKelas(r.Context(), tingkatanID, kelasID)
 	if err != nil {
-		writeJSONError(w, err.Error(), http.StatusInternalServerError)
+		writeJSONError(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 
@@ -43,7 +43,7 @@ func BulkUpdateNIS(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := models.BulkUpdateNIS(r.Context(), items); err != nil {
-		writeJSONError(w, err.Error(), http.StatusInternalServerError)
+		writeJSONError(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -10,6 +11,23 @@ import (
 	appMiddleware "github.com/mubtadiaat/app/middleware"
 	"github.com/mubtadiaat/app/models"
 )
+
+// internalError mengembalikan pesan yang AMAN dikirim ke client, sementara
+// detail teknis error (pesan pgx, nama constraint/kolom/tabel, string query)
+// dicatat hanya di log container.
+//
+// Sebelumnya 140 handler mengirim err.Error() langsung ke client lewat
+// http.Error/writeJSONError sehingga memaparkan skema database.
+//
+// Pakai: http.Error(w, internalError("", err), http.StatusInternalServerError)
+//       http.Error(w, internalError("Gagal mengambil data", err), 500)
+func internalError(msg string, err error) string {
+	if msg == "" {
+		msg = "Terjadi kesalahan pada server"
+	}
+	log.Printf("[ERROR] %s: %v", msg, err)
+	return msg
+}
 
 // writeJSONError sends an error response as valid JSON so the frontend can
 // always parse it with response.json().
@@ -36,7 +54,7 @@ func GetSantriAktif(w http.ResponseWriter, r *http.Request) {
 	}
 	res, err := models.GetSantriAktif(r.Context(), user.Roles, user.ID, filter)
 	if err != nil {
-		writeJSONError(w, err.Error(), http.StatusInternalServerError)
+		writeJSONError(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	writeJSON(w, res)
@@ -58,7 +76,7 @@ func GetSantriByBagian(w http.ResponseWriter, r *http.Request) {
 	}
 	res, err := models.GetSantriByBagian(r.Context(), bagianID, user.Roles, user.ID)
 	if err != nil {
-		writeJSONError(w, err.Error(), http.StatusInternalServerError)
+		writeJSONError(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	writeJSON(w, res)
@@ -100,7 +118,7 @@ func GetArsipSantri(w http.ResponseWriter, r *http.Request) {
 
 	res, err := models.GetArsipSantri(r.Context(), user.Roles, user.ID, filter)
 	if err != nil {
-		writeJSONError(w, err.Error(), http.StatusInternalServerError)
+		writeJSONError(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	writeJSON(w, res)
@@ -119,7 +137,7 @@ func RegisterSantri(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := models.CreateSantri(r.Context(), req.Santri, req.BagianAwalID); err != nil {
-		writeJSONError(w, err.Error(), http.StatusInternalServerError)
+		writeJSONError(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 
@@ -136,7 +154,7 @@ func AssignBagian(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := models.AssignSantriToBagian(r.Context(), req.SantriIDs, req.BagianID); err != nil {
-		writeJSONError(w, err.Error(), http.StatusInternalServerError)
+		writeJSONError(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	writeJSON(w, map[string]string{"status": "success"})
@@ -182,7 +200,7 @@ func UpdateSantri(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := models.UpdateSantri(r.Context(), id, s); err != nil {
-		writeJSONError(w, err.Error(), http.StatusInternalServerError)
+		writeJSONError(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	writeJSON(w, map[string]string{"status": "success", "message": "Data santri berhasil diperbarui"})
@@ -196,7 +214,7 @@ func DeleteSantri(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := models.DeleteSantri(r.Context(), id); err != nil {
-		writeJSONError(w, err.Error(), http.StatusInternalServerError)
+		writeJSONError(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	writeJSON(w, map[string]string{"status": "success", "message": "Data santri berhasil dihapus"})
@@ -207,7 +225,7 @@ func FixStambukSantri(w http.ResponseWriter, r *http.Request) {
 	// Cari santri yang stambuk-nya melebihi 10000 (karena ini inputan ngawur user)
 	rows, err := config.DB.Query(ctx, `SELECT id, bagian_id FROM santri WHERE NULLIF(regexp_replace(COALESCE(stambuk, ''), '\D', '', 'g'), '')::int > 10000`)
 	if err != nil {
-		writeJSONError(w, err.Error(), http.StatusInternalServerError)
+		writeJSONError(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()

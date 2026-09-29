@@ -18,7 +18,7 @@ func ExportPengajar(w http.ResponseWriter, r *http.Request) {
 	// 1. Fetch data
 	data, err := models.GetAllPengajar(r.Context(), user.Roles, user.PengajarID, 0, 0, 0)
 	if err != nil {
-		http.Error(w, "Gagal mengambil data: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("Gagal mengambil data", err), http.StatusInternalServerError)
 		return
 	}
 
@@ -70,7 +70,7 @@ func ExportPengajar(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 	w.Header().Set("Content-Disposition", "attachment; filename=Data_Pengajar.xlsx")
 	if err := f.Write(w); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 	}
 }
 
@@ -153,7 +153,7 @@ func ImportPengajar(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if err := models.CreatePengajar(r.Context(), p); err != nil {
-			http.Error(w, "Gagal menyimpan baris ke-"+strconv.Itoa(i+1)+": "+err.Error(), http.StatusInternalServerError)
+			http.Error(w, internalError("Gagal menyimpan baris ke-"+strconv.Itoa(i+1), err), http.StatusInternalServerError)
 			return
 		}
 		count++

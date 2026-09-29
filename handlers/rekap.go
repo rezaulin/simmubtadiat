@@ -33,7 +33,7 @@ func GetLogAbsensiPengajar(w http.ResponseWriter, r *http.Request) {
 
 	res, err := models.GetRekapAbsensiPengajarManual(r.Context(), tahunAjaran, tahunHijri, bulanHijri, roles, user.PengajarID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 
@@ -57,7 +57,7 @@ func GetRekapAbsensiSiswaRentang(w http.ResponseWriter, r *http.Request) {
 
 	res, err := models.GetRekapAbsensiSiswaManual(r.Context(), bagianID, tahunAjaran, tahunHijri, bulanHijri)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 

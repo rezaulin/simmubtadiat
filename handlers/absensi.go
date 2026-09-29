@@ -44,7 +44,7 @@ func RecalculateRekap(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := models.RecalculateRekapAbsensi(r.Context(), req.KuartalID, req.SantriID); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 

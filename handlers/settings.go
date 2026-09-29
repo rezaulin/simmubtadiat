@@ -13,7 +13,7 @@ import (
 func GetRaportSettings(w http.ResponseWriter, r *http.Request) {
 	settings, err := models.GetRaportSettings(r.Context())
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	writeJSON(w, settings)
@@ -51,7 +51,7 @@ func UpdateRaportSettings(w http.ResponseWriter, r *http.Request) {
 		req.HeaderBaris1, req.HeaderBaris2, req.HeaderBaris3, req.NamaKepala, req.NIPKepala, currentLogo, currentUrutan)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 
@@ -62,7 +62,7 @@ func UpdateRaportSettings(w http.ResponseWriter, r *http.Request) {
 func GetMudirTingkatan(w http.ResponseWriter, r *http.Request) {
 	list, err := models.GetMudirTingkatan(r.Context())
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	writeJSON(w, list)
@@ -80,7 +80,7 @@ func UpdateMudirTingkatan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := models.UpsertMudirTingkatan(r.Context(), req.TingkatanID, req.NamaMudir); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	writeJSON(w, map[string]string{"status": "success", "message": "Nama mudir berhasil disimpan"})
@@ -110,7 +110,7 @@ func UpdateMudirTandaTangan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := models.UpsertMudirTandaTangan(r.Context(), req.TingkatanID, req.TandaTangan); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	writeJSON(w, map[string]string{"status": "success", "message": "Tanda tangan tersimpan"})
@@ -146,7 +146,7 @@ func UpdateSettingsUmum(w http.ResponseWriter, r *http.Request) {
 	`, ta)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 

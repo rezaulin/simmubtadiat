@@ -23,7 +23,7 @@ func Search(w http.ResponseWriter, r *http.Request) {
 
 	results, err := models.GlobalSearch(r.Context(), query, roles, pengajarID)
 	if err != nil {
-		writeJSONError(w, err.Error(), http.StatusInternalServerError)
+		writeJSONError(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 
