@@ -122,10 +122,12 @@ async function checkAuth() {
     }
     const data = await response.json();
 
-    // Admins (Pimpinan / Admin) can manage Pengajar
+    // Tombol tulis (Tambah / Import) hanya pimpinan. Role admin = "Admin Data":
+    // cukup download — jatuh ke cabang else di bawah sehingga hanya export
+    // yang ditampilkan.
     userRole = data.role;
     const roles = data.roles || [data.role];
-    if (window.isAdminRole(userRole)) {
+    if (window.isPimpinanRole(userRole)) {
       btnTambah.classList.remove('hidden');
       const btnExport = document.getElementById('btn-export');
       const btnImport = document.getElementById('btn-import-trigger');
@@ -135,7 +137,7 @@ async function checkAuth() {
       }
       if (btnImport) { btnImport.classList.remove('hidden'); btnImport.classList.add('flex'); }
     } else {
-      // For just "admin" role
+      // Role admin (tanpa pimpinan): hanya download, tanpa input/upload.
       if (roles.includes('admin')) {
         const btnExport = document.getElementById('btn-export');
         if (btnExport) { 

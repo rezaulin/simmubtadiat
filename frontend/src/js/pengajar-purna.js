@@ -93,12 +93,17 @@ async function checkAuth() {
     const data = await response.json();
     currentRole = data.role;
 
-    // Tombol tulis hanya untuk admin/pimpinan.
-    if (window.isAdminRole(data.role)) {
+    // Tombol tulis (Tambah / Import / Template) hanya pimpinan.
+    // Role admin = "Admin Data": cukup akses download, tanpa input manual
+    // maupun upload — sesuai permintaan role menu.
+    if (window.isPimpinanRole(data.role)) {
       btnTambah?.classList.remove('hidden');
       btnImport?.classList.remove('hidden');
-      btnExport?.classList.remove('hidden');
       btnTemplate?.classList.remove('hidden');
+    }
+    // Download/export: admin & pimpinan.
+    if (window.isAdminRole(data.role)) {
+      btnExport?.classList.remove('hidden');
     }
 
     // Muat wilayah untuk filter + modal, lalu data, lalu deep-link #id dari
@@ -216,7 +221,8 @@ function renderTable(list) {
     tableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Tidak ada data pengajar purna.</td></tr>`;
     return;
   }
-  const canWrite = window.isAdminRole(currentRole);
+  // Tombol aksi tulis (Edit/Hapus) hanya pimpinan; role admin cukup download.
+  const canWrite = window.isPimpinanRole(currentRole);
   tableBody.innerHTML = '';
 
   list.forEach((p, idx) => {

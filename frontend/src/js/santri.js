@@ -72,7 +72,9 @@ async function checkAuth() {
       return;
     }
     const data = await response.json();
-    if (window.isAdminRole(data.role)) {
+    // Tombol tulis (Tambah / Import) hanya pimpinan. Role admin = "Admin Data":
+    // cukup download (blok export di bawah), tanpa input manual / upload.
+    if (window.isPimpinanRole(data.role)) {
       btnTambah.classList.remove('hidden');
       const importBtn = document.getElementById('btn-import');
       if (importBtn) importBtn.classList.remove('hidden');

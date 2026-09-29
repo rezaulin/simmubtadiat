@@ -23,18 +23,20 @@ describe('MENU_ACCESS canonical map', () => {
     expect(MENU_ACCESS.admin).toEqual(ALL_PAGES);
   });
 
-  it('mufatish has all pages except /settings.html and /absensi-manual.html', () => {
-    expect(MENU_ACCESS.mufatish).toEqual(ALL_PAGES.filter(p => p !== '/settings.html' && p !== '/absensi-manual.html'));
-  });
-
-  it('mustahiq has grades & attendance set', () => {
-    expect(MENU_ACCESS.mustahiq).toEqual(
-      ['/index.html', '/penilaian.html', '/absensi.html', '/rapot.html', '/rekap.html', '/catatan.html']
+  it('mufatish: /rapot.html and /dewan-harian.html removed (permintaan role menu)', () => {
+    expect(MENU_ACCESS.mufatish).toEqual(
+      ['/index.html', '/santri.html', '/penilaian.html', '/absensi-manual.html', '/pengajar.html', '/arsip.html', '/rekap.html', '/catatan.html']
     );
   });
 
-  it('muroqib has attendance only', () => {
-    expect(MENU_ACCESS.muroqib).toEqual(['/index.html', '/santri.html', '/kelas.html', '/absensi-manual.html', '/rekap.html', '/catatan.html']);
+  it('mustahiq: /perpindahan, /rapot and /dewan-harian removed (permintaan role menu)', () => {
+    expect(MENU_ACCESS.mustahiq).toEqual(
+      ['/index.html', '/santri.html', '/penilaian.html', '/rekap.html', '/catatan.html', '/pengajar.html']
+    );
+  });
+
+  it('muroqib: /pengajar.html and /dewan-harian.html removed (permintaan role menu)', () => {
+    expect(MENU_ACCESS.muroqib).toEqual(['/index.html', '/santri.html', '/absensi-manual.html', '/catatan.html', '/rekap.html']);
   });
 
   it('wali_santri has beranda & rapot only', () => {
