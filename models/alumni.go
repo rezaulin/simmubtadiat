@@ -108,13 +108,15 @@ func ProsesKeluarSantri(ctx context.Context, input ProsesKeluarInput) error {
 	return nil
 }
 
-func UpdateAlumniDetail(ctx context.Context, santriID int, statusIjazah, noIjazah, khidmah, keterangan, asalDaerah, tingkatanAkhir, alasanIjazah string) error {
+func UpdateAlumniDetail(ctx context.Context, santriID int, statusIjazah, noIjazah, khidmah, keterangan, asalDaerah, tingkatanAkhir, alasanIjazah, tahunLulus string) error {
 	_, err := config.DB.Exec(ctx,
-		`UPDATE alumni 
+		`UPDATE alumni
 		 SET status_ijazah = $1, no_ijazah = $2, khidmah = $3, keterangan = $4,
 		 asal_daerah = NULLIF($5, ''), tingkatan_akhir = NULLIF($6, ''), alasan_ijazah_belum_diambil = NULLIF($7, ''),
-		 updated_at = CURRENT_TIMESTAMP 
-		 WHERE santri_id = $8`, statusIjazah, noIjazah, khidmah, keterangan, asalDaerah, tingkatanAkhir, alasanIjazah, santriID)
+		 -- tahun_lulus memakai NULLIF agar kolom kosong tidak menimpa nilai lama.
+		 tahun_lulus = COALESCE(NULLIF($9, ''), tahun_lulus),
+		 updated_at = CURRENT_TIMESTAMP
+		 WHERE santri_id = $8`, statusIjazah, noIjazah, khidmah, keterangan, asalDaerah, tingkatanAkhir, alasanIjazah, santriID, tahunLulus)
 	return err
 }
 
@@ -188,6 +190,7 @@ type AlumniResponse struct {
 	KabupatenNama  *string `json:"kabupaten_nama"`
 	TahunMasuk     *string `json:"tahun_masuk"`
 	TahunKeluar    *string `json:"tahun_keluar"`
+	TahunLulus     *string `json:"tahun_lulus"`
 	Kamar          *string `json:"kamar"`
 	AlasanIjazah   *string `json:"alasan_ijazah_belum_diambil"`
 }
@@ -204,7 +207,7 @@ func GetAllAlumni(ctx context.Context, filter AlumniFilter) ([]AlumniResponse, e
 			  s.ttl_tempat, s.ttl_tanggal, s.nama_wali, s.alamat, s.no_hp_wali, s.khidmah_tempat,
 			  a.status_ijazah, a.no_ijazah, a.khidmah, a.keterangan, s.status,
 			  s.provinsi_kode, s.provinsi_nama, s.kabupaten_kode, s.kabupaten_nama,
-			  s.tahun_masuk, s.tahun_keluar, s.kamar,
+			  s.tahun_masuk, s.tahun_keluar, s.kamar, a.tahun_lulus,
 			  COALESCE(a.tingkatan_akhir, (
 				SELECT TRIM(COALESCE(t.nama, '') || ' ' || COALESCE(k.nama, ''))
 				FROM riwayat_bagian rb
@@ -249,7 +252,7 @@ func GetAllAlumni(ctx context.Context, filter AlumniFilter) ([]AlumniResponse, e
 			&a.TTL, &a.TTLTanggal, &a.NamaWali, &a.Alamat, &a.NoHP, &a.TempatKhidmah,
 			&a.StatusIjazah, &noIj, &khid, &keterangan, &a.StatusAkhir,
 			&a.ProvinsiKode, &a.ProvinsiNama, &a.KabupatenKode, &a.KabupatenNama,
-			&a.TahunMasuk, &a.TahunKeluar, &a.Kamar, &tingkatanAkhir, &asalDaerah, &alasanIjazah); err != nil {
+			&a.TahunMasuk, &a.TahunKeluar, &a.Kamar, &a.TahunLulus, &tingkatanAkhir, &asalDaerah, &alasanIjazah); err != nil {
 			return nil, err
 		}
 		if noIj != nil {
@@ -305,7 +308,8 @@ func buildAsalDaerah(kabupaten, provinsi, alamat *string) string {
 
 // TambahAlumniManual menambahkan satu alumni secara manual (tanpa proses keluar).
 // Insert ke tabel santri (status=lulus) + tabel alumni.
-func TambahAlumniManual(ctx context.Context, nama, stambuk, nisn, ttl, wali, alamat, noHP, khidmah, tempatKhidmah, statusIjazah, keterangan, tahunMasuk, tahunKeluar string) error {
+// tahunLulus diisi ke kolom alumni.tahun_lulus (terpisah dari santri.tahun_keluar).
+func TambahAlumniManual(ctx context.Context, nama, stambuk, nisn, ttl, wali, alamat, noHP, khidmah, tempatKhidmah, statusIjazah, keterangan, tahunMasuk, tahunKeluar, tahunLulus string) error {
 	// Generate NIK placeholder
 	nik := "ALM_" + stambuk + "_" + time.Now().Format("20060102150405")
 
@@ -327,14 +331,20 @@ func TambahAlumniManual(ctx context.Context, nama, stambuk, nisn, ttl, wali, ala
 		return err
 	}
 
-	// Insert alumni record
+	// Insert alumni record.
+	// tahun_lulus diambil dari input tahunLulus; bila kosong, isi dari
+	// tahunKeluar agar alumni lama tetap punya tahun lulus yang wajar.
+	tahunLulusAkhir := tahunLulus
+	if tahunLulusAkhir == "" {
+		tahunLulusAkhir = tahunKeluar
+	}
 	_, err = config.DB.Exec(ctx,
 		`INSERT INTO alumni (santri_id, tahun_lulus, khidmah, status_ijazah, keterangan)
 		 VALUES ($1, $2, $3, $4, $5)
 		 ON CONFLICT (santri_id) DO UPDATE SET
 		   khidmah = EXCLUDED.khidmah, status_ijazah = EXCLUDED.status_ijazah,
 		   keterangan = EXCLUDED.keterangan, updated_at = CURRENT_TIMESTAMP`,
-		santriID, nilIfEmpty2(tahunKeluar), khidmah, statusIjazah, nilIfEmpty2(keterangan))
+		santriID, nilIfEmpty2(tahunLulusAkhir), khidmah, statusIjazah, nilIfEmpty2(keterangan))
 	return err
 }
 

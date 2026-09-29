@@ -40,31 +40,63 @@ func ImportAlumniFromExcel(ctx context.Context, reader io.Reader) (*AlumniImport
 
 	result := &AlumniImportResult{}
 
+	// Petakan nama header -> indeks kolom. Membaca berdasar nama (bukan indeks
+	// tetap) membuat file template lama tetap terbaca walau urutan kolom berubah
+	// dan menambah kolom baru (mis. "Tahun Lulus").
+	headerIdx := map[string]int{}
+	for i, h := range rows[0] {
+		key := strings.ToLower(strings.TrimSpace(h))
+		if key == "" {
+			continue
+		}
+		if _, dup := headerIdx[key]; !dup {
+			headerIdx[key] = i
+		}
+	}
+	// idx mengembalikan indeks kolom berdasar salah satu kandidat nama header,
+	// atau fallback (indeks lama) bila tidak ditemukan.
+	idx := func(names []string, fallback int) int {
+		for _, n := range names {
+			if i, ok := headerIdx[strings.ToLower(strings.TrimSpace(n))]; ok {
+				return i
+			}
+		}
+		return fallback
+	}
+
 	for rowNum := 1; rowNum < len(rows); rowNum++ {
 		row := rows[rowNum]
 		result.Total++
 
 		get := func(i int) string {
-			if i < len(row) {
+			// i >= 0 wajib: idx() mengembalikan -1 bila header tidak ada
+			// (mis. kolom "Tahun Lulus" pada file template lama).
+			if i >= 0 && i < len(row) {
 				return strings.TrimSpace(row[i])
 			}
 			return ""
 		}
 
-		nama := get(0)
-		stambuk := get(1)
-		nisn := get(2)
-		ttl := get(3)
-		wali := get(4)
-		alamat := get(5)
-		noHP := get(6)
-		khidmahRaw := strings.ToLower(get(7))
-		tempatKhidmah := get(8)
-		ijazahRaw := strings.ToLower(get(9))
-		keterangan := get(10)
-		tahunMasuk := get(11)
-		tahunKeluar := get(12)
-		kamar := get(13)
+		nama := get(idx([]string{"nama", "nama lengkap"}, 0))
+		stambuk := get(idx([]string{"stambuk"}, 1))
+		nisn := get(idx([]string{"nisn"}, 2))
+		ttl := get(idx([]string{"ttl", "tempat, tanggal lahir"}, 3))
+		wali := get(idx([]string{"wali", "nama wali"}, 4))
+		alamat := get(idx([]string{"alamat"}, 5))
+		noHP := get(idx([]string{"no hp ws", "no hp", "no. hp wali"}, 6))
+		khidmahRaw := strings.ToLower(get(idx([]string{"khidmah"}, 7)))
+		tempatKhidmah := get(idx([]string{"tempat khidmah"}, 8))
+		ijazahRaw := strings.ToLower(get(idx([]string{"pengambilan ijazah", "status ijazah"}, 9)))
+		keterangan := get(idx([]string{"keterangan"}, 10))
+		tahunMasuk := get(idx([]string{"tahun masuk"}, 11))
+		tahunKeluar := get(idx([]string{"tahun keluar"}, 12))
+		kamar := get(idx([]string{"kamar"}, 13))
+		// Kolom baru di template: tanpa fallback indeks karena tidak ada pada file lama.
+		// Bila kosong, tahun lulus diambil dari tahun keluar agar data lama tetap wajar.
+		tahunLulus := get(idx([]string{"tahun lulus"}, -1))
+		if tahunLulus == "" {
+			tahunLulus = tahunKeluar
+		}
 
 		// Skip empty rows
 		if nama == "" && stambuk == "" {
@@ -129,7 +161,7 @@ func ImportAlumniFromExcel(ctx context.Context, reader io.Reader) (*AlumniImport
 				 ON CONFLICT (santri_id) DO UPDATE SET
 				   khidmah = EXCLUDED.khidmah, status_ijazah = EXCLUDED.status_ijazah,
 				   keterangan = EXCLUDED.keterangan, updated_at = CURRENT_TIMESTAMP`,
-				santriID, nilIfEmpty(tahunKeluar), khidmah, statusIjazah, nilIfEmpty(keterangan))
+				santriID, nilIfEmpty(tahunLulus), khidmah, statusIjazah, nilIfEmpty(keterangan))
 			if tempatKhidmah != "" {
 				_, _ = config.DB.Exec(ctx, `UPDATE santri SET khidmah_tempat = $1 WHERE id = $2`, tempatKhidmah, santriID)
 			}
@@ -158,7 +190,7 @@ func ImportAlumniFromExcel(ctx context.Context, reader io.Reader) (*AlumniImport
 			 ON CONFLICT (santri_id) DO UPDATE SET
 			   khidmah = EXCLUDED.khidmah, status_ijazah = EXCLUDED.status_ijazah,
 			   keterangan = EXCLUDED.keterangan, updated_at = CURRENT_TIMESTAMP`,
-			santriID, nilIfEmpty(tahunKeluar), khidmah, statusIjazah, nilIfEmpty(keterangan))
+			santriID, nilIfEmpty(tahunLulus), khidmah, statusIjazah, nilIfEmpty(keterangan))
 		if err != nil {
 			result.Skipped++
 			result.Errors = append(result.Errors, fmt.Sprintf("Baris %d (%s) alumni: %v", rowNum+1, nama, err))

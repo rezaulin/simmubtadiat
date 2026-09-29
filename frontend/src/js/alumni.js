@@ -440,7 +440,7 @@ if (formSelesai) {
 
 // 3. Fetch Data Alumni
 async function loadAlumni(query = '') {
-  tableBody.innerHTML = `<tr><td colspan="8" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Memuat data alumni...</td></tr>`;
+  tableBody.innerHTML = `<tr><td colspan="9" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Memuat data alumni...</td></tr>`;
   
   try {
     // Bangun query string filter wilayah (backend mendukung ?provinsi= & ?kabupaten=)
@@ -463,16 +463,19 @@ async function loadAlumni(query = '') {
       data = data.filter(a => a.nama.toLowerCase().includes(query.toLowerCase()) || (a.stambuk && a.stambuk.includes(query)));
     }
     
-    // Filter by tahun masuk / keluar on client side
+    // Filter by tahun masuk / lulus / keluar on client side
     const filterTahunMasuk = document.getElementById('filter-tahun-masuk');
+    const filterTahunLulus = document.getElementById('filter-tahun-lulus');
     const filterTahunKeluar = document.getElementById('filter-tahun-keluar');
     const tm = filterTahunMasuk && filterTahunMasuk.value ? filterTahunMasuk.value.trim() : '';
+    const tl = filterTahunLulus && filterTahunLulus.value ? filterTahunLulus.value.trim() : '';
     const tk = filterTahunKeluar && filterTahunKeluar.value ? filterTahunKeluar.value.trim() : '';
 
-    if (tm || tk) {
+    if (tm || tl || tk) {
       data = data.filter(a => {
         let match = true;
         if (tm && a.tahun_masuk !== tm) match = false;
+        if (tl && a.tahun_lulus !== tl) match = false;
         if (tk && a.tahun_keluar !== tk) match = false;
         return match;
       });
@@ -481,7 +484,7 @@ async function loadAlumni(query = '') {
     renderTable(data);
     
   } catch (err) {
-    tableBody.innerHTML = `<tr><td colspan="8" class="px-6 py-8 text-center text-red-500">Terjadi kesalahan: ${err.message}</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="9" class="px-6 py-8 text-center text-red-500">Terjadi kesalahan: ${err.message}</td></tr>`;
   }
 }
 
@@ -535,8 +538,13 @@ if (filterKabupaten) {
   filterKabupaten.addEventListener('change', () => loadAlumni(searchInput.value));
 }
 const filterTahunMasuk = document.getElementById('filter-tahun-masuk');
+const filterTahunLulus = document.getElementById('filter-tahun-lulus');
 const filterTahunKeluar = document.getElementById('filter-tahun-keluar');
 if (filterTahunMasuk) filterTahunMasuk.addEventListener('input', () => {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => loadAlumni(searchInput.value), 300);
+});
+if (filterTahunLulus) filterTahunLulus.addEventListener('input', () => {
   clearTimeout(searchTimeout);
   searchTimeout = setTimeout(() => loadAlumni(searchInput.value), 300);
 });
@@ -551,6 +559,7 @@ if (btnResetFilter) {
     filterKabupaten.innerHTML = '<option value="">-- Semua Kabupaten --</option>';
     filterKabupaten.disabled = true;
     if (filterTahunMasuk) filterTahunMasuk.value = '';
+    if (filterTahunLulus) filterTahunLulus.value = '';
     if (filterTahunKeluar) filterTahunKeluar.value = '';
     loadAlumni(searchInput.value);
   });
@@ -564,7 +573,7 @@ function renderTable(alumniArray) {
   if (totalEl) totalEl.textContent = `Total: ${alumniArray.length} alumni`;
 
   if (!alumniArray || alumniArray.length === 0) {
-    tableBody.innerHTML = `<tr><td colspan="8" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Tidak ada data alumni ditemukan.</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="9" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Tidak ada data alumni ditemukan.</td></tr>`;
     return;
   }
   
@@ -615,6 +624,9 @@ function renderTable(alumniArray) {
         ${a.tahun_masuk || '-'}
       </td>
       <td data-label="Tahun Lulus" class="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
+        ${a.tahun_lulus || '-'}
+      </td>
+      <td data-label="Tahun Keluar" class="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
         ${a.tahun_keluar || '-'}
       </td>
       <td data-label="Status Keluar" class="px-6 py-4">
@@ -824,6 +836,7 @@ function openDetailModal(alumni) {
   // Riwayat
   document.getElementById('detail-kamar').textContent = alumni.kamar || '-';
   document.getElementById('detail-tahun-masuk').textContent = alumni.tahun_masuk || '-';
+  document.getElementById('detail-tahun-lulus').textContent = alumni.tahun_lulus || '-';
   document.getElementById('detail-tahun-keluar').textContent = alumni.tahun_keluar || '-';
   document.getElementById('detail-tempat-khidmah').textContent = alumni.tempat_khidmah || '-';
 
@@ -859,6 +872,7 @@ function openEditModal(alumni) {
   setVal('edit-alumni-alamat', alumni.alamat || '');
   setVal('edit-alumni-kamar', alumni.kamar || '');
   setVal('edit-alumni-tahun-masuk', alumni.tahun_masuk || '');
+  setVal('edit-alumni-tahun-lulus', alumni.tahun_lulus || '');
   setVal('edit-alumni-tahun-keluar', alumni.tahun_keluar || '');
   setVal('edit-alumni-tempat-khidmah', alumni.tempat_khidmah || '');
 
@@ -942,6 +956,7 @@ formUpdateAlumni.addEventListener('submit', async (e) => {
     alamat: getVal('edit-alumni-alamat'),
     kamar: getVal('edit-alumni-kamar'),
     tahun_masuk: getVal('edit-alumni-tahun-masuk'),
+    tahun_lulus: getVal('edit-alumni-tahun-lulus'),
     tahun_keluar: getVal('edit-alumni-tahun-keluar'),
     tempat_khidmah: getVal('edit-alumni-tempat-khidmah')
   };
@@ -1084,7 +1099,8 @@ formTambahAlumni?.addEventListener('submit', async (e) => {
     status_ijazah: fd.get('status_ijazah') || 'belum',
     keterangan: fd.get('keterangan')?.trim() || '',
     tahun_masuk: fd.get('tahun_masuk')?.trim() || '',
-    tahun_keluar: fd.get('tahun_keluar')?.trim() || ''
+    tahun_keluar: fd.get('tahun_keluar')?.trim() || '',
+    tahun_lulus: fd.get('tahun_lulus')?.trim() || ''
   };
 
   const btn = formTambahAlumni.querySelector('button[type="submit"]');
@@ -1215,16 +1231,18 @@ async function downloadAlumni() {
 
     // Apply same filters as table
     const tm = filterTahunMasuk && filterTahunMasuk.value ? filterTahunMasuk.value.trim() : '';
+    const tl = filterTahunLulus && filterTahunLulus.value ? filterTahunLulus.value.trim() : '';
     const tk = filterTahunKeluar && filterTahunKeluar.value ? filterTahunKeluar.value.trim() : '';
-    if (tm || tk) {
+    if (tm || tl || tk) {
       data = data.filter(a => {
         if (tm && a.tahun_masuk !== tm) return false;
+        if (tl && a.tahun_lulus !== tl) return false;
         if (tk && a.tahun_keluar !== tk) return false;
         return true;
       });
     }
 
-    const headers = ['No', 'Nama', 'Stambuk', 'NISN', 'TTL', 'Tingkatan Akhir', 'Status Keluar', 'Kamar', 'Asal Daerah', 'Provinsi', 'Kabupaten', 'Tahun Masuk', 'Tahun Keluar', 'Nama Wali', 'No. HP Wali', 'Alamat', 'Tempat Khidmah', 'Status Ijazah', 'No. Ijazah', 'Keterangan', 'Alasan Ijazah'];
+    const headers = ['No', 'Nama', 'Stambuk', 'NISN', 'TTL', 'Tingkatan Akhir', 'Status Keluar', 'Kamar', 'Asal Daerah', 'Provinsi', 'Kabupaten', 'Tahun Masuk', 'Tahun Lulus', 'Tahun Keluar', 'Nama Wali', 'No. HP Wali', 'Alamat', 'Tempat Khidmah', 'Status Ijazah', 'No. Ijazah', 'Keterangan', 'Alasan Ijazah'];
     const statusMap = { lulus: 'Lulus', boyong: 'Boyong', keluar: 'Dikeluarkan', dikeluarkan: 'Dikeluarkan' };
     const ijazahMap = { belum: 'Belum', sudah: 'Sudah', tidak: 'Tidak' };
     const keteranganMap = { menikah: 'Menikah', membantu_ortu: 'Membantu Orang Tua', bekerja: 'Bekerja', kuliah: 'Kuliah', lainnya: 'Lainnya' };
@@ -1250,6 +1268,7 @@ async function downloadAlumni() {
         a.provinsi_nama || '-',
         a.kabupaten_nama || '-',
         a.tahun_masuk || '-',
+        a.tahun_lulus || '-',
         a.tahun_keluar || '-',
         a.nama_wali || '-',
         a.no_hp_wali || '-',

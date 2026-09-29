@@ -7,7 +7,8 @@ import (
 )
 
 // DownloadTemplateAlumni mengembalikan file Excel (.xlsx) template import alumni.
-// Format: NAMA | Stambuk | NISN | TTL | WALI | ALAMAT | NO HP WS | KHIDMAH | TEMPAT KHIDMAH | PENGAMBILAN IJAZAH | KETERANGAN | TAHUN MASUK | TAHUN KELUAR
+// Format: NAMA | Stambuk | NISN | TTL | WALI | ALAMAT | NO HP WS | KHIDMAH | TEMPAT KHIDMAH | PENGAMBILAN IJAZAH | KETERANGAN | TAHUN MASUK | TAHUN KELUAR | TAHUN LULUS | KAMAR
+// Kolom dibaca berdasarkan nama header, sehingga urutan boleh berubah.
 func DownloadTemplateAlumni(w http.ResponseWriter, r *http.Request) {
 	f := excelize.NewFile()
 	defer f.Close()
@@ -17,7 +18,7 @@ func DownloadTemplateAlumni(w http.ResponseWriter, r *http.Request) {
 	headers := []string{
 		"Nama", "Stambuk", "NISN", "TTL", "Wali", "Alamat", "No HP WS",
 		"Khidmah", "Tempat Khidmah", "Pengambilan Ijazah", "Keterangan",
-		"Tahun Masuk", "Tahun Keluar", "Kamar",
+		"Tahun Masuk", "Tahun Keluar", "Tahun Lulus", "Kamar",
 	}
 
 	headerStyle, _ := f.NewStyle(&excelize.Style{
@@ -37,7 +38,7 @@ func DownloadTemplateAlumni(w http.ResponseWriter, r *http.Request) {
 	example := []interface{}{
 		"Fatimah", "4576", "0012345678", "Kediri, 21 Juli 2000", "Muhammad",
 		"Mojoroto, Kediri, Jawa Timur", "085691985001",
-		"Khidmah", "Ustadzah", "Sudah", "", "2020", "2025", "Kamar A1",
+		"Khidmah", "Ustadzah", "Sudah", "", "2020", "2025", "2025", "Kamar A1",
 	}
 	for i, v := range example {
 		cell, _ := excelize.CoordinatesToCellName(i+1, 2)
@@ -56,7 +57,8 @@ func DownloadTemplateAlumni(w http.ResponseWriter, r *http.Request) {
 		"4. Khidmah: isi 'Khidmah' atau 'Tidak Khidmah'.",
 		"5. Pengambilan Ijazah: Sudah / Belum / Tidak.",
 		"6. TTL format bebas (Kota, Tanggal).",
-		"7. Jika Stambuk sudah ada di sistem, data akan di-update.",
+		"7. Tahun Lulus = tahun wisuda/ijazah; boleh dikosongkan (fallback ke Tahun Keluar).",
+		"8. Jika Stambuk sudah ada di sistem, data akan di-update.",
 	}
 	for i, row := range guide {
 		cell, _ := excelize.CoordinatesToCellName(1, i+1)

@@ -41,6 +41,7 @@ func UpdateAlumni(w http.ResponseWriter, r *http.Request) {
 		Kamar         string `json:"kamar"`
 		TahunMasuk    string `json:"tahun_masuk"`
 		TahunKeluar   string `json:"tahun_keluar"`
+		TahunLulus    string `json:"tahun_lulus"`
 		TempatKhidmah string `json:"tempat_khidmah"`
 		AsalDaerah     string `json:"asal_daerah"`
 		TingkatanAkhir string `json:"tingkatan_akhir"`
@@ -52,7 +53,7 @@ func UpdateAlumni(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := models.UpdateAlumniDetail(r.Context(), req.SantriID, req.StatusIjazah, req.NoIjazah, req.Khidmah, req.Keterangan, req.AsalDaerah, req.TingkatanAkhir, req.AlasanIjazah); err != nil {
+	if err := models.UpdateAlumniDetail(r.Context(), req.SantriID, req.StatusIjazah, req.NoIjazah, req.Khidmah, req.Keterangan, req.AsalDaerah, req.TingkatanAkhir, req.AlasanIjazah, req.TahunLulus); err != nil {
 		writeJSONError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -105,6 +106,7 @@ func TambahAlumniManual(w http.ResponseWriter, r *http.Request) {
 		Keterangan    string `json:"keterangan"`
 		TahunMasuk    string `json:"tahun_masuk"`
 		TahunKeluar   string `json:"tahun_keluar"`
+		TahunLulus    string `json:"tahun_lulus"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -119,7 +121,7 @@ func TambahAlumniManual(w http.ResponseWriter, r *http.Request) {
 
 	err := models.TambahAlumniManual(r.Context(), req.Nama, req.Stambuk, req.NISN, req.TTL, req.Wali,
 		req.Alamat, req.NoHP, req.Khidmah, req.TempatKhidmah, req.StatusIjazah, req.Keterangan,
-		req.TahunMasuk, req.TahunKeluar)
+		req.TahunMasuk, req.TahunKeluar, req.TahunLulus)
 	if err != nil {
 		writeJSONError(w, err.Error(), http.StatusInternalServerError)
 		return
