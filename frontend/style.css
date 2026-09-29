@@ -224,6 +224,30 @@
       flex-direction: column;
       align-items: flex-end;
     }
+
+    /* --- HP: cegah teks panjang keluar batas layar ----------------------
+       Beberapa sel memakai `whitespace-nowrap` (Tgl. Perubahan di menu
+       Arsip & Keluar, Asal Daerah/Nama di menu Pengajar Purna & Alumni).
+       Di desktop tidak masalah, tapi di layar 390px teks seperti
+       "16 Rabiul Akhir 1448 H" / "KABUPATEN BREBES, Jawa Tengah"
+       meluber keluar sel. Spesifisitas .table-responsive td (0,1,1) lebih
+       tinggi dari utility .whitespace-nowrap (0,1,0), jadi aturan ini menang.
+       Desktop (>= 768px) tidak terpengaruh karena ada di dalam media query. */
+    .table-responsive td,
+    .table-responsive td * {
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+
+    /* --- HP: dropdown filter jangan melebihi layar ----------------------
+       <select> punya min-width bawaan mengikuti teks opsi terpanjang
+       (mis. opsi "I'dadiyah - 1 - A" -> filter Kelas di menu Arsip keluar
+       168px dari layar). Sebagai flex item, automatic minimum size-nya
+       bisa dimatikan dengan min-width:0 agar ikut lebar container. */
+    select.glass-input {
+      min-width: 0;
+      max-width: 100%;
+    }
   }
 
   /* Scroll shadow: visual indicator that a horizontally scrollable container
