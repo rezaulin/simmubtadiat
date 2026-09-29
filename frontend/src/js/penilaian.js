@@ -21,10 +21,10 @@ let cachedTingkatan = [], cachedKelas = [], cachedBagian = [];
 let currentData = null;
 let tahunAjaran = '';
 
-// Track khos/bayan cells that the user explicitly edited (dirty).
-// Keys: "santriId_mapelId_semester" for khos, "bayan_santriId" for bayan.
+// Track khos cells that the user explicitly edited (dirty).
+// Keys: "santriId_mapelId_semester".
+// CATATAN: Al-Bayan TIDAK punya dirty-tracking — kolom dikunci, tidak bisa diedit.
 const dirtyKhos = new Set();
-const dirtyBayan = new Set();
 
 async function loadFilters() {
   // Load tahun ajaran aktif
@@ -150,8 +150,8 @@ function renderSpreadsheet() {
   html += renderSection('UJIAN SEMESTER GENAP', mapels, santri, nilai_kuartal['4'], 4, canEdit);
   // Section 6: Raport Semester 2
   html += renderRaportSection('NILAI RAPORT SEMESTER 2', mapels, santri, nilai_khos['2'], absensi['2'], 2, canEdit);
-  // Section 7: Al-Bayan
-  html += renderBayanSection(santri, nilai_khos, nilai_bayan, absensi_bayan, mapels.length, canEdit);
+  // Section 7: Al-Bayan — DIKUNCI (read-only, selalu dihitung otomatis)
+  html += renderBayanSection(santri, nilai_khos, nilai_bayan, absensi_bayan, mapels.length);
 
   // Export + Save buttons
   html += '<div class="mt-6 flex flex-wrap gap-2 justify-end">';
@@ -188,7 +188,6 @@ function renderSpreadsheet() {
 
   // Clear dirty tracking on fresh render (data just loaded from server).
   dirtyKhos.clear();
-  dirtyBayan.clear();
 
   // Wire save button
   document.getElementById('btn-save-all')?.addEventListener('click', saveAll);
@@ -217,12 +216,7 @@ function renderSpreadsheet() {
     });
   });
 
-  // Track user edits on bayan inputs.
-  container.querySelectorAll('input[data-bayan]').forEach(inp => {
-    inp.addEventListener('input', () => {
-      dirtyBayan.add(inp.dataset.bayan);
-    });
-  });
+  // CATATAN: Al-Bayan tidak punya listener edit — kolom dikunci (read-only).
 
   // Recalculate Jml & Rata² pada baris section (Tamrin/Ujian) secara live saat
   // pengguna mengubah nilai, tanpa perlu menyimpan dulu.
@@ -238,8 +232,8 @@ function renderSpreadsheet() {
     });
   });
 
-  // Clamp khos override (4-9) & bayan (0-9) + refresh tanda nilai rendah live.
-  container.querySelectorAll('input[data-khos-sem], input[data-bayan]').forEach(inp => {
+  // Clamp khos override (4-9) + refresh tanda nilai rendah live.
+  container.querySelectorAll('input[data-khos-sem]').forEach(inp => {
     inp.addEventListener('input', () => {
       clampNilaiInput(inp);
       refreshRendahMarks();
@@ -668,7 +662,7 @@ function renderRaportSection(title, mapels, santri, khosMap, absensiMap, semeste
   return html;
 }
 
-function renderBayanSection(santri, nilaiKhos, nilaiBayan, absensiMap, totalMapels, canEdit) {
+function renderBayanSection(santri, nilaiKhos, nilaiBayan, absensiMap, totalMapels) {
   // Label Al-Bayan: 9..6 punya label sendiri, <=5 semuanya RODI'.
   const bayanLabels = { 9: 'JAYYID AWAL', 8: 'JAYYID TSANI', 7: 'MUTAWASSIT AWAL', 6: 'MUTAWASSIT TSANI' };
   const bayanLabel = (v) => bayanLabels[v] || "RODI'";
@@ -752,11 +746,9 @@ function renderBayanSection(santri, nilaiKhos, nilaiBayan, absensiMap, totalMape
     html += `<td class="px-2 py-1 border text-center ${koreksi < 0 && !overridden ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'}">${ketKoreksi}</td>`;
     
     const labelAkhir = hasilAkhir !== '-' ? bayanLabel(hasilAkhir) : '';
-    if (!canEdit) {
-      html += `<td class="px-0 py-0 border text-center bg-gray-50 dark:bg-slate-800"><input type="text" disabled data-bayan-cell value="${hasilAkhir !== '-' ? hasilAkhir : ''}" class="w-full text-center text-xs py-2 bg-transparent border-0 outline-none text-gray-600 dark:text-gray-300 font-bold" title="${labelAkhir || 'Hanya mustahiq yang dapat mengedit'}"></td>`;
-    } else {
-      html += `<td class="px-0 py-0 border text-center bg-emerald-50 dark:bg-emerald-900/20"><input type="number" min="0" max="9" data-bayan="${s.id}" data-bayan-cell value="${hasilAkhir !== '-' ? hasilAkhir : ''}" class="w-full text-center text-xs py-1 bg-transparent border-0 focus:bg-emerald-100 dark:focus:bg-emerald-900/40 text-emerald-800 dark:text-emerald-200 outline-none font-bold" title="${labelAkhir}"></td>`;
-    }
+    // Kolom Al-Bayan Akhir DIKUNCI — selalu disabled, tanpa atribut data-bayan
+    // (tidak ada override manual). Nilai murni hasil GenerateAlBayan.
+    html += `<td class="px-0 py-0 border text-center bg-gray-50 dark:bg-slate-800"><input type="text" disabled data-bayan-cell value="${hasilAkhir !== '-' ? hasilAkhir : ''}" class="w-full text-center text-xs py-2 bg-transparent border-0 outline-none text-gray-600 dark:text-gray-300 font-bold cursor-not-allowed" title="${labelAkhir || ''}Al-Bayan dikunci (otomatis)"></td>`;
     html += `<td class="px-2 py-1 border text-center text-xs font-semibold">${labelAkhir || '-'}</td>`;
     html += '</tr>';
   });
@@ -891,30 +883,9 @@ async function saveAll() {
       });
     }
 
-    // 6. Save manual Al-Bayan overrides (if edited directly in Al-Bayan table)
-    // Collect ONLY bayan inputs that the user explicitly edited.
-    const bayanInputs = [];
-    container.querySelectorAll('input[data-bayan]').forEach(inp => {
-      if (!dirtyBayan.has(inp.dataset.bayan)) return; // skip non-edited cells
-      const val = parseInt(inp.value);
-      if (isNaN(val)) return;
-      bayanInputs.push({
-        santri_id: parseInt(inp.dataset.bayan),
-        hasil_akhir: val
-      });
-    });
-
-    if (bayanInputs.length > 0) {
-      const resBayan = await fetch(`/api/penilaian/bayan?tahun_ajaran=${encodeURIComponent(tahunAjaran)}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(bayanInputs)
-      });
-      if (!resBayan.ok) {
-        const d = await resBayan.json().catch(() => ({}));
-        throw new Error(d.message || 'Gagal simpan manual override Al-Bayan');
-      }
-    }
+    // 6. Al-Bayan DIKUNCI — tidak ada upload manual. generate-bayan (langkah 5)
+    //    sudah menulis nilai akhir + label ke DB, dan endpoint /api/penilaian/bayan
+    //    ditolak backend sebagai lapis pengaman kedua.
 
     alert('Semua nilai berhasil disimpan dan dihitung!');
     loadSpreadsheet(); // Reload to show calculated values

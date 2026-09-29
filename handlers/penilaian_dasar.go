@@ -268,33 +268,14 @@ func GetPenilaianSpreadsheet(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, data)
 }
 
-// BulkInputBayan handles bulk saving of Al-Bayan override
+// BulkInputBayan handles bulk saving of Al-Bayan override.
+// DIKUNCI: Al-Bayan akhir hanya boleh dihasilkan GenerateAlBayan (otomatis dari
+// rata-rata Khos 2 semester + koreksi absensi tahunan). Override manual
+// dinonaktifkan — endpoint ini sengaja menolak semua tulisan manual.
 func BulkInputBayan(w http.ResponseWriter, r *http.Request) {
-	var req []models.NilaiBayanInput
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	sids := make([]int, 0, len(req))
-	for _, it := range req {
-		sids = append(sids, it.SantriID)
-	}
-	if penilaianScopeGuardSantriEdit(w, r, sids) {
-		return
-	}
-
-	tahunAjaran := r.URL.Query().Get("tahun_ajaran")
-	if tahunAjaran == "" {
-		tahunAjaran = models.GetTahunAjaranAktif(r.Context())
-	}
-
-	if err := models.BulkInputNilaiBayan(r.Context(), req, tahunAjaran); err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		writeJSON(w, map[string]string{"message": err.Error()})
-		return
-	}
-
-	writeJSON(w, map[string]string{"status": "success", "message": "Override Al-Bayan berhasil disimpan"})
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusForbidden)
+	writeJSON(w, map[string]string{
+		"message": "Al-Bayan dikunci. Nilai hanya dihitung otomatis dari rata-rata Khos dan absensi tahunan.",
+	})
 }
