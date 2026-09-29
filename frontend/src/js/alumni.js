@@ -100,6 +100,7 @@ async function checkAuth() {
     }
     const data = await response.json();
     currentRole = data.role;
+    const roles = data.roles || [data.role];
     
     // Admins (Pimpinan / Admin) can process student exits
     // Aksi tulis (proses keluar/tambah/import/template) hanya untuk pimpinan.
@@ -119,9 +120,23 @@ async function checkAuth() {
       if (btnImportP) btnImportP.classList.remove('hidden');
     }
 
-    // Tombol Download: semua role yang bisa akses alumni
+    // Tombol Download: semua role yang bisa akses alumni — KECUALI role
+    // mustahiq (permintaan "Role Mustahiq + Keamanan"): tidak perlu download
+    // data Pengabdian dan tidak perlu download data alumni; input manual
+    // sudah tertutup lewat isPimpinanRole() di atas.
+    const bolehDownload = !roles.includes('mustahiq');
     const btnDownloadAlumni = document.getElementById('btn-download-alumni');
-    if (btnDownloadAlumni) btnDownloadAlumni.classList.remove('hidden');
+    if (btnDownloadAlumni) {
+      if (bolehDownload) btnDownloadAlumni.classList.remove('hidden');
+      else btnDownloadAlumni.classList.add('hidden');
+    }
+    // Tombol download Pengabdian tampil bawaan HTML (tanpa class hidden),
+    // jadi untuk role mustahiq harus DISIMPAN secara eksplisit.
+    const btnDownloadPengabdian = document.getElementById('btn-download-pengabdian');
+    if (btnDownloadPengabdian) {
+      if (bolehDownload) btnDownloadPengabdian.classList.remove('hidden');
+      else btnDownloadPengabdian.classList.add('hidden');
+    }
 
     
     // Load Data
