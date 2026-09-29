@@ -2,6 +2,8 @@ package middleware
 
 import (
 	"crypto/subtle"
+	"log"
+	"net"
 	"net/http"
 	"strings"
 	"sync"
@@ -194,18 +196,62 @@ func init() {
 	}()
 }
 
+// clientIP mengembalikan IP klien yang STABIL untuk rate limiting.
+//
+// AKAR MASALAH (dibuktikan empiris): versi lama memakai seluruh nilai
+// X-Forwarded-For sebagai key. nginx memakai `proxy_set_header X-Forwarded-For
+// $proxy_add_x_forwarded_for` sehingga IP edge Cloudflare menempel di akhir
+// header — dan edge-nya BERBEDA tiap request (tercatat: 162.158.88.129,
+// 172.70.142.183, 172.69.176.82, 162.159.98.25 dalam 5 request dari klien
+// yang sama). Key jadi selalu unik -> counter tak pernah terkumpul -> rate
+// limit tidak pernah membatasi (75+ percobaan login, NOL respons 429).
+func clientIP(r *http.Request) string {
+	// Cloudflare MENIMPA header ini dengan IP asli klien, jadi tidak bisa
+	// dipalsukan selama traffic melewati Cloudflare.
+	if cf := strings.TrimSpace(r.Header.Get("CF-Connecting-IP")); cf != "" {
+		if net.ParseIP(cf) != nil {
+			return cf
+		}
+	}
+	// X-Forwarded-For: pakai IP PERTAMA yang valid. Tiap proxy menambahkan
+	// miliknya di akhir, sehingga yang pertama = klien asli.
+	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
+		for _, part := range strings.Split(xff, ",") {
+			p := strings.TrimSpace(part)
+			if net.ParseIP(p) != nil {
+				return p
+			}
+		}
+	}
+	if host, _, err := net.SplitHostPort(r.RemoteAddr); err == nil && host != "" {
+		return host
+	}
+	return r.RemoteAddr
+}
+
+// GlobalLoginLimiter adalah jaring pengaman: membatasi TOTAL percobaan login
+// per menit tanpa peduli IP. Menutup celah bila header IP dipalsukan atau IP
+// tidak stabil, sehingga brute-force tetap terhambat meski key per-IP bermasalah.
+var GlobalLoginLimiter = &rateLimiter{
+	clients:  make(map[string]*rateEntry),
+	window:   1 * time.Minute,
+	maxReqs:  60,
+	banAfter: 120,
+}
+
 func RateLimitLogin(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ip := r.Header.Get("X-Forwarded-For")
-		if ip == "" {
-			ip = r.RemoteAddr
-		}
-		// Strip port
-		if idx := strings.LastIndex(ip, ":"); idx != -1 {
-			ip = ip[:idx]
-		}
+		ip := clientIP(r)
+
 		if !LoginLimiter.Allow(ip) {
+			log.Printf("[RATELIMIT] blokir per-IP ip=%s path=%s", ip, r.URL.Path)
 			w.Header().Set("Retry-After", "900")
+			http.Error(w, "Too many attempts. Try again later.", http.StatusTooManyRequests)
+			return
+		}
+		if !GlobalLoginLimiter.Allow("global") {
+			log.Printf("[RATELIMIT] blokir global ip=%s path=%s", ip, r.URL.Path)
+			w.Header().Set("Retry-After", "60")
 			http.Error(w, "Too many attempts. Try again later.", http.StatusTooManyRequests)
 			return
 		}
