@@ -109,14 +109,14 @@ if (btnResetFilter) {
 }
 
 async function loadCatatan() {
-  tableBody.innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Memuat data...</td></tr>`;
+  tableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Memuat data...</td></tr>`;
   try {
     const res = await fetch(`/api/catatan`);
     if (!res.ok) throw new Error('Gagal memuat catatan');
     cachedCatatan = (await res.json()) || [];
     filterCatatan();
   } catch (e) {
-    tableBody.innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-red-500">${e.message}</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-red-500">${e.message}</td></tr>`;
   }
 }
 
@@ -135,9 +135,15 @@ function filterCatatan() {
   renderRows(list);
 }
 
+// Escape teks data sebelum dirender (mencegah XSS pada kategori buatan pengguna).
+function escJenis(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, m =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+}
+
 function renderRows(list) {
   if (!list || list.length === 0) {
-    tableBody.innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Belum ada catatan.</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Belum ada catatan.</td></tr>`;
     return;
   }
   tableBody.innerHTML = '';
@@ -151,6 +157,13 @@ function renderRows(list) {
       ? `<div class="text-xs font-medium text-gray-600 dark:text-gray-400 mt-0.5">${infoArr.join(' - ')}</div>` 
       : '';
     const btnRiwayat = `<button data-riwayat="${c.santri_id}" data-nama="${c.santri_nama}" class="px-3 py-1 bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-200 rounded-lg text-xs font-semibold transition-colors">Riwayat</button>`;
+    // Jenis catatan tampil langsung di tabel (tanpa perlu klik Riwayat).
+    const badges = [];
+    if (c.jenis_pelanggaran) badges.push(`<span class="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300">${escJenis(c.jenis_pelanggaran)}</span>`);
+    if (c.jenis_prestasi) badges.push(`<span class="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300">${escJenis(c.jenis_prestasi)}</span>`);
+    const jenisCell = badges.length
+      ? `<div class="flex flex-col items-center gap-1">${badges.join('')}</div>`
+      : '<span class="text-gray-400 dark:text-gray-500">-</span>';
     tableBody.innerHTML += `
       <tr class="hover:bg-gray-50/50 dark:hover:bg-slate-700/30 transition-colors">
         <td data-label="Santri" class="px-6 py-4">
@@ -159,6 +172,7 @@ function renderRows(list) {
         </td>
         <td data-label="Total Pelanggaran" class="px-6 py-4 text-center font-bold text-red-600 dark:text-red-400">${c.total_pelanggaran || 0}</td>
         <td data-label="Total Prestasi" class="px-6 py-4 text-center font-bold text-green-600 dark:text-green-400">${c.total_prestasi || 0}</td>
+        <td data-label="Jenis" class="px-6 py-4 text-center">${jenisCell}</td>
         <td data-label="Aksi" class="px-6 py-4 text-right">
           <div class="flex justify-end gap-2">
             ${btnRiwayat}

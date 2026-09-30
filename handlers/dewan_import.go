@@ -237,3 +237,63 @@ func optStrDewan(s string) *string {
 	}
 	return &s
 }
+// ExportDewanHarian mengunduh seluruh data pengurus dewan harian sebagai
+// berkas .xlsx (baca-saja). Tersedia bagi semua role yang boleh melihat
+// tabel dewan harian — berbeda dengan /template yang hanya format kosong.
+func ExportDewanHarian(w http.ResponseWriter, r *http.Request) {
+	tahun := r.URL.Query().Get("tahun_ajaran")
+	list, err := models.GetDewanHarian(r.Context(), tahun)
+	if err != nil {
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
+		return
+	}
+
+	f := excelize.NewFile()
+	defer f.Close()
+	const sheet = "Dewan Harian"
+	f.SetSheetName("Sheet1", sheet)
+
+	headers := []string{"Nama", "Nama Wali", "Alamat", "No HP", "Jabatan", "Lembaga", "Tahun Aktif", "Status"}
+	for i, h := range headers {
+		cell, _ := excelize.CoordinatesToCellName(i+1, 1)
+		f.SetCellValue(sheet, cell, h)
+	}
+	styleID, err := f.NewStyle(&excelize.Style{
+		Font:      &excelize.Font{Bold: true, Color: "FFFFFF"},
+		Fill:      excelize.Fill{Type: "pattern", Color: []string{"0E7C86"}, Pattern: 1},
+		Alignment: &excelize.Alignment{Horizontal: "center", Vertical: "center"},
+	})
+	if err == nil {
+		lastCol, _ := excelize.CoordinatesToCellName(len(headers), 1)
+		f.SetCellStyle(sheet, "A1", lastCol, styleID)
+	}
+
+	deref := func(s *string) string {
+		if s == nil {
+			return ""
+		}
+		return *s
+	}
+	for i, d := range list {
+		status := "Nonaktif"
+		if d.IsActive {
+			status = "Aktif"
+		}
+		vals := []interface{}{d.Nama, deref(d.NamaWali), deref(d.Alamat), deref(d.NoHP),
+			d.Jabatan, d.Lembaga, d.TahunAktif, status}
+		for c, v := range vals {
+			cell, _ := excelize.CoordinatesToCellName(c+1, i+2)
+			f.SetCellValue(sheet, cell, v)
+		}
+	}
+	for i := range headers {
+		col, _ := excelize.ColumnNumberToName(i + 1)
+		f.SetColWidth(sheet, col, col, 24)
+	}
+
+	w.Header().Set("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+	w.Header().Set("Content-Disposition", `attachment; filename="data_dewan_harian.xlsx"`)
+	if err := f.Write(w); err != nil {
+		log.Printf("export dewan harian: %v", err)
+	}
+}

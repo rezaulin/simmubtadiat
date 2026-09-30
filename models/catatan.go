@@ -42,6 +42,11 @@ type RekapCatatan struct {
 	BagianNama       string `json:"bagian_nama,omitempty"`
 	TotalPelanggaran int    `json:"total_pelanggaran"`
 	TotalPrestasi    int    `json:"total_prestasi"`
+	// JenisPelanggaran / JenisPrestasi: daftar kategori unik per santri
+	// (dipisah koma) agar jenis catatan tampil langsung di tabel utama
+	// tanpa membuka modal Riwayat.
+	JenisPelanggaran string `json:"jenis_pelanggaran"`
+	JenisPrestasi    string `json:"jenis_prestasi"`
 }
 
 func validJenisCatatan(j string) bool {
@@ -175,7 +180,11 @@ func ListCatatan(ctx context.Context, jenis, keyword string) ([]CatatanSantri, e
 func GetRekapCatatan(ctx context.Context, keyword string, roles []string, pengajarID *int, userID int) ([]RekapCatatan, error) {
 	q := `SELECT c.santri_id, s.nama, COALESCE(t.nama, ''), COALESCE(k.nama, ''), COALESCE(b.nama_bagian, ''),
 	             SUM(CASE WHEN c.jenis = 'pelanggaran' THEN 1 ELSE 0 END) AS total_pelanggaran,
-	             SUM(CASE WHEN c.jenis = 'prestasi' THEN 1 ELSE 0 END) AS total_prestasi
+	             SUM(CASE WHEN c.jenis = 'prestasi' THEN 1 ELSE 0 END) AS total_prestasi,
+	             COALESCE(STRING_AGG(DISTINCT NULLIF(TRIM(c.kategori), ''), ', ')
+	                      FILTER (WHERE c.jenis = 'pelanggaran' AND c.kategori IS NOT NULL), '') AS jenis_pelanggaran,
+	             COALESCE(STRING_AGG(DISTINCT NULLIF(TRIM(c.kategori), ''), ', ')
+	                      FILTER (WHERE c.jenis = 'prestasi' AND c.kategori IS NOT NULL), '') AS jenis_prestasi
 	      FROM catatan_santri c
 	      JOIN santri s ON c.santri_id = s.id
 	      LEFT JOIN bagian b ON s.bagian_id = b.id
@@ -237,7 +246,7 @@ func GetRekapCatatan(ctx context.Context, keyword string, roles []string, pengaj
 	res := make([]RekapCatatan, 0)
 	for rows.Next() {
 		var r RekapCatatan
-		if err := rows.Scan(&r.SantriID, &r.SantriNama, &r.Tingkatan, &r.Kelas, &r.BagianNama, &r.TotalPelanggaran, &r.TotalPrestasi); err != nil {
+		if err := rows.Scan(&r.SantriID, &r.SantriNama, &r.Tingkatan, &r.Kelas, &r.BagianNama, &r.TotalPelanggaran, &r.TotalPrestasi, &r.JenisPelanggaran, &r.JenisPrestasi); err != nil {
 			return nil, err
 		}
 		res = append(res, r)

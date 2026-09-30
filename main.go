@@ -413,6 +413,7 @@ func main() {
 					r.Group(func(r chi.Router) {
 						r.Use(appMiddleware.RequireRoles("pimpinan", "mufatish", "mustahiq", "muroqib", "admin"))
 						r.Get("/", handlers.GetDewanHarian)
+						r.Get("/export", handlers.ExportDewanHarian)
 					})
 					// Write: pimpinan only
 					r.Group(func(r chi.Router) {
