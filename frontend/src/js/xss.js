@@ -90,7 +90,7 @@ const MENU_ACCESS = {
   pimpinan: ['/index.html', '/santri.html', '/perpindahan.html', '/kelas.html', '/penilaian.html', '/absensi-manual.html', '/rapot.html', '/pengajar.html', '/dewan-harian.html', '/arsip.html', '/alumni.html', '/rekap.html', '/catatan.html', '/settings.html', '/pengajar-purna.html'],
   admin: ['/index.html', '/santri.html', '/pengajar.html', '/pengajar-purna.html', '/alumni.html', '/dewan-harian.html', '/settings.html'],
   mufatish: ['/index.html', '/santri.html', '/penilaian.html', '/absensi-manual.html', '/pengajar.html', '/arsip.html', '/rekap.html', '/catatan.html'],
-  mustahiq: ['/index.html', '/santri.html', '/penilaian.html', '/rekap.html', '/catatan.html', '/pengajar.html', '/arsip.html', '/pengajar-purna.html'],
+  mustahiq: ['/index.html', '/santri.html', '/penilaian.html', '/rekap.html', '/catatan.html', '/pengajar.html', '/arsip.html'],
   muroqib: ['/index.html', '/santri.html', '/absensi-manual.html', '/catatan.html', '/rekap.html'],
   tim_rapot: ['/index.html', '/santri.html', '/penilaian.html', '/rapot.html', '/rekap.html'],
   keamanan: ['/index.html', '/santri.html', '/arsip.html', '/alumni.html', '/catatan.html', '/pengajar-purna.html'],

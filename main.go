@@ -426,12 +426,13 @@ func main() {
 				})
 
 				// Pengajar Purna (arsip pengajar lama).
-				// Baca : pimpinan & admin + (mustahiq, keamanan) sesuai permintaan
-				//        menu "Role Mustahiq + Keamanan — Menu Pengajar Purna".
+				// Baca : pimpinan, admin & keamanan (menu MUSTAHIQ dihapuskan
+				//        sesuai permintaan terbaru — role gda tetap dapat lewat
+				//        keamanan).
 				// Tulis : TETAP hanya pimpinan & admin.
 				r.Route("/pengajar-purna", func(r chi.Router) {
 					r.Group(func(r chi.Router) {
-						r.Use(appMiddleware.RequireRoles("pimpinan", "admin", "mustahiq", "keamanan"))
+						r.Use(appMiddleware.RequireRoles("pimpinan", "admin", "keamanan"))
 						r.Get("/", handlers.GetPengajarPurna)
 						r.Get("/export", handlers.ExportPengajarPurna)
 						r.Get("/template", handlers.DownloadTemplatePengajarPurna)
