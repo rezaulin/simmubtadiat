@@ -39,7 +39,20 @@
                 }
               }
             }
-          } catch(e) {}
+            // Menu kombinasi (AND) - Opsi C: Dewan Harian HANYA utk ganda
+            // Mustahiq + Keamanan (tunggal tidak dapat).
+            var menuCombo = [{ roles: ['mustahiq', 'keamanan'], menus: ['/dewan-harian.html'] }];
+            for (var ci = 0; ci < menuCombo.length; ci++) {
+              var comboOk = true;
+              for (var cj = 0; cj < menuCombo[ci].roles.length; cj++) {
+                if (parsedRoles.indexOf(menuCombo[ci].roles[cj]) === -1) { comboOk = false; break; }
+              }
+              if (comboOk) {
+                for (var cm = 0; cm < menuCombo[ci].menus.length; cm++) {
+                  if (allowed.indexOf(menuCombo[ci].menus[cm]) === -1) allowed.push(menuCombo[ci].menus[cm]);
+                }
+              }
+            }          } catch(e) {}
         }
         if (allowed.length === 0) allowed = menuAccess[savedRole] || [];
         if (allowed.indexOf(window.location.pathname) === -1) {

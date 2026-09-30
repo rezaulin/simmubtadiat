@@ -97,19 +97,32 @@ const MENU_ACCESS = {
   wali_santri: ['/index.html']
 };
 
+// ── Menu khusus KOMBINASI role (Opsi C) ────────────────────────────────────
+// Menu di bawah ini TIDAK dimiliki satu role mana pun; hanya muncul bila
+// SEMUA role dalam daftar `roles` dimiliki user. Saat ini: Dewan Harian
+// hanya untuk ganda Mustahiq + Keamanan (mustahiq tunggal / keamanan
+// tunggal tidak mendapatkannya).
+const MENU_COMBO = [
+  { roles: ['mustahiq', 'keamanan'], menus: ['/dewan-harian.html'] },
+];
+
 // Pure function: compute the links a role or array of roles is allowed to see.
 // Returns an empty array for unknown/empty roles so no disallowed menu leaks.
 function computeAllowedLinks(roles) {
-  if (Array.isArray(roles)) {
-    let allowed = new Set();
-    for (const r of roles) {
-      if (Object.prototype.hasOwnProperty.call(MENU_ACCESS, r)) {
-        MENU_ACCESS[r].forEach(link => allowed.add(link));
-      }
+  const list = Array.isArray(roles) ? roles : [roles];
+  const allowed = new Set();
+  for (const r of list) {
+    if (Object.prototype.hasOwnProperty.call(MENU_ACCESS, r)) {
+      MENU_ACCESS[r].forEach(link => allowed.add(link));
     }
-    return Array.from(allowed);
   }
-  return Object.prototype.hasOwnProperty.call(MENU_ACCESS, roles) ? MENU_ACCESS[roles] : [];
+  // Menu kombinasi: hanya ditambahkan bila SEMUA role terpenuhi (AND).
+  for (const combo of MENU_COMBO) {
+    if (combo.roles.every(r => list.indexOf(r) !== -1)) {
+      combo.menus.forEach(link => allowed.add(link));
+    }
+  }
+  return Array.from(allowed);
 }
 
 // Expose on window so plain-page scripts and head-guards can reference the

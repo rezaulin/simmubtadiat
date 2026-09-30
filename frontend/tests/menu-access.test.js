@@ -65,3 +65,34 @@ describe('computeAllowedLinks(role)', () => {
     expect(computeAllowedLinks(null)).toEqual([]);
   });
 });
+
+describe('Opsi C - /dewan-harian.html hanya utk kombinasi mustahiq+keamanan', () => {
+  const DH = '/dewan-harian.html';
+
+  it('mustahiq tunggal TIDAK mendapat Dewan Harian', () => {
+    expect(computeAllowedLinks(['mustahiq'])).not.toContain(DH);
+    expect(computeAllowedLinks('mustahiq')).not.toContain(DH);
+  });
+
+  it('keamanan tunggal TIDAK mendapat Dewan Harian', () => {
+    expect(computeAllowedLinks(['keamanan'])).not.toContain(DH);
+    expect(computeAllowedLinks('keamanan')).not.toContain(DH);
+  });
+
+  it('ganda mustahiq+keamanan MENDAPAT Dewan Harian (9 union + 1 combo = 10)', () => {
+    const gda = computeAllowedLinks(['mustahiq', 'keamanan']);
+    expect(gda).toContain(DH);
+    expect(gda).toHaveLength(10);
+  });
+
+  it('kombinasi lain TIDAK mendapat (syarat AND harus dua-duanya)', () => {
+    expect(computeAllowedLinks(['mufatish', 'keamanan'])).not.toContain(DH);
+    expect(computeAllowedLinks(['mustahiq', 'mufatish'])).not.toContain(DH);
+    expect(computeAllowedLinks(['mustahiq', 'keamanan', 'muroqib'])).toContain(DH);
+  });
+
+  it('pimpinan & admin tetap dapat lewat MENU_ACCESS (bukan via combo)', () => {
+    expect(computeAllowedLinks('pimpinan')).toContain(DH);
+    expect(computeAllowedLinks('admin')).toContain(DH);
+  });
+});
