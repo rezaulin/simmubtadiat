@@ -178,6 +178,14 @@ systemctl enable nginx
 # --- 8. Auto-renew (certbot timer sudah aktif by default) -------------------
 systemctl enable --now certbot.timer >/dev/null 2>&1 || true
 
+# --- 9. Backup harian (opsional: aktif otomatis kalau R2_* diset) -----------
+if [ -n "${R2_ACCESS_KEY_ID:-}" ] && [ -n "${R2_SECRET_ACCESS_KEY:-}" ]; then
+  log "Memasang backup harian → Cloudflare R2 ..."
+  bash "$APP_DIR/backup/install-backup.sh" || log "Backup dilewati (lihat pesan error di atas)."
+else
+  log "Backup harian: belum aktif — set R2_* lalu jalankan: sudo bash backup/install-backup.sh (panduan: backup/README.md)"
+fi
+
 # --- Selesai ----------------------------------------------------------------
 cat <<EOF
 

@@ -39,3 +39,7 @@ tmp_*.ps1
 Thumbs.db
 tmp_extract/
 tmp_deploy_folder/
+
+# Backup harian (dump & log jangan masuk repo)
+backup/dumps/
+backup/logs/
