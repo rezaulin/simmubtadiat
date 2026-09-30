@@ -78,8 +78,15 @@ async function checkAuth() {
       btnTambah.classList.remove('hidden');
       const importBtn = document.getElementById('btn-import');
       if (importBtn) importBtn.classList.remove('hidden');
+      // "Assign Terpilih" (tab Belum Dikelas) = tulis; backend
+      // POST /api/santri/assign juga hanya untuk pimpinan.
+      if (btnAssignBatch) btnAssignBatch.classList.remove('hidden');
       const fab = document.getElementById('btn-tambah-fab');
       if (fab) fab.addEventListener('click', openModal);
+    } else {
+      // Peran selain pimpinan (mustahiq, keamanan, admin, dst.): tab Belum
+      // Dikelas tetap bisa dilihat, tetapi tanpa tombol assign.
+      if (btnAssignBatch) btnAssignBatch.classList.add('hidden');
     }
     const roles = data.roles || [data.role];
     if (roles.includes('pimpinan') || roles.includes('admin')) {

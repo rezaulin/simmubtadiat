@@ -29,9 +29,15 @@ describe('MENU_ACCESS canonical map', () => {
     );
   });
 
-  it('mustahiq: /perpindahan, /rapot and /dewan-harian removed (permintaan role menu)', () => {
+  it('mustahiq: /perpindahan, /rapot and /dewan-harian removed; + /arsip & /pengajar-purna added (permintaan role menu)', () => {
     expect(MENU_ACCESS.mustahiq).toEqual(
-      ['/index.html', '/santri.html', '/penilaian.html', '/rekap.html', '/catatan.html', '/pengajar.html']
+      ['/index.html', '/santri.html', '/penilaian.html', '/rekap.html', '/catatan.html', '/pengajar.html', '/arsip.html', '/pengajar-purna.html']
+    );
+  });
+
+  it('keamanan: + /pengajar-purna added (permintaan Role Mustahiq + Keamanan)', () => {
+    expect(MENU_ACCESS.keamanan).toEqual(
+      ['/index.html', '/santri.html', '/arsip.html', '/alumni.html', '/catatan.html', '/pengajar-purna.html']
     );
   });
 

@@ -118,6 +118,15 @@ async function checkAuth() {
       if (btnTemplateP) btnTemplateP.classList.remove('hidden');
       const btnImportP = document.getElementById('btn-import-pengabdian');
       if (btnImportP) btnImportP.classList.remove('hidden');
+      // Input manual Pengabdian (bawaan HTML tampil tanpa class hidden —
+      // harus di-`hidden`-kan default di HTML, baru di-show di sini).
+      const btnTambahP = document.getElementById('btn-tambah-pengabdian');
+      if (btnTambahP) btnTambahP.classList.remove('hidden');
+    } else {
+      // Peran selain pimpinan (admin data, mustahiq, keamanan, dst):
+      // tanpa input manual Pengabdian maupun Alumni.
+      const btnTambahP = document.getElementById('btn-tambah-pengabdian');
+      if (btnTambahP) btnTambahP.classList.add('hidden');
     }
 
     // Tombol Download: semua role yang bisa akses alumni — KECUALI role

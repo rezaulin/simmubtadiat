@@ -178,7 +178,11 @@ async function checkAuth() {
 // pengajar dengan mustahiq_bagian / pengajar_bagian(peran=munawwib) di
 // tingkatan + kelas tersebut.
 async function fetchPengajarCakupan() {
-  const terbatas = userRoles.includes('mustahiq') || userRoles.includes('mufatish');
+  // Role keamanan harus melihat SELURUH pengajar (permintaan Role Mustahiq +
+  // Keamanan: "Menu Pengajar harusnya menampilkan semua pengajar"), jadi
+  // filter cakupan hanya berlaku bila TIDAK ada keamanan di daftar role.
+  const terbatas = (userRoles.includes('mustahiq') || userRoles.includes('mufatish'))
+      && !userRoles.includes('keamanan');
   if (!terbatas) {
     const response = await fetch('/api/pengajar');
     const body = await response.json();

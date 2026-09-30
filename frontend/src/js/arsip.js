@@ -11,6 +11,9 @@ const btnReset = document.getElementById("btn-reset-filter");
 
 let debounceTimeout = null;
 let cachedBagian = [];
+// Diisi di loadFilters(): true bila role hanya mustahiq (tanpa pimpinan/
+// admin/keamanan) — dipakai init untuk auto-pilih cakupan angkatan.
+let isMustahiqOnly = false;
 
 // Apply Theme
 if (localStorage.theme === "dark") {
@@ -201,7 +204,7 @@ async function loadFilters() {
     let roles = [];
     try { roles = JSON.parse(rolesStr); } catch (e) {}
 
-    const isMustahiqOnly = roles.includes("mustahiq") && !roles.includes("pimpinan") && !roles.includes("admin") && !roles.includes("keamanan");
+    isMustahiqOnly = roles.includes("mustahiq") && !roles.includes("pimpinan") && !roles.includes("admin") && !roles.includes("keamanan");
     const endpoint = isMustahiqOnly ? "/api/penilaian/bagian" : "/api/akademik/bagian";
 
     const [resBagian, resArsipAll] = await Promise.all([
@@ -324,7 +327,21 @@ if (btnReset) {
 }
 
 // Init
-document.addEventListener("DOMContentLoaded", () => {
-  loadFilters();
-  loadArsip();
+document.addEventListener("DOMContentLoaded", async () => {
+  await loadFilters();
+  // Role Mustahiq: tampilkan hanya siswi ANGKATANNYA (tingkatan + kelas
+  // penugasannya). Dropdown sudah terbatas cakupan (/api/penilaian/bagian);
+  // tanpa pemilihan, default "-- Semua Tingkatan --" membuat tabel menampilkan
+  // SELURUH arsip. Pilih otomatis opsi pertama lalu kelasnya — listener
+  // "change" sudah memanggil loadArsip() sendiri.
+  if (isMustahiqOnly && filterTingkatan && filterTingkatan.options.length > 1) {
+    filterTingkatan.value = filterTingkatan.options[1].value; // [0] = "-- Semua Tingkatan --"
+    filterTingkatan.dispatchEvent(new Event("change"));
+    if (filterKelas && filterKelas.options.length > 1 && !filterKelas.value) {
+      filterKelas.value = filterKelas.options[1].value;
+      filterKelas.dispatchEvent(new Event("change"));
+    }
+  } else {
+    loadArsip();
+  }
 });

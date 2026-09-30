@@ -192,7 +192,7 @@ func main() {
 					})
 
 					r.Group(func(r chi.Router) {
-						r.Use(appMiddleware.RequireRoles("pimpinan", "mufatish", "keamanan"))
+						r.Use(appMiddleware.RequireRoles("pimpinan", "mufatish", "keamanan", "mustahiq"))
 						r.Get("/arsip", handlers.GetArsipSantri)
 					})
 
@@ -425,18 +425,24 @@ func main() {
 					})
 				})
 
-				// Pengajar Purna (arsip pengajar lama). Fitur khusus: hanya
-				// admin & pimpinan yang boleh membaca maupun mengelola (RBAC di sini
-				// adalah lapisan keamanan sebenarnya; menu frontend hanya kosmetik).
+				// Pengajar Purna (arsip pengajar lama).
+				// Baca : pimpinan & admin + (mustahiq, keamanan) sesuai permintaan
+				//        menu "Role Mustahiq + Keamanan — Menu Pengajar Purna".
+				// Tulis : TETAP hanya pimpinan & admin.
 				r.Route("/pengajar-purna", func(r chi.Router) {
-					r.Use(appMiddleware.RequireRoles("pimpinan", "admin"))
-					r.Get("/", handlers.GetPengajarPurna)
-					r.Get("/export", handlers.ExportPengajarPurna)
-					r.Get("/template", handlers.DownloadTemplatePengajarPurna)
-					r.Post("/", handlers.CreatePengajarPurna)
-					r.Post("/import", handlers.ImportPengajarPurna)
-					r.Put("/{id}", handlers.UpdatePengajarPurna)
-					r.Delete("/{id}", handlers.DeletePengajarPurna)
+					r.Group(func(r chi.Router) {
+						r.Use(appMiddleware.RequireRoles("pimpinan", "admin", "mustahiq", "keamanan"))
+						r.Get("/", handlers.GetPengajarPurna)
+						r.Get("/export", handlers.ExportPengajarPurna)
+						r.Get("/template", handlers.DownloadTemplatePengajarPurna)
+					})
+					r.Group(func(r chi.Router) {
+						r.Use(appMiddleware.RequireRoles("pimpinan", "admin"))
+						r.Post("/", handlers.CreatePengajarPurna)
+						r.Post("/import", handlers.ImportPengajarPurna)
+						r.Put("/{id}", handlers.UpdatePengajarPurna)
+						r.Delete("/{id}", handlers.DeletePengajarPurna)
+					})
 				})
 
 				// Dashboard Stats (statistik pondok, bukan untuk wali_santri)
