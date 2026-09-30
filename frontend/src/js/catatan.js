@@ -39,6 +39,17 @@ async function init() {
     currentRole = me.role || '';
     currentRoles = me.roles || [me.role];
 
+    // Permintaan: mufatish & mustahiq — filter Tingkatan & Kelas DIKUNCI,
+    // cakupan sudah diterapkan di level API. Yang berfungsi: filter Bagian.
+    const isGlobalCatatan = ['pimpinan', 'admin', 'keamanan', 'muroqib']
+      .some(g => currentRoles.includes(g));
+    const kunciFilterCatatan = !isGlobalCatatan &&
+      (currentRoles.includes('mufatish') || currentRoles.includes('mustahiq'));
+    if (kunciFilterCatatan) {
+      if (filterTingkatan) filterTingkatan.disabled = true;
+      if (filterKelas) filterKelas.disabled = true;
+    }
+
     await loadBagianOptions();
     await loadCatatan();
   } catch (e) {

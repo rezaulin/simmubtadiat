@@ -44,8 +44,12 @@ async function checkAuth() {
     if (window.isPimpinanRole(userRole)) {
       btnTambah.classList.remove('hidden');
       document.getElementById('btn-template')?.classList.remove('hidden');
-      document.getElementById('btn-download')?.classList.remove('hidden');
       document.getElementById('btn-import')?.classList.remove('hidden');
+    }
+    // Role admin = "Admin Data": cukup akses DOWNLOAD DATA (tanpa input/
+    // import) — konsisten dengan pola pengajar.js / santri.js / pengajar-purna.js.
+    if (userRole === 'admin' || window.isPimpinanRole(userRole)) {
+      document.getElementById('btn-download')?.classList.remove('hidden');
     }
 
 

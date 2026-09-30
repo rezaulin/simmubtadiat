@@ -19,6 +19,9 @@ const container = document.getElementById('spreadsheet-container');
 
 let cachedTingkatan = [], cachedKelas = [], cachedBagian = [];
 let currentData = null;
+// Role login (diisi saat loadFilters) — dipakai utk memutus visibilitas
+// tombol export nilai (Permintaan: Mustahiq & Mufatish tanpa download).
+let userRolesPen = [];
 let tahunAjaran = '';
 
 // Track khos cells that the user explicitly edited (dirty).
@@ -40,6 +43,7 @@ async function loadFilters() {
     if (meRes.ok) {
       const meData = await meRes.json();
       userRoles = meData.roles || [meData.role];
+      userRolesPen = userRoles;
     }
   } catch (_) {}
 
@@ -155,15 +159,26 @@ function renderSpreadsheet() {
 
   // Export + Save buttons
   html += '<div class="mt-6 flex flex-wrap gap-2 justify-end">';
-  html += '<div class="flex flex-wrap gap-2">';
-  html += '<button class="btn-export bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-medium shadow-md" data-export="tamrin-k1">📥 Tamrin K1</button>';
-  html += '<button class="btn-export bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-medium shadow-md" data-export="ujian-smt1">📥 Ujian Smt Ganjil</button>';
-  html += '<button class="btn-export bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-medium shadow-md" data-export="tamrin-k3">📥 Tamrin K3</button>';
-  html += '<button class="btn-export bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-medium shadow-md" data-export="ujian-smt2">📥 Ujian Smt Genap</button>';
-  html += '<button class="btn-export bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-xl text-xs font-medium shadow-md" data-export="raport-smt1">📥 Raport Smt 1</button>';
-  html += '<button class="btn-export bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-xl text-xs font-medium shadow-md" data-export="raport-smt2">📥 Raport Smt 2</button>';
-  html += '<button class="btn-export bg-emerald-700 hover:bg-emerald-800 text-white px-4 py-2 rounded-xl text-xs font-medium shadow-md" data-export="bayan">📥 Al-Bayan</button>';
-  html += '</div>';
+  // Permintaan (Mustahiq & Mufatish, termasuk semua kombinasi role):
+  // TIDAK perlu akses download nilai — SELURUH tombol export (Tamrin K1/K3,
+  // Ujian Smt, Raport Smt 1/2, Al-Bayan) disembunyikan.
+  // Fail-closed: role belum termuat -> tombol tetap disembunyikan.
+  // Pimpinan/admin/tim_rapot/muroqib tetap dapat (tidak disebut dalam permintaan).
+  const isGlobalPen = ['pimpinan', 'admin', 'tim_rapot', 'muroqib']
+    .some(g => userRolesPen.includes(g));
+  const showExportPen = userRolesPen.length > 0 && (isGlobalPen ||
+    !(userRolesPen.includes('mustahiq') || userRolesPen.includes('mufatish')));
+  if (showExportPen) {
+    html += '<div class="flex flex-wrap gap-2">';
+    html += '<button class="btn-export bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-medium shadow-md" data-export="tamrin-k1">📥 Tamrin K1</button>';
+    html += '<button class="btn-export bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-medium shadow-md" data-export="ujian-smt1">📥 Ujian Smt Ganjil</button>';
+    html += '<button class="btn-export bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-medium shadow-md" data-export="tamrin-k3">📥 Tamrin K3</button>';
+    html += '<button class="btn-export bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-medium shadow-md" data-export="ujian-smt2">📥 Ujian Smt Genap</button>';
+    html += '<button class="btn-export bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-xl text-xs font-medium shadow-md" data-export="raport-smt1">📥 Raport Smt 1</button>';
+    html += '<button class="btn-export bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-xl text-xs font-medium shadow-md" data-export="raport-smt2">📥 Raport Smt 2</button>';
+    html += '<button class="btn-export bg-emerald-700 hover:bg-emerald-800 text-white px-4 py-2 rounded-xl text-xs font-medium shadow-md" data-export="bayan">📥 Al-Bayan</button>';
+    html += '</div>';
+  }
   if (canEdit) {
     html += '<button id="btn-save-all" class="bg-primary hover:bg-primary-hover text-white px-6 py-2 rounded-xl text-sm font-medium shadow-md">Simpan Semua Nilai</button>';
   }

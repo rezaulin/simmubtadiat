@@ -205,6 +205,28 @@ async function loadFilters() {
       selKelas.value = String(firstBagian.kelas_id);
       selKelas.dispatchEvent(new Event('change'));
     }, 100);
+
+    // Tab Ustadz/Pengajar: auto-select tingkatan & kelas yang sama dari cakupan.
+    const selKelasPIn = document.getElementById('sel-kelas-p');
+    selTingkatanP.value = String(firstBagian.tingkatan_id);
+    selTingkatanP.dispatchEvent(new Event('change'));
+    setTimeout(() => {
+      if (selKelasPIn) {
+        selKelasPIn.value = String(firstBagian.kelas_id);
+        selKelasPIn.dispatchEvent(new Event('change'));
+      }
+    }, 100);
+
+    // Permintaan: filter Tingkatan & Kelas "otomatis terkunci" sesuai
+    // tingkatan/kelas yang dibawahi (mufatish & mustahiq). Filter Bagian
+    // tetap berfungsi untuk memilih ruang kelasnya.
+    const kunciFilterManual = currentRoles.includes('mufatish') || currentRoles.includes('mustahiq');
+    if (kunciFilterManual) {
+      selTingkatan.disabled = true;
+      selKelas.disabled = true;
+      selTingkatanP.disabled = true;
+      if (selKelasPIn) selKelasPIn.disabled = true;
+    }
   }
 
   // Populate bulan Hijri dropdown (24 bulan: 2 tahun Hijri aktif).
