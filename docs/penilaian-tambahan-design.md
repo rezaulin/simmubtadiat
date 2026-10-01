@@ -1,92 +1,101 @@
 # Desain: Pengembangan Menu Penilaian → 4 Aspek
 
-> Status: DRAF ANALISA (belum ada kode yang diubah)
-> Tanggal: 2026-10-01
+> Status: DRAF ANALISA (belum ada kode fitur baru yang diubah)
+> Tanggal: 2026-10-01 (revisi struktur: 2026-10-02)
 > Sumber spesifikasi: permintaan owner (chat).
 
 ## 1. Ringkasan
 
-Menu **Penilaian** dipetakan jadi 4 aspek:
+Menu **Penilaian** (nama sidebar TIDAK berubah) berkembang jadi 4 aspek,
+dipisahkan sebagai **TAB di dalam `penilaian.html`** — bukan menu/halaman
+terpisah, dan tidak dicampur jadi satu layar:
 
-| # | Aspek | Status |
-|---|-------|--------|
-| 1 | **Nilai Akademik** | Menu LAMA — hanya ganti label, isi TIDAK disentuh |
-| 2 | **Nilai Di Bawah Rata² (4,4)** | BARU — auto dari nilai akademik + input takziran manual |
+| # | Tab | Status |
+|---|-----|--------|
+| 1 | **Akademik** | Isi LAMA (spreadsheet kuartal→khos→AM→bayan) — TIDAK disentuh |
+| 2 | **Di Bawah Rata² (4,4)** | BARU — auto dari nilai akademik + input takziran manual |
 | 3 | **Setoran Juz Amma** | BARU — checklist surat per kelas + evaluasi |
 | 4 | **Nilai Kompetensi** | BARU — UBQ / Ujian Praktik / Baca Kitab (Lulus–Her–Tidak Lulus) |
 
-Aspek 2–4 pindah ke halaman baru **`penilaian-tambahan.html`** (3 tab).
-Menu lama tetap di `/penilaian.html` dengan label baru **"Penilaian Akademik"**.
+**Koreksi keputusan owner (2026-10-02):**
+- Jangan dicampur penilaian akademik dengan menu baru → tiap aspek **tab sendiri**.
+- Tetap dalam **satu menu "Penilaian"** (rename "Penilaian Akademik" DIBATALKAN,
+  commit rename di-revert).
+- Bukan satu halaman panjang → tiap tab adalah tampilan sendiri, konten hanya
+  muncul saat tab dipilih.
 
-**Prinsip:** pipeline lama (kuartal → khos → AM → bayan, kunci 3 lapis) **tidak
-disentuh sama sekali**. Tidak ada kolom/tabel lama yang dimodifikasi.
+**Prinsip:** pipeline lama (kuartal → khos → AM → bayan, kunci 3 lapis) tidak
+disentuh. Tidak ada kolom/tabel lama yang dimodifikasi — semua murni tambahan.
 
-## 2. Pemetaan menu & halaman
+## 2. Struktur menu & tab
 
 ```
-Sidebar
-├── Penilaian Akademik   → /penilaian.html       (LAMA, label saja berubah)
-└── Penilaian Tambahan   → /penilaian-tambahan.html (BARU)
-    ├── Tab A: Di Bawah Rata²      (semua kelas)
-    ├── Tab B: Setoran Juz Amma    (kecuali I'dadiyah)
-    └── Tab C: Nilai Kompetensi    (khusus: 3 tsn, 1/2/3 aly)
+Sidebar: Penilaian  →  /penilaian.html   (satu-satunya menu, nama asli)
+─────────────────────────────────────────────────────────────
+[ Tab: Akademik | Di Bawah Rata² | Setoran Juz Amma | Nilai Kompetensi ]
+
+Tab 1 "Akademik"      = spreadsheet lama persis seperti sekarang
+Tab 2 "Bawah Rata²"   = semua kelas
+Tab 3 "Juz Amma"      = ibt 4–6, tsn 1–3, aly 1–3 (I'dadiyah TIDAK)
+Tab 4 "Kompetensi"    = khusus 3 tsn, 1/2/3 aly
 ```
 
-- URL lama TIDAK berubah → link/shortcut lama tetap hidup.
-- Nav disalin statis di tiap `frontend/*.html` (tidak ada partial), lalu
-  ditampilkan/disembunyikan JS via `MENU_ACCESS` di `xss.js`.
+- URL hash per tab: `#akademik` (default), `#bawah-rata`, `#juz-amma`,
+  `#kompetensi` → bisa share link langsung ke tab.
+- Tab baru di-load **lazy** (JS dinamis) — halaman lama tidak ikut menanggung
+  beban kode tab baru sampai tab itu dibuka.
+- Nav sidebar: **tidak ada penambahan item** (tidak ada "Penilaian Tambahan").
 
 ## 3. Akses (RBAC)
 
 | Aksi | Role |
 |------|------|
-| Input/edit nilai tambahan | **pimpinan** saja |
-| Download/ekspor data | **pimpinan** saja (sementara) |
-| Lihat (read-only) | pimpinan, mufatish, mustahiq, walisantri |
+| Input/edit nilai tambahan (tab 2–4) | **pimpinan** saja |
+| Download/ekspor data tab 2–4 | **pimpinan** saja (sementara) |
+| Lihat tab 2–4 (read-only) | pimpinan, mufatish, mustahiq, walisantri |
+| Tab 1 "Akademik" | role yang hari ini boleh buka penilaian.html (pimpinan, admin, mustahiq, tim_rapot; view: + mufatish, muroqib) — **walisantri TIDAK dapat tab ini** |
 
-- **Walisantri**: hanya melihat data **anaknya sendiri** (via `wali_santri_link`),
-  semua kontrol input disembunyikan.
-- Backend wajib cek role di route (bukan cuma sembunyikan tombol):
-  - `POST` → `RequireRoles("pimpinan")`
-  - `GET` → `RequireRoles("pimpinan","mufatish","mustahiq")` + special-case
-    `wali_santri` (filter `santri_id` anak) — atau endpoint terpisah untuk wali.
-- **Keputusan**: mustahiq **dibatasi cakupan bagian** sama seperti menu
-  akademik (pola `penilaianScopeGuard*` / `GetBagianPenilaian`).
+- **Walisantri**: hanya membuka tab 2–4, hanya data **anaknya sendiri**
+  (via `wali_santri_link`); kalau wali membuka `penilaian.html`, tab "Akademik"
+  disembunyikan dan kontrol input tidak dirender.
+- Backend tetap mengunci: `POST` → `RequireRoles("pimpinan")`; `GET` tab 2–4 →
+  `pimpinan/mufatish/mustahiq` + special-case `wali_santri` (filter anak).
+- **Mustahiq dibatasi cakupan bagian** seperti menu akademik (pola
+  `penilaianScopeGuard*` / `GetBagianPenilaian`).
 
 ## 4. Skema Database (3 tabel BARU)
 
 ```sql
--- A. Nilai Di Bawah Rata² + status takziran
+-- Tab 2: status takziran (nilai TIDAK disimpan — selalu live dari nilai_kuartal)
 CREATE TABLE penilaian_takziran (
   id              SERIAL PRIMARY KEY,
   santri_id       INT NOT NULL REFERENCES santri(id) ON DELETE CASCADE,
   kuartal         INT NOT NULL CHECK (kuartal BETWEEN 1 AND 4),
   tahun_ajaran    VARCHAR(9) NOT NULL,
-  konsekuensi     TEXT,                       -- input pimpinan
-  jenis_takziran  TEXT,                       -- input pimpinan
+  konsekuensi     TEXT,                       -- teks bebas
+  jenis_takziran  TEXT,                       -- teks bebas
   dalam_masa      BOOLEAN NOT NULL DEFAULT false,   -- "Dalam masa Takziran" ✔
   selesai         BOOLEAN NOT NULL DEFAULT false,   -- "Selesai Melaksanakan" ✔
   created_at      TIMESTAMPTZ DEFAULT now(),
   updated_at      TIMESTAMPTZ DEFAULT now(),
   UNIQUE (santri_id, kuartal, tahun_ajaran)
 );
--- Jumlah nilai & Rata2 TIDAK disimpan: selalu dihitung live dari nilai_kuartal.
 
--- B. Setoran Juz Amma
+-- Tab 3: setoran Juz Amma (satu baris per santri × surat)
 CREATE TABLE setoran_juz_amma (
   id              SERIAL PRIMARY KEY,
   santri_id       INT NOT NULL REFERENCES santri(id) ON DELETE CASCADE,
-  surat_no        INT NOT NULL CHECK (surat_no BETWEEN 78 AND 114), -- urut 114→bawah
+  surat_no        INT NOT NULL CHECK (surat_no BETWEEN 78 AND 114),
   setor           BOOLEAN NOT NULL DEFAULT false,  -- ceklis nama surat
-  evaluasi        TEXT,                            -- dropdown (opsi: lihat §6)
+  evaluasi        VARCHAR(20) CHECK (evaluasi IN ('lulus','her','tidak_lulus')),
   status          VARCHAR(10) NOT NULL DEFAULT 'belum'
-                    CHECK (status IN ('selesai','belum')), -- model memilih
+                    CHECK (status IN ('selesai','belum')),
   tahun_ajaran    VARCHAR(9) NOT NULL,
   updated_at      TIMESTAMPTZ DEFAULT now(),
   UNIQUE (santri_id, surat_no, tahun_ajaran)
 );
 
--- C. Nilai Kompetensi
+-- Tab 4: nilai kompetensi
 CREATE TABLE nilai_kompetensi (
   id              SERIAL PRIMARY KEY,
   santri_id       INT NOT NULL REFERENCES santri(id) ON DELETE CASCADE,
@@ -102,27 +111,24 @@ Migrasi: SQL file di `migrations/`, dijalankan manual via `psql` (lokal + VPS 1)
 
 ## 5. Logika per fitur
 
-### Tab A — Nilai Di Bawah Rata² (4,4)
+### Tab 2 — Nilai Di Bawah Rata² (4,4)
 
 - **Otomatis**: rata-rata `nilai_kuartal` per santri per kuartal (TA aktif),
   semua mapel yang bernilai **KECUALI kategori akhlaq**
-  (`kategori NOT IN ('akhlaq','akhlaq_perilaku')`). Skala data terbukti
-  **0–10** (min 1, max 10).
-- Kandidat muncul bila `AVG(nilai) < 4.4` pada kuartal terpilih.
-- Baris **tetap tersimpan** walau takziran sudah selesai — kalau nanti
-  rata²-nya naik di atas 4,4, baris lama tetap tampil (tidak dihapus otomatis).
+  (`kategori NOT IN ('akhlaq','akhlaq_perilaku')`). Skala data **0–10**.
+- Kandidat muncul bila `AVG(nilai) < 4.4`. Baris **tetap tersimpan** walau
+  takziran selesai; kalau rata² nanti naik di atas 4,4 baris tidak dihapus.
 - Kolom: Nomer · Nama · Bagian · Jumlah nilai (SUM) · Rata² Nilai (AVG) ·
-  Konsekuensi · Jenis Takziran · Dalam masa Takziran (✔) · Selesai (✔)
-- Filter: **Dalam masa takziran** (ya/tidak) & **Selesai takziran** (ya/tidak),
-  plus selector kuartal + tahun ajaran.
-- Isian manual (konsekuensi, jenis, 2 ceklis) disimpan via satu `POST`.
+  Konsekuensi (teks) · Jenis Takziran (teks) · Dalam masa Takziran (✔) ·
+  Selesai (✔)
+- Filter: **Dalam masa takziran** & **Selesai takziran** (ya/tidak) + selector
+  kuartal + tahun ajaran.
 
-### Tab B — Setoran Juz Amma
+### Tab 3 — Setoran Juz Amma
 
-- **Satu baris per siswi**, isi cell "Nama surat" = deret **ceklis** surat sesuai
-  rentang kelasnya (urut dari an-Nas ke bawah), lalu dropdown **Evaluasi**
-  (`Lulus / Her / Tidak Lulus`) dan model pilih **Selesai/Belum**.
-- **I'dadiyah (1–3) TIDAK ikut** — tab hanya berisi ibt 4–6, tsn 1–3, aly 1–3.
+- **Satu baris per siswi**: cell "Nama surat" = deret **ceklis** surat sesuai
+  rentang kelasnya (urut dari an-Nas ke bawah), dropdown **Evaluasi**
+  (`Lulus / Her / Tidak Lulus`), model pilih **Selesai/Belum**.
 
 | Kelas | Rentang surat (an-Nas → …) | Jumlah |
 |-------|---------------------------|--------|
@@ -136,20 +142,17 @@ Migrasi: SQL file di `migrations/`, dijalankan manual via `psql` (lokal + VPS 1)
 | 2 aly | 'Abasa (80) | 35 |
 | 3 aly | an-Naba' (78) | 37 |
 
-- Rentang disimpan sebagai konstanta backend (map kelas → `surat_no` target),
-  kelas (map kelas → `surat_no` target), bukan hardcode di HTML. I'dadiyah
-  tidak punya entri → siswanya otomatis tidak tampil.
-- Filter: **Selesai / Belum Selesai** + **Evaluasi (Lulus/Her/Tidak Lulus)**.
-- Banner keterangan: *"Lulus setoran Juz Amma menjadi syarat mengikuti ujian
-  semester genap · Batas akhir: Kuartal 2"*.
+- Rentang = konstanta backend (map kelas → `surat_no` target). **I'dadiyah tidak
+  punya entri → siswanya tidak tampil.**
+- Filter: **Selesai / Belum Selesai** + **Evaluasi**.
+- Banner: *"Lulus setoran Juz Amma menjadi syarat mengikuti ujian semester
+  genap · Batas akhir: Kuartal 2"*.
 
-### Tab C — Nilai Kompetensi
+### Tab 4 — Nilai Kompetensi
 
-- 3 kategori dengan **filter**: `Ujian Baca Al-Qur'an (UBQ)` ·
-  `Ujian Praktik` · `Ujian Baca Kitab`.
-- Isi per siswi: **Lulus / Her / Tidak Lulus** (model pilih).
-- Nama & bagian diambil dari sumber yang sama dengan fitur Nilai Akademik
-  (daftar siswi per bagian).
+- 3 kategori + filter: `Ujian Baca Al-Qur'an (UBQ)` · `Ujian Praktik` ·
+  `Ujian Baca Kitab`. Isi: **Lulus / Her / Tidak Lulus** (model pilih).
+- Nama & bagian dari sumber yang sama dengan fitur Nilai Akademik.
 - **Kelas yang berlaku** (baris hanya tampil di kelas ini):
 
 | Kelas | Kategori ujian |
@@ -163,16 +166,15 @@ Migrasi: SQL file di `migrations/`, dijalankan manual via `psql` (lokal + VPS 1)
 - Banner syarat ijazah:
   - **6 ibt & 3 tsn**: Lulus praktik + UBQ + baca kitab.
   - **3 aly**: Lulus praktik + UBQ + baca kitab **+ khidmah 1 tahun**.
-- Catatan jadwal (ditampilkan sebagai keterangan, bukan aturan sistem):
-  tajhiz al-mayit di 1 aly, UBQ di 2 aly, baca kitab di 3 aly; tsanawiyah
-  ketiganya di 3 tsn.
+- Keterangan jadwal: tajhiz al-mayit di 1 aly, UBQ di 2 aly, baca kitab di
+  3 aly; tsanawiyah ketiganya di 3 tsn.
 
-## 6. API (baru, prefiks `/api/penilaian-tambahan`)
+## 6. API (prefiks `/api/penilaian-tambahan`, semua BARU)
 
 ```
 GET  /bawah-rata?kuartal=&tahun_ajaran=&dalam_masa=&selesai=   (auto-compute)
 POST /bawah-rata/takziran        {santri_id, kuartal, konsekuensi, jenis, dalam_masa, selesai}
-GET  /juz-amma?bagian_id=&status=&tahun_ajaran=
+GET  /juz-amma?bagian_id=&status=&evaluasi=&tahun_ajaran=
 POST /juz-amma                   {santri_id, surat_no, setor, evaluasi, status}
 GET  /kompetensi?kategori=&hasil=&bagian_id=&tahun_ajaran=
 POST /kompetensi                 {santri_id, kategori, hasil}
@@ -180,62 +182,62 @@ GET  /export?fitur=bawah-rata|juz-amma|kompetensi&...          (pimpinan only)
 GET  /wali/anak              (khusus wali_santri → read-only data anak)
 ```
 
-- `GET` struktur sama dengan pola `/api/penilaian/bagian` + filter.
-- `POST` balas `{status:"ok"}`; semua tulisan dibungkus role check pimpinan.
-- Ekspor ikut pola `ExportSantri`/`ExportPengajar` (`GET .../export`).
+- Semua `GET` wajib terapkan cakupan mustahiq + filter anak utk wali.
+- `POST` dibungkus `RequireRoles("pimpinan")`.
+- Ekspor mengikuti pola `ExportSantri`/`ExportPengajar` (`GET .../export`).
 
 ## 7. Frontend
 
-1. **Rename label** (ikuti recipe `frontend-nav-and-lockdown.md`):
-   - `Penilaian` → `Penilaian Akademik` di nav **16 file** frontend
-     (1×/file, termasuk 2 file preview CRLF) + `main.js` breadcrumb
-     (baris ~1110, `PAGE_META['/penilaian.html'].label`) + judul di dalam
-     `penilaian.html`.
-   - **Jangan** ubah istilah "penilaian" di teks lain (kesehatan data, dll).
-   - Hitung kemunculan dulu → patch per file → verify 0 → build → bukti di
-     container (`docker exec grep`) → bukti live → commit.
-2. **Halaman baru** `frontend/penilaian-tambahan.html` + `src/js/penilaian-tambahan.js`
-   (di-bundle seperti halaman lain):
-   - 3 tab, tabel masing-masing + toolbar filter sesuai §5.
-   - Mode read-only otomatis kalau role bukan pimpinan (tombol simpan/unduh
-     tidak dirender) — backend tetap mengunci.
-   - Untuk **wali**: halaman yang sama, data dibatasi anak + kontrol disembunyikan.
-3. **Nav**: tambah item `Penilaian Tambahan` (icon `award`/`clipboard-plus`)
-   tepat setelah Penilaian Akademik di semua file nav; register path di
-   `MENU_ACCESS` (pimpinan, mufatish, mustahiq, wali_santri) di `xss.js`.
-4. **Wali home** (`index.html`): opsional — kartu/tautan ringkas ke halaman ini.
+1. **Nav sidebar: TIDAK diubah** — item tetap "Penilaian" (rename sudah
+   di-revert, lihat §1). Tidak ada menu baru di 19 file HTML.
+2. **Tab bar di `penilaian.html`** (markup vanilla di atas konten yang ada):
+   - Tab "Akademik" = wrapper konten lama (spreadsheet) — tanpa perubahan logika.
+   - Slot konten untuk tab 2–4 (kosong, diisi lazy oleh JS).
+   - Tab aktif dari URL hash; ganti tab → ganti `location.hash`.
+   - Tampilan tab untuk role: wali_santri → sembunyikan tab "Akademik";
+     mufatish/muroqib → tab 2–4 read-only; dst.
+3. **JS baru** `frontend/src/js/penilaian-tambahan.js` (di-bundle terpisah,
+   di-import dinamis saat tab baru pertama dibuka):
+   - `renderBawahRata()`, `renderJuzAmma()`, `renderKompetensi()` + toolbar
+     filter sesuai §5, tombol simpan/unduh hanya bila role pimpinan.
+4. **Kesehatan halaman lama**: pastikan DOM spreadsheet lama (id/jenis) tidak
+   bentrok dengan markup tab; `loadSpreadsheet()` hanya jalan saat tab
+   "Akademik" aktif (atau tetap jalan seperti sekarang — tidak diubah).
+5. **MENU_ACCESS `xss.js`**: `/penilaian.html` ditambah `wali_santri` (agar
+   wali bisa membuka tab baru) — backend spreadsheet tetap menolak wali,
+   tab Akademik disembunyikan di UI.
 
 ## 8. Fase Pengerjaan
 
 | Fase | Isi | Output |
 |------|-----|--------|
-| 0 | Rename label → "Penilaian Akademik" | commit kecil, deploy, bukti live |
-| 1 | Migrasi 3 tabel + skeleton halaman + route API + RBAC | build lolos, health 200 |
-| 2 | Tab A (bawah rata², auto + takziran) | E2E: kandidat muncul dari nilai real |
-| 3 | Tab B (juz amma, checklist per kelas) | E2E: rentang surat per kelas benar |
-| 4 | Tab C (kompetensi + filter kelas) | E2E: 3 tsn/1-3 aly tampil, kelas lain kosong |
-| 5 | Ekspor + view wali + banner syarat | E2E role matrix (pimpinan/mufatish/mustahiq/wali) |
+| 0 | ~~Rename label~~ **DIBATALKAN (revert)** — sudah dikembalikan | label "Penilaian" kembali live |
+| 1 | Migrasi 3 tabel + tab bar skeleton di penilaian.html + route API + RBAC | build lolos, health 200 |
+| 2 | Tab "Bawah Rata²" (auto + takziran) | E2E: kandidat muncul dari nilai real |
+| 3 | Tab "Juz Amma" (checklist per kelas) | E2E: rentang surat per kelas benar |
+| 4 | Tab "Kompetensi" (filter kelas) | E2E: 3 tsn/1-3 aly tampil, kelas lain kosong |
+| 5 | Ekspor + akses wali + banner syarat | E2E role matrix (pimpinan/mufatish/mustahiq/wali) |
 
 Tiap fase: `go build` → `node --check` → docker build di VPS 1 → health 200 →
-commit+push. Tabel di-live dibuat sebelum kode dipasang (DDL dulu, kode belakang)
-agar tidak ada kode menunggu tabel.
+commit+push. DDL tabel didahulukan sebelum kode yang memakainya dipasang.
 
-## 9. Keputusan Owner (2026-10-01, final)
+## 9. Keputusan Owner (final)
 
-1. **I'dadiyah tidak ikut setoran Juz Amma** → Tab B hanya ibt 4–6, tsn 1–3,
-   aly 1–3. Siswa I'dadiyah tidak muncul di tab ini.
-2. **Evaluasi Juz Amma** = pilihan `Lulus / Her / Tidak Lulus` (sama seperti
-   Nilai Kompetensi), terpisah dari kolom Selesai/Belum.
-3. **Rata² 4,4 dihitung kecuali akhlaq** → exclude kategori
-   `akhlaq_perilaku` DAN `akhlaq` (safety; kategori 'akhlaq' kosong di data).
-   Catatan: mapel `علم الأخلاق` berkategori `umum` → TETAP ikut hitungan.
-4. **Konsekuensi & Jenis Takziran = teks bebas** (kolom TEXT, tanpa dropdown).
-5. **Mustahiq dibatasi cakupan** seperti menu akademik — pakai pola
-   `penilaianScopeGuard*` / daftar bagian cakupan yang sama.
+1. **I'dadiyah tidak ikut setoran Juz Amma** → Tab Juz Amma hanya ibt 4–6,
+   tsn 1–3, aly 1–3.
+2. **Evaluasi Juz Amma** = `Lulus / Her / Tidak Lulus` (terpisah dari
+   Selesai/Belum).
+3. **Rata² 4,4 kecuali akhlaq** → exclude kategori `akhlaq_perilaku` & `akhlaq`
+   (kategori 'akhlaq' kosong di data; `علم الأخلاق` berkategori `umum` → ikut).
+4. **Konsekuensi & Jenis Takziran = teks bebas** (kolom TEXT).
+5. **Mustahiq dibatasi cakupan** seperti menu akademik.
+6. **Struktur (koreksi 2026-10-02)**: tetap satu menu **"Penilaian"**; aspek
+   baru = **tab-tab sendiri di dalam penilaian.html**; akademik & tambahan
+   tidak dicampur; bukan satu halaman panjang; rename label dibatalkan.
 
 ## 10. Referensi internal
 
 - Pipeline nilai lama: `references/penilaian-pipeline.md`
-- Recipe rename nav: `references/frontend-nav-and-lockdown.md`
+- Nav sidebar (19 file, tanpa partial): `references/frontend-nav-and-lockdown.md`
 - Menu per role: `references/role-menu-and-cakupan.md`
 - Deploy/build VPS 1: `references/install-deploy.md`
