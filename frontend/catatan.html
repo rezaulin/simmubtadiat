@@ -221,27 +221,28 @@
   
           </div>
         </div>
-    <!-- FILTER DATA -->
-    <div class="px-6 mb-4 flex flex-wrap items-center gap-3">
-      <div class="flex flex-col gap-1 w-[48%] md:w-auto flex-1 md:flex-none">
+    <!-- FILTER DATA: mobile = grid 2 kolom (cukup lebar, label 1 baris,
+         semua sejajar); md+ = flex sejajar bawah tanpa hack mt-5 -->
+    <div class="px-6 mb-4 grid grid-cols-2 gap-3 md:flex md:flex-wrap md:items-end">
+      <div class="flex flex-col gap-1 min-w-0">
         <label class="text-xs font-semibold text-gray-500 dark:text-gray-400">Filter Tingkatan</label>
-        <select id="filter-tingkatan" class="glass-input px-3 py-2 rounded-lg text-sm bg-white dark:bg-slate-800 md:min-w-[180px] w-full">
+        <select id="filter-tingkatan" class="glass-input px-3 py-2 rounded-lg text-sm bg-white dark:bg-slate-800 w-full md:min-w-[180px]">
           <option value="">-- Semua Tingkatan --</option>
         </select>
       </div>
-      <div class="flex flex-col gap-1 w-[48%] md:w-auto flex-1 md:flex-none">
+      <div class="flex flex-col gap-1 min-w-0">
         <label class="text-xs font-semibold text-gray-500 dark:text-gray-400">Filter Kelas</label>
-        <select id="filter-kelas" class="glass-input px-3 py-2 rounded-lg text-sm bg-white dark:bg-slate-800 md:min-w-[150px] w-full">
+        <select id="filter-kelas" class="glass-input px-3 py-2 rounded-lg text-sm bg-white dark:bg-slate-800 w-full md:min-w-[150px]">
           <option value="">-- Semua Kelas --</option>
         </select>
       </div>
-      <div class="flex flex-col gap-1 w-[48%] md:w-auto flex-1 md:flex-none">
+      <div class="flex flex-col gap-1 min-w-0">
         <label class="text-xs font-semibold text-gray-500 dark:text-gray-400">Filter Bagian</label>
-        <select id="filter-bagian" class="glass-input px-3 py-2 rounded-lg text-sm bg-white dark:bg-slate-800 md:min-w-[180px] w-full">
+        <select id="filter-bagian" class="glass-input px-3 py-2 rounded-lg text-sm bg-white dark:bg-slate-800 w-full md:min-w-[180px]">
           <option value="">-- Semua Bagian --</option>
         </select>
       </div>
-      <button id="btn-reset-filter" class="mt-5 text-xs text-primary dark:text-accent-emerald hover:underline">Reset filter
+      <button id="btn-reset-filter" class="self-end text-xs text-primary dark:text-accent-emerald hover:underline">Reset filter</button>
     </div>
 
     <!-- TABLE AREA -->
