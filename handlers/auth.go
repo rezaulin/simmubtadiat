@@ -143,13 +143,15 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 		config.DB.Exec(context.Background(), "DELETE FROM sessions WHERE id=$1", cookie.Value)
 	}
 
-	// Clear Cookie
+	// Clear Cookie — flags WAJIB sama dengan saat diset (Secure: true),
+	// kalau beda browser bisa mengabaikan clear-nya di koneksi https.
 	http.SetCookie(w, &http.Cookie{
 		Name:     "session_id",
 		Value:    "",
 		Expires:  time.Unix(0, 0),
+		MaxAge:   -1,
 		HttpOnly: true,
-		Secure:   false,
+		Secure:   true,
 		SameSite: http.SameSiteStrictMode,
 		Path:     "/",
 	})

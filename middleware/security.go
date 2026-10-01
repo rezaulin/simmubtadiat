@@ -18,6 +18,10 @@ func SecurityHeaders(next http.Handler) http.Handler {
 		w.Header().Set("X-XSS-Protection", "1; mode=block")
 		w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
 		w.Header().Set("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+		// CSP: semua resource dari origin sendiri; inline script/handler
+		// diizinkan (MPA legacy memakai 53 onclick= + <script> inline),
+		// eksternal dibatasi hanya unpkg (lucide) + Google Fonts.
+		w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'")
 		if r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == "https" {
 			w.Header().Set("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
 		}

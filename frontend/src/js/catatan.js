@@ -183,7 +183,7 @@ function renderRows(list) {
         </td>
         <td data-label="Total Pelanggaran" class="px-6 py-4 text-center font-bold text-red-600 dark:text-red-400">${c.total_pelanggaran || 0}</td>
         <td data-label="Total Prestasi" class="px-6 py-4 text-center font-bold text-green-600 dark:text-green-400">${c.total_prestasi || 0}</td>
-        <td data-label="Jenis" class="px-6 py-4 text-center">${jenisCell}</td>
+        <td data-label="Deskripsi" class="px-6 py-4 text-center">${jenisCell}</td>
         <td data-label="Aksi" class="px-6 py-4 text-right">
           <div class="flex justify-end gap-2">
             ${btnRiwayat}

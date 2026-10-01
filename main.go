@@ -54,13 +54,13 @@ func main() {
 			r.Post("/login", handlers.Login)
 			r.Post("/login-wali", handlers.LoginWali)
 		})
-		r.Post("/logout", handlers.Logout)
-
 		// Protected Routes
 		r.Group(func(r chi.Router) {
 			r.Use(appMiddleware.RequireAuth)
 			r.Use(appMiddleware.CSRFProtect)
 
+			// Logout wajib lewat CSRF — sebelumnya di luar group (CSRF logout).
+			r.Post("/logout", handlers.Logout)
 			// Can change password without RequirePasswordChanged middleware blocking it
 			r.Post("/change-password", handlers.ChangePassword)
 
