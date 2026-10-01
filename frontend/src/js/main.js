@@ -1658,9 +1658,9 @@ function buildRiwayatAkademik(riwayat) {
                 ${ta.absensi.map(a => `
                 <tr class="border-b border-gray-100 dark:border-slate-700">
                   <td class="px-2 py-1.5 text-center text-gray-800 dark:text-gray-200">${waliEscape(a.bulan || '-')}</td>
-                  <td class="px-2 py-1.5 text-center font-bold text-blue-600">${waliFmtNilai(a.s)}</td>
-                  <td class="px-2 py-1.5 text-center font-bold text-amber-600">${waliFmtNilai(a.i)}</td>
-                  <td class="px-2 py-1.5 text-center font-bold text-red-600">${waliFmtNilai(a.t)}</td>
+                  <td class="px-2 py-1.5 text-center font-bold ${a.ada_data === false ? 'text-gray-400' : 'text-blue-600'}">${a.ada_data === false ? '-' : waliFmtNilai(a.s)}</td>
+                  <td class="px-2 py-1.5 text-center font-bold ${a.ada_data === false ? 'text-gray-400' : 'text-amber-600'}">${a.ada_data === false ? '-' : waliFmtNilai(a.i)}</td>
+                  <td class="px-2 py-1.5 text-center font-bold ${a.ada_data === false ? 'text-gray-400' : 'text-red-600'}">${a.ada_data === false ? '-' : waliFmtNilai(a.t)}</td>
                 </tr>`).join('')}
               </tbody>
               <tfoot class="bg-gray-50 dark:bg-slate-900/40 font-bold">

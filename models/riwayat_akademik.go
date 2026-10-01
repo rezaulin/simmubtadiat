@@ -16,6 +16,7 @@ type RiwayatAbsensi struct {
 	Sakit       int    `json:"s"`
 	Izin        int    `json:"i"`
 	TanpaKet    int    `json:"t"`
+	AdaData     bool   `json:"ada_data"` // false = bulan placeholder (belum ada catatan)
 }
 
 type RiwayatRaport struct {
@@ -302,6 +303,25 @@ func GetRiwayatAkademik(ctx context.Context, santriID int) ([]RiwayatAkademikTah
 		return ""
 	}
 
+	// 5b. Range bulan per TA dari kalender_semester_hijri — dipakai untuk
+	//     menampilkan SEMUA bulan TA (termasuk yang belum ada catatan).
+	//     Key k = tahun_hijri*12 + (bulan-1) agar urut secara numerik.
+	taRange := map[string][2]int{}
+	if rowsRg, err := config.DB.Query(ctx, `
+		SELECT tahun_ajaran,
+		       MIN(mulai_tahun_hijri*12 + (mulai_bulan_hijri-1)),
+		       MAX(selesai_tahun_hijri*12 + (selesai_bulan_hijri-1))
+		FROM kalender_semester_hijri GROUP BY tahun_ajaran`); err == nil {
+		for rowsRg.Next() {
+			var t string
+			var mn, mx int
+			if rowsRg.Scan(&t, &mn, &mx) == nil && mx >= mn {
+				taRange[t] = [2]int{mn, mx}
+			}
+		}
+		rowsRg.Close()
+	}
+
 	// 6. Susun hasil per TA.
 	result := make([]RiwayatAkademikTahun, 0, len(taList))
 	for _, ta := range taList {
@@ -385,20 +405,44 @@ func GetRiwayatAkademik(ctx context.Context, santriID int) ([]RiwayatAkademikTah
 				if a.BulanHijri >= 1 && a.BulanHijri <= 12 {
 					nama = bulanHijriNames[a.BulanHijri]
 				}
-				m = &RiwayatAbsensi{Bulan: nama, BulanAngka: a.BulanHijri, TahunHijri: a.TahunHijri}
+				m = &RiwayatAbsensi{Bulan: nama, BulanAngka: a.BulanHijri, TahunHijri: a.TahunHijri, AdaData: true}
 				abMap[a.BulanHijri] = m
 			}
 			m.Sakit += a.Sakit
 			m.Izin += a.Izin
 			m.TanpaKet += a.Alpha
 		}
-		// Urutkan bulan.
-		var bulanKeys []int
-		for k := range abMap {
-			bulanKeys = append(bulanKeys, k)
+		// Tampilkan SEMUA bulan dalam range kalender TA. Bulan yang belum
+		// punya catatan tetap tampil sebagai placeholder (ada_data=false)
+		// supaya terlihat bulan mana yang belum diisi. Bila TA tidak punya
+		// kalender (taRange kosong) tetap pakai perilaku lama: hanya bulan
+		// yang berdata. Bulan berdata di luar range tetap ditampilkan.
+		covered := map[int]bool{}
+		if rng, ok := taRange[ta]; ok {
+			for k := rng[0]; k <= rng[1]; k++ {
+				bn, th := k%12+1, k/12
+				covered[bn] = true
+				if m, found := abMap[bn]; found {
+					rat.Absensi = append(rat.Absensi, *m)
+					continue
+				}
+				nama := ""
+				if bn >= 1 && bn <= 12 {
+					nama = bulanHijriNames[bn]
+				}
+				rat.Absensi = append(rat.Absensi, RiwayatAbsensi{
+					Bulan: nama, BulanAngka: bn, TahunHijri: th, AdaData: false,
+				})
+			}
 		}
-		sort.Ints(bulanKeys)
-		for _, k := range bulanKeys {
+		var sisaKeys []int
+		for k := range abMap {
+			if !covered[k] {
+				sisaKeys = append(sisaKeys, k)
+			}
+		}
+		sort.Ints(sisaKeys)
+		for _, k := range sisaKeys {
 			rat.Absensi = append(rat.Absensi, *abMap[k])
 		}
 

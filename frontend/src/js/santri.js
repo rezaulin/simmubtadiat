@@ -585,7 +585,7 @@ function renderAkademikContent(mode) {
         const months = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
         
         months.forEach((mName, idx) => {
-            const ab = data.absensi.find(a => a.bulan_angka === idx) || {s: '-', i: '-', t: '-'};
+            const ab = data.absensi.find(a => a.bulan_angka === idx && a.ada_data !== false) || {s: '-', i: '-', t: '-'};
             rows += `
               <tr class="border-b border-gray-100 dark:border-slate-700/50">
                   <td class="py-2 font-medium">${mName}</td>

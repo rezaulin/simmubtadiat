@@ -462,7 +462,7 @@ function populateRiwayat(riwayatArr, bulanListByTA = {}) {
        totS += a.s || 0;
        totI += a.i || 0;
        totA += a.t || 0;
-       absensiMapBulan[`${a.tahun_hijri || 0}:${a.bulan_angka || 0}`] = { s: a.s || 0, i: a.i || 0, t: a.t || 0 };
+       absensiMapBulan[`${a.tahun_hijri || 0}:${a.bulan_angka || 0}`] = { s: a.s || 0, i: a.i || 0, t: a.t || 0, ada: a.ada_data !== false };
     });
     // Daftar bulan dari kalender akademik TA (mulai→selesai, sama seperti Input
     // Manual & Rekap). Fallback: turunkan dari tahun Hijri yang muncul di data.
@@ -484,9 +484,9 @@ function populateRiwayat(riwayatArr, bulanListByTA = {}) {
             <tr class="${d.t ? 'bg-red-50/60 dark:bg-red-900/10' : ''}">
               <td class="px-2 py-1.5 border border-gray-200 dark:border-gray-700 text-center text-xs text-gray-500 dark:text-gray-400">${String(i + 1).padStart(2, '0')}</td>
               <td class="px-3 py-1.5 border border-gray-200 dark:border-gray-700 font-medium text-gray-800 dark:text-gray-200">${nama} ${th} H</td>
-              <td class="px-2 py-1.5 border border-gray-200 dark:border-gray-700 text-center font-bold text-blue-600 dark:text-blue-400">${d.s || 0}</td>
-              <td class="px-2 py-1.5 border border-gray-200 dark:border-gray-700 text-center font-bold text-amber-600 dark:text-amber-400">${d.i || 0}</td>
-              <td class="px-2 py-1.5 border border-gray-200 dark:border-gray-700 text-center font-bold ${d.t ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'}">${d.t || 0}</td>
+              <td class="px-2 py-1.5 border border-gray-200 dark:border-gray-700 text-center font-bold ${d.ada === false ? 'text-gray-400 dark:text-gray-500' : 'text-blue-600 dark:text-blue-400'}">${d.ada === false ? '-' : (d.s || 0)}</td>
+              <td class="px-2 py-1.5 border border-gray-200 dark:border-gray-700 text-center font-bold ${d.ada === false ? 'text-gray-400 dark:text-gray-500' : 'text-amber-600 dark:text-amber-400'}">${d.ada === false ? '-' : (d.i || 0)}</td>
+              <td class="px-2 py-1.5 border border-gray-200 dark:border-gray-700 text-center font-bold ${d.ada === false ? 'text-gray-400 dark:text-gray-500' : (d.t ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-gray-400')}">${d.ada === false ? '-' : (d.t || 0)}</td>
             </tr>`;
       });
       absensiRows += `
