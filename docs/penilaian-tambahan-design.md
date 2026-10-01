@@ -28,7 +28,7 @@ Sidebar
 ├── Penilaian Akademik   → /penilaian.html       (LAMA, label saja berubah)
 └── Penilaian Tambahan   → /penilaian-tambahan.html (BARU)
     ├── Tab A: Di Bawah Rata²      (semua kelas)
-    ├── Tab B: Setoran Juz Amma    (semua kelas)
+    ├── Tab B: Setoran Juz Amma    (kecuali I'dadiyah)
     └── Tab C: Nilai Kompetensi    (khusus: 3 tsn, 1/2/3 aly)
 ```
 
@@ -50,7 +50,8 @@ Sidebar
   - `POST` → `RequireRoles("pimpinan")`
   - `GET` → `RequireRoles("pimpinan","mufatish","mustahiq")` + special-case
     `wali_santri` (filter `santri_id` anak) — atau endpoint terpisah untuk wali.
-- Asumsi: mustahiq melihat **semua** bagian (spesifikasi tidak menyebut cakupan).
+- **Keputusan**: mustahiq **dibatasi cakupan bagian** sama seperti menu
+  akademik (pola `penilaianScopeGuard*` / `GetBagianPenilaian`).
 
 ## 4. Skema Database (3 tabel BARU)
 
@@ -104,7 +105,9 @@ Migrasi: SQL file di `migrations/`, dijalankan manual via `psql` (lokal + VPS 1)
 ### Tab A — Nilai Di Bawah Rata² (4,4)
 
 - **Otomatis**: rata-rata `nilai_kuartal` per santri per kuartal (TA aktif),
-  semua mapel yang bernilai. Skala data terbukti **0–10** (min 1, max 10).
+  semua mapel yang bernilai **KECUALI kategori akhlaq**
+  (`kategori NOT IN ('akhlaq','akhlaq_perilaku')`). Skala data terbukti
+  **0–10** (min 1, max 10).
 - Kandidat muncul bila `AVG(nilai) < 4.4` pada kuartal terpilih.
 - Baris **tetap tersimpan** walau takziran sudah selesai — kalau nanti
   rata²-nya naik di atas 4,4, baris lama tetap tampil (tidak dihapus otomatis).
@@ -117,8 +120,9 @@ Migrasi: SQL file di `migrations/`, dijalankan manual via `psql` (lokal + VPS 1)
 ### Tab B — Setoran Juz Amma
 
 - **Satu baris per siswi**, isi cell "Nama surat" = deret **ceklis** surat sesuai
-  rentang kelasnya (urut dari an-Nas ke bawah), lalu dropdown **Evaluasi** dan
-  model pilih **Selesai/Belum**.
+  rentang kelasnya (urut dari an-Nas ke bawah), lalu dropdown **Evaluasi**
+  (`Lulus / Her / Tidak Lulus`) dan model pilih **Selesai/Belum**.
+- **I'dadiyah (1–3) TIDAK ikut** — tab hanya berisi ibt 4–6, tsn 1–3, aly 1–3.
 
 | Kelas | Rentang surat (an-Nas → …) | Jumlah |
 |-------|---------------------------|--------|
@@ -133,12 +137,11 @@ Migrasi: SQL file di `migrations/`, dijalankan manual via `psql` (lokal + VPS 1)
 | 3 aly | an-Naba' (78) | 37 |
 
 - Rentang disimpan sebagai konstanta backend (map kelas → `surat_no` target),
-  bukan hardcode di HTML.
-- Filter: **Selesai / Belum Selesai**.
+  kelas (map kelas → `surat_no` target), bukan hardcode di HTML. I'dadiyah
+  tidak punya entri → siswanya otomatis tidak tampil.
+- Filter: **Selesai / Belum Selesai** + **Evaluasi (Lulus/Her/Tidak Lulus)**.
 - Banner keterangan: *"Lulus setoran Juz Amma menjadi syarat mengikuti ujian
   semester genap · Batas akhir: Kuartal 2"*.
-- Catatan: kelas **I'dadiyah (1–3)** belum ada di daftar rentang → lihat Open
-  Question #1.
 
 ### Tab C — Nilai Kompetensi
 
@@ -217,16 +220,18 @@ Tiap fase: `go build` → `node --check` → docker build di VPS 1 → health 20
 commit+push. Tabel di-live dibuat sebelum kode dipasang (DDL dulu, kode belakang)
 agar tidak ada kode menunggu tabel.
 
-## 9. Open Question (kecil, bisa dikoreksi saat mulai)
+## 9. Keputusan Owner (2026-10-01, final)
 
-1. **Kelas I'dadiyah (1–3 idad)** belum punya rentang surat di spek — masuk
-   "semua kelas" (pakai rentang mana?) atau memang tidak ikut Juz Amma?
-2. **Opsi "Evaluasi" Juz Amma** — nilai pilihannya apa? (usulan default:
-   `Baik / Cukup / Kurang`)
-3. **Rata² 4,4** dihitung dari **semua** mapel kuartal, atau kecuali akhlaq?
-4. **Konsekuensi & Jenis Takziran** — dropdown pilihan tetap atau teks bebas?
-   (usulan: dropdown `Tugas tambahan / Pengulangan setoran / Lainnya` + teks)
-5. **Mustahiq view**: semua bagian atau dibatasi cakupan seperti menu akademik?
+1. **I'dadiyah tidak ikut setoran Juz Amma** → Tab B hanya ibt 4–6, tsn 1–3,
+   aly 1–3. Siswa I'dadiyah tidak muncul di tab ini.
+2. **Evaluasi Juz Amma** = pilihan `Lulus / Her / Tidak Lulus` (sama seperti
+   Nilai Kompetensi), terpisah dari kolom Selesai/Belum.
+3. **Rata² 4,4 dihitung kecuali akhlaq** → exclude kategori
+   `akhlaq_perilaku` DAN `akhlaq` (safety; kategori 'akhlaq' kosong di data).
+   Catatan: mapel `علم الأخلاق` berkategori `umum` → TETAP ikut hitungan.
+4. **Konsekuensi & Jenis Takziran = teks bebas** (kolom TEXT, tanpa dropdown).
+5. **Mustahiq dibatasi cakupan** seperti menu akademik — pakai pola
+   `penilaianScopeGuard*` / daftar bagian cakupan yang sama.
 
 ## 10. Referensi internal
 
