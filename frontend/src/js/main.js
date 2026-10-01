@@ -1107,7 +1107,7 @@ async function loadKalenderAgenda(target, today) {
 // home-screen app. Menu yang tampil = MENU_ACCESS role (sama dengan sidebar).
 const DASH_MENU = {
   '/santri.html':         { label: 'Santri',          icon: 'users',            grad: 'from-[#0F6E77] via-[#10919A] to-[#12A2A8]', glow: 'shadow-teal-500/25' },
-  '/penilaian.html':      { label: 'Penilaian',       icon: 'list-checks',      grad: 'from-[#0F6E77] via-[#10919A] to-[#12A2A8]', glow: 'shadow-teal-500/25' },
+  '/penilaian.html':      { label: 'Penilaian Akademik',       icon: 'list-checks',      grad: 'from-[#0F6E77] via-[#10919A] to-[#12A2A8]', glow: 'shadow-teal-500/25' },
   '/absensi-manual.html': { label: 'Absensi',         icon: 'clipboard-check',  grad: 'from-[#0F6E77] via-[#10919A] to-[#12A2A8]', glow: 'shadow-teal-500/25' },
   '/rapot.html':          { label: 'Raport',          icon: 'scroll-text',      grad: 'from-[#0F6E77] via-[#10919A] to-[#12A2A8]', glow: 'shadow-teal-500/25' },
   '/catatan.html':        { label: 'Pelanggaran',     icon: 'shield-alert',     grad: 'from-[#0F6E77] via-[#10919A] to-[#12A2A8]', glow: 'shadow-teal-500/25' },
