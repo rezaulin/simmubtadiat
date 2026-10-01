@@ -2,7 +2,10 @@
 FROM node:20-alpine AS frontend-builder
 WORKDIR /app/frontend
 COPY frontend/package*.json ./
-RUN npm install
+# npm 10.x kena bug "Exit handler never called" saat npm ci/install dari
+# lockfile project (exit 0, node_modules sebagian, vite tak ada).
+# Install TANPA lockfile teruji bersih — lock sengaja dibuang di sini.
+RUN rm -f package-lock.json && npm install --no-audit --no-fund
 COPY frontend/ ./
 # Vite outDir = ../public/dist (lihat vite.config.js) -> output ke /app/public/dist
 RUN npm run build

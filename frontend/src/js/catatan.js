@@ -168,10 +168,10 @@ function renderRows(list) {
       ? `<div class="text-xs font-medium text-gray-600 dark:text-gray-400 mt-0.5">${infoArr.join(' - ')}</div>` 
       : '';
     const btnRiwayat = `<button data-riwayat="${c.santri_id}" data-nama="${c.santri_nama}" class="px-3 py-1 bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-200 rounded-lg text-xs font-semibold transition-colors">Riwayat</button>`;
-    // Jenis catatan tampil langsung di tabel (tanpa perlu klik Riwayat).
+    // Deskripsi catatan terakhir tampil langsung di tabel (tanpa perlu klik Riwayat).
     const badges = [];
-    if (c.jenis_pelanggaran) badges.push(`<span class="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300">${escJenis(c.jenis_pelanggaran)}</span>`);
-    if (c.jenis_prestasi) badges.push(`<span class="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300">${escJenis(c.jenis_prestasi)}</span>`);
+    if (c.deskripsi_pelanggaran) badges.push(`<span class="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300">${escJenis(c.deskripsi_pelanggaran)}</span>`);
+    if (c.deskripsi_prestasi) badges.push(`<span class="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300">${escJenis(c.deskripsi_prestasi)}</span>`);
     const jenisCell = badges.length
       ? `<div class="flex flex-col items-center gap-1">${badges.join('')}</div>`
       : '<span class="text-gray-400 dark:text-gray-500">-</span>';

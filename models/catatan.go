@@ -47,6 +47,10 @@ type RekapCatatan struct {
 	// tanpa membuka modal Riwayat.
 	JenisPelanggaran string `json:"jenis_pelanggaran"`
 	JenisPrestasi    string `json:"jenis_prestasi"`
+	// DeskripsiPelanggaran / DeskripsiPrestasi: isi catatan TERAKHIR per
+	// jenis — tampil di kolom tabel utama (tanpa buka modal Riwayat).
+	DeskripsiPelanggaran string `json:"deskripsi_pelanggaran"`
+	DeskripsiPrestasi    string `json:"deskripsi_prestasi"`
 }
 
 func validJenisCatatan(j string) bool {
@@ -184,8 +188,12 @@ func GetRekapCatatan(ctx context.Context, keyword string, roles []string, pengaj
 	             COALESCE(STRING_AGG(DISTINCT NULLIF(TRIM(c.kategori), ''), ', ')
 	                      FILTER (WHERE c.jenis = 'pelanggaran' AND c.kategori IS NOT NULL), '') AS jenis_pelanggaran,
 	             COALESCE(STRING_AGG(DISTINCT NULLIF(TRIM(c.kategori), ''), ', ')
-	                      FILTER (WHERE c.jenis = 'prestasi' AND c.kategori IS NOT NULL), '') AS jenis_prestasi
-	      FROM catatan_santri c
+	                      FILTER (WHERE c.jenis = 'prestasi' AND c.kategori IS NOT NULL), '') AS jenis_prestasi,
+	                      COALESCE((ARRAY_AGG(NULLIF(TRIM(c.deskripsi), '') ORDER BY c.tanggal DESC, c.id DESC)
+	                       FILTER (WHERE c.jenis = 'pelanggaran'))[1], '') AS deskripsi_pelanggaran,
+	                      COALESCE((ARRAY_AGG(NULLIF(TRIM(c.deskripsi), '') ORDER BY c.tanggal DESC, c.id DESC)
+	                       FILTER (WHERE c.jenis = 'prestasi'))[1], '') AS deskripsi_prestasi
+	                      FROM catatan_santri c
 	      JOIN santri s ON c.santri_id = s.id
 	      LEFT JOIN bagian b ON s.bagian_id = b.id
 	      LEFT JOIN tingkatan t ON b.tingkatan_id = t.id
@@ -246,7 +254,7 @@ func GetRekapCatatan(ctx context.Context, keyword string, roles []string, pengaj
 	res := make([]RekapCatatan, 0)
 	for rows.Next() {
 		var r RekapCatatan
-		if err := rows.Scan(&r.SantriID, &r.SantriNama, &r.Tingkatan, &r.Kelas, &r.BagianNama, &r.TotalPelanggaran, &r.TotalPrestasi, &r.JenisPelanggaran, &r.JenisPrestasi); err != nil {
+		if err := rows.Scan(&r.SantriID, &r.SantriNama, &r.Tingkatan, &r.Kelas, &r.BagianNama, &r.TotalPelanggaran, &r.TotalPrestasi, &r.JenisPelanggaran, &r.JenisPrestasi, &r.DeskripsiPelanggaran, &r.DeskripsiPrestasi); err != nil {
 			return nil, err
 		}
 		res = append(res, r)
