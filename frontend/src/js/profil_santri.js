@@ -1049,7 +1049,7 @@ function loadTambahan() {
         const nm = NAMA_SURAT_T[r0.surat_sampai] || ('Surat ' + r0.surat_sampai);
         isi += `
         <div>
-          <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">🕌 Setoran Juz Amma</h4>
+          <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">📖 Setoran Juz Amma</h4>
           <div class="bg-gray-50 dark:bg-slate-900/30 rounded-xl p-4 border border-gray-100 dark:border-slate-700">
             <div class="flex flex-wrap justify-between items-center gap-2 mb-2">
               <span class="text-xs text-gray-500 dark:text-gray-400">Target: An-Nas s/d ${escapeHtml(nm)}</span>
