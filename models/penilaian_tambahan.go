@@ -38,7 +38,7 @@ type BarisBawahRata struct {
 // akhlaq) dan mengembalikan yang di bawah 4,4, di-LEFT-JOIN dengan status
 // takziran yang pernah diisi pimpinan. baris takziran TIDAK dihapus otomatis
 // walau rata² sudah naik — filter opsional menyaring tampilan, bukan data.
-func GetBawahRata(ctx context.Context, tahunAjaran string, kuartal int, dalamMasa, selesai *bool, bagianIDs []int) ([]BarisBawahRata, error) {
+func GetBawahRata(ctx context.Context, tahunAjaran string, kuartal int, dalamMasa, selesai *bool, bagianIDs []int, santriIDs []int) ([]BarisBawahRata, error) {
 	args := []any{tahunAjaran, kuartal, bagianIDs}
 	q := `
 		SELECT s.id,
@@ -66,7 +66,13 @@ func GetBawahRata(ctx context.Context, tahunAjaran string, kuartal int, dalamMas
 		  AND nk.nilai IS NOT NULL
 		  AND mp.kategori NOT IN ('akhlaq', 'akhlaq_perilaku')
 		  AND s.status = 'aktif'
-		  AND s.bagian_id = ANY($3)`
+	  AND s.bagian_id = ANY($3)`
+	// filter anak (khusus wali_santri) — disisip SEBELUM filter opsional lain
+	// supaya penomoran argumen tetap: $1 ta, $2 kuartal, $3 bagian, $4 santri.
+	if len(santriIDs) > 0 {
+		args = append(args, santriIDs)
+		q += fmt.Sprintf(" AND s.id = ANY($%d)", len(args))
+	}
 	if dalamMasa != nil {
 		args = append(args, *dalamMasa)
 		q += fmt.Sprintf(" AND COALESCE(pt.dalam_masa, false) = $%d", len(args))
@@ -82,14 +88,10 @@ func GetBawahRata(ctx context.Context, tahunAjaran string, kuartal int, dalamMas
 		ORDER BY AVG(nk.nilai) ASC, s.nama ASC`
 	// ambang sebagai argumen (di-cast float8 supaya numerik)
 	args = append(args, BatasRataRata)
-	// HAVING pakai $4 → pastikan urutan argumen: ta, kuartal, bagianIDs, [opsional…], batas
-	// Bangun ulang dengan placeholder batas yang benar:
-	if dalamMasa != nil || selesai != nil {
-		q = strings.Replace(q, "HAVING AVG(nk.nilai) < $4",
-			fmt.Sprintf("HAVING AVG(nk.nilai) < $%d", len(args)), 1)
-	} else {
-		q = strings.Replace(q, "HAVING AVG(nk.nilai) < $4", "HAVING AVG(nk.nilai) < $4", 1)
-	}
+	// HAVING selalu menunjuk argumen TERAKHIR (= batas), berapa pun banyak
+	// filter opsional sebelumnya (dalam_masa/selesai/santri-anak).
+	q = strings.Replace(q, "HAVING AVG(nk.nilai) < $4",
+		fmt.Sprintf("HAVING AVG(nk.nilai) < $%d", len(args)), 1)
 
 	rows, err := config.DB.Query(ctx, q, args...)
 	if err != nil {
@@ -189,7 +191,7 @@ func SuratTargetJuz(tingkatan, kelas string) (int, bool) {
 }
 
 type SuratSetor struct {
-	No   int  `json:"no"`
+	No    int  `json:"no"`
 	Setor bool `json:"setor"`
 }
 
@@ -197,7 +199,7 @@ type BarisJuzAmma struct {
 	SantriID    int          `json:"santri_id"`
 	Nama        string       `json:"nama"`
 	BagianID    int          `json:"bagian_id"`
-	Bagian      string       `json:"bagian"` // "6 Ibtidaiyah A"
+	Bagian      string       `json:"bagian"`       // "6 Ibtidaiyah A"
 	SuratDari   int          `json:"surat_dari"`   // selalu 114 (An-Nas)
 	SuratSampai int          `json:"surat_sampai"` // batas kelas
 	JumlahSurat int          `json:"jumlah_surat"`
@@ -207,7 +209,7 @@ type BarisJuzAmma struct {
 }
 
 // GetJuzAmma: daftar siswi kelas yang punya rentang setoran + ceklis per surat.
-func GetJuzAmma(ctx context.Context, tahunAjaran string, bagianID *int, status, evaluasi string, bagianIDs []int) ([]BarisJuzAmma, error) {
+func GetJuzAmma(ctx context.Context, tahunAjaran string, bagianID *int, status, evaluasi string, bagianIDs []int, santriIDs []int) ([]BarisJuzAmma, error) {
 	args := []any{bagianIDs}
 	q := `
 		SELECT s.id, s.nama, b.id,
@@ -222,6 +224,11 @@ func GetJuzAmma(ctx context.Context, tahunAjaran string, bagianID *int, status, 
 		args = append(args, *bagianID)
 		q += fmt.Sprintf(" AND b.id = $%d", len(args))
 	}
+	// filter anak (khusus wali_santri)
+	if len(santriIDs) > 0 {
+		args = append(args, santriIDs)
+		q += fmt.Sprintf(" AND s.id = ANY($%d)", len(args))
+	}
 	q += ` ORDER BY t.urutan DESC, k.nama ASC, b.nama_bagian ASC, s.nama ASC`
 
 	rows, err := config.DB.Query(ctx, q, args...)
@@ -231,7 +238,12 @@ func GetJuzAmma(ctx context.Context, tahunAjaran string, bagianID *int, status, 
 	defer rows.Close()
 
 	type kandidat struct {
-		id int; nama string; bagianID int; bagian string; tingkatan string; kelas string
+		id        int
+		nama      string
+		bagianID  int
+		bagian    string
+		tingkatan string
+		kelas     string
 	}
 	var kands []kandidat
 	for rows.Next() {
@@ -327,10 +339,10 @@ func GetJuzAmma(ctx context.Context, tahunAjaran string, bagianID *int, status, 
 }
 
 type JuzAmmaInput struct {
-	TahunAjaran string `json:"tahun_ajaran"`
-	SantriID    int    `json:"santri_id"`
-	SuratNo     *int   `json:"surat_no"`
-	Setor       *bool  `json:"setor"`
+	TahunAjaran string  `json:"tahun_ajaran"`
+	SantriID    int     `json:"santri_id"`
+	SuratNo     *int    `json:"surat_no"`
+	Setor       *bool   `json:"setor"`
 	Evaluasi    *string `json:"evaluasi"`
 	Status      *string `json:"status"`
 }
@@ -448,7 +460,7 @@ type BarisKompetensi struct {
 
 // GetKompetensi: daftar siswi kelas berlaku + hasil ujian per kategori.
 // kategori "" → semua kategori yang berlaku untuk masing-masing kelas.
-func GetKompetensi(ctx context.Context, tahunAjaran, kategori, hasil string, bagianID *int, bagianIDs []int) ([]BarisKompetensi, error) {
+func GetKompetensi(ctx context.Context, tahunAjaran, kategori, hasil string, bagianID *int, bagianIDs []int, santriIDs []int) ([]BarisKompetensi, error) {
 	args := []any{bagianIDs}
 	q := `
 		SELECT s.id, s.nama, b.id,
@@ -463,6 +475,11 @@ func GetKompetensi(ctx context.Context, tahunAjaran, kategori, hasil string, bag
 		args = append(args, *bagianID)
 		q += fmt.Sprintf(" AND b.id = $%d", len(args))
 	}
+	// filter anak (khusus wali_santri)
+	if len(santriIDs) > 0 {
+		args = append(args, santriIDs)
+		q += fmt.Sprintf(" AND s.id = ANY($%d)", len(args))
+	}
 	q += ` ORDER BY t.urutan DESC, k.nama ASC, b.nama_bagian ASC, s.nama ASC`
 
 	rows, err := config.DB.Query(ctx, q, args...)
@@ -472,7 +489,12 @@ func GetKompetensi(ctx context.Context, tahunAjaran, kategori, hasil string, bag
 	defer rows.Close()
 
 	type santriRow struct {
-		id int; nama string; bagianID int; bagian string; tingkatan string; kelas string
+		id        int
+		nama      string
+		bagianID  int
+		bagian    string
+		tingkatan string
+		kelas     string
 	}
 	var sis []santriRow
 	for rows.Next() {
@@ -580,7 +602,67 @@ func SaveKompetensi(ctx context.Context, in KompetensiInput) error {
 		INSERT INTO nilai_kompetensi (santri_id, kategori, hasil, tahun_ajaran)
 		VALUES ($1, $2, $3, $4)
 		ON CONFLICT (santri_id, kategori, tahun_ajaran)
-		DO UPDATE SET hasil = EXCLUDED.hasil, updated_at = now()`,
+				DO UPDATE SET hasil = EXCLUDED.hasil, updated_at = now()`,
 		in.SantriID, in.Kategori, in.Hasil, in.TahunAjaran)
 	return err
+}
+
+// ─── Fase 5: akses wali santri (read-only data anaknya sendiri) ────────────
+
+// AnakWali = daftar anak milik akun wali_santri.
+type AnakWali struct {
+	SantriID int    `json:"santri_id"`
+	Nama     string `json:"nama"`
+	Bagian   string `json:"bagian"`
+}
+
+// WaliAnakSantriIDs: ID santri aktif yang dilink ke user wali ini.
+// Dipakai semua GET tab tambahan sebagai filter "hanya anak".
+func WaliAnakSantriIDs(ctx context.Context, userID int) ([]int, error) {
+	rows, err := config.DB.Query(ctx, `
+				SELECT wsl.santri_id
+				FROM wali_santri_link wsl
+				JOIN santri s ON s.id = wsl.santri_id AND s.status = 'aktif'
+				WHERE wsl.user_id = $1
+				ORDER BY wsl.santri_id`, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	ids := []int{}
+	for rows.Next() {
+		var id int
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+	return ids, rows.Err()
+}
+
+// WaliAnakRows: info anak utk endpoint GET /wali/anak.
+func WaliAnakRows(ctx context.Context, userID int) ([]AnakWali, error) {
+	rows, err := config.DB.Query(ctx, `
+				SELECT s.id, s.nama,
+				       TRIM(COALESCE(k.nama,'') || ' ' || COALESCE(t.nama,'') || ' ' || COALESCE(b.nama_bagian,''))
+				FROM wali_santri_link wsl
+				JOIN santri s   ON s.id = wsl.santri_id AND s.status = 'aktif'
+				LEFT JOIN bagian b  ON b.id = s.bagian_id
+				LEFT JOIN kelas k   ON k.id = b.kelas_id
+				LEFT JOIN tingkatan t ON t.id = b.tingkatan_id
+				WHERE wsl.user_id = $1
+				ORDER BY s.nama`, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := []AnakWali{}
+	for rows.Next() {
+		var a AnakWali
+		if err := rows.Scan(&a.SantriID, &a.Nama, &a.Bagian); err != nil {
+			return nil, err
+		}
+		out = append(out, a)
+	}
+	return out, rows.Err()
 }

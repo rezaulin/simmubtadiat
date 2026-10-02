@@ -95,18 +95,54 @@ Kolom: No, Nama, `<select class="km-select" disabled>` (sudah ada, value:
 2. Filter `km-kategori`, `km-hasil`, `km-bagian` sudah jalan.
 3. E2E: kategori Praktik → hanya 3 tsn+1 aly+3 aly; kelas lain kosong.
 
-## Fase 5 — Ekspor + akses wali + role matrix
+## Fase 5 — Ekspor + akses wali + role matrix — ✅ **DONE, live (2026-10-02)**
+
+**Hasil: E2E role matrix 41/41 PASS** (`/tmp/e2e_fase5.py`, screenshot
+`/root/e2e-fase5/` + `export-*.xlsx`).
+
+- **Download/export** ✅: endpoint `GET /api/penilaian-tambahan/export?fitur=
+  bawah-rata|juz-amma|kompetensi` — `RequireRoles("pimpinan")` di route DAN
+  cek ulang di dalam handler (gaya `ExportSantri`) → generate `.xlsx` via
+  `excelize` (server-side, bukan ExcelJS; tetap mengikuti pola export
+  `ExportSantri/ExportPengajar` sesuai design §6). Filter ikut query. Tombol
+  📥 per tab hanya dirender utk pimpinan; non-pimpinan → 403 walau dipanggil
+  langsung.
+- **Akses wali** ✅: `wali_santri` masuk `RequireRoles` GET + `ROLE_TAMBAHAN`
+  (sudah dari awal) + `MENU_ACCESS` xss.js (`['/index.html','/penilaian.html']`).
+  Scope baru `tambahanScope()`: wali → SEMUA bagian + filter `s.id = ANY(anak)`
+  dari `wali_santri_link` di ketiga GET (param `santriIDs` baru). Endpoint
+  `GET /wali/anak` (khusus wali). Banner "Akses Wali: hanya data anak" dirender
+  via JS di bawah tab bar.
+- **Banner syarat** ✅ (Fase 1): tab Juz Amma (syarat ujian semester genap,
+  batas K2) + tab Kompetensi (syarat ijazah 6 ibt/3 tsn/3 aly + jadwal).
+- **Role matrix E2E** ✅:
+  - pimpinan: GET/POST/export semua OK (export 3 file xlsx valid, PK magic).
+  - mufatish/mustahiq: GET 200 (cakupan: bawah-rata 0, juz 14, komp 14),
+    POST 403, export 403, tanpa tombol Download, select disabled.
+  - wali (user 92 → anak santri 105 Maryam): GET hanya baris anak
+    (bawah-rata [105], juz-amma 1 baris, kompetensi 0 — 2 tsn tak eligible),
+    `/wali/anak` OK, POST 403, export 403, **tab Akademik HIDDEN**, default
+    tab = Bawah Rata, banner tampil, tanpa tombol Download.
+  - admin(42)/tim_rapot(50): GET 403, export 403, **hanya tab Akademik**.
+- **Bug Fase 1 ikut diperbaiki**: `activate()` menimpa `btn.className` total →
+  class `hidden` dari `applyVisibility()` hilang (tab tak pernah benar-benar
+  disembunyikan utk wali/admin). Fix: status `visible[]` ditulis ulang saat
+  set className.
 
 - **Download/export**: PIMPINAN ONLY, cek role di BACKEND (jangan cuma sembunyi
   tombol). Format ikut pola export tab Akademik (ExcelJS di
-  `frontend/src/js/penilaian.js`).
+  `frontend/src/js/penilaian.js`). → **selesai, lihat blok di atas** (diputuskan
+  pakai pola `ExportSantri` excelize server-side sesuai design §6).
 - **Akses lihat**: pimpinan, mufatish, mustahiq, **walisantri** (wali hanya
   data anaknya). Wali BELUM masuk `RequireRoles` GET — tambahkan + filter
   `santri_id` milik anak saat fase 5. Tambah wali ke `ROLE_TAMBAHAN` di
-  `penilaian-tambahan.js` saat itu juga.
+  `penilaian-tambahan.js` saat itu juga. → **selesai** (`ROLE_TAMBAHAN` sudah
+  berisi `wali_santri` sejak Fase 1).
 - Role matrix E2E wajib: pimpinan (full), mufatish/mustahiq (lihat, cakupan),
   wali (hanya anak), admin/tim_rapot/muroqib (**tidak lihat** tab tambahan —
   sesuai spek; kalau boss minta ditambah, ubah `ROLE_TAMBAHAN` + `RequireRoles`).
+  → **selesai, 41/41 PASS** (muroqib: sifatnya sama dgn admin/tim_rapot —
+  tidak masuk `ROLE_TAMBAHAN`/`RequireRoles`; dites via admin+tim_rapot).
 
 ## Pola kerja & jebakan (dari Fase 1)
 

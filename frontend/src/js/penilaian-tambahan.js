@@ -418,6 +418,25 @@
     'kompetensi': loadKompetensi
   };
 
+  // ── Fase 5: unduh Excel (backend mengecek role pimpinan juga) ────────────
+  function unduhTambahan(fitur) {
+    var p = new URLSearchParams({ fitur: fitur });
+    if (fitur === 'bawah-rata') {
+      p.set('kuartal', $('br-kuartal').value);
+      var d = $('br-dalam').value; if (d) p.set('dalam_masa', d);
+      var s = $('br-selesai').value; if (s) p.set('selesai', s);
+    } else if (fitur === 'juz-amma') {
+      var b = $('ja-bagian').value; if (b) p.set('bagian_id', b);
+      var st = $('ja-status').value; if (st) p.set('status', st);
+      var ev = $('ja-evaluasi').value; if (ev) p.set('evaluasi', ev);
+    } else if (fitur === 'kompetensi') {
+      p.set('kategori', $('km-kategori').value);
+      var h = $('km-hasil').value; if (h) p.set('hasil', h);
+      var kb = $('km-bagian').value; if (kb) p.set('bagian_id', kb);
+    }
+    window.location.href = '/api/penilaian-tambahan/export?' + p.toString();
+  }
+
   // ── tab controller ────────────────────────────────────────────────────────
   function defaultTab() {
     if (visible['akademik']) return 'akademik';
@@ -433,7 +452,10 @@
     if (panel) panel.classList.remove('hidden');
     document.querySelectorAll('.ptab-btn').forEach(function (btn) {
       var on = btn.dataset.tab === tab;
-      btn.className = BTN_BASE + ' ' + (on ? BTN_ON : BTN_OFF);
+      // pertahankan status sembunyi (visible[]) — className ditimpa total,
+      // jadi class 'hidden' harus dilepas ulang di sini (bug fase-1).
+      btn.className = BTN_BASE + ' ' + (on ? BTN_ON : BTN_OFF) +
+        (visible[btn.dataset.tab] ? '' : ' hidden');
       btn.setAttribute('aria-selected', on ? 'true' : 'false');
     });
     if ((location.hash || '').slice(1) !== tab) history.replaceState(null, '', '#' + tab);
@@ -542,6 +564,26 @@
     }).then(function (hasil) {
       me = hasil;
       applyVisibility();
+      // Fase 5: tombol Download HANYA utk pimpinan — walau pun, role tetap
+      // dicek ulang di backend (GET /export → 403 utk non-pimpinan).
+      var bolehUnduh = me ? punyaRole(['pimpinan']) : false;
+      document.querySelectorAll('.btn-tambahan').forEach(function (b) {
+        if (bolehUnduh) {
+          b.addEventListener('click', function () { unduhTambahan(b.dataset.fitur); });
+        } else {
+          b.remove();
+        }
+      });
+      // Fase 5: wali_santri → banner akses terbatas "hanya anak sendiri".
+      if (me && punyaRole(['wali_santri'])) {
+        var bar = document.getElementById('ptab-bar');
+        if (bar) {
+          var ban = document.createElement('div');
+          ban.className = 'mx-6 mt-4 rounded-2xl border border-blue-200 dark:border-blue-500/30 bg-blue-50/70 dark:bg-blue-500/10 px-4 py-3 text-sm text-blue-800 dark:text-blue-300 leading-relaxed';
+          ban.innerHTML = '👁️ <b>Akses Wali:</b> Anda hanya melihat data <b>anak Anda sendiri</b> pada tab Di Bawah Rata-rata, Setoran Juz Amma, dan Nilai Kompetensi.';
+          bar.parentNode.insertBefore(ban, bar.nextSibling);
+        }
+      }
       activate((location.hash || '').slice(1) || defaultTab());
     });
   }

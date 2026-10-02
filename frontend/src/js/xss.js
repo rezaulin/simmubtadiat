@@ -94,7 +94,7 @@ const MENU_ACCESS = {
   muroqib: ['/index.html', '/santri.html', '/absensi-manual.html', '/catatan.html', '/rekap.html'],
   tim_rapot: ['/index.html', '/santri.html', '/penilaian.html', '/rapot.html', '/rekap.html'],
   keamanan: ['/index.html', '/santri.html', '/arsip.html', '/alumni.html', '/catatan.html', '/pengajar-purna.html'],
-  wali_santri: ['/index.html']
+  wali_santri: ['/index.html', '/penilaian.html']
 };
 
 // ── Menu khusus KOMBINASI role (Opsi C) ────────────────────────────────────

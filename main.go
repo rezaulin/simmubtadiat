@@ -329,19 +329,27 @@ func main() {
 				// Penilaian Tambahan — tab baru di dalam halaman Penilaian:
 				// Di Bawah Rata², Setoran Juz Amma, Nilai Kompetensi.
 				r.Route("/penilaian-tambahan", func(r chi.Router) {
-					// Baca: pimpinan + mufatish + mustahiq (dibatasi cakupan).
+					// Baca: pimpinan + mufatish + mustahiq (dibatasi cakupan)
+					// + wali_santri (HANYA data anaknya — filter di handler).
 					r.Group(func(r chi.Router) {
-						r.Use(appMiddleware.RequireRoles("pimpinan", "mufatish", "mustahiq"))
+						r.Use(appMiddleware.RequireRoles("pimpinan", "mufatish", "mustahiq", "wali_santri"))
 						r.Get("/bawah-rata", handlers.GetBawahRata)
 						r.Get("/juz-amma", handlers.GetJuzAmma)
 						r.Get("/kompetensi", handlers.GetKompetensi)
 					})
-					// Tulis: pimpinan saja (keputusan owner).
+					// Khusus wali: daftar anak (read-only).
+					r.Group(func(r chi.Router) {
+						r.Use(appMiddleware.RequireRoles("wali_santri"))
+						r.Get("/wali/anak", handlers.WaliAnak)
+					})
+					// Tulis + ekspor: pimpinan saja (keputusan owner;
+					// cek role ekspor juga di dalam handler).
 					r.Group(func(r chi.Router) {
 						r.Use(appMiddleware.RequireRoles("pimpinan"))
 						r.Post("/bawah-rata/takziran", handlers.SaveTakziran)
 						r.Post("/juz-amma", handlers.SaveJuzAmma)
 						r.Post("/kompetensi", handlers.SaveKompetensi)
+						r.Get("/export", handlers.ExportTambahan)
 					})
 				})
 
@@ -368,8 +376,6 @@ func main() {
 						r.Post("/status", handlers.UbahStatusSantri)
 					})
 				})
-
-
 
 				// Alumni & Kelulusan
 				r.Route("/alumni", func(r chi.Router) {
@@ -425,7 +431,7 @@ func main() {
 						r.Post("/pindah-purna", handlers.PindahPengajarPurna)
 						r.Post("/{id}/pindah-purna", handlers.PindahPengajarPurna)
 					})
-					})
+				})
 
 				r.Route("/dewan-harian", func(r chi.Router) {
 					// Read: pimpinan + mufatish + mustahiq + muroqib + admin (admin read-only viewer)
