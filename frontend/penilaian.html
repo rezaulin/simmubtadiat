@@ -213,6 +213,19 @@
       <p class="text-sm text-gray-500 dark:text-gray-400">Input dan lihat nilai semua mapel sekaligus (spreadsheet). Tahun Ajaran: <span id="display-tahun-ajaran" class="font-mono font-bold text-amber-600">-</span></p>
     </div>
 
+    <!-- TAB BAR PENILAIAN (tab-tab terpisah — bukan satu halaman) -->
+    <div class="px-6 mb-4">
+      <div id="ptab-bar" class="flex gap-1 p-1.5 bg-white/70 dark:bg-slate-800/80 rounded-2xl border border-gray-200 dark:border-slate-700 overflow-x-auto" role="tablist">
+        <button type="button" class="ptab-btn shrink-0 px-4 py-2 rounded-xl text-sm font-semibold transition-colors bg-primary text-white shadow-md" data-tab="akademik">Akademik</button>
+        <button type="button" class="ptab-btn shrink-0 px-4 py-2 rounded-xl text-sm font-semibold transition-colors text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700" data-tab="bawah-rata">Di Bawah Rata&sup2;</button>
+        <button type="button" class="ptab-btn shrink-0 px-4 py-2 rounded-xl text-sm font-semibold transition-colors text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700" data-tab="juz-amma">Setoran Juz Amma</button>
+        <button type="button" class="ptab-btn shrink-0 px-4 py-2 rounded-xl text-sm font-semibold transition-colors text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700" data-tab="kompetensi">Nilai Kompetensi</button>
+      </div>
+    </div>
+
+    <!-- TAB: AKADEMIK — isi lama, TIDAK diubah -->
+    <div id="tab-akademik" class="ptab-panel">
+
     <!-- FILTER -->
     <div class="px-6 mb-6">
       <div class="glass dark:bg-slate-800/80 rounded-2xl border border-gray-200 dark:border-slate-700 p-4">
@@ -240,6 +253,126 @@
         <div class="flex flex-col items-center justify-center p-12 text-gray-500 dark:text-gray-400">
           <svg class="w-16 h-16 mb-4 text-gray-300 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
           <p>Pilih Kelas dan Bagian, lalu klik Tampilkan.</p>
+        </div>
+      </div>
+    </div>
+    </div><!-- /tab-akademik -->
+
+    <!-- TAB: DI BAWAH RATA² (4,4) -->
+    <div id="tab-bawah-rata" class="ptab-panel hidden">
+      <div class="px-6 pb-6 space-y-4">
+        <div class="rounded-2xl border border-amber-200 dark:border-amber-500/30 bg-amber-50/70 dark:bg-amber-500/10 p-4 text-sm text-amber-800 dark:text-amber-300 leading-relaxed">
+          Rata-rata nilai &lt; <b>4,4</b> dihitung otomatis dari Nilai Akademik (kuartal terpilih, <b>kecuali akhlaq</b>). Baris tetap tersimpan meski takziran sudah selesai.
+        </div>
+        <div class="glass dark:bg-slate-800/80 rounded-2xl border border-gray-200 dark:border-slate-700 p-4">
+          <div class="grid grid-cols-2 sm:flex sm:flex-row gap-3 sm:flex-wrap sm:items-end">
+            <div class="flex flex-col gap-1">
+              <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">Kuartal</label>
+              <select id="br-kuartal" class="glass-input px-3 py-2 rounded-lg text-sm w-full sm:min-w-[110px]">
+                <option value="1">Kuartal 1</option>
+                <option value="2">Kuartal 2</option>
+                <option value="3">Kuartal 3</option>
+                <option value="4">Kuartal 4</option>
+              </select>
+            </div>
+            <div class="flex flex-col gap-1">
+              <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">Dalam Masa Takziran</label>
+              <select id="br-dalam" class="glass-input px-3 py-2 rounded-lg text-sm w-full sm:min-w-[150px]">
+                <option value="">-- Semua --</option>
+                <option value="true">Ya</option>
+                <option value="false">Tidak</option>
+              </select>
+            </div>
+            <div class="flex flex-col gap-1">
+              <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">Selesai Takziran</label>
+              <select id="br-selesai" class="glass-input px-3 py-2 rounded-lg text-sm w-full sm:min-w-[150px]">
+                <option value="">-- Semua --</option>
+                <option value="true">Sudah</option>
+                <option value="false">Belum</option>
+              </select>
+            </div>
+            <button id="br-refresh" class="bg-primary hover:bg-primary-hover text-white px-5 py-2 rounded-xl text-sm font-medium shadow-md col-span-2 sm:col-span-1">Tampilkan</button>
+          </div>
+        </div>
+        <div id="br-table" class="glass dark:bg-slate-800/80 rounded-2xl border border-gray-200 dark:border-slate-700 p-4 overflow-x-auto text-sm text-gray-500 dark:text-gray-400">
+          Memuat…
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: SETORAN JUZ AMMA -->
+    <div id="tab-juz-amma" class="ptab-panel hidden">
+      <div class="px-6 pb-6 space-y-4">
+        <div class="rounded-2xl border border-emerald-200 dark:border-emerald-500/30 bg-emerald-50/70 dark:bg-emerald-500/10 p-4 text-sm text-emerald-800 dark:text-emerald-300 leading-relaxed">
+          Lulus setoran Juz Amma menjadi <b>syarat mengikuti ujian semester genap</b> · Batas akhir: <b>Kuartal 2</b> · Kelas I'dadiyah tidak memiliki setoran.
+        </div>
+        <div class="glass dark:bg-slate-800/80 rounded-2xl border border-gray-200 dark:border-slate-700 p-4">
+          <div class="grid grid-cols-2 sm:flex sm:flex-row gap-3 sm:flex-wrap sm:items-end">
+            <div class="flex flex-col gap-1">
+              <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">Bagian</label>
+              <select id="ja-bagian" class="glass-input px-3 py-2 rounded-lg text-sm w-full sm:min-w-[160px]"><option value="">-- Semua Bagian --</option></select>
+            </div>
+            <div class="flex flex-col gap-1">
+              <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">Status</label>
+              <select id="ja-status" class="glass-input px-3 py-2 rounded-lg text-sm w-full sm:min-w-[130px]">
+                <option value="">-- Semua --</option>
+                <option value="selesai">Selesai</option>
+                <option value="belum">Belum</option>
+              </select>
+            </div>
+            <div class="flex flex-col gap-1">
+              <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">Evaluasi</label>
+              <select id="ja-evaluasi" class="glass-input px-3 py-2 rounded-lg text-sm w-full sm:min-w-[140px]">
+                <option value="">-- Semua --</option>
+                <option value="lulus">Lulus</option>
+                <option value="her">Her</option>
+                <option value="tidak_lulus">Tidak Lulus</option>
+              </select>
+            </div>
+            <button id="ja-refresh" class="bg-primary hover:bg-primary-hover text-white px-5 py-2 rounded-xl text-sm font-medium shadow-md col-span-2 sm:col-span-1">Tampilkan</button>
+          </div>
+        </div>
+        <div id="ja-table" class="glass dark:bg-slate-800/80 rounded-2xl border border-gray-200 dark:border-slate-700 p-4 overflow-x-auto text-sm text-gray-500 dark:text-gray-400">
+          Memuat…
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: NILAI KOMPETENSI -->
+    <div id="tab-kompetensi" class="ptab-panel hidden">
+      <div class="px-6 pb-6 space-y-4">
+        <div class="rounded-2xl border border-sky-200 dark:border-sky-500/30 bg-sky-50/70 dark:bg-sky-500/10 p-4 text-sm text-sky-800 dark:text-sky-300 leading-relaxed">
+          <b>Syarat ijazah:</b> 6 ibt &amp; 3 tsn — Lulus Ujian Baca Al-Qur'an + Praktik + Baca Kitab; 3 aliyah — ketiganya + khidmah satu tahun.
+          <b>Jadwal:</b> 3 tsn (ketiga ujian) · 1 aly Praktik · 2 aly Ujian Baca Al-Qur'an · 3 aly Baca Kitab + Praktik.
+        </div>
+        <div class="glass dark:bg-slate-800/80 rounded-2xl border border-gray-200 dark:border-slate-700 p-4">
+          <div class="grid grid-cols-2 sm:flex sm:flex-row gap-3 sm:flex-wrap sm:items-end">
+            <div class="flex flex-col gap-1">
+              <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">Kategori Ujian</label>
+              <select id="km-kategori" class="glass-input px-3 py-2 rounded-lg text-sm w-full sm:min-w-[190px]">
+                <option value="ubq">Ujian Baca Al-Qur'an</option>
+                <option value="praktik">Ujian Praktik</option>
+                <option value="kitab">Ujian Baca Kitab</option>
+              </select>
+            </div>
+            <div class="flex flex-col gap-1">
+              <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">Hasil</label>
+              <select id="km-hasil" class="glass-input px-3 py-2 rounded-lg text-sm w-full sm:min-w-[140px]">
+                <option value="">-- Semua --</option>
+                <option value="lulus">Lulus</option>
+                <option value="her">Her</option>
+                <option value="tidak_lulus">Tidak Lulus</option>
+              </select>
+            </div>
+            <div class="flex flex-col gap-1">
+              <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">Bagian</label>
+              <select id="km-bagian" class="glass-input px-3 py-2 rounded-lg text-sm w-full sm:min-w-[160px]"><option value="">-- Semua Bagian --</option></select>
+            </div>
+            <button id="km-refresh" class="bg-primary hover:bg-primary-hover text-white px-5 py-2 rounded-xl text-sm font-medium shadow-md col-span-2 sm:col-span-1">Tampilkan</button>
+          </div>
+        </div>
+        <div id="km-table" class="glass dark:bg-slate-800/80 rounded-2xl border border-gray-200 dark:border-slate-700 p-4 overflow-x-auto text-sm text-gray-500 dark:text-gray-400">
+          Memuat…
         </div>
       </div>
     </div>
@@ -284,6 +417,7 @@
   </nav>
   
   <script src="./src/js/penilaian.js" type="module"></script>
+  <script src="./src/js/penilaian-tambahan.js" type="module"></script>
 
   <script>
     // Initialize Lucide Icons

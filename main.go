@@ -326,6 +326,25 @@ func main() {
 					})
 				})
 
+				// Penilaian Tambahan — tab baru di dalam halaman Penilaian:
+				// Di Bawah Rata², Setoran Juz Amma, Nilai Kompetensi.
+				r.Route("/penilaian-tambahan", func(r chi.Router) {
+					// Baca: pimpinan + mufatish + mustahiq (dibatasi cakupan).
+					r.Group(func(r chi.Router) {
+						r.Use(appMiddleware.RequireRoles("pimpinan", "mufatish", "mustahiq"))
+						r.Get("/bawah-rata", handlers.GetBawahRata)
+						r.Get("/juz-amma", handlers.GetJuzAmma)
+						r.Get("/kompetensi", handlers.GetKompetensi)
+					})
+					// Tulis: pimpinan saja (keputusan owner).
+					r.Group(func(r chi.Router) {
+						r.Use(appMiddleware.RequireRoles("pimpinan"))
+						r.Post("/bawah-rata/takziran", handlers.SaveTakziran)
+						r.Post("/juz-amma", handlers.SaveJuzAmma)
+						r.Post("/kompetensi", handlers.SaveKompetensi)
+					})
+				})
+
 				// Catatan Pelanggaran & Prestasi
 				r.Route("/catatan", func(r chi.Router) {
 					// Baca: pimpinan/admin/mufatish/mustahiq/muroqib/keamanan.
