@@ -1415,21 +1415,147 @@ async function loadAnakDetail(santriId) {
   home.innerHTML = `<div class="text-center py-10 text-gray-500 dark:text-gray-400 text-sm">Memuat detail anak...</div>`;
 
   try {
-    const [resS, resR, resC] = await Promise.all([
+    // 6 fetch paralel: profil + riwayat + catatan + 3 nilai tambahan.
+    // Jalur A (keputusan owner 2026-10-02): endpoint penilaian-tambahan
+    // sudah meng-filter wali_santri → HANYA anaknya (backend tak diubah).
+    const [resS, resR, resC, resJuz, resKomp, resBr] = await Promise.all([
       fetch(`/api/santri/${santriId}`),
       fetch(`/api/santri/${santriId}/riwayat-akademik`),
-      fetch(`/api/wali/catatan?santri_id=${santriId}`)
+      fetch(`/api/wali/catatan?santri_id=${santriId}`),
+      fetch('/api/penilaian-tambahan/juz-amma'),
+      fetch('/api/penilaian-tambahan/kompetensi'),
+      fetch('/api/penilaian-tambahan/bawah-rata')
     ]);
     if (!resS.ok) throw new Error('Gagal memuat profil anak');
     const s = await resS.json();
     const riwayat = resR.ok ? ((await resR.json()) || []) : [];
     const catatan = resC.ok ? ((await resC.json()) || []) : [];
+    const juzRows = resJuz.ok ? ((await resJuz.json()) || []) : [];
+    const kompRows = resKomp.ok ? ((await resKomp.json()) || []) : [];
+    const brRows = resBr.ok ? ((await resBr.json()) || []) : [];
 
-    home.innerHTML = buildAnakBiodata(s) + buildAlphaAlert(riwayat) + buildCatatanAnak(catatan) + buildRiwayatAkademik(riwayat);
+    home.innerHTML = buildAnakBiodata(s) + buildAlphaAlert(riwayat) + buildCatatanAnak(catatan) +
+      buildNilaiTambahan(juzRows, kompRows, brRows, santriId) + buildRiwayatAkademik(riwayat);
     if (window.lucide) window.lucide.createIcons();
   } catch (err) {
     home.innerHTML = `<div class="text-center py-10 text-red-500 text-sm">${waliEscape(err.message)}</div>`;
   }
+}
+
+// ── Nilai Tambahan utk dashboard wali (Jalur A, keputusan owner 2026-10-02) ─
+// Setoran Juz Amma + Nilai Kompetensi + Di Bawah Rata-rata. Data dari
+// /api/penilaian-tambahan/* (sudah difilter backend → HANYA anak wali tsb).
+// Penempatan: setelah catatan, sebelum riwayat akademik.
+const WALI_NAMA_SURAT_SAMPAI = {
+  108: 'Al-Kautsar', 104: 'al-Humazah', 99: 'az-Zalzalah', 97: 'al-Qadr',
+  93: 'ad-Duha', 87: "al-A'la", 83: 'al-Muthaffifin', 80: "'Abasa", 78: "an-Naba'"
+};
+const WALI_KATEGORI_KOMP = { ubq: "Ujian Baca Al-Qur'an", praktik: 'Ujian Praktik', kitab: 'Ujian Baca Kitab' };
+
+function waliBadgeNilai(nilai, tipe) {
+  if (tipe === 'evaluasi') {
+    if (nilai === 'lulus') return '<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">Lulus</span>';
+    if (nilai === 'tidak_lulus') return '<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300">Tidak Lulus</span>';
+    return '<span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-500 dark:bg-slate-700 dark:text-gray-400">(belum dinilai)</span>';
+  }
+  // hasil kompetensi — 'her' tetap tampil utk data lama
+  if (nilai === 'lulus') return '<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">Lulus</span>';
+  if (nilai === 'her') return '<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">Her</span>';
+  if (nilai === 'tidak_lulus') return '<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300">Tidak Lulus</span>';
+  return '<span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-500 dark:bg-slate-700 dark:text-gray-400">(belum dinilai)</span>';
+}
+
+function buildNilaiTambahan(juzRows, kompRows, brRows, santriId) {
+  const juz = (juzRows || []).filter(r => r.santri_id === santriId);
+  const komp = (kompRows || []).filter(r => r.santri_id === santriId);
+  const br = (brRows || []).filter(r => r.santri_id === santriId);
+  if (!juz.length && !komp.length && br.length === 0) return '';
+
+  let sections = '';
+
+  // — Setoran Juz Amma —
+  if (juz.length) {
+    const r = juz[0];
+    const disetor = (r.surat || []).filter(x => x.setor).length;
+    const total = r.jumlah_surat || (r.surat || []).length || 1;
+    const pct = Math.round((disetor / total) * 100);
+    const nm = WALI_NAMA_SURAT_SAMPAI[r.surat_sampai] || ('Surat ' + r.surat_sampai);
+    const statusBadge = r.status === 'selesai'
+      ? '<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">Selesai</span>'
+      : '<span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">Belum Selesai</span>';
+    sections += `
+    <div>
+      <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">🕌 Setoran Juz Amma</h4>
+      <div class="bg-gray-50 dark:bg-slate-900/30 rounded-xl p-4 border border-gray-100 dark:border-slate-700">
+        <div class="flex flex-wrap justify-between items-center gap-2 mb-2">
+          <span class="text-xs text-gray-500 dark:text-gray-400">Target: An-Nas s/d ${waliEscape(nm)}</span>
+          ${waliBadgeNilai(r.evaluasi || '', 'evaluasi')}
+        </div>
+        <div class="h-2.5 bg-gray-200 dark:bg-slate-700 rounded-full overflow-hidden">
+          <div class="h-2.5 bg-emerald-500 rounded-full transition-all" style="width:${pct}%"></div>
+        </div>
+        <div class="flex flex-wrap justify-between items-center gap-2 mt-2">
+          <span class="text-xs font-bold text-gray-700 dark:text-gray-300">${disetor}/${total} surat disetor (${pct}%)</span>
+          ${statusBadge}
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // — Nilai Kompetensi —
+  if (komp.length) {
+    const items = komp.map(k => `
+      <div class="flex flex-wrap justify-between items-center gap-2 py-1.5 border-b border-gray-100 dark:border-slate-700 last:border-0">
+        <span class="text-sm text-gray-700 dark:text-gray-300">${waliEscape(WALI_KATEGORI_KOMP[k.kategori] || k.kategori)}</span>
+        ${waliBadgeNilai(k.hasil || '', 'hasil')}
+      </div>`).join('');
+    sections += `
+    <div>
+      <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">🎯 Nilai Kompetensi</h4>
+      <div class="bg-gray-50 dark:bg-slate-900/30 rounded-xl px-4 py-1 border border-gray-100 dark:border-slate-700">${items}
+      </div>
+    </div>`;
+  }
+
+  // — Di Bawah Rata-rata — selalu tampil: masuk daftar ATAU "tidak termasuk".
+  if (br.length) {
+    const r = br[0];
+    const ket = [];
+    if (r.konsekuensi) ket.push('Konsekuensi: ' + r.konsekuensi);
+    if (r.jenis_takziran) ket.push('Takziran: ' + r.jenis_takziran);
+    sections += `
+    <div>
+      <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">📉 Di Bawah Rata-rata (&lt; 4,4)</h4>
+      <div class="bg-red-50 dark:bg-red-900/15 rounded-xl p-4 border border-red-200 dark:border-red-800/60">
+        <div class="flex flex-wrap justify-between items-center gap-2 mb-1">
+          <span class="text-sm font-bold text-red-700 dark:text-red-300">Termasuk daftar bawah rata-rata — Kuartal ${r.kuartal || 1}</span>
+          <span class="text-sm font-bold text-red-600 dark:text-red-400">Rata² ${waliFmtNilai(r.rata2)}</span>
+        </div>
+        ${ket.length ? '<p class="text-xs text-red-700 dark:text-red-300">' + waliEscape(ket.join(' • ')) + '</p>' : ''}
+        <p class="text-xs mt-1 ${r.selesai ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : (r.dalam_masa ? 'text-amber-600 dark:text-amber-400 font-semibold' : 'text-gray-500 dark:text-gray-400')}">
+          ${r.selesai ? '✓ Takziran sudah selesai' : (r.dalam_masa ? '⏳ Dalam masa takziran' : 'Belum dalam masa takziran')}
+        </p>
+      </div>
+    </div>`;
+  } else if (komp.length || juz.length) {
+    sections += `
+    <div>
+      <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">📉 Di Bawah Rata-rata (&lt; 4,4)</h4>
+      <div class="bg-emerald-50 dark:bg-emerald-900/15 rounded-xl p-4 border border-emerald-200 dark:border-emerald-800/60">
+        <p class="text-sm font-semibold text-emerald-700 dark:text-emerald-300">✓ Tidak termasuk daftar siswi di bawah rata-rata 4,4</p>
+      </div>
+    </div>`;
+  }
+
+  if (!sections) return '';
+  return `
+  <div class="bg-white dark:bg-slate-800 rounded-3xl border border-gray-100 dark:border-slate-700/60 shadow-sm overflow-hidden mb-6">
+    <div class="px-6 py-4 border-b border-gray-100 dark:border-slate-700">
+      <h3 class="text-lg font-bold text-gray-900 dark:text-white">Nilai Tambahan</h3>
+      <p class="text-sm text-indigo-600 dark:text-indigo-400">Setoran Juz Amma, Nilai Kompetensi & Bawah Rata-rata</p>
+    </div>
+    <div class="p-6 space-y-5">${sections}</div>
+  </div>`;
 }
 
 function buildCatatanAnak(catatan) {
