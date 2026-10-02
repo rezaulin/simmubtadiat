@@ -151,15 +151,28 @@
   }
 
   // ── tabel ─────────────────────────────────────────────────────────────────
-  function tabelHTML(kolom, isi, kosongMsg) {
+  // renderTabel: set innerHTML + pasang data-label otomatis per kolom.
+  // Di HP (<768px) class `table-responsive` (style.css) mengubah tiap <tr>
+  // jadi kartu vertikal — sama seperti tampilan Data Santri — jadi user
+  // cukup scroll ke bawah, TANPA geser ke samping.
+  function renderTabel(el, kolom, isi, kosongMsg) {
     if (!isi) {
-      return '<div class="p-8 text-center text-gray-500 dark:text-gray-400">' + esc(kosongMsg) + '</div>';
+      el.innerHTML = '<div class="p-8 text-center text-gray-500 dark:text-gray-400">' + esc(kosongMsg) + '</div>';
+      return;
     }
-    return '<div class="overflow-x-auto"><table class="w-full text-sm border-collapse">' +
+    el.innerHTML = '<div class="overflow-x-auto"><table class="w-full text-sm border-collapse table-responsive">' +
       '<thead><tr class="text-left text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-slate-700">' +
       kolom.map(function (k) { return '<th class="px-3 py-2 font-bold whitespace-nowrap">' + k + '</th>'; }).join('') +
       '</tr></thead><tbody class="divide-y divide-gray-100 dark:divide-slate-700/60">' +
       isi + '</tbody></table></div>';
+    // label kartu mobile: selaraskan <td> ke-dgn urutan <th>
+    var trs = el.querySelectorAll('tbody tr');
+    for (var t = 0; t < trs.length; t++) {
+      var tds = trs[t].children;
+      for (var c = 0; c < tds.length && c < kolom.length; c++) {
+        tds[c].setAttribute('data-label', kolom[c]);
+      }
+    }
   }
   function errHTML(e) {
     if (e && e.status === 403) {
@@ -275,7 +288,7 @@
           '<div class="br-status text-[11px] font-semibold text-gray-400"></div></td>' +
           '</tr>';
       }).join('');
-      el.innerHTML = tabelHTML(
+      renderTabel(el,
         ['No', 'Nama', 'Bagian', 'Jumlah Nilai', 'Rata-rata Nilai', 'Konsekuensi', 'Jenis Takziran', 'Dalam Masa Takziran', 'Selesai Melaksanakan Takziran'],
         isi,
         'Tidak ada siswi dengan rata-rata di bawah 4,4 pada kuartal ini.');
@@ -401,7 +414,7 @@
             '<div class="ja-status text-[11px] font-semibold text-gray-400"></div></td>' +
           '</tr>';
       }).join('');
-      el.innerHTML = tabelHTML(
+      renderTabel(el,
         ['No', 'Bagian', 'Nama Siswi', 'Nama Surat', 'Evaluasi', 'Selesai/Belum Selesai'],
         isi,
         'Tidak ada data setoran Juz Amma untuk filter ini.');
@@ -439,8 +452,8 @@
           '<td class="px-3 py-2"><div class="km-status text-[11px] font-semibold text-gray-400"></div></td>' +
           '</tr>';
       }).join('');
-      el.innerHTML = tabelHTML(
-        ['No', 'Nama', 'Lulus / Her / Tidak Lulus', 'Status'],
+      renderTabel(el,
+        ['No', 'Nama', 'Hasil', 'Status'],
         isi,
         'Tidak ada siswi untuk kategori ujian & filter ini.');
     }).catch(function (e) { el.innerHTML = errHTML(e); });

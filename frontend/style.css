@@ -314,6 +314,25 @@
     }
   }
 }
+
+/* ── Kartu mobile tabel Penilaian Tambahan (bawah-rata / juz-amma /
+   kompetensi) ──────────────────────────────────────────────────────────────
+   .table-responsive (lihat @media 767px di atas) mengubah tiap <tr> jadi
+   kartu vertikal seperti Data Santri — user scroll ke bawah, tanpa geser
+   samping. Dalam mode kartu td menjadi flex; aturan turunan ini:
+   - flex-wrap: konten panjang (chips surat, label panjang) turun ke baris
+     baru alih-alih overflow ke samping;
+   - input teks (konsekuensi / jenis takziran) melebar mengisi sisa ruang
+     setelah label. */
+@media (max-width: 767px) {
+  .table-responsive td {
+    flex-wrap: wrap;
+  }
+  .table-responsive td > input[type="text"] {
+    flex: 1 1 0%;
+    min-width: 0;
+  }
+}
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* #dash-mobile-summary memakai -mt-12 untuk menumpang tepi bawah hero saat berisi

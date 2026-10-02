@@ -215,11 +215,13 @@
 
     <!-- TAB BAR PENILAIAN (tab-tab terpisah — bukan satu halaman) -->
     <div class="px-6 mb-4">
-      <div id="ptab-bar" class="flex gap-1 p-1.5 bg-white/70 dark:bg-slate-800/80 rounded-2xl border border-gray-200 dark:border-slate-700 overflow-x-auto" role="tablist">
-        <button type="button" class="ptab-btn shrink-0 px-4 py-2 rounded-xl text-sm font-semibold transition-colors bg-primary text-white shadow-md" data-tab="akademik">Akademik</button>
-        <button type="button" class="ptab-btn shrink-0 px-4 py-2 rounded-xl text-sm font-semibold transition-colors text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700" data-tab="bawah-rata">Di Bawah Rata-rata</button>
-        <button type="button" class="ptab-btn shrink-0 px-4 py-2 rounded-xl text-sm font-semibold transition-colors text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700" data-tab="juz-amma">Setoran Juz Amma</button>
-        <button type="button" class="ptab-btn shrink-0 px-4 py-2 rounded-xl text-sm font-semibold transition-colors text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700" data-tab="kompetensi">Nilai Kompetensi</button>
+      <!-- HP: grid 2 kolom = 2 baris (Akademik+BawahRata² / JuzAmma+Kompetensi).
+           md+: kembali flex 1 baris seperti semula. -->
+      <div id="ptab-bar" class="grid grid-cols-2 gap-1 p-1.5 bg-white/70 dark:bg-slate-800/80 rounded-2xl border border-gray-200 dark:border-slate-700 md:flex md:flex-nowrap" role="tablist">
+        <button type="button" class="ptab-btn shrink-0 px-2 md:px-4 py-2 rounded-xl text-sm font-semibold transition-colors bg-primary text-white shadow-md" data-tab="akademik">Akademik</button>
+        <button type="button" class="ptab-btn shrink-0 px-2 md:px-4 py-2 rounded-xl text-sm font-semibold transition-colors text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700" data-tab="bawah-rata">Di Bawah Rata-rata</button>
+        <button type="button" class="ptab-btn shrink-0 px-2 md:px-4 py-2 rounded-xl text-sm font-semibold transition-colors text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700" data-tab="juz-amma">Setoran Juz Amma</button>
+        <button type="button" class="ptab-btn shrink-0 px-2 md:px-4 py-2 rounded-xl text-sm font-semibold transition-colors text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700" data-tab="kompetensi">Nilai Kompetensi</button>
       </div>
     </div>
 
