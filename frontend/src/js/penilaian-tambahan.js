@@ -1,8 +1,8 @@
 // penilaian-tambahan.js — tab controller + renderer untuk tab-tab baru di
-// halaman Penilaian (Akademik | Di Bawah Rata² | Setoran Juz Amma | Nilai
+// halaman Penilaian (Akademik | Di Bawah Rata-rata | Setoran Juz Amma | Nilai
 // Kompetensi). Tab = tampilan terpisah per hash (#akademik, #bawah-rata, …).
-// Fase 1: baca-tampil. Fase 2–4: aktifkan kontrol input (sudah dirender
-// disabled di sini supaya strukturnya stabil).
+// Fase 1: baca-tampil. Fase 2: input takziran aktif. Fase 3–4: aktifkan
+// kontrol input lain (sudah dirender disabled di sini supaya strukturnya stabil).
 (function () {
   'use strict';
 
@@ -86,7 +86,79 @@
     return '<div class="p-8 text-center text-red-500">Gagal memuat data: ' + esc(e && e.message ? e.message : e) + '</div>';
   }
 
-  // ── Tab: Di Bawah Rata² ───────────────────────────────────────────────────
+  // ── Tab: Di Bawah Rata-rata ───────────────────────────────────────────────
+  // Fase 2: input teks bebas (konsekuensi / jenis takziran) + 2 checkbox aktif.
+  // Backend POST hanya untuk pimpinan — kontrol tetap disabled bagi role lain.
+  function bolehEditTakziran() { return punyaRole(['pimpinan']); }
+
+  function brStatus(td, teks, warna) {
+    var s = td.querySelector('.br-status');
+    if (!s) return;
+    s.textContent = teks;
+    s.className = 'br-status text-[11px] font-semibold ' + warna;
+  }
+
+  // Simpan SATU baris. Payload lengkap 4 field karena backend melakukan upsert
+  // penuh (field yang tidak dikirim akan jadi kosong/false).
+  function simpanTakziran(tr) {
+    if (!tr) return Promise.resolve();
+    var santriID = parseInt(tr.dataset.santri, 10);
+    var kuartal = parseInt($('br-kuartal').value, 10) || 1;
+    var ambil = function (kolom) {
+      var el = tr.querySelector('[data-kolom="' + kolom + '"]');
+      if (!el) return null;
+      return el.type === 'checkbox' ? el.checked : el.value;
+    };
+    var payload = {
+      tahun_ajaran: '',   // kosong → backend pakai tahun ajaran aktif
+      items: [{
+        santri_id: santriID,
+        kuartal: kuartal,
+        konsekuensi: String(ambil('konsekuensi') || ''),
+        jenis_takziran: String(ambil('jenis_takziran') || ''),
+        dalam_masa: !!ambil('dalam_masa'),
+        selesai: !!ambil('selesai')
+      }]
+    };
+    var tdStatus = tr.querySelector('td:last-child');
+    brStatus(tdStatus, 'Menyimpan…', 'text-gray-400');
+    return fetch('/api/penilaian-tambahan/bawah-rata/takziran', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }).then(function (res) {
+      return res.json().catch(function () { return {}; }).then(function (d) {
+        if (!res.ok) throw new Error(d.message || ('HTTP ' + res.status));
+        brStatus(tdStatus, '✓ Tersimpan', 'text-emerald-600 dark:text-emerald-400');
+        showToast('Takziran tersimpan', 'success');
+        // Filter yang memengaruhi KEANGGOTAAN baris: dalam_masa / selesai.
+        // Kalau filter itu aktif, daftar perlu di-refresh supaya baris
+        // keluar/masuk sesuai filter. Ditunda & dibatalkan bila user sudah
+        // mengetik di input lain (jangan rebut fokus).
+        if (($('br-dalam').value || $('br-selesai').value) && tr.dataset.stale === '1') {
+          refreshSetelahBlur(tr);
+        }
+        delete tr.dataset.stale;
+      });
+    }).catch(function (e) {
+      brStatus(tdStatus, '✗ Gagal', 'text-red-500');
+      showToast('Gagal simpan takziran: ' + e.message, 'error');
+    });
+  }
+
+  function refreshSetelahBlur(tr) {
+    var coba = function () {
+      var a = document.activeElement;
+      if (a && tr.contains(a) && a.tagName === 'INPUT' && a.type !== 'checkbox') {
+        setTimeout(coba, 500);   // user masih mengetik → tunggu
+        return;
+      }
+      loadBawahRata();
+    };
+    setTimeout(coba, 300);
+  }
+
   function loadBawahRata() {
     var el = $('br-table');
     if (!el) return Promise.resolve();
@@ -94,22 +166,34 @@
     var p = new URLSearchParams({ kuartal: $('br-kuartal').value });
     var d = $('br-dalam').value; if (d) p.set('dalam_masa', d);
     var s = $('br-selesai').value; if (s) p.set('selesai', s);
+    var edit = bolehEditTakziran();
+    var nonaktif = edit ? '' : ' disabled';
     return jget('/api/penilaian-tambahan/bawah-rata?' + p.toString()).then(function (rows) {
       var isi = rows.map(function (r, i) {
-        return '<tr>' +
+        var kolomTeks = function (kolom, nilai) {
+          return '<td class="px-3 py-2">' +
+            '<input type="text" data-kolom="' + kolom + '" value="' + esc(nilai || '') + '"' + nonaktif +
+            ' placeholder="-"' +
+            ' class="glass-input w-full min-w-[120px] px-2 py-1.5 rounded-lg text-xs"' +
+            '></td>';
+        };
+        return '<tr data-santri="' + r.santri_id + '">' +
           '<td class="px-3 py-2 text-gray-400">' + (i + 1) + '</td>' +
           '<td class="px-3 py-2 font-semibold text-gray-800 dark:text-gray-100 whitespace-nowrap">' + esc(r.nama) + '</td>' +
           '<td class="px-3 py-2 text-gray-600 dark:text-gray-300 whitespace-nowrap">' + esc(r.bagian) + '</td>' +
           '<td class="px-3 py-2 text-right">' + fmt(r.jumlah_nilai, 1) + '</td>' +
           '<td class="px-3 py-2 text-right font-bold text-red-500">' + fmt(r.rata2, 2) + '</td>' +
-          '<td class="px-3 py-2">' + (r.konsekuensi ? esc(r.konsekuensi) : '<span class="text-gray-400">-</span>') + '</td>' +
-          '<td class="px-3 py-2">' + (r.jenis_takziran ? esc(r.jenis_takziran) : '<span class="text-gray-400">-</span>') + '</td>' +
-          '<td class="px-3 py-2 text-center"><input type="checkbox" disabled class="w-4 h-4 accent-amber-500" ' + (r.dalam_masa ? 'checked' : '') + '></td>' +
-          '<td class="px-3 py-2 text-center"><input type="checkbox" disabled class="w-4 h-4 accent-emerald-600" ' + (r.selesai ? 'checked' : '') + '></td>' +
+          kolomTeks('konsekuensi', r.konsekuensi) +
+          kolomTeks('jenis_takziran', r.jenis_takziran) +
+          '<td class="px-3 py-2 text-center"><input type="checkbox" data-kolom="dalam_masa"' + nonaktif +
+          ' class="w-4 h-4 accent-amber-500" ' + (r.dalam_masa ? 'checked' : '') + '></td>' +
+          '<td class="px-3 py-2 text-center"><input type="checkbox" data-kolom="selesai"' + nonaktif +
+          ' class="w-4 h-4 accent-emerald-600" ' + (r.selesai ? 'checked' : '') + '>' +
+          '<div class="br-status text-[11px] font-semibold text-gray-400"></div></td>' +
           '</tr>';
       }).join('');
       el.innerHTML = tabelHTML(
-        ['No', 'Nama', 'Bagian', 'Jumlah Nilai', 'Rata² Nilai', 'Konsekuensi', 'Jenis Takziran', 'Dalam Masa Takziran', 'Selesai Takziran'],
+        ['No', 'Nama', 'Bagian', 'Jumlah Nilai', 'Rata-rata Nilai', 'Konsekuensi', 'Jenis Takziran', 'Dalam Masa Takziran', 'Selesai Takziran'],
         isi,
         'Tidak ada siswi dengan rata-rata di bawah 4,4 pada kuartal ini.');
     }).catch(function (e) { el.innerHTML = errHTML(e); });
@@ -264,6 +348,22 @@
       var el = $(pair[0]);
       if (el) el.addEventListener('click', function () { if (LOADERS[pair[1]]) LOADERS[pair[1]](); });
     });
+
+    // Fase 2 — simpan per baris. Delegasi ke container #br-table supaya tetap
+    // berlaku setelah tabel di-render ulang. Teks tersimpan saat 'change'
+    // (blur / Enter), checkbox langsung saat dicentang.
+    var brEl = $('br-table');
+    if (brEl) {
+      brEl.addEventListener('change', function (e) {
+        var t = e.target;
+        if (!t || !t.dataset || !t.dataset.kolom) return;
+        var tr = t.closest('tr');
+        if (!tr || !tr.dataset.santri) return;
+        // Checkbox memengaruhi keanggotaan baris saat filter aktif.
+        if (t.dataset.kolom === 'dalam_masa' || t.dataset.kolom === 'selesai') tr.dataset.stale = '1';
+        simpanTakziran(tr);
+      });
+    }
 
     isiBagian().then(function () {
       return fetch('/api/me', { credentials: 'same-origin' })
