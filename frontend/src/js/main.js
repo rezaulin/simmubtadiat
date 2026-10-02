@@ -1578,6 +1578,30 @@ function waliFmtNilaiRed(n) {
   return str;
 }
 
+// ── Rekap Absensi (mode wali santri) ───────────────────────────────────────
+// Disamakan dgn menu Rekap Absensi Siswa (rekap.js): semua bulan TA + baris
+// subtotal per kuartal + TOTAL SETAHUN. Pemetaan bulan Hijriyah → kuartal
+// SAMA dgn KUARTAL_MAP di rekap.js.
+const WALI_KUARTAL_MAP = { 10: 1, 11: 1, 12: 1, 1: 2, 2: 2, 3: 2, 4: 3, 5: 3, 6: 4, 7: 4, 8: 4 };
+const WALI_KUARTAL_LABELS = {
+  1: 'KQ1 (Syawwal–Dzulhijjah)',
+  2: 'KQ2 (Muharram–Rabiul Awal)',
+  3: 'KQ3 (Rabiul Awal–Jumadil Ula)',
+  4: 'KQ4 (Jumadil Tsani–Sya\'ban)'
+};
+
+// Keterangan aturan ketidakhadiran (permintaan owner 2026-10-02) — muncul di
+// atas rekap absensi: menu Rekap Absensi Siswa (rekap.js) & beranda wali (sini).
+const KET_REKAP_ABSENSI = `
+  <div class="bg-amber-50 dark:bg-amber-900/15 border border-amber-200 dark:border-amber-800/60 rounded-xl p-3.5 mb-3 text-xs text-amber-900 dark:text-amber-100">
+    <p class="font-bold mb-1">Ketentuan ketidakhadiran:</p>
+    <ol class="list-decimal list-inside space-y-1">
+      <li>Izin 20 hari atau tidak izin selama 6 hari dalam satu semester, dapat menurunkan satu nilai akhlak.</li>
+      <li>Izin 15 hari atau tidak izin selama 5 hari dalam satu tahun, dapat menurunkan satu tingkatan nilai prestasi.</li>
+      <li>Siswi yang tidak masuk sekolah selama 60 hari dalam 2 kuartal berturut-turut, dinyatakan musbat dan pada tahun berikutnya tetap di kelas semula.</li>
+    </ol>
+  </div>`;
+
 function buildRiwayatAkademik(riwayat) {
   if (!riwayat || riwayat.length === 0) {
     return `<div class="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-gray-100 dark:border-slate-700/60 text-center text-sm text-gray-500 dark:text-gray-400">Belum ada data akademik.</div>`;
@@ -1643,36 +1667,66 @@ function buildRiwayatAkademik(riwayat) {
         </div>
         <div class="p-6">
           <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Rekap Absensi</h4>
+          ${KET_REKAP_ABSENSI}
           ${ta.absensi && ta.absensi.length > 0 ? `
           <div class="overflow-x-auto rounded-xl border border-gray-100 dark:border-slate-700 mb-6">
             <table class="min-w-full text-xs">
               <thead class="bg-gray-50 dark:bg-slate-900/40">
                 <tr>
                   <th class="px-2 py-1.5 text-center text-xs font-bold text-gray-600 dark:text-gray-400 uppercase">Bulan</th>
-                  <th class="px-2 py-1.5 text-center text-xs font-bold text-blue-600 uppercase">Sakit</th>
-                  <th class="px-2 py-1.5 text-center text-xs font-bold text-amber-600 uppercase">Izin</th>
-                  <th class="px-2 py-1.5 text-center text-xs font-bold text-red-600 uppercase">Alpha</th>
+                  <th class="px-2 py-1.5 text-center text-xs font-bold text-blue-600 uppercase">S</th>
+                  <th class="px-2 py-1.5 text-center text-xs font-bold text-amber-600 uppercase">I</th>
+                  <th class="px-2 py-1.5 text-center text-xs font-bold text-red-600 uppercase">T</th>
+                  <th class="px-2 py-1.5 text-center text-xs font-bold text-gray-600 dark:text-gray-400 uppercase">SIT</th>
                 </tr>
               </thead>
               <tbody>
-                ${ta.absensi.map(a => `
+                ${(() => {
+                  // Disamakan dgn menu Rekap Absensi Siswa: semua bulan TA +
+                  // baris subtotal KUARTAL (KUARTAL_MAP per bulan Hijriyah) +
+                  // TOTAL SETAHUN. (Req owner 2026-10-02.)
+                  let out = '', cur = 0, kqS = 0, kqI = 0, kqT = 0;
+                  const subRow = (kq, s, i, t) => `
+                  <tr class="bg-blue-50 dark:bg-blue-900/20 font-bold text-xs">
+                    <td class="px-2 py-1.5 text-center" colspan="2">${WALI_KUARTAL_LABELS[kq] || ('Kuartal ' + kq)}</td>
+                    <td class="px-2 py-1.5 text-center text-blue-700 dark:text-blue-300">${s}</td>
+                    <td class="px-2 py-1.5 text-center text-blue-700 dark:text-blue-300">${i}</td>
+                    <td class="px-2 py-1.5 text-center text-blue-700 dark:text-blue-300">${t}</td>
+                    <td class="px-2 py-1.5 text-center text-blue-700 dark:text-blue-300 font-extrabold">${s + i + t}</td>
+                  </tr>`;
+                  ta.absensi.forEach(a => {
+                    const kq = WALI_KUARTAL_MAP[a.bulan_angka] || 0;
+                    if (kq > 0 && kq !== cur) {
+                      if (cur > 0) out += subRow(cur, kqS, kqI, kqT);
+                      cur = kq; kqS = 0; kqI = 0; kqT = 0;
+                    }
+                    if (kq > 0) { kqS += a.s || 0; kqI += a.i || 0; kqT += a.t || 0; }
+                    const kosong = a.ada_data === false;
+                    const sit = (a.s || 0) + (a.i || 0) + (a.t || 0);
+                    out += `
                 <tr class="border-b border-gray-100 dark:border-slate-700">
-                  <td class="px-2 py-1.5 text-center text-gray-800 dark:text-gray-200">${waliEscape(a.bulan || '-')}</td>
-                  <td class="px-2 py-1.5 text-center font-bold ${a.ada_data === false ? 'text-gray-400' : 'text-blue-600'}">${a.ada_data === false ? '-' : waliFmtNilai(a.s)}</td>
-                  <td class="px-2 py-1.5 text-center font-bold ${a.ada_data === false ? 'text-gray-400' : 'text-amber-600'}">${a.ada_data === false ? '-' : waliFmtNilai(a.i)}</td>
-                  <td class="px-2 py-1.5 text-center font-bold ${a.ada_data === false ? 'text-gray-400' : 'text-red-600'}">${a.ada_data === false ? '-' : waliFmtNilai(a.t)}</td>
-                </tr>`).join('')}
-              </tbody>
-              <tfoot class="bg-gray-50 dark:bg-slate-900/40 font-bold">
-                <tr>
-                  <td class="px-2 py-1.5 text-center">Total</td>
+                  <td class="px-2 py-1.5 text-center text-gray-800 dark:text-gray-200">${waliEscape(a.bulan || '-')}${a.tahun_hijri ? ' ' + a.tahun_hijri + ' H' : ''}</td>
+                  <td class="px-2 py-1.5 text-center font-bold ${kosong ? 'text-gray-400' : 'text-blue-600'}">${kosong ? '-' : waliFmtNilai(a.s)}</td>
+                  <td class="px-2 py-1.5 text-center font-bold ${kosong ? 'text-gray-400' : 'text-amber-600'}">${kosong ? '-' : waliFmtNilai(a.i)}</td>
+                  <td class="px-2 py-1.5 text-center font-bold ${kosong ? 'text-gray-400' : 'text-red-600'}">${kosong ? '-' : waliFmtNilai(a.t)}</td>
+                  <td class="px-2 py-1.5 text-center font-extrabold ${kosong ? 'text-gray-400' : 'text-gray-700 dark:text-gray-300'}">${kosong ? '-' : (sit || '-')}</td>
+                </tr>`;
+                  });
+                  if (cur > 0) out += subRow(cur, kqS, kqI, kqT);
+                  out += `
+                <tr class="bg-gray-100 dark:bg-slate-700 font-extrabold text-xs">
+                  <td class="px-2 py-1.5 text-center" colspan="2">TOTAL SETAHUN</td>
                   <td class="px-2 py-1.5 text-center text-blue-600">${totS}</td>
                   <td class="px-2 py-1.5 text-center text-amber-600">${totI}</td>
                   <td class="px-2 py-1.5 text-center text-red-600">${totA}</td>
-                </tr>
-              </tfoot>
+                  <td class="px-2 py-1.5 text-center">${totS + totI + totA}</td>
+                </tr>`;
+                  return out;
+                })()}
+              </tbody>
             </table>
-          </div>` : `
+          </div>
+          <p class="text-xs text-gray-500 dark:text-gray-400 -mt-4 mb-6">S = Sakit &nbsp;•&nbsp; I = Izin &nbsp;•&nbsp; T = Alpha (tanpa keterangan) &nbsp;•&nbsp; Tampilan rekap (baca saja)</p>` : `
           <div class="bg-gray-50 dark:bg-slate-900/20 rounded-xl p-4 text-center text-sm text-gray-500 dark:text-gray-400 italic mb-6">
             Belum ada data absensi untuk tahun ajaran ini.
           </div>`}

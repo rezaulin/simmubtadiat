@@ -253,6 +253,19 @@ const BULAN_HIJRI = [
   'Ramadhan', 'Syawwal', "Dzulqa'dah", 'Dzulhijjah'
 ];
 
+// Keterangan aturan ketidakhadiran (permintaan owner 2026-10-02) — muncul di
+// atas rekap absensi. Teks identik dgn KET_REKAP_ABSENSI di main.js (beranda
+// wali santri); keduanya module scope terpisah jadi tidak bertabrakan.
+const KET_REKAP_ABSENSI = `
+  <div class="bg-amber-50 dark:bg-amber-900/15 border border-amber-200 dark:border-amber-800/60 rounded-xl p-3.5 mb-3 text-xs text-amber-900 dark:text-amber-100">
+    <p class="font-bold mb-1">Ketentuan ketidakhadiran:</p>
+    <ol class="list-decimal list-inside space-y-1">
+      <li>Izin 20 hari atau tidak izin selama 6 hari dalam satu semester, dapat menurunkan satu nilai akhlak.</li>
+      <li>Izin 15 hari atau tidak izin selama 5 hari dalam satu tahun, dapat menurunkan satu tingkatan nilai prestasi.</li>
+      <li>Siswi yang tidak masuk sekolah selama 60 hari dalam 2 kuartal berturut-turut, dinyatakan musbat dan pada tahun berikutnya tetap di kelas semula.</li>
+    </ol>
+  </div>`;
+
 // Kuartal akademik berdasarkan bulan Hijri
 // KQ1: Syawwal–Dzulhijjah (10,11,12)
 // KQ2: Muharram–Rabiul Awal (1,2,3)
@@ -420,7 +433,7 @@ function renderRekapSiswaGrid() {
     return Object.values(d).every(v => !v.a);
   }).length;
 
-  summarySiswa.innerHTML = `
+  summarySiswa.innerHTML = KET_REKAP_ABSENSI + `
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
       ${summaryCard('Total Santri', rekapSiswaList.length, 'Siswa dalam kelas ini')}
       ${summaryCard('Sakit & Izin', totS + totI, `S: ${totS} • I: ${totI}`)}
