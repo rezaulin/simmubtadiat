@@ -479,7 +479,7 @@ func ExportTambahan(w http.ResponseWriter, r *http.Request) {
 				disetor, d.JumlahSurat,
 				judulHasilEnum(d.Evaluasi), judulHasilEnum(d.Status)})
 		}
-		tulis("Hasil Setoran Juz Amma",
+		tulis(fmt.Sprintf("Hasil Setoran Juz Amma — Tahun Ajaran: %s", ta),
 			[]string{"No", "Bagian", "Nama Siswi", "Surat Disetor",
 				"Jumlah Surat", "Evaluasi", "Selesai / Belum"}, rows)
 		namaFile = fmt.Sprintf("setoran-juz-amma-%s.xlsx", ta)
@@ -511,11 +511,13 @@ func ExportTambahan(w http.ResponseWriter, r *http.Request) {
 				judulHasilEnum(d.Hasil)})
 		}
 		// kolom "Kategori Ujian" dihapus — kategori jadi JUDUL data
-		// (keputusan owner 2026-10-02).
+		// (keputusan owner 2026-10-02); tahun ajaran menyusul di judul
+		// (permintaan owner 2026-10-02, pola sama dgn nilai akademik).
 		judulKompetensi := "Hasil Ujian Kompetensi"
 		if kategori != "" {
 			judulKompetensi = "Hasil " + judulKategoriEnum(kategori)
 		}
+		judulKompetensi += fmt.Sprintf(" — Tahun Ajaran: %s", ta)
 		tulis(judulKompetensi,
 			[]string{"No", "Bagian", "Nama Siswi", "Hasil"}, rows)
 		namaFile = fmt.Sprintf("nilai-kompetensi-%s.xlsx", ta)

@@ -269,6 +269,22 @@ pimpinan 9 baris ✓, evaluasi tanpa Her ✓, Maryam UI 34,0/3,09 ✓).
 Catatan: 21 test vitest gagal = **pre-existing** (terverifikasi via
 `git stash` — gagal juga tanpa perubahan; drift test fitur wali/rekap/nav).
 
+## 9a. Update batch 3 (2026-10-02) — laporan owner bab evaluasi & TA
+- **Evaluasi "belum" tidak tersimpan** (`SaveJuzAmma`): SQL lama
+  `CASE WHEN $3 = '' THEN evaluasi ELSE $3 END` mengabaikan reset `''`.
+  Sekarang: kolom yang DIKIRIM `''` → di-reset ke NULL; kolom yang tidak
+  dikirim (pointer nil) → tidak disentuh (dynamic SET builder).
+- **Judul export juz-amma & kompetensi + Tahun Ajaran**:
+  `"Hasil Setoran Juz Amma — Tahun Ajaran: 2026/2027"` dan
+  `"Hasil Ujian Baca Al-Qur'an — Tahun Ajaran: 2026/2027"`.
+- **BUG ekstra ketemu saat E2E**: `ensureSetoranRows` pakai
+  `generate_series(114, target)` — start(114) > stop(target, mis. 83) →
+  **0 baris dibuat** → UPDATE evaluasi/status kena 0 row ("tersimpan"
+  palsu). Santri yang belum pernah toggle ceklis tidak pernah menyimpan
+  evaluasi. Fixed: `generate_series(target, 114)` (ASC).
+- E2E batch 3: 6/6 PASS (`/tmp/e2e_batch3.py`) — set→tersimpan,
+  reset `''`→NULL persist, kedua judul export ada Tahun Ajaran.
+
 ## 10. Referensi internal
 
 - Pipeline nilai lama: `references/penilaian-pipeline.md`

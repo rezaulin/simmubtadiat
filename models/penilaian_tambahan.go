@@ -523,13 +523,24 @@ func SaveJuzAmma(ctx context.Context, in JuzAmmaInput) error {
 	if _, err := ensureSetoranRows(ctx, in.SantriID, in.TahunAjaran); err != nil {
 		return err
 	}
-	_, err := config.DB.Exec(ctx, `
-		UPDATE setoran_juz_amma
-		   SET evaluasi = CASE WHEN $3::text = '' THEN evaluasi ELSE $3::text END,
-		       status   = CASE WHEN $4::text = '' THEN status   ELSE $4::text END,
-		       updated_at = now()
-		 WHERE santri_id = $1 AND tahun_ajaran = $2`,
-		in.SantriID, in.TahunAjaran, deref(in.Evaluasi), deref(in.Status))
+	// Bangun SET dinamis (bug fix 2026-10-02: "(belum)" = kirim '' → harus
+	// ME-RESET nilai jadi NULL; dulu '' diabaikan → pilihan lulus tetap melekat.
+	// Field yang TIDAK dikirim (nil) tetap tidak diubah.)
+	setClauses := []string{"updated_at = now()"}
+	args := []any{in.SantriID, in.TahunAjaran}
+	if in.Evaluasi != nil {
+		args = append(args, *in.Evaluasi)
+		setClauses = append(setClauses,
+			fmt.Sprintf("evaluasi = CASE WHEN $%d::text = '' THEN NULL ELSE $%d::text END", len(args), len(args)))
+	}
+	if in.Status != nil {
+		args = append(args, *in.Status)
+		setClauses = append(setClauses,
+			fmt.Sprintf("status = CASE WHEN $%d::text = '' THEN NULL ELSE $%d::text END", len(args), len(args)))
+	}
+	q := "UPDATE setoran_juz_amma SET " + strings.Join(setClauses, ", ") +
+		" WHERE santri_id = $1 AND tahun_ajaran = $2"
+	_, err := config.DB.Exec(ctx, q, args...)
 	return err
 }
 
@@ -562,9 +573,12 @@ func ensureSetoranRows(ctx context.Context, santriID int, tahunAjaran string) (i
 	if !ok {
 		return 0, ErrJuzTidakBerlaku
 	}
+	// generate_series harus ASCENDING dari target ke 114 (mis. 83..114 utk
+	// 1 aly). Dulu "generate_series(114, target)" → start > stop → 0 baris →
+	// UPDATE evaluasi/status kena 0 row ("tersimpan" palsu, bug 2026-10-02).
 	_, err = config.DB.Exec(ctx, fmt.Sprintf(`
 		INSERT INTO setoran_juz_amma (santri_id, surat_no, tahun_ajaran)
-		SELECT $1, g, $2 FROM generate_series(114, %d) AS g
+		SELECT $1, g, $2 FROM generate_series(%d, 114) AS g
 		ON CONFLICT (santri_id, surat_no, tahun_ajaran) DO NOTHING`, target),
 		santriID, tahunAjaran)
 	return target, err
