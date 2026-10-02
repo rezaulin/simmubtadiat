@@ -1,8 +1,9 @@
 // penilaian-tambahan.js — tab controller + renderer untuk tab-tab baru di
 // halaman Penilaian (Akademik | Di Bawah Rata-rata | Setoran Juz Amma | Nilai
 // Kompetensi). Tab = tampilan terpisah per hash (#akademik, #bawah-rata, …).
-// Fase 1: baca-tampil. Fase 2: input takziran aktif. Fase 3–4: aktifkan
-// kontrol input lain (sudah dirender disabled di sini supaya strukturnya stabil).
+// Fase 1: baca-tampil. Fase 2: input takziran aktif. Fase 3: setoran Juz
+// Amma aktif. Fase 4: select kompetensi. Kontrol tetap dirender disabled
+// bagi role non-pimpinan supaya strukturnya stabil.
 (function () {
   'use strict';
 
@@ -200,12 +201,92 @@
   }
 
   // ── Tab: Setoran Juz Amma ─────────────────────────────────────────────────
-  function chipSurat(s, santriID) {
+  // Fase 3: ceklis chip surat aktif (toggle per surat) + select Evaluasi dan
+  // Selesai/Belum (per santri). Backend POST hanya pimpinan → kontrol tetap
+  // disabled bagi role lain.
+  function bolehEditJuz() { return punyaRole(['pimpinan']); }
+
+  function chipSurat(s, santriID, edit) {
     var nama = NAMA_SURAT[s.no] || ('Surat ' + s.no);
-    return '<label class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-gray-100 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 text-[11px] text-gray-700 dark:text-gray-200 cursor-not-allowed" title="' + s.no + ' · ' + esc(nama) + '">' +
-      '<input type="checkbox" disabled class="w-3 h-3 accent-emerald-600" data-santri="' + santriID + '" data-surat="' + s.no + '" ' + (s.setor ? 'checked' : '') + '>' +
+    return '<label class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-gray-100 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 text-[11px] text-gray-700 dark:text-gray-200 ' +
+      (edit ? 'cursor-pointer hover:border-emerald-400' : 'cursor-not-allowed') +
+      '" title="' + s.no + ' · ' + esc(nama) + '">' +
+      '<input type="checkbox"' + (edit ? '' : ' disabled') +
+      ' class="w-3 h-3 accent-emerald-600" data-santri="' + santriID + '" data-surat="' + s.no + '" ' + (s.setor ? 'checked' : '') + '>' +
       '<span>' + esc(nama) + '</span></label>';
   }
+
+  // Select per santri (Evaluasi / Selesai-Belum) — menggantikan badge statis.
+  function selectHasil(santriID, field, nilai, opsi, edit) {
+    var opts = opsi.map(function (o) {
+      return '<option value="' + o[0] + '"' + (nilai === o[0] ? ' selected' : '') + '>' + o[1] + '</option>';
+    }).join('');
+    var warna = field === 'evaluasi'
+      ? (nilai === 'lulus' ? 'text-emerald-600 dark:text-emerald-400 font-bold'
+        : nilai === 'her' ? 'text-amber-600 dark:text-amber-400 font-bold'
+        : nilai === 'tidak_lulus' ? 'text-red-600 dark:text-red-400 font-bold'
+        : 'text-gray-400')
+      : (nilai === 'selesai' ? 'text-emerald-600 dark:text-emerald-400 font-bold'
+        : 'text-gray-500 dark:text-gray-300');
+    return '<select data-santri="' + santriID + '" data-field="' + field + '"' + (edit ? '' : ' disabled') +
+      ' class="ja-pilih glass-input px-2 py-1.5 rounded-lg text-xs ' + warna + '">' + opts + '</select>';
+  }
+
+  var OPSI_EVALUASI = [['', '(belum)'], ['lulus', 'Lulus'], ['her', 'Her'], ['tidak_lulus', 'Tidak Lulus']];
+  var OPSI_STATUS = [['belum', 'Belum'], ['selesai', 'Selesai']];
+
+  // POST satu perubahan. body = {santri_id, surat_no?/setor?/evaluasi?/status?}
+  function simpanJuz(tr, body, field) {
+    body.tahun_ajaran = '';   // kosong → backend pakai tahun ajaran aktif
+    var td = tr.querySelector('td:last-child');
+    var ind = td && td.querySelector('.ja-status');
+    if (ind) { ind.textContent = 'Menyimpan…'; ind.className = 'ja-status text-[11px] font-semibold text-gray-400'; }
+    return fetch('/api/penilaian-tambahan/juz-amma', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    }).then(function (res) {
+      return res.json().catch(function () { return {}; }).then(function (d) {
+        if (!res.ok) throw new Error(d.message || ('HTTP ' + res.status));
+        if (ind) { ind.textContent = '✓ Tersimpan'; ind.className = 'ja-status text-[11px] font-semibold text-emerald-600 dark:text-emerald-400'; }
+        showToast('Setoran Juz Amma tersimpan', 'success');
+        // Hitung ulang "N/M surat disetor" tanpa reload bila memungkinkan.
+        if (field === 'setor') hitungSetor(tr);
+        // Filter yang memengaruhi KEANGGOTAAN baris: ja-status & ja-evaluasi.
+        var adaFilter = $('ja-status').value || $('ja-evaluasi').value;
+        if (adaFilter && (field === 'evaluasi' || field === 'status')) {
+          refreshJuzSetelahBlur(tr);
+        }
+      });
+    }).catch(function (e) {
+      if (ind) { ind.textContent = '✗ Gagal'; ind.className = 'ja-status text-[11px] font-semibold text-red-500'; }
+      showToast('Gagal simpan Juz Amma: ' + e.message, 'error');
+    });
+  }
+
+  function hitungSetor(tr) {
+    var total = tr.querySelectorAll('[data-surat]').length;
+    var n = tr.querySelectorAll('[data-surat]:checked').length;
+    var box = tr.querySelector('.ja-hitung');
+    if (!box || !total) return;
+    var sisa = box.textContent.split('·')[1];
+    box.textContent = n + '/' + total + ' surat disetor' + (sisa ? ' ·' + sisa : '');
+  }
+
+  function refreshJuzSetelahBlur(tr) {
+    var coba = function () {
+      var a = document.activeElement;
+      if (a && tr.contains(a) && (a.tagName === 'SELECT' ||
+          (a.tagName === 'INPUT' && a.type !== 'checkbox'))) {
+        setTimeout(coba, 500);   // user masih memilih → tunggu
+        return;
+      }
+      loadJuzAmma();
+    };
+    setTimeout(coba, 300);
+  }
+
   function loadJuzAmma() {
     var el = $('ja-table');
     if (!el) return Promise.resolve();
@@ -215,28 +296,24 @@
     var s = $('ja-status').value; if (s) p.set('status', s);
     var ev = $('ja-evaluasi').value; if (ev) p.set('evaluasi', ev);
     var qs = p.toString();
+    var edit = bolehEditJuz();
     return jget('/api/penilaian-tambahan/juz-amma' + (qs ? '?' + qs : '')).then(function (rows) {
       var isi = rows.map(function (r, i) {
-        var setor = r.surat.filter(function (x) { return x.setor; }).length;
-        var badge = r.evaluasi
-          ? '<span class="px-2 py-0.5 rounded-full text-[11px] font-bold ' +
-            (r.evaluasi === 'lulus' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300'
-              : r.evaluasi === 'her' ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300'
-              : 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300') + '">' + esc(judulHasil(r.evaluasi)) + '</span>'
-          : '<span class="text-gray-400">-</span>';
-        var status = r.status === 'selesai'
-          ? '<span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">Selesai</span>'
-          : '<span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-gray-100 text-gray-500 dark:bg-slate-700 dark:text-gray-300">Belum</span>';
-        return '<tr>' +
+        return '<tr data-santri="' + r.santri_id + '">' +
           '<td class="px-3 py-2 text-gray-400 align-top">' + (i + 1) + '</td>' +
           '<td class="px-3 py-2 text-gray-600 dark:text-gray-300 whitespace-nowrap align-top">' + esc(r.bagian) + '</td>' +
           '<td class="px-3 py-2 font-semibold text-gray-800 dark:text-gray-100 whitespace-nowrap align-top">' + esc(r.nama) + '</td>' +
           '<td class="px-3 py-2 align-top"><div class="flex flex-wrap gap-1 max-w-[560px]">' +
-            r.surat.map(function (x) { return chipSurat(x, r.santri_id); }).join('') +
-          '</div><div class="text-[11px] text-gray-400 mt-1.5">' + setor + '/' + r.jumlah_surat + ' surat disetor · An-Nas s/d ' +
+            r.surat.map(function (x) { return chipSurat(x, r.santri_id, edit); }).join('') +
+          '</div><div class="ja-hitung text-[11px] text-gray-400 mt-1.5">' +
+            r.surat.filter(function (x) { return x.setor; }).length + '/' + r.jumlah_surat +
+            ' surat disetor · An-Nas s/d ' +
             esc(NAMA_SURAT[r.surat_sampai] || ('Surat ' + r.surat_sampai)) + '</div></td>' +
-          '<td class="px-3 py-2 align-top text-center">' + badge + '</td>' +
-          '<td class="px-3 py-2 align-top text-center">' + status + '</td>' +
+          '<td class="px-3 py-2 align-top text-center">' +
+            selectHasil(r.santri_id, 'evaluasi', r.evaluasi, OPSI_EVALUASI, edit) + '</td>' +
+          '<td class="px-3 py-2 align-top text-center">' +
+            selectHasil(r.santri_id, 'status', r.status, OPSI_STATUS, edit) +
+            '<div class="ja-status text-[11px] font-semibold text-gray-400"></div></td>' +
           '</tr>';
       }).join('');
       el.innerHTML = tabelHTML(
@@ -362,6 +439,28 @@
         // Checkbox memengaruhi keanggotaan baris saat filter aktif.
         if (t.dataset.kolom === 'dalam_masa' || t.dataset.kolom === 'selesai') tr.dataset.stale = '1';
         simpanTakziran(tr);
+      });
+    }
+
+    // Fase 3 — Setoran Juz Amma: ceklis chip per surat + select evaluasi/status.
+    var jaEl = $('ja-table');
+    if (jaEl) {
+      jaEl.addEventListener('change', function (e) {
+        var t = e.target;
+        if (!t || !t.dataset) return;
+        var tr = t.closest('tr');
+        if (!tr || !tr.dataset.santri) return;
+        var santriID = parseInt(tr.dataset.santri, 10);
+        if (t.dataset.surat) {
+          // toggle satu surat → baris lain ikut dibuat backend (114..target)
+          simpanJuz(tr, { santri_id: santriID, surat_no: parseInt(t.dataset.surat, 10),
+                          setor: t.checked }, 'setor');
+        } else if (t.dataset.field) {
+          // evaluasi / status → diterapkan ke semua baris surat santri tsb
+          var body = { santri_id: santriID };
+          body[t.dataset.field] = t.value;
+          simpanJuz(tr, body, t.dataset.field);
+        }
       });
     }
 

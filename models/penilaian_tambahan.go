@@ -261,7 +261,8 @@ func GetJuzAmma(ctx context.Context, tahunAjaran string, bagianID *int, status, 
 		ids = append(ids, c.id)
 	}
 	srows, err := config.DB.Query(ctx, `
-		SELECT santri_id, surat_no, setor, evaluasi, status
+		SELECT santri_id, surat_no, setor,
+		       COALESCE(evaluasi, ''), COALESCE(status, 'belum')
 		FROM setoran_juz_amma
 		WHERE tahun_ajaran = $1 AND santri_id = ANY($2)`, tahunAjaran, ids)
 	if err != nil {
@@ -406,9 +407,9 @@ func ensureSetoranRows(ctx context.Context, santriID int, tahunAjaran string) (i
 	}
 	_, err = config.DB.Exec(ctx, fmt.Sprintf(`
 		INSERT INTO setoran_juz_amma (santri_id, surat_no, tahun_ajaran)
-		SELECT $1, g, $3 FROM generate_series(114, %d) AS g
+		SELECT $1, g, $2 FROM generate_series(114, %d) AS g
 		ON CONFLICT (santri_id, surat_no, tahun_ajaran) DO NOTHING`, target),
-		santriID, target, tahunAjaran)
+		santriID, tahunAjaran)
 	return target, err
 }
 

@@ -12,7 +12,7 @@
 | 0 | Rename label | ❌ Dibatalkan (revert) — jangan diulang |
 | 1 | 3 tabel + tab bar + API + RBAC + render baca | ✅ DONE, live |
 | 2 | Tab "Di Bawah Rata-rata": kontrol input takziran + save | ✅ DONE, live (2026-10-02) |
-| 3 | Tab "Setoran Juz Amma": aktifkan ceklis + evaluasi + save | ⬜ BELUM |
+| 3 | Tab "Setoran Juz Amma": aktifkan ceklis + evaluasi + save | ✅ DONE, live (2026-10-02) |
 | 4 | Tab "Nilai Kompetensi": aktifkan select hasil + save | ⬜ BELUM |
 | 5 | Ekspor/download + akses wali + role matrix E2E | ⬜ BELUM |
 
