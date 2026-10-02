@@ -28,12 +28,18 @@ const tabPelanggaran = document.getElementById('tab-pelanggaran');
 const contentBiodata = document.getElementById('content-biodata');
 const contentAkademik = document.getElementById('content-akademik');
 const contentPelanggaran = document.getElementById('content-pelanggaran');
+const tabTambahan = document.getElementById('tab-tambahan');
+const contentTambahan = document.getElementById('content-tambahan');
 
 const btnBack = document.getElementById('btn-back');
 
 // URL params
 const urlParams = new URLSearchParams(window.location.search);
 const santriId = urlParams.get('id');
+// Tab Nilai Tambahan (spek owner 2026-10-02): daftar TA diambil dari riwayat
+// akademik (per kehadiran santri di tahun itu) — bukan semua kalender.
+let riwayatTahunList = [];
+let tambahanDimuat = false;
 
 // Pemetaan Status_Santri → label & kelas warna badge pada detail profil.
 // Nilai DB: aktif, cuti, pengabdian, lulus, boyong, keluar.
@@ -113,6 +119,7 @@ window.switchTab = function(tab) {
   const tabs = [
     { key: 'biodata', btn: tabBiodata, content: contentBiodata },
     { key: 'akademik', btn: tabAkademik, content: contentAkademik },
+    { key: 'tambahan', btn: tabTambahan, content: contentTambahan },
     { key: 'pelanggaran', btn: tabPelanggaran, content: contentPelanggaran },
   ];
   tabs.forEach((t) => {
@@ -132,6 +139,7 @@ window.switchTab = function(tab) {
 
 if (tabBiodata) tabBiodata.addEventListener('click', () => switchTab('biodata'));
 if (tabAkademik) tabAkademik.addEventListener('click', () => switchTab('akademik'));
+if (tabTambahan) tabTambahan.addEventListener('click', () => { switchTab('tambahan'); loadTambahan(); });
 if (tabPelanggaran) tabPelanggaran.addEventListener('click', () => switchTab('pelanggaran'));
 
 btnBack.addEventListener('click', () => {
@@ -214,6 +222,7 @@ async function loadData() {
     // 2. Fetch Riwayat Akademik
     const resRiwayat = await fetch(`/api/santri/${santriId}/riwayat-akademik`);
     const riwayat = resRiwayat.ok ? await resRiwayat.json() : [];
+    riwayatTahunList = Array.isArray(riwayat) ? riwayat : [];
 
     // 2b. Untuk tiap TA, susun daftar bulan Hijri LENGKAP dari kalender akademik
     //     (mulai→selesai, SAMA seperti Input Manual & Rekap) supaya grid absensi
@@ -263,6 +272,9 @@ async function loadData() {
     // auto switch tab if location hash is present
     if (window.location.hash === '#transkrip' || window.location.hash === '#akademik') {
       switchTab('akademik');
+    } else if (window.location.hash === '#tambahan') {
+      switchTab('tambahan');
+      loadTambahan();
     } else if (window.location.hash === '#pelanggaran' || window.location.hash === '#catatan') {
       switchTab('pelanggaran');
     }
@@ -938,11 +950,194 @@ if (catatanContainer) {
   });
 }
 
-// Initialize auth to populate navbar
-checkAuth();
+// checkAuth() DIHAPUS (fix 2026-10-02): fungsi ini tidak pernah didefinisikan
+// di modul ini (ada sejak initial commit) → ReferenceError menghentikan
+// evaluasi modul sehingga SEMUA kode setelahnya mati (termasuk ekspor test
+// & loader tab Nilai Tambahan). Gating role halaman ini jalan normal lewat
+// loadProfile → fetch /api/me (canWriteCatatan).
 
 // ES module exports for tests (jsdom/Vitest) and any module consumers.
 // Halaman memuat file ini dengan <script type="module">, sehingga named export
 // tidak mengganggu perilaku halaman biasa (browser tetap memakai fungsi di atas).
 export { statusMap, profilStatusLabel, khidmahRiwayatStatus, populateBiodata, populateRiwayatPengabdian };
 
+
+
+// ── Tab "Nilai Tambahan" — riwayat penilaian non-akademik per tahun ajaran ──
+// Spek owner 2026-10-02: saat santri naik kelas, riwayat Setoran Juz Amma,
+// Nilai Kompetensi, dan Di Bawah Rata-rata TETAP tampil per tahun ajaran.
+// Data: /api/penilaian-tambahan/*?tahun_ajaran= (filter cakupan role di
+// backend) → difilter lagi per santri ini. Bawah-rata diambil kuartal 1–4
+// karena takziran disimpan per kuartal. Sekali muat, di-cache (read-only).
+const NAMA_SURAT_T = {
+  108: 'Al-Kautsar', 104: 'al-Humazah', 99: 'az-Zalzalah', 97: 'al-Qadr',
+  93: 'ad-Duha', 87: "al-A'la", 83: 'al-Muthaffifin', 80: "'Abasa", 78: "an-Naba'"
+};
+const LABEL_KATEGORI_T = { ubq: "Ujian Baca Al-Qur'an", praktik: 'Ujian Praktik', kitab: 'Ujian Baca Kitab' };
+
+function _fmtR2(v) {
+  return (typeof v === 'number' && isFinite(v)) ? v.toFixed(2).replace('.', ',') : '-';
+}
+
+function _badgeT(v) {
+  if (v === 'lulus' || v === 'selesai')
+    return '<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300">' + (v === 'selesai' ? 'Selesai' : 'Lulus') + '</span>';
+  if (v === 'her')
+    return '<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300">Her</span>';
+  if (v === 'tidak_lulus')
+    return '<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300">Tidak Lulus</span>';
+  if (v === 'belum')
+    return '<span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300">Belum Selesai</span>';
+  return '<span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-500 dark:bg-slate-700 dark:text-gray-400">(belum dinilai)</span>';
+}
+
+function loadTambahan() {
+  if (tambahanDimuat) return;
+  tambahanDimuat = true;
+  const loading = document.getElementById('tambahan-loading');
+  const container = document.getElementById('tambahan-container');
+  const empty = document.getElementById('tambahan-empty');
+  if (!container) return;
+  const sid = parseInt(santriId, 10);
+
+  // TA dari riwayat akademik santri (descending → terbaru di atas)
+  const tahun = [];
+  (riwayatTahunList || []).forEach((t) => {
+    if (t && t.tahun_ajaran && tahun.indexOf(t.tahun_ajaran) === -1) tahun.push(t.tahun_ajaran);
+  });
+  tahun.sort().reverse();
+  if (!tahun.length) {
+    if (loading) loading.classList.add('hidden');
+    if (empty) empty.classList.remove('hidden');
+    return;
+  }
+
+  const jobs = [];
+  tahun.forEach((ta) => {
+    const q = encodeURIComponent(ta);
+    jobs.push(fetch(`/api/penilaian-tambahan/juz-amma?tahun_ajaran=${q}`).then((r) => (r.ok ? r.json() : [])));
+    jobs.push(fetch(`/api/penilaian-tambahan/kompetensi?tahun_ajaran=${q}`).then((r) => (r.ok ? r.json() : [])));
+    [1, 2, 3, 4].forEach((k) => {
+      jobs.push(fetch(`/api/penilaian-tambahan/bawah-rata?tahun_ajaran=${q}&kuartal=${k}`).then((r) => (r.ok ? r.json() : [])));
+    });
+  });
+
+  Promise.all(jobs.map((p) => p.catch(() => []))).then((hasil) => {
+    if (loading) loading.classList.add('hidden');
+    let html = '';
+    let adaIsi = false;
+
+    tahun.forEach((ta, i) => {
+      const base = i * 6;
+      const juz = (hasil[base] || []).filter((r) => r.santri_id === sid);
+      const komp = (hasil[base + 1] || []).filter((r) => r.santri_id === sid);
+      const br = [];
+      [1, 2, 3, 4].forEach((k, j) => {
+        (hasil[base + 2 + j] || []).forEach((r) => {
+          if (r.santri_id === sid) br.push(Object.assign({}, r, { kuartal: k }));
+        });
+      });
+      const rw = (riwayatTahunList || []).find((t) => t.tahun_ajaran === ta);
+      const bagian = rw ? (rw.nama_bagian || '') : '';
+      let isi = '';
+
+      if (juz.length) {
+        const r0 = juz[0];
+        const disetor = (r0.surat || []).filter((x) => x.setor).length;
+        const total = r0.jumlah_surat || (r0.surat || []).length || 1;
+        const pct = Math.round((disetor / total) * 100);
+        const nm = NAMA_SURAT_T[r0.surat_sampai] || ('Surat ' + r0.surat_sampai);
+        isi += `
+        <div>
+          <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">🕌 Setoran Juz Amma</h4>
+          <div class="bg-gray-50 dark:bg-slate-900/30 rounded-xl p-4 border border-gray-100 dark:border-slate-700">
+            <div class="flex flex-wrap justify-between items-center gap-2 mb-2">
+              <span class="text-xs text-gray-500 dark:text-gray-400">Target: An-Nas s/d ${escapeHtml(nm)}</span>
+              ${_badgeT(r0.evaluasi || '')}
+            </div>
+            <div class="h-2.5 bg-gray-200 dark:bg-slate-700 rounded-full overflow-hidden">
+              <div class="h-2.5 bg-emerald-500 rounded-full" style="width:${pct}%"></div>
+            </div>
+            <div class="flex flex-wrap justify-between items-center gap-2 mt-2">
+              <span class="text-xs font-bold text-gray-700 dark:text-gray-300">${disetor}/${total} surat disetor (${pct}%)</span>
+              ${_badgeT(r0.status || '')}
+            </div>
+          </div>
+        </div>`;
+        adaIsi = true;
+      }
+
+      if (komp.length) {
+        const rows = komp.map((k) => `
+          <div class="flex flex-wrap justify-between items-center gap-2 py-1.5 border-b border-gray-100 dark:border-slate-700 last:border-0">
+            <span class="text-sm text-gray-700 dark:text-gray-300">${escapeHtml(LABEL_KATEGORI_T[k.kategori] || k.kategori)}</span>
+            ${_badgeT(k.hasil || '')}
+          </div>`).join('');
+        isi += `
+        <div>
+          <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">🎯 Nilai Kompetensi</h4>
+          <div class="bg-gray-50 dark:bg-slate-900/30 rounded-xl px-4 py-1 border border-gray-100 dark:border-slate-700">${rows}</div>
+        </div>`;
+        adaIsi = true;
+      }
+
+      if (br.length) {
+        const brRows = br.map((r) => {
+          const ket = [];
+          if (r.konsekuensi) ket.push('Konsekuensi: ' + r.konsekuensi);
+          if (r.jenis_takziran) ket.push('Takziran: ' + r.jenis_takziran);
+          const st = r.selesai ? '✓ Takziran selesai'
+            : (r.dalam_masa ? '⏳ Dalam masa takziran' : 'Belum dalam masa takziran');
+          const stCls = r.selesai ? 'text-emerald-600 dark:text-emerald-400 font-semibold'
+            : (r.dalam_masa ? 'text-amber-600 dark:text-amber-400 font-semibold' : 'text-gray-500 dark:text-gray-400');
+          return `
+          <div class="border-b border-red-100 dark:border-red-800/50 last:border-0 py-2">
+            <div class="flex flex-wrap justify-between items-center gap-2">
+              <span class="text-sm font-bold text-red-600 dark:text-red-400">Kuartal ${r.kuartal} · Rata² ${_fmtR2(r.rata2)}</span>
+              <span class="text-xs ${stCls}">${st}</span>
+            </div>
+            ${ket.length ? `<p class="text-xs text-red-600 dark:text-red-300 mt-0.5">${escapeHtml(ket.join(' · '))}</p>` : ''}
+          </div>`;
+        }).join('');
+        isi += `
+        <div>
+          <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">📉 Di Bawah Rata-rata (&lt; 4,4)</h4>
+          <div class="bg-red-50 dark:bg-red-900/15 rounded-xl px-4 py-1 border border-red-200 dark:border-red-800/60">${brRows}</div>
+        </div>`;
+        adaIsi = true;
+      } else if (juz.length || komp.length) {
+        isi += `
+        <div>
+          <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">📉 Di Bawah Rata-rata (&lt; 4,4)</h4>
+          <div class="bg-emerald-50 dark:bg-emerald-900/15 rounded-xl p-4 border border-emerald-200 dark:border-emerald-800/60">
+            <p class="text-sm font-semibold text-emerald-700 dark:text-emerald-300">✓ Tidak termasuk daftar siswi di bawah rata-rata 4,4</p>
+          </div>
+        </div>`;
+      }
+
+      if (!isi) isi = '<p class="text-sm text-gray-500 dark:text-gray-400">Belum ada data penilaian tambahan tahun ini.</p>';
+
+      html += `
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h3 class="text-base font-bold text-gray-900 dark:text-white">${escapeHtml(ta)}</h3>
+            ${bagian ? `<p class="text-xs text-gray-500 dark:text-gray-400">Kelas saat itu: ${escapeHtml(bagian)}</p>` : ''}
+          </div>
+          <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300">Tahun Ajaran</span>
+        </div>
+        <div class="p-6 space-y-5">${isi}</div>
+      </div>`;
+    });
+
+    if (adaIsi) {
+      container.innerHTML = html;
+    } else if (empty) {
+      empty.classList.remove('hidden');
+    }
+  }).catch((e) => {
+    console.error('loadTambahan gagal:', e);
+    if (loading) loading.classList.add('hidden');
+    if (empty) empty.classList.remove('hidden');
+  });
+}

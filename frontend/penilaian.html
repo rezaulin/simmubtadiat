@@ -266,8 +266,13 @@
         <div class="rounded-2xl border border-amber-200 dark:border-amber-500/30 bg-amber-50/70 dark:bg-amber-500/10 p-4 text-sm text-amber-800 dark:text-amber-300 leading-relaxed">
           Rata-rata nilai &lt; <b>4,4</b> dihitung otomatis dari Nilai Akademik — <b>jumlah nilai &amp; rata-ratanya sama persis</b> dengan kolom Jml/Rata² di tab Nilai Akademik. Baris tetap tersimpan meski takziran sudah selesai.
         </div>
+        <div id="br-riwayat" class="hidden rounded-2xl border border-amber-200 dark:border-amber-500/30 bg-amber-50/70 dark:bg-amber-500/10 p-4 text-sm text-amber-800 dark:text-amber-300 leading-relaxed">📁 <b>Mode Riwayat</b> — menampilkan data tahun ajaran yang dipilih (hanya bisa dilihat; pilih tahun <b>(aktif)</b> untuk mengubah data).</div>
         <div class="glass dark:bg-slate-800/80 rounded-2xl border border-gray-200 dark:border-slate-700 p-4">
           <div class="grid grid-cols-2 sm:flex sm:flex-row gap-3 sm:flex-wrap sm:items-end">
+            <div class="flex flex-col gap-1">
+              <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">Tahun Ajaran</label>
+              <select id="br-tahun" class="glass-input px-3 py-2 rounded-lg text-sm w-full sm:min-w-[130px]"></select>
+            </div>
             <div class="flex flex-col gap-1">
               <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">Tingkatan</label>
               <select id="br-tingkatan" class="glass-input px-3 py-2 rounded-lg text-sm w-full sm:min-w-[140px]"><option value="">-- Semua Tingkatan --</option></select>
@@ -322,8 +327,13 @@
           Lulus setoran Juz Amma menjadi <b>syarat mengikuti ujian semester genap</b> · Batas akhir: <b>Kuartal 2</b> · Kelas I'dadiyah tidak memiliki setoran.
         </div>
         <div id="ja-target" class="hidden rounded-2xl border border-teal-200 dark:border-teal-500/30 bg-teal-50/70 dark:bg-teal-500/10 p-4 text-sm text-teal-900 dark:text-teal-200 leading-relaxed"></div>
+        <div id="ja-riwayat" class="hidden rounded-2xl border border-amber-200 dark:border-amber-500/30 bg-amber-50/70 dark:bg-amber-500/10 p-4 text-sm text-amber-800 dark:text-amber-300 leading-relaxed">📁 <b>Mode Riwayat</b> — menampilkan data tahun ajaran yang dipilih (hanya bisa dilihat; pilih tahun <b>(aktif)</b> untuk mengubah data).</div>
         <div class="glass dark:bg-slate-800/80 rounded-2xl border border-gray-200 dark:border-slate-700 p-4">
           <div class="grid grid-cols-2 sm:flex sm:flex-row gap-3 sm:flex-wrap sm:items-end">
+            <div class="flex flex-col gap-1">
+              <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">Tahun Ajaran</label>
+              <select id="ja-tahun" class="glass-input px-3 py-2 rounded-lg text-sm w-full sm:min-w-[130px]"></select>
+            </div>
             <div class="flex flex-col gap-1">
               <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">Tingkatan</label>
               <select id="ja-tingkatan" class="glass-input px-3 py-2 rounded-lg text-sm w-full sm:min-w-[140px]"><option value="">-- Semua Tingkatan --</option></select>
@@ -379,8 +389,13 @@
             <b>Jadwal ujian:</b> tingkat tsanawiyah — praktik, baca Al-Qur'an &amp; baca kitab ketiganya di 3 tsn · tingkat aliyah — ujian praktik tajhiz al-mayit di 1 aly, Ujian Baca Al-Qur'an di 2 aliyah, ujian baca kitab di 3 aliyah.
           </div>
         </div>
+        <div id="km-riwayat" class="hidden rounded-2xl border border-amber-200 dark:border-amber-500/30 bg-amber-50/70 dark:bg-amber-500/10 p-4 text-sm text-amber-800 dark:text-amber-300 leading-relaxed">📁 <b>Mode Riwayat</b> — menampilkan data tahun ajaran yang dipilih (hanya bisa dilihat; pilih tahun <b>(aktif)</b> untuk mengubah data).</div>
         <div class="glass dark:bg-slate-800/80 rounded-2xl border border-gray-200 dark:border-slate-700 p-4">
           <div class="grid grid-cols-2 sm:flex sm:flex-row gap-3 sm:flex-wrap sm:items-end">
+            <div class="flex flex-col gap-1">
+              <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">Tahun Ajaran</label>
+              <select id="km-tahun" class="glass-input px-3 py-2 rounded-lg text-sm w-full sm:min-w-[130px]"></select>
+            </div>
             <div class="flex flex-col gap-1">
               <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">Kategori Ujian</label>
               <select id="km-kategori" class="glass-input px-3 py-2 rounded-lg text-sm w-full sm:min-w-[190px]">

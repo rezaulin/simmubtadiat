@@ -111,6 +111,8 @@
     var t = $(prefix + '-tingkatan'); if (t && t.value) p.set('tingkatan', t.value);
     var k = $(prefix + '-kelas'); if (k && k.value) p.set('kelas', k.value);
     var b = $(prefix + '-bagian'); if (b && b.value) p.set('bagian_id', b.value);
+    // Tahun Ajaran (riwayat) — ikut ke load tabel & export Excel.
+    var ta = $(prefix + '-tahun'); if (ta && ta.value) p.set('tahun_ajaran', ta.value);
   }
 
   // ── Keterangan Target Hafalan per kelas (spek owner 2026-10-02) ──────────
@@ -184,7 +186,7 @@
   // ── Tab: Di Bawah Rata-rata ───────────────────────────────────────────────
   // Fase 2: input teks bebas (konsekuensi / jenis takziran) + 2 checkbox aktif.
   // Backend POST hanya untuk pimpinan — kontrol tetap disabled bagi role lain.
-  function bolehEditTakziran() { return punyaRole(['pimpinan']); }
+  function bolehEditTakziran() { return punyaRole(['pimpinan']) && !modeRiwayat('br'); }
 
   function brStatus(td, teks, warna) {
     var s = td.querySelector('.br-status');
@@ -299,7 +301,7 @@
   // Fase 3: ceklis chip surat aktif (toggle per surat) + select Evaluasi dan
   // Selesai/Belum (per santri). Backend POST hanya pimpinan → kontrol tetap
   // disabled bagi role lain.
-  function bolehEditJuz() { return punyaRole(['pimpinan']); }
+  function bolehEditJuz() { return punyaRole(['pimpinan']) && !modeRiwayat('ja'); }
 
   function chipSurat(s, santriID, edit) {
     var nama = NAMA_SURAT[s.no] || ('Surat ' + s.no);
@@ -425,7 +427,7 @@
   // Fase 4: select hasil aktif utk pimpinan → POST per baris. Backend hanya
   // menerima lulus/her/tidak_lulus ("" ditolak 400) → "(belum dinilai)" yang
   // dipilih user dibalikkan lagi.
-  function bolehEditKomp() { return punyaRole(['pimpinan']); }
+  function bolehEditKomp() { return punyaRole(['pimpinan']) && !modeRiwayat('km'); }
 
   function loadKompetensi() {
     var el = $('km-table');
@@ -623,7 +625,62 @@
   }
 
   // ── init ──────────────────────────────────────────────────────────────────
+  // ── Pemilih Tahun Ajaran (riwayat) — spek owner 2026-10-02 ─────────────
+  // Penilaian tambahan disimpan per tahun_ajaran; select ini membuka tahun
+  // lama (naik kelas → riwayat tetap ada). Tahun non-aktif = MODE RIWAYAT:
+  // edit & simpan dinonaktifkan (guard bolehEdit*), sebab POST backend
+  // selalu menulis ke tahun AKTIF — mencegah salah-tulis ke tahun lama.
+  var taAktifGlobal = '';
+
+  function pilihTahun(prefix) {
+    var el = $(prefix + '-tahun');
+    return el ? el.value : '';
+  }
+  function modeRiwayat(prefix) {
+    var v = pilihTahun(prefix);
+    return !!(taAktifGlobal && v && v !== taAktifGlobal);
+  }
+  function syncRiwayatBanners() {
+    FILTER_PREFIX.forEach(function (p) {
+      var ban = $(p + '-riwayat');
+      if (ban) ban.classList.toggle('hidden', !modeRiwayat(p));
+    });
+  }
+  function initTahunAjaran() {
+    var selects = FILTER_PREFIX.map(function (p) { return $(p + '-tahun'); }).filter(Boolean);
+    if (!selects.length) return;
+    Promise.all([
+      fetch('/api/kalender/tahun', { credentials: 'same-origin' })
+        .then(function (r) { return r.ok ? r.json() : []; }).catch(function () { return []; }),
+      fetch('/api/settings/umum', { credentials: 'same-origin' })
+        .then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
+    ]).then(function (res) {
+      var list = res[0] || [];
+      var umum = res[1] || null;
+      taAktifGlobal = (umum && umum.tahun_ajaran_aktif) || '';
+      if (taAktifGlobal && list.indexOf(taAktifGlobal) === -1) list.unshift(taAktifGlobal);
+      if (!list.length) return;
+      if (!taAktifGlobal) taAktifGlobal = list[0];
+      var ops = list.map(function (t) {
+        return '<option value="' + esc(t) + '">' + esc(t) + (t === taAktifGlobal ? ' (aktif)' : '') + '</option>';
+      }).join('');
+      selects.forEach(function (sel) {
+        sel.innerHTML = ops;
+        sel.value = taAktifGlobal;
+        // Pilihan disinkronkan antar 3 tab; tab aktif langsung dimuat ulang.
+        sel.addEventListener('change', function () {
+          var v = sel.value;
+          selects.forEach(function (o) { o.value = v; });
+          syncRiwayatBanners();
+          if (LOADERS[currentTab]) LOADERS[currentTab]();
+        });
+      });
+      syncRiwayatBanners();
+    });
+  }
+
   function init() {
+    initTahunAjaran();
     document.querySelectorAll('.ptab-btn').forEach(function (btn) {
       btn.addEventListener('click', function () { activate(btn.dataset.tab); });
     });
