@@ -37,7 +37,7 @@ Sidebar: Penilaian  →  /penilaian.html   (satu-satunya menu, nama asli)
 Tab 1 "Akademik"      = spreadsheet lama persis seperti sekarang
 Tab 2 "Bawah Rata²"   = semua kelas
 Tab 3 "Juz Amma"      = ibt 4–6, tsn 1–3, aly 1–3 (I'dadiyah TIDAK)
-Tab 4 "Kompetensi"    = khusus 3 tsn, 1/2/3 aly
+Tab 4 "Kompetensi"    = khusus 3 tsn, 1/2/3 aly, + 6 ibt (koreksi owner 2026-10-02)
 ```
 
 - URL hash per tab: `#akademik` (default), `#bawah-rata`, `#juz-amma`,

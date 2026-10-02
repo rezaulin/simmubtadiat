@@ -588,7 +588,8 @@ func ensureSetoranRows(ctx context.Context, santriID int, tahunAjaran string) (i
 
 // ErrKompetensiTidakBerlaku dipanggil bila kelas/kategori tidak sesuai
 // jadwal owner: 3 tsn (ubq+kitab+praktik), 1 aly (praktik), 2 aly (ubq),
-// 3 aly (kitab+praktik).
+// 3 aly (kitab+praktik), + 6 ibt (ubq+kitab+praktik) — koreksi owner
+// 2026-10-02: siswi kelas 6 Ibtidaiyah wajib tampil di Nilai Kompetensi.
 var ErrKompetensiTidakBerlaku = errors.New("kategori ujian tidak berlaku untuk kelas ini")
 
 var kategoriKompetensi = []string{"ubq", "praktik", "kitab"}
@@ -597,6 +598,10 @@ var kategoriKompetensi = []string{"ubq", "praktik", "kitab"}
 func KompetensiEligible(tingkatan, kelas, kategori string) bool {
 	t := strings.ToLower(strings.TrimSpace(tingkatan))
 	k := strings.TrimSpace(kelas)
+	// Kelas 6 Ibtidaiyah: semua kategori ujian berlaku (koreksi owner 2026-10-02).
+	if t == "ibtidaiyah" && k == "6" {
+		return true
+	}
 	switch kategori {
 	case "ubq":
 		return (t == "tsanawiyah" && k == "3") || (t == "aliyah" && k == "2")
