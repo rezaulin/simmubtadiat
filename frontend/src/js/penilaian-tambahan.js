@@ -28,7 +28,12 @@
   };
 
   var TABS = ['akademik', 'bawah-rata', 'juz-amma', 'kompetensi'];
-  var visible = {};       // tab -> bool (hasil cek role)
+  // Optimistik true SEBELUM init (/api/me) selesai, supaya klik tab yang
+  // datang lebih dulu tetap dihormati (loader jalan; akses final tetap
+  // di-apply oleh applyVisibility + dicek backend).
+  var visible = {
+    'akademik': true, 'bawah-rata': true, 'juz-amma': true, 'kompetensi': true
+  };
   var currentTab = 'akademik';
   var me = null;
 
