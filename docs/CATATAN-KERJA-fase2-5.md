@@ -129,6 +129,26 @@ Kolom: No, Nama, `<select class="km-select" disabled>` (sudah ada, value:
   disembunyikan utk wali/admin). Fix: status `visible[]` ditulis ulang saat
   set className.
 
+### Audit spek vs implementasi (2026-10-02, E2E `/tmp/e2e_audit.py` 7/7 PASS)
+
+Disilang ulang dgn spek asli owner. Seluruh kolom/filter/rentang/akses dites:
+
+- **Sudah sesuai semua**: kolom A (9, urut persis spek), kolom B (6 persis),
+  rentang surat 9 kelas persis (108/104/99/97/93/87/83/80/78) & urutan chip
+  An-Nas turun ke batas kelas ("mulai an-nas sampai X"), ceklis 2 kolom
+  takziran, filter A/B/C, model pilih B/C, kategori kelas C
+  (`KompetensiEligible`), banner syarat B, otomatis dari nilai akademik,
+  persist setelah selesai, akses (input+download pimpinan; lihat pimpinan/
+  mufatish/mustahiq/wali).
+- **2 ketidaksesuaian DIPERBAIKI**:
+  1. Banner syarat ijazah C sekarang **kondisional per kelas** (spek:
+     "ditampilkan di kelas 6 ibt & 3 tsn" / "ditampilkan di kelas 3
+     aliyah") — 3 blok `.km-note[data-kelas]` + `updateKmNotes()` mengikuti
+     filter `#km-bagian` (map `BAGIAN_KELAS` dari `/api/penilaian/bagian`);
+     "Semua Bagian" → semua blok. E2E: semua→3 blok, 3aly→2, 6ibt→1, 1tsn→0.
+  2. Label kolom disamakan persis spek: "Selesai Melaksanakan Takziran" (A),
+     "Selesai/Belum Selesai" (B).
+
 - **Download/export**: PIMPINAN ONLY, cek role di BACKEND (jangan cuma sembunyi
   tombol). Format ikut pola export tab Akademik (ExcelJS di
   `frontend/src/js/penilaian.js`). → **selesai, lihat blok di atas** (diputuskan

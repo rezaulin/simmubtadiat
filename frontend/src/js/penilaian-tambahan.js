@@ -194,7 +194,7 @@
           '</tr>';
       }).join('');
       el.innerHTML = tabelHTML(
-        ['No', 'Nama', 'Bagian', 'Jumlah Nilai', 'Rata-rata Nilai', 'Konsekuensi', 'Jenis Takziran', 'Dalam Masa Takziran', 'Selesai Takziran'],
+        ['No', 'Nama', 'Bagian', 'Jumlah Nilai', 'Rata-rata Nilai', 'Konsekuensi', 'Jenis Takziran', 'Dalam Masa Takziran', 'Selesai Melaksanakan Takziran'],
         isi,
         'Tidak ada siswi dengan rata-rata di bawah 4,4 pada kuartal ini.');
     }).catch(function (e) { el.innerHTML = errHTML(e); });
@@ -317,7 +317,7 @@
           '</tr>';
       }).join('');
       el.innerHTML = tabelHTML(
-        ['No', 'Bagian', 'Nama Siswi', 'Nama Surat', 'Evaluasi', 'Selesai / Belum'],
+        ['No', 'Bagian', 'Nama Siswi', 'Nama Surat', 'Evaluasi', 'Selesai/Belum Selesai'],
         isi,
         'Tidak ada data setoran Juz Amma untuk filter ini.');
     }).catch(function (e) { el.innerHTML = errHTML(e); });
@@ -438,6 +438,29 @@
   }
 
   // ── tab controller ────────────────────────────────────────────────────────
+  // Banner syarat ijazah tab Kompetensi mengikuti filter bagian (spek owner:
+  // syarat 6 ibt/3 tsn "ditampilkan di kelas 6 ibt & 3 tsn", syarat 3 aly
+  // "ditampilkan di kelas 3 aliyah") — 'Semua Bagian' → semua blok tampil.
+  var BAGIAN_KELAS = {};   // bagian_id → kode kelas pendek, mis. "6 ibt"
+
+  function kodeKelas(tingkatan, kelas) {
+    var t = (tingkatan || '').toLowerCase().trim();
+    var pre = t.indexOf('ibt') === 0 ? 'ibt'
+      : t.indexOf('tsan') === 0 ? 'tsn'
+      : t.indexOf('ali') === 0 ? 'aly' : t;
+    return ((kelas || '') + ' ' + pre).trim().toLowerCase();
+  }
+
+  function updateKmNotes() {
+    var sel = $('km-bagian');
+    var kelas = (sel && sel.value && BAGIAN_KELAS[sel.value]) ? BAGIAN_KELAS[sel.value] : '';
+    document.querySelectorAll('.km-note').forEach(function (n) {
+      if (!kelas) { n.classList.remove('hidden'); return; }
+      var daftar = (n.dataset.kelas || '').split(',').map(function (s) { return s.trim(); });
+      n.classList.toggle('hidden', daftar.indexOf(kelas) === -1);
+    });
+  }
+
   function defaultTab() {
     if (visible['akademik']) return 'akademik';
     for (var i = 1; i < TABS.length; i++) { if (visible[TABS[i]]) return TABS[i]; }
@@ -485,12 +508,14 @@
       .then(function (bagians) {
         var opts = bagians.map(function (b) {
           var label = ((b.kelas || '') + ' ' + (b.tingkatan || '') + ' ' + (b.nama_bagian || '')).trim();
+          BAGIAN_KELAS[b.id] = kodeKelas(b.tingkatan, b.kelas);
           return '<option value="' + b.id + '">' + esc(label) + '</option>';
         }).join('');
         ['ja-bagian', 'km-bagian'].forEach(function (id) {
           var el = $(id);
           if (el) el.insertAdjacentHTML('beforeend', opts);
         });
+        updateKmNotes();
       })
       .catch(function () { /* dropdown tetap bisa dipakai tanpa opsi */ });
   }
@@ -505,7 +530,10 @@
     });
     [['br-refresh', 'bawah-rata'], ['ja-refresh', 'juz-amma'], ['km-refresh', 'kompetensi']].forEach(function (pair) {
       var el = $(pair[0]);
-      if (el) el.addEventListener('click', function () { if (LOADERS[pair[1]]) LOADERS[pair[1]](); });
+      if (el) el.addEventListener('click', function () {
+        if (pair[1] === 'kompetensi') updateKmNotes();   // banner ikut filter bagian
+        if (LOADERS[pair[1]]) LOADERS[pair[1]]();
+      });
     });
 
     // Fase 2 — simpan per baris. Delegasi ke container #br-table supaya tetap

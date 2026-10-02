@@ -221,6 +221,12 @@ GET  /wali/anak              (khusus wali_santri → read-only data anak)
 Tiap fase: `go build` → `node --check` → docker build di VPS 1 → health 200 →
 commit+push. DDL tabel didahulukan sebelum kode yang memakainya dipasang.
 
+**Audit spek vs implementasi (2026-10-02)**: seluruh spek owner disilang ulang —
+✅ semua kolom/filter/rentang surat/akses sesuai; 2 perbaikan: banner syarat
+ijazah jadi **kondisional per kelas** (`updateKmNotes()`, E2E audit 7/7) +
+label kolom "Selesai Melaksanakan Takziran" (A) & "Selesai/Belum Selesai" (B).
+Regresi role matrix tetap 41/41.
+
 ## 9. Keputusan Owner (final)
 
 1. **I'dadiyah tidak ikut setoran Juz Amma** → Tab Juz Amma hanya ibt 4–6,
