@@ -212,10 +212,10 @@ GET  /wali/anak              (khusus wali_santri → read-only data anak)
 | Fase | Isi | Output |
 |------|-----|--------|
 | 0 | ~~Rename label~~ **DIBATALKAN (revert)** — sudah dikembalikan | label "Penilaian" kembali live |
-| 1 | Migrasi 3 tabel + tab bar skeleton di penilaian.html + route API + RBAC | build lolos, health 200 |
-| 2 | Tab "Bawah Rata²" (auto + takziran) | E2E: kandidat muncul dari nilai real |
-| 3 | Tab "Juz Amma" (checklist per kelas) | E2E: rentang surat per kelas benar |
-| 4 | Tab "Kompetensi" (filter kelas) | E2E: 3 tsn/1-3 aly tampil, kelas lain kosong |
+| 1 | Migrasi 3 tabel + tab bar + route API + RBAC + render baca (ketiganya) | ✅ **DONE 2026-10-02** (`5bb1ef2`+`0323ffb`): E2E live — Bawah Rata 1 baris (Maryam 3,87), Juz Amma 25 siswi tanpa I'dadiyah, Kompetensi UBQ 14 / Praktik 8, tab Akademik utuh |
+| 2 | Tab "Bawah Rata²": kontrol input takziran (konsekuensi/jenis teks bebas + ceklis) + save | E2E: simpan takziran, filter aktif |
+| 3 | Tab "Juz Amma": aktifkan ceklis + evaluasi/status + save | E2E: toggle surat tersimpan |
+| 4 | Tab "Kompetensi": aktifkan select hasil + save | E2E: hasil tersimpan & filter |
 | 5 | Ekspor + akses wali + banner syarat | E2E role matrix (pimpinan/mufatish/mustahiq/wali) |
 
 Tiap fase: `go build` → `node --check` → docker build di VPS 1 → health 200 →
