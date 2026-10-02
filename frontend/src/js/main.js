@@ -1485,7 +1485,7 @@ function buildNilaiTambahan(juzRows, kompRows, brRows, santriId) {
       : '<span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">Belum Selesai</span>';
     sections += `
     <div>
-      <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">🕌 Setoran Juz Amma</h4>
+      <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">📖 Setoran Juz Amma</h4>
       <div class="bg-gray-50 dark:bg-slate-900/30 rounded-xl p-4 border border-gray-100 dark:border-slate-700">
         <div class="flex flex-wrap justify-between items-center gap-2 mb-2">
           <span class="text-xs text-gray-500 dark:text-gray-400">Target: An-Nas s/d ${waliEscape(nm)}</span>
