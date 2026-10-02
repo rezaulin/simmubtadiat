@@ -324,6 +324,11 @@
   }
 
   // ── Tab: Nilai Kompetensi ─────────────────────────────────────────────────
+  // Fase 4: select hasil aktif utk pimpinan → POST per baris. Backend hanya
+  // menerima lulus/her/tidak_lulus ("" ditolak 400) → "(belum dinilai)" yang
+  // dipilih user dibalikkan lagi.
+  function bolehEditKomp() { return punyaRole(['pimpinan']); }
+
   function loadKompetensi() {
     var el = $('km-table');
     if (!el) return Promise.resolve();
@@ -331,25 +336,80 @@
     var p = new URLSearchParams({ kategori: $('km-kategori').value });
     var h = $('km-hasil').value; if (h) p.set('hasil', h);
     var b = $('km-bagian').value; if (b) p.set('bagian_id', b);
+    var edit = bolehEditKomp();
     return jget('/api/penilaian-tambahan/kompetensi?' + p.toString()).then(function (rows) {
       var isi = rows.map(function (r, i) {
-        return '<tr>' +
+        return '<tr data-santri="' + r.santri_id + '">' +
           '<td class="px-3 py-2 text-gray-400">' + (i + 1) + '</td>' +
           '<td class="px-3 py-2 font-semibold text-gray-800 dark:text-gray-100 whitespace-nowrap">' + esc(r.nama) + '</td>' +
-          '<td class="px-3 py-2"><select disabled data-santri="' + r.santri_id + '" data-kategori="' + esc(r.kategori) + '" ' +
-            'class="km-select glass-input px-2 py-1.5 rounded-lg text-xs w-[160px]">' +
+          '<td class="px-3 py-2"><select' + (edit ? '' : ' disabled') +
+            ' data-santri="' + r.santri_id + '" data-kategori="' + esc(r.kategori) + '"' +
+            ' data-awal="' + esc(r.hasil || '') + '"' +
+            ' class="km-select glass-input px-2 py-1.5 rounded-lg text-xs w-[160px]">' +
             '<option value="" ' + (!r.hasil ? 'selected' : '') + '>(belum dinilai)</option>' +
             '<option value="lulus" ' + (r.hasil === 'lulus' ? 'selected' : '') + '>Lulus</option>' +
             '<option value="her" ' + (r.hasil === 'her' ? 'selected' : '') + '>Her</option>' +
             '<option value="tidak_lulus" ' + (r.hasil === 'tidak_lulus' ? 'selected' : '') + '>Tidak Lulus</option>' +
             '</select></td>' +
+          '<td class="px-3 py-2"><div class="km-status text-[11px] font-semibold text-gray-400"></div></td>' +
           '</tr>';
       }).join('');
       el.innerHTML = tabelHTML(
-        ['No', 'Nama', 'Lulus / Her / Tidak Lulus'],
+        ['No', 'Nama', 'Lulus / Her / Tidak Lulus', 'Status'],
         isi,
         'Tidak ada siswi untuk kategori ujian & filter ini.');
     }).catch(function (e) { el.innerHTML = errHTML(e); });
+  }
+
+  // POST satu hasil kompetensi per baris.
+  function simpanKompetensi(tr, sel) {
+    var td = tr.querySelector('td:last-child');
+    var ind = td && td.querySelector('.km-status');
+    var setStatus = function (teks, warna) {
+      if (ind) { ind.textContent = teks; ind.className = 'km-status text-[11px] font-semibold ' + warna; }
+    };
+    if (!sel.value) {
+      // backend menolak hasil kosong → kembalikan pilihan lama
+      sel.value = sel.dataset.awal || '';
+      showToast('Hasil harus Lulus / Her / Tidak Lulus', 'error');
+      return;
+    }
+    setStatus('Menyimpan…', 'text-gray-400');
+    fetch('/api/penilaian-tambahan/kompetensi', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        tahun_ajaran: '',            // kosong → tahun ajaran aktif
+        santri_id: parseInt(sel.dataset.santri, 10),
+        kategori: sel.dataset.kategori,
+        hasil: sel.value
+      })
+    }).then(function (res) {
+      return res.json().catch(function () { return {}; }).then(function (d) {
+        if (!res.ok) throw new Error(d.message || ('HTTP ' + res.status));
+        sel.dataset.awal = sel.value;      // jadi patokan revert berikutnya
+        setStatus('✓ Tersimpan', 'text-emerald-600 dark:text-emerald-400');
+        showToast('Nilai kompetensi tersimpan', 'success');
+        // filter hasil memengaruhi keanggotaan baris → refresh tertunda
+        if ($('km-hasil').value) refreshKompSetelahBlur(tr);
+      });
+    }).catch(function (e) {
+      setStatus('✗ Gagal', 'text-red-500');
+      showToast('Gagal simpan kompetensi: ' + e.message, 'error');
+    });
+  }
+
+  function refreshKompSetelahBlur(tr) {
+    var coba = function () {
+      var a = document.activeElement;
+      if (a && tr.contains(a) && a.tagName === 'SELECT') {
+        setTimeout(coba, 500);   // user masih memilih → tunggu
+        return;
+      }
+      loadKompetensi();
+    };
+    setTimeout(coba, 300);
   }
 
   var LOADERS = {
@@ -461,6 +521,17 @@
           body[t.dataset.field] = t.value;
           simpanJuz(tr, body, t.dataset.field);
         }
+      });
+    }
+
+    // Fase 4 — Nilai Kompetensi: select hasil → POST per baris.
+    var kmEl = $('km-table');
+    if (kmEl) {
+      kmEl.addEventListener('change', function (e) {
+        var t = e.target;
+        if (!t || !t.classList || !t.classList.contains('km-select')) return;
+        var tr = t.closest('tr');
+        if (tr) simpanKompetensi(tr, t);
       });
     }
 

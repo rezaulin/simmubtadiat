@@ -215,7 +215,7 @@ GET  /wali/anak              (khusus wali_santri → read-only data anak)
 | 1 | Migrasi 3 tabel + tab bar + route API + RBAC + render baca (ketiganya) | ✅ **DONE 2026-10-02** (`5bb1ef2`+`0323ffb`): E2E live — Bawah Rata 1 baris (Maryam 3,87), Juz Amma 25 siswi tanpa I'dadiyah, Kompetensi UBQ 14 / Praktik 8, tab Akademik utuh |
 | 2 | Tab "Bawah Rata-rata": kontrol input takziran (konsekuensi/jenis teks bebas + ceklis) + save | ✅ **DONE 2026-10-02**: E2E 28/28 — simpan teks via blur & ceklis persist ke DB, filter `dalam_masa`/`selesai` jalan, kontrol AKTIF utk pimpinan & DISABLED utk mufatish, POST non-pimpinan 403, label jadi "Di Bawah Rata-rata" |
 | 3 | Tab "Juz Amma": aktifkan ceklis + evaluasi/status + save | ✅ **DONE 2026-10-02**: E2E 32/32 — toggle chip per surat & select Evaluasi/Selesai persist ke DB, indikator "✓ Tersimpan", filter `ja-status` jalan, chip AKTIF utk pimpinan & DISABLED utk mufatish, POST non-pimpinan 403. Bug backend ikut diperbaiki: `ensureSetoranRows` ($3→$2) & `COALESCE(evaluasi)` di GET |
-| 4 | Tab "Kompetensi": aktifkan select hasil + save | E2E: hasil tersimpan & filter |
+| 4 | Tab "Kompetensi": aktifkan select hasil + save | ✅ **DONE 2026-10-02**: E2E 29/29 — select hasil AKTIF utk pimpinan & DISABLED utk mufatish, POST per baris persist (indikator "✓ Tersimpan"), pilihan "(belum dinilai)" di-revert lokal (backend tolak hasil kosong), filter hasil + kategori jalan (ubq 14 / praktik 8 / kitab 4, aturan kelas owner terverifikasi), validasi 400 utk kelas tak eligible, POST non-pimpinan 403 |
 | 5 | Ekspor + akses wali + banner syarat | E2E role matrix (pimpinan/mufatish/mustahiq/wali) |
 
 Tiap fase: `go build` → `node --check` → docker build di VPS 1 → health 200 →
