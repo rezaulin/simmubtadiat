@@ -11,11 +11,30 @@ import (
 	"math"
 	"net/http"
 	"strconv"
+	"strings"
 
 	appMiddleware "github.com/mubtadiaat/app/middleware"
 	"github.com/mubtadiaat/app/models"
 	"github.com/xuri/excelize/v2"
 )
+
+// parseFilterBagian: baca query tingkatan/kelas/bagian_id — filter cascading
+// "Tingkatan → Kelas → Bagian" utk 3 fitur nilai tambahan (kosong = semua).
+// ok=false kalau bagian_id tidak valid.
+func parseFilterBagian(r *http.Request) (models.FilterBagian, bool) {
+	var f models.FilterBagian
+	q := r.URL.Query()
+	f.Tingkatan = strings.TrimSpace(q.Get("tingkatan"))
+	f.Kelas = strings.TrimSpace(q.Get("kelas"))
+	if v := q.Get("bagian_id"); v != "" {
+		n, err := strconv.Atoi(v)
+		if err != nil || n <= 0 {
+			return f, false
+		}
+		f.BagianID = &n
+	}
+	return f, true
+}
 
 // tambahanBagianIDs mengembalikan ID bagian yang boleh dilihat user sesuai
 // cakupan (pimpinan: semua; mustahiq/mufatish: kelas+tingkatan tugasannya).
@@ -132,7 +151,12 @@ func GetBawahRata(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	rows, err := models.GetBawahRata(r.Context(), ta, kuartal, dalamMasa, selesai, bagianIDs, santriIDs)
+	filter, okFilter := parseFilterBagian(r)
+	if !okFilter {
+		writeJSONError(w, "bagian_id tidak valid", http.StatusBadRequest)
+		return
+	}
+	rows, err := models.GetBawahRata(r.Context(), ta, kuartal, dalamMasa, selesai, bagianIDs, santriIDs, filter)
 	if err != nil {
 		writeJSONError(w, internalError("", err), http.StatusInternalServerError)
 		return
@@ -178,20 +202,16 @@ func GetJuzAmma(w http.ResponseWriter, r *http.Request) {
 		writeJSONError(w, "filter evaluasi tidak valid", http.StatusBadRequest)
 		return
 	}
-	var bagianID *int
-	if v := r.URL.Query().Get("bagian_id"); v != "" {
-		n, err := strconv.Atoi(v)
-		if err != nil || n <= 0 {
-			writeJSONError(w, "bagian_id tidak valid", http.StatusBadRequest)
-			return
-		}
-		bagianID = &n
+	filter, okFilter := parseFilterBagian(r)
+	if !okFilter {
+		writeJSONError(w, "bagian_id tidak valid", http.StatusBadRequest)
+		return
 	}
 	bagianIDs, santriIDs, ok := tambahanScope(w, r)
 	if !ok {
 		return
 	}
-	rows, err := models.GetJuzAmma(r.Context(), ta, bagianID, status, evaluasi, bagianIDs, santriIDs)
+	rows, err := models.GetJuzAmma(r.Context(), ta, filter, status, evaluasi, bagianIDs, santriIDs)
 	if err != nil {
 		writeJSONError(w, internalError("", err), http.StatusInternalServerError)
 		return
@@ -239,20 +259,16 @@ func GetKompetensi(w http.ResponseWriter, r *http.Request) {
 		writeJSONError(w, "filter hasil tidak valid", http.StatusBadRequest)
 		return
 	}
-	var bagianID *int
-	if v := r.URL.Query().Get("bagian_id"); v != "" {
-		n, err := strconv.Atoi(v)
-		if err != nil || n <= 0 {
-			writeJSONError(w, "bagian_id tidak valid", http.StatusBadRequest)
-			return
-		}
-		bagianID = &n
+	filter, okFilter := parseFilterBagian(r)
+	if !okFilter {
+		writeJSONError(w, "bagian_id tidak valid", http.StatusBadRequest)
+		return
 	}
 	bagianIDs, santriIDs, ok := tambahanScope(w, r)
 	if !ok {
 		return
 	}
-	rows, err := models.GetKompetensi(r.Context(), ta, kategori, hasil, bagianID, bagianIDs, santriIDs)
+	rows, err := models.GetKompetensi(r.Context(), ta, kategori, hasil, filter, bagianIDs, santriIDs)
 	if err != nil {
 		writeJSONError(w, internalError("", err), http.StatusInternalServerError)
 		return
@@ -368,14 +384,22 @@ func ExportTambahan(w http.ResponseWriter, r *http.Request) {
 	defer func() { _ = f.Close() }()
 	sheet := "Sheet1"
 
-	tulis := func(headers []string, rows [][]any) {
+	tulis := func(judul string, headers []string, rows [][]any) {
+		// Baris 1 = judul (di-merge, tebal); baris 2 = header; data mulai baris 3
+		// (keputusan owner 2026-10-02: hasil download wajib punya judul).
+		last, _ := excelize.CoordinatesToCellName(len(headers), 1)
+		_ = f.MergeCell(sheet, "A1", last)
+		f.SetCellValue(sheet, "A1", judul)
+		if st, err := f.NewStyle(&excelize.Style{Font: &excelize.Font{Bold: true, Size: 13}}); err == nil {
+			_ = f.SetCellStyle(sheet, "A1", "A1", st)
+		}
 		for i, h := range headers {
-			cell, _ := excelize.CoordinatesToCellName(i+1, 1)
+			cell, _ := excelize.CoordinatesToCellName(i+1, 2)
 			f.SetCellValue(sheet, cell, h)
 		}
 		for ri, row := range rows {
 			for ci, v := range row {
-				cell, _ := excelize.CoordinatesToCellName(ci+1, ri+2)
+				cell, _ := excelize.CoordinatesToCellName(ci+1, ri+3)
 				f.SetCellValue(sheet, cell, v)
 			}
 		}
@@ -399,7 +423,12 @@ func ExportTambahan(w http.ResponseWriter, r *http.Request) {
 			writeJSONError(w, "filter tidak valid", http.StatusBadRequest)
 			return
 		}
-		data, err := models.GetBawahRata(r.Context(), ta, kuartal, dalamMasa, selesai, bagianIDs, santriIDs)
+		filter, okFilter := parseFilterBagian(r)
+		if !okFilter {
+			writeJSONError(w, "bagian_id tidak valid", http.StatusBadRequest)
+			return
+		}
+		data, err := models.GetBawahRata(r.Context(), ta, kuartal, dalamMasa, selesai, bagianIDs, santriIDs, filter)
 		if err != nil {
 			writeJSONError(w, internalError("", err), http.StatusInternalServerError)
 			return
@@ -411,20 +440,17 @@ func ExportTambahan(w http.ResponseWriter, r *http.Request) {
 				b.Konsekuensi, b.JenisTakziran,
 				yaTidak(b.DalamMasa), yaTidak(b.Selesai)})
 		}
-		tulis([]string{"No", "Bagian", "Nama Siswi", "Kuartal", "Jumlah Nilai",
-			"Rata-rata", "Konsekuensi", "Jenis Takziran",
-			"Dalam Masa Takziran", "Selesai Takziran"}, rows)
+		tulis("Nilai Siswi di Bawah Rata² 4,4",
+			[]string{"No", "Bagian", "Nama Siswi", "Kuartal", "Jumlah Nilai",
+				"Rata-rata", "Konsekuensi", "Jenis Takziran",
+				"Dalam Masa Takziran", "Selesai Takziran"}, rows)
 		namaFile = fmt.Sprintf("di-bawah-rata-%s.xlsx", ta)
 
 	case "juz-amma":
-		var bagianID *int
-		if v := q.Get("bagian_id"); v != "" {
-			n, err := strconv.Atoi(v)
-			if err != nil || n <= 0 {
-				writeJSONError(w, "bagian_id tidak valid", http.StatusBadRequest)
-				return
-			}
-			bagianID = &n
+		filter, okFilter := parseFilterBagian(r)
+		if !okFilter {
+			writeJSONError(w, "bagian_id tidak valid", http.StatusBadRequest)
+			return
 		}
 		status := q.Get("status")
 		if status != "" && status != "selesai" && status != "belum" {
@@ -436,7 +462,7 @@ func ExportTambahan(w http.ResponseWriter, r *http.Request) {
 			writeJSONError(w, "filter evaluasi tidak valid", http.StatusBadRequest)
 			return
 		}
-		data, err := models.GetJuzAmma(r.Context(), ta, bagianID, status, evaluasi, bagianIDs, santriIDs)
+		data, err := models.GetJuzAmma(r.Context(), ta, filter, status, evaluasi, bagianIDs, santriIDs)
 		if err != nil {
 			writeJSONError(w, internalError("", err), http.StatusInternalServerError)
 			return
@@ -453,19 +479,16 @@ func ExportTambahan(w http.ResponseWriter, r *http.Request) {
 				disetor, d.JumlahSurat,
 				judulHasilEnum(d.Evaluasi), judulHasilEnum(d.Status)})
 		}
-		tulis([]string{"No", "Bagian", "Nama Siswi", "Surat Disetor",
-			"Jumlah Surat", "Evaluasi", "Selesai / Belum"}, rows)
+		tulis("Hasil Setoran Juz Amma",
+			[]string{"No", "Bagian", "Nama Siswi", "Surat Disetor",
+				"Jumlah Surat", "Evaluasi", "Selesai / Belum"}, rows)
 		namaFile = fmt.Sprintf("setoran-juz-amma-%s.xlsx", ta)
 
 	case "kompetensi":
-		var bagianID *int
-		if v := q.Get("bagian_id"); v != "" {
-			n, err := strconv.Atoi(v)
-			if err != nil || n <= 0 {
-				writeJSONError(w, "bagian_id tidak valid", http.StatusBadRequest)
-				return
-			}
-			bagianID = &n
+		filter, okFilter := parseFilterBagian(r)
+		if !okFilter {
+			writeJSONError(w, "bagian_id tidak valid", http.StatusBadRequest)
+			return
 		}
 		kategori := q.Get("kategori")
 		if kategori != "" && kategori != "ubq" && kategori != "praktik" && kategori != "kitab" {
@@ -477,7 +500,7 @@ func ExportTambahan(w http.ResponseWriter, r *http.Request) {
 			writeJSONError(w, "filter hasil tidak valid", http.StatusBadRequest)
 			return
 		}
-		data, err := models.GetKompetensi(r.Context(), ta, kategori, hasil, bagianID, bagianIDs, santriIDs)
+		data, err := models.GetKompetensi(r.Context(), ta, kategori, hasil, filter, bagianIDs, santriIDs)
 		if err != nil {
 			writeJSONError(w, internalError("", err), http.StatusInternalServerError)
 			return
@@ -485,9 +508,16 @@ func ExportTambahan(w http.ResponseWriter, r *http.Request) {
 		rows := make([][]any, 0, len(data))
 		for i, d := range data {
 			rows = append(rows, []any{i + 1, d.Bagian, d.Nama,
-				judulKategoriEnum(d.Kategori), judulHasilEnum(d.Hasil)})
+				judulHasilEnum(d.Hasil)})
 		}
-		tulis([]string{"No", "Bagian", "Nama Siswi", "Kategori Ujian", "Hasil"}, rows)
+		// kolom "Kategori Ujian" dihapus — kategori jadi JUDUL data
+		// (keputusan owner 2026-10-02).
+		judulKompetensi := "Hasil Ujian Kompetensi"
+		if kategori != "" {
+			judulKompetensi = "Hasil " + judulKategoriEnum(kategori)
+		}
+		tulis(judulKompetensi,
+			[]string{"No", "Bagian", "Nama Siswi", "Hasil"}, rows)
 		namaFile = fmt.Sprintf("nilai-kompetensi-%s.xlsx", ta)
 	}
 

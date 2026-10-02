@@ -231,15 +231,43 @@ Regresi role matrix tetap 41/41.
 
 1. **I'dadiyah tidak ikut setoran Juz Amma** → Tab Juz Amma hanya ibt 4–6,
    tsn 1–3, aly 1–3.
-2. **Evaluasi Juz Amma** = `Lulus / Her / Tidak Lulus` (terpisah dari
-   Selesai/Belum).
-3. **Rata² 4,4 kecuali akhlaq** → exclude kategori `akhlaq_perilaku` & `akhlaq`
-   (kategori 'akhlaq' kosong di data; `علم الأخلاق` berkategori `umum` → ikut).
+2. **Evaluasi Juz Amma** = `Lulus / Tidak Lulus` (terpisah dari
+   Selesai/Belum). ~~Her~~ dihapus dari UI (batch 2026-10-02); backend masih
+   menerima `her` utk kompatibilitas data lama (data eksisting: hanya `lulus`).
+3. **Rata² 4,4 konsisten dgn Nilai Akademik** (batch 2026-10-02) →
+   `GetBawahRata` memakai `MapelDihitungIDs()` = port persis `isExcludedMapel()`
+   frontend (exclude kategori al_quran/al_khot_imla/qiroah_kutub/muhafadhoh/
+   akhlaq* + aturan nama/kitab + `aktif_kuartal`) — jumlah & rata² kini PERSIS
+   kolom Jml/Rata² tab akademik (bukti: Maryam 2 Tsn A kuartal 1 = 34 / 3,09).
+   Sebelumnya hanya exclude akhlaq → selisih (58 / 3,87).
 4. **Konsekuensi & Jenis Takziran = teks bebas** (kolom TEXT).
 5. **Mustahiq dibatasi cakupan** seperti menu akademik.
 6. **Struktur (koreksi 2026-10-02)**: tetap satu menu **"Penilaian"**; aspek
    baru = **tab-tab sendiri di dalam penilaian.html**; akademik & tambahan
    tidak dicampur; bukan satu halaman panjang; rename label dibatalkan.
+
+### Update batch 2 (2026-10-02) — 9 poin perbaikan owner
+
+1. **Jumlah/Rata² = Nilai Akademik** — lihat keputusan #3 di atas.
+2. **Judul hasil download** (baris 1 di-merge + tebal, header di baris 2):
+   bawah-rata = "Nilai Siswi di Bawah Rata² 4,4"; juz-amma = "Hasil Setoran
+   Juz Amma"; kompetensi = "Hasil Ujian Baca Al-Qur'an" (dari filter kategori).
+3. **Filter cascading Tingkatan → Kelas → Bagian** di ketiga tab
+   (backend `FilterBagian` — nama tingkatan/kelas case-insensitive; FE
+   `isiOpsiFilter()` dibangun dari `/api/penilaian/bagian` cakupan-aware).
+4. **Evaluasi Juz Amma** tanpa Her (keputusan #2).
+5. Filter tingkatan/kelas juga di juz-amma & kompetensi (bagian sudah ada).
+6. **Target Hafalan per kelas** di banner `#ja-target` (9 baris persis spek):
+   pimpinan → semua; role lain → derive kelas dari baris hasil GET
+   (`renderTargetHafalan()` + `kodeDariBagian()`).
+7. Judul export juz-amma (poin 2).
+8. Kolom "Kategori Ujian" export kompetensi dihapus → jadi judul.
+9. Filter tingkatan/kelas/bagian di kompetensi (poin 3).
+
+E2E batch 2: 17/17 PASS (API+export) + browser (cascading sempit ✓, target
+pimpinan 9 baris ✓, evaluasi tanpa Her ✓, Maryam UI 34,0/3,09 ✓).
+Catatan: 21 test vitest gagal = **pre-existing** (terverifikasi via
+`git stash` — gagal juga tanpa perubahan; drift test fitur wali/rekap/nav).
 
 ## 10. Referensi internal
 

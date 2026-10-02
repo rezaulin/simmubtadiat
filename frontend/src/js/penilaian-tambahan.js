@@ -69,6 +69,87 @@
     return h === 'lulus' ? 'Lulus' : h === 'her' ? 'Her' : h === 'tidak_lulus' ? 'Tidak Lulus' : '(belum dinilai)';
   }
 
+  // ── filter cascading Tingkatan → Kelas → Bagian (3 tab nilai tambahan) ────
+  // Opsi dibangun dari /api/penilaian/bagian (cakupan-aware: mustahiq/mufatish
+  // hanya melihat bagian tugasannya; wali → dropdown kosong). Prefix: br/ja/km.
+  var DFT_BAGIAN = [];
+  var FILTER_PREFIX = ['br', 'ja', 'km'];
+
+  function unikTert(list) {
+    return list.filter(function (v, i, a) { return v && a.indexOf(v) === i; });
+  }
+
+  // Isi ulang select (prefix)-tingkatan/-kelas/-bagian mengikuti pilihan induk.
+  // Pilihan lama dipertahankan selama masih valid; kalau tidak → di-reset.
+  function isiOpsiFilter(prefix) {
+    var t = $(prefix + '-tingkatan'), k = $(prefix + '-kelas'), b = $(prefix + '-bagian');
+    if (!t || !k || !b) return;
+    var pT = t.value, pK = k.value, pB = b.value;
+    var daftarT = unikTert(DFT_BAGIAN.map(function (x) { return x.tingkatan; }));
+    if (daftarT.indexOf(pT) === -1) pT = '';
+    var barisT = DFT_BAGIAN.filter(function (x) { return !pT || x.tingkatan === pT; });
+    var daftarK = unikTert(barisT.map(function (x) { return x.kelas; }));
+    if (daftarK.indexOf(pK) === -1) pK = '';
+    var barisK = barisT.filter(function (x) { return !pK || x.kelas === pK; });
+    var adaB = barisK.some(function (x) { return String(x.id) === String(pB); });
+    if (!adaB) pB = '';
+    var opsiTeks = function (label, nilai, daftar) {
+      return '<option value="">' + label + '</option>' + daftar.map(function (v) {
+        return '<option value="' + esc(v) + '"' + (nilai === v ? ' selected' : '') + '>' + esc(v) + '</option>';
+      }).join('');
+    };
+    t.innerHTML = opsiTeks('-- Semua Tingkatan --', pT, daftarT);
+    k.innerHTML = opsiTeks('-- Semua Kelas --', pK, daftarK);
+    b.innerHTML = '<option value="">-- Semua Bagian --</option>' + barisK.map(function (x) {
+      return '<option value="' + x.id + '"' + (String(pB) === String(x.id) ? ' selected' : '') + '>' + esc(x.label) + '</option>';
+    }).join('');
+    t.value = pT; k.value = pK; b.value = pB;
+  }
+
+  // Sisipkan param filter cascading (tingkatan/kelas/bagian_id) ke URL load+export.
+  function tambahFilter(prefix, p) {
+    var t = $(prefix + '-tingkatan'); if (t && t.value) p.set('tingkatan', t.value);
+    var k = $(prefix + '-kelas'); if (k && k.value) p.set('kelas', k.value);
+    var b = $(prefix + '-bagian'); if (b && b.value) p.set('bagian_id', b.value);
+  }
+
+  // ── Keterangan Target Hafalan per kelas (spek owner 2026-10-02) ──────────
+  // Pimpinan melihat SEMUA target; role lain hanya kelas dari cakupannya
+  // (derive dari baris hasil GET — mustahiq = kelas tugasannya, wali = kelas anak).
+  var TARGET_HAFALAN = [
+    ['4 ibt', 'Kelas 4 Ibtidaiyah — an-Nas s/d Al-Kautsar'],
+    ['5 ibt', 'Kelas 5 Ibtidaiyah — an-Nas s/d al-Humazah'],
+    ['6 ibt', 'Kelas 6 Ibtidaiyah — an-Nas s/d az-Zalzalah'],
+    ['1 tsn', 'Kelas 1 Tsanawiyah — an-Nas s/d al-Qadr'],
+    ['2 tsn', 'Kelas 2 Tsanawiyah — an-Nas s/d ad-Dhuha'],
+    ['3 tsn', 'Kelas 3 Tsanawiyah — an-Nas s/d al-A\u2019la'],
+    ['1 aly', 'Kelas 1 Aliyah — an-Nas s/d al-Muthaffifin'],
+    ['2 aly', 'Kelas 2 Aliyah — an-Nas s/d \u2018Abasa'],
+    ['3 aly', 'Kelas 3 Aliyah — an-Nas s/d an-Naba\u2019']
+  ];
+
+  // label bagian "2 Tsanawiyah A" → kode kelas "2 tsn"
+  function kodeDariBagian(label) {
+    var p = String(label || '').trim().split(/\s+/);
+    if (p.length < 2) return '';
+    return kodeKelas(p[1], p[0]);
+  }
+
+  function renderTargetHafalan(rows) {
+    var el = $('ja-target');
+    if (!el) return;
+    var daftar = TARGET_HAFALAN;
+    if (!punyaRole(['pimpinan'])) {
+      var kode = unikTert((rows || []).map(function (r) { return kodeDariBagian(r.bagian); })).filter(Boolean);
+      daftar = TARGET_HAFALAN.filter(function (x) { return kode.indexOf(x[0]) !== -1; });
+    }
+    if (!daftar.length) { el.classList.add('hidden'); el.innerHTML = ''; return; }
+    el.classList.remove('hidden');
+    el.innerHTML = '<b>🎯 Target Hafalan per Kelas:</b>' +
+      '<ul class="mt-1.5 space-y-0.5 list-disc list-inside">' +
+      daftar.map(function (x) { return '<li>' + esc(x[1]) + '</li>'; }).join('') + '</ul>';
+  }
+
   // ── tabel ─────────────────────────────────────────────────────────────────
   function tabelHTML(kolom, isi, kosongMsg) {
     if (!isi) {
@@ -167,6 +248,7 @@
     var p = new URLSearchParams({ kuartal: $('br-kuartal').value });
     var d = $('br-dalam').value; if (d) p.set('dalam_masa', d);
     var s = $('br-selesai').value; if (s) p.set('selesai', s);
+    tambahFilter('br', p);
     var edit = bolehEditTakziran();
     var nonaktif = edit ? '' : ' disabled';
     return jget('/api/penilaian-tambahan/bawah-rata?' + p.toString()).then(function (rows) {
@@ -232,7 +314,9 @@
       ' class="ja-pilih glass-input px-2 py-1.5 rounded-lg text-xs ' + warna + '">' + opts + '</select>';
   }
 
-  var OPSI_EVALUASI = [['', '(belum)'], ['lulus', 'Lulus'], ['her', 'Her'], ['tidak_lulus', 'Tidak Lulus']];
+  // Evaluasi cukup Lulus / Tidak Lulus — pilihan "Her" dihapus (keputusan
+  // owner 2026-10-02; data lama 'her' tetap ditampilkan apa adanya di export).
+  var OPSI_EVALUASI = [['', '(belum)'], ['lulus', 'Lulus'], ['tidak_lulus', 'Tidak Lulus']];
   var OPSI_STATUS = [['belum', 'Belum'], ['selesai', 'Selesai']];
 
   // POST satu perubahan. body = {santri_id, surat_no?/setor?/evaluasi?/status?}
@@ -292,12 +376,13 @@
     if (!el) return Promise.resolve();
     el.innerHTML = '<div class="p-6 text-center text-gray-400">Memuat…</div>';
     var p = new URLSearchParams();
-    var b = $('ja-bagian').value; if (b) p.set('bagian_id', b);
+    tambahFilter('ja', p);
     var s = $('ja-status').value; if (s) p.set('status', s);
     var ev = $('ja-evaluasi').value; if (ev) p.set('evaluasi', ev);
     var qs = p.toString();
     var edit = bolehEditJuz();
     return jget('/api/penilaian-tambahan/juz-amma' + (qs ? '?' + qs : '')).then(function (rows) {
+      renderTargetHafalan(rows);
       var isi = rows.map(function (r, i) {
         return '<tr data-santri="' + r.santri_id + '">' +
           '<td class="px-3 py-2 text-gray-400 align-top">' + (i + 1) + '</td>' +
@@ -335,7 +420,7 @@
     el.innerHTML = '<div class="p-6 text-center text-gray-400">Memuat…</div>';
     var p = new URLSearchParams({ kategori: $('km-kategori').value });
     var h = $('km-hasil').value; if (h) p.set('hasil', h);
-    var b = $('km-bagian').value; if (b) p.set('bagian_id', b);
+    tambahFilter('km', p);
     var edit = bolehEditKomp();
     return jget('/api/penilaian-tambahan/kompetensi?' + p.toString()).then(function (rows) {
       var isi = rows.map(function (r, i) {
@@ -425,14 +510,15 @@
       p.set('kuartal', $('br-kuartal').value);
       var d = $('br-dalam').value; if (d) p.set('dalam_masa', d);
       var s = $('br-selesai').value; if (s) p.set('selesai', s);
+      tambahFilter('br', p);
     } else if (fitur === 'juz-amma') {
-      var b = $('ja-bagian').value; if (b) p.set('bagian_id', b);
+      tambahFilter('ja', p);
       var st = $('ja-status').value; if (st) p.set('status', st);
       var ev = $('ja-evaluasi').value; if (ev) p.set('evaluasi', ev);
     } else if (fitur === 'kompetensi') {
       p.set('kategori', $('km-kategori').value);
       var h = $('km-hasil').value; if (h) p.set('hasil', h);
-      var kb = $('km-bagian').value; if (kb) p.set('bagian_id', kb);
+      tambahFilter('km', p);
     }
     window.location.href = '/api/penilaian-tambahan/export?' + p.toString();
   }
@@ -506,15 +592,18 @@
     return fetch('/api/penilaian/bagian', { credentials: 'same-origin' })
       .then(function (res) { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
       .then(function (bagians) {
-        var opts = bagians.map(function (b) {
-          var label = ((b.kelas || '') + ' ' + (b.tingkatan || '') + ' ' + (b.nama_bagian || '')).trim();
+        // Simpan dulu utk cascading filter Tingkatan → Kelas → Bagian,
+        // lalu isi select filter ketiga tab dari daftar yang sama.
+        DFT_BAGIAN = bagians.map(function (b) {
           BAGIAN_KELAS[b.id] = kodeKelas(b.tingkatan, b.kelas);
-          return '<option value="' + b.id + '">' + esc(label) + '</option>';
-        }).join('');
-        ['ja-bagian', 'km-bagian'].forEach(function (id) {
-          var el = $(id);
-          if (el) el.insertAdjacentHTML('beforeend', opts);
+          return {
+            id: b.id,
+            kelas: b.kelas || '',
+            tingkatan: b.tingkatan || '',
+            label: ((b.kelas || '') + ' ' + (b.tingkatan || '') + ' ' + (b.nama_bagian || '')).trim()
+          };
         });
+        FILTER_PREFIX.forEach(isiOpsiFilter);
         updateKmNotes();
       })
       .catch(function () { /* dropdown tetap bisa dipakai tanpa opsi */ });
@@ -533,6 +622,15 @@
       if (el) el.addEventListener('click', function () {
         if (pair[1] === 'kompetensi') updateKmNotes();   // banner ikut filter bagian
         if (LOADERS[pair[1]]) LOADERS[pair[1]]();
+      });
+    });
+
+    // Filter cascading Tingkatan → Kelas → Bagian (3 tab): pilihan induk
+    // me-refresh opsi anak. Load manual tetap lewat tombol "Tampilkan".
+    FILTER_PREFIX.forEach(function (p) {
+      ['-tingkatan', '-kelas', '-bagian'].forEach(function (sfx) {
+        var el = $(p + sfx);
+        if (el) el.addEventListener('change', function () { isiOpsiFilter(p); });
       });
     });
 

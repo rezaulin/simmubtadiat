@@ -34,11 +34,127 @@ type BarisBawahRata struct {
 	AdaTakziran   bool    `json:"ada_takziran"`
 }
 
-// GetBawahRata menghitung rata-rata nilai kuartal per santri (KECUALI kategori
-// akhlaq) dan mengembalikan yang di bawah 4,4, di-LEFT-JOIN dengan status
-// takziran yang pernah diisi pimpinan. baris takziran TIDAK dihapus otomatis
-// walau rata² sudah naik — filter opsional menyaring tampilan, bukan data.
-func GetBawahRata(ctx context.Context, tahunAjaran string, kuartal int, dalamMasa, selesai *bool, bagianIDs []int, santriIDs []int) ([]BarisBawahRata, error) {
+// FilterBagian = filter cascading "Tingkatan → Kelas → Bagian" untuk 3 fitur
+// nilai tambahan (Di Bawah Rata², Setoran Juz Amma, Kompetensi). Nama
+// tingkatan/kelas case-insensitive; kosong = semua; BagianID nil = semua.
+type FilterBagian struct {
+	Tingkatan string
+	Kelas     string
+	BagianID  *int
+}
+
+// ── Konsistensi dgn Nilai Akademik (keputusan owner 2026-10-02) ─────────────
+// MapelDihitungIDs mengembalikan ID mapel yang ikut dihitung kolom
+// "Jumlah"/"Rata-rata" di tab Nilai Akademik — port PERSIS dari
+// isExcludedMapel(m) di frontend/src/js/penilaian.js (tanpa isRaport),
+// supaya jumlah & rata² di tab Di Bawah Rata² sama persis dengan akademik.
+func MapelDihitungIDs(ctx context.Context) ([]int, error) {
+	rows, err := config.DB.Query(ctx, `
+		SELECT id, LOWER(COALESCE(kategori,'')), LOWER(COALESCE(nama_mapel,'')),
+		       LOWER(COALESCE(nama_kitab,''))
+		FROM mata_pelajaran`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	ids := []int{}
+	for rows.Next() {
+		var id int
+		var kat, nama, kitab string
+		if err := rows.Scan(&id, &kat, &nama, &kitab); err != nil {
+			return nil, err
+		}
+		if mapelDihitung(kat, nama, kitab) {
+			ids = append(ids, id)
+		}
+	}
+	return ids, rows.Err()
+}
+
+// mapelDihitung = port dari isExcludedMapel (non-raport). Parameter sudah
+// di-lower (latin) — ejaan Arab tidak peka huruf besar/kecil.
+func mapelDihitung(kat, nama, kitab string) bool {
+	// kategori selalu dikecualikan
+	switch kat {
+	case "al_quran", "al_khot_imla", "qiroah_kutub", "muhafadhoh", "akhlaq", "akhlaq_perilaku":
+		return false
+	}
+	// pengecualian nama: mapel ini TETAP dihitung walau mirip kategori di atas
+	for _, p := range []string{"qawaid", "qowaid", "قواعد", "tafsir", "تفسير",
+		"ulum", "علوم", "tarikh", "تاريخ", "muta'allim", "متعلم", "ta'lim", "تعليم"} {
+		if strings.Contains(nama, p) {
+			return true
+		}
+	}
+	for _, p := range []string{"qawaid", "qowaid", "قواعد",
+		"muta'allim", "متعلم", "ta'lim", "تعليم"} {
+		if strings.Contains(kitab, p) {
+			return true
+		}
+	}
+	// exclude berdasarkan nama
+	for _, p := range []string{"quran", "qur'an", "قرآن", "القرءان", "القرآن"} {
+		if strings.Contains(nama, p) {
+			return false
+		}
+	}
+	for _, p := range []string{"khot", "imla", "خط", "إملاء", "الخط"} {
+		if strings.Contains(nama, p) {
+			return false
+		}
+	}
+	for _, p := range []string{"qiroah", "qira'ah", "qiraat", "قراءة"} {
+		if strings.Contains(nama, p) {
+			return false
+		}
+	}
+	for _, p := range []string{"hafad", "muhafadhoh", "محافظة"} {
+		if strings.Contains(nama, p) {
+			return false
+		}
+	}
+	// Fann Akhlaq: dikecualikan hanya jika kitab kosong/"-"/"Akhlaq" dsb
+	isKitabKosong := kitab == "" || kitab == "-" || kitab == "akhlaq" || kitab == "akhlak" ||
+		kitab == "al-akhlaq" || kitab == "al-akhlak" || kitab == "أخلاق" ||
+		kitab == "اخلاق" || kitab == "الأخلاق" || kitab == "الاخلاق"
+	if (strings.Contains(nama, "akhlaq") || strings.Contains(nama, "akhlak") ||
+		strings.Contains(nama, "أخلاق") || strings.Contains(nama, "اخلاق")) && isKitabKosong {
+		return false
+	}
+	// exclude berdasarkan nama kitab
+	for _, p := range []string{"quran", "قرآن", "القرآن"} {
+		if strings.Contains(kitab, p) {
+			return false
+		}
+	}
+	for _, p := range []string{"khot", "خط", "إملاء"} {
+		if strings.Contains(kitab, p) {
+			return false
+		}
+	}
+	for _, p := range []string{"qiroah", "قراءة"} {
+		if strings.Contains(kitab, p) {
+			return false
+		}
+	}
+	for _, p := range []string{"hafad", "محافظة"} {
+		if strings.Contains(kitab, p) {
+			return false
+		}
+	}
+	for _, p := range []string{"akhlaq", "akhlak", "al-akhlaq", "al-akhlak",
+		"أخلاق", "اخلاق", "الأخلاق", "الاخلاق"} {
+		if kitab == p {
+			return false
+		}
+	}
+	return true
+}
+
+// GetBawahRata: filter opsional tingkatan/kelas/bagian (nama, case-insensitive)
+// — untuk filter cascading "Tingkatan → Kelas → Bagian" (kosong = semua).
+// filter AnakWali: wali hanya melihat santri miliknya.
+func GetBawahRata(ctx context.Context, tahunAjaran string, kuartal int, dalamMasa, selesai *bool, bagianIDs []int, santriIDs []int, filter FilterBagian) ([]BarisBawahRata, error) {
 	args := []any{tahunAjaran, kuartal, bagianIDs}
 	q := `
 		SELECT s.id,
@@ -64,11 +180,32 @@ func GetBawahRata(ctx context.Context, tahunAjaran string, kuartal int, dalamMas
 		WHERE nk.tahun_ajaran = $1
 		  AND nk.kuartal = $2
 		  AND nk.nilai IS NOT NULL
-		  AND mp.kategori NOT IN ('akhlaq', 'akhlaq_perilaku')
 		  AND s.status = 'aktif'
-	  AND s.bagian_id = ANY($3)`
-	// filter anak (khusus wali_santri) — disisip SEBELUM filter opsional lain
-	// supaya penomoran argumen tetap: $1 ta, $2 kuartal, $3 bagian, $4 santri.
+		  AND s.bagian_id = ANY($3)`
+		// mapel yang IKUT dihitung kolom Jumlah/Rata² tab Nilai Akademik
+		// (port isExcludedMapel) + wajib aktif di kuartal ini → konsistensi
+		// dgn tampilan akademik (keputusan owner 2026-10-02).
+		mapelIDs, err := MapelDihitungIDs(ctx)
+		if err != nil {
+			return nil, err
+		}
+		args = append(args, mapelIDs)
+		q += fmt.Sprintf(" AND mp.id = ANY($%d) AND mp.aktif_kuartal @> to_jsonb($2::integer)", len(args))
+		// filter cascading tingkatan/kelas/bagian (kosong = semua)
+		if filter.Tingkatan != "" {
+			args = append(args, filter.Tingkatan)
+			q += fmt.Sprintf(" AND LOWER(t.nama) = LOWER($%d)", len(args))
+		}
+		if filter.Kelas != "" {
+			args = append(args, filter.Kelas)
+			q += fmt.Sprintf(" AND LOWER(k.nama) = LOWER($%d)", len(args))
+		}
+		if filter.BagianID != nil {
+			args = append(args, *filter.BagianID)
+			q += fmt.Sprintf(" AND b.id = $%d", len(args))
+		}
+		// filter anak (khusus wali_santri) — disisip SEBELUM filter opsional lain
+		// supaya penomoran argumen tetap: $1 ta, $2 kuartal, $3 bagian, $4 santri.
 	if len(santriIDs) > 0 {
 		args = append(args, santriIDs)
 		q += fmt.Sprintf(" AND s.id = ANY($%d)", len(args))
@@ -209,7 +346,7 @@ type BarisJuzAmma struct {
 }
 
 // GetJuzAmma: daftar siswi kelas yang punya rentang setoran + ceklis per surat.
-func GetJuzAmma(ctx context.Context, tahunAjaran string, bagianID *int, status, evaluasi string, bagianIDs []int, santriIDs []int) ([]BarisJuzAmma, error) {
+func GetJuzAmma(ctx context.Context, tahunAjaran string, filter FilterBagian, status, evaluasi string, bagianIDs []int, santriIDs []int) ([]BarisJuzAmma, error) {
 	args := []any{bagianIDs}
 	q := `
 		SELECT s.id, s.nama, b.id,
@@ -220,9 +357,17 @@ func GetJuzAmma(ctx context.Context, tahunAjaran string, bagianID *int, status, 
 		JOIN kelas k    ON k.id = b.kelas_id
 		LEFT JOIN tingkatan t ON t.id = b.tingkatan_id
 		WHERE s.status = 'aktif' AND b.id = ANY($1)`
-	if bagianID != nil {
-		args = append(args, *bagianID)
+	if filter.BagianID != nil {
+		args = append(args, *filter.BagianID)
 		q += fmt.Sprintf(" AND b.id = $%d", len(args))
+	}
+	if filter.Tingkatan != "" {
+		args = append(args, filter.Tingkatan)
+		q += fmt.Sprintf(" AND LOWER(t.nama) = LOWER($%d)", len(args))
+	}
+	if filter.Kelas != "" {
+		args = append(args, filter.Kelas)
+		q += fmt.Sprintf(" AND LOWER(k.nama) = LOWER($%d)", len(args))
 	}
 	// filter anak (khusus wali_santri)
 	if len(santriIDs) > 0 {
@@ -460,7 +605,7 @@ type BarisKompetensi struct {
 
 // GetKompetensi: daftar siswi kelas berlaku + hasil ujian per kategori.
 // kategori "" → semua kategori yang berlaku untuk masing-masing kelas.
-func GetKompetensi(ctx context.Context, tahunAjaran, kategori, hasil string, bagianID *int, bagianIDs []int, santriIDs []int) ([]BarisKompetensi, error) {
+func GetKompetensi(ctx context.Context, tahunAjaran, kategori, hasil string, filter FilterBagian, bagianIDs []int, santriIDs []int) ([]BarisKompetensi, error) {
 	args := []any{bagianIDs}
 	q := `
 		SELECT s.id, s.nama, b.id,
@@ -471,9 +616,17 @@ func GetKompetensi(ctx context.Context, tahunAjaran, kategori, hasil string, bag
 		JOIN kelas k    ON k.id = b.kelas_id
 		LEFT JOIN tingkatan t ON t.id = b.tingkatan_id
 		WHERE s.status = 'aktif' AND b.id = ANY($1)`
-	if bagianID != nil {
-		args = append(args, *bagianID)
+	if filter.BagianID != nil {
+		args = append(args, *filter.BagianID)
 		q += fmt.Sprintf(" AND b.id = $%d", len(args))
+	}
+	if filter.Tingkatan != "" {
+		args = append(args, filter.Tingkatan)
+		q += fmt.Sprintf(" AND LOWER(t.nama) = LOWER($%d)", len(args))
+	}
+	if filter.Kelas != "" {
+		args = append(args, filter.Kelas)
+		q += fmt.Sprintf(" AND LOWER(k.nama) = LOWER($%d)", len(args))
 	}
 	// filter anak (khusus wali_santri)
 	if len(santriIDs) > 0 {
