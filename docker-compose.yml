@@ -4,7 +4,7 @@ services:
     restart: always
     # Hanya diekspos ke localhost; publik diakses lewat nginx (reverse proxy + SSL).
     ports:
-      - "127.0.0.1:8080:8080"
+      - "127.0.0.1:8090:8080"
     environment:
       - DB_HOST=db
       - DB_PORT=5432
