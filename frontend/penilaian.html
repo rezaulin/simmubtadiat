@@ -407,8 +407,18 @@
           <div class="km-note rounded-2xl border border-sky-200 dark:border-sky-500/30 bg-sky-50/70 dark:bg-sky-500/10 p-4 text-sm text-sky-800 dark:text-sky-300 leading-relaxed" data-kelas="3 aly">
             <b>Syarat ijazah kelas 3 aliyah:</b> Lulus Ujian Baca Al-Qur'an + Ujian Praktik + Ujian Baca Kitab <b>dan khidmah satu tahun</b>.
           </div>
-          <div class="km-note rounded-2xl border border-sky-200 dark:border-sky-500/30 bg-sky-50/70 dark:bg-sky-500/10 p-4 text-sm text-sky-800 dark:text-sky-300 leading-relaxed" data-kelas="1 aly,2 aly,3 aly,3 tsn">
-            <b>Jadwal ujian:</b> tingkat tsanawiyah — praktik, baca Al-Qur'an &amp; baca kitab ketiganya di 3 tsn · tingkat aliyah — ujian praktik tajhiz al-mayit di 1 aly, Ujian Baca Al-Qur'an di 2 aliyah, ujian baca kitab di 3 aliyah.
+          <!-- Jadwal ujian DIPETAKAN per tingkatan (permintaan owner
+               2026-10-03): ibt, tsn, aliyah dipisah — tidak dijadikan satu
+               baris. Tiap blok punya data-kelas sendiri → tiap tingkatan
+               melihat jadwalnya sendiri (pola .km-note, lihat updateKmNotes). -->
+          <div class="km-note rounded-2xl border border-sky-200 dark:border-sky-500/30 bg-sky-50/70 dark:bg-sky-500/10 p-4 text-sm text-sky-800 dark:text-sky-300 leading-relaxed" data-kelas="6 ibt">
+            <b>Jadwal ujian:</b> tingkat ibtidaiyah — ujian praktik, baca Al-Qur'an &amp; ujian baca kitab ketiganya di kelas 6 ibtidaiyah
+          </div>
+          <div class="km-note rounded-2xl border border-sky-200 dark:border-sky-500/30 bg-sky-50/70 dark:bg-sky-500/10 p-4 text-sm text-sky-800 dark:text-sky-300 leading-relaxed" data-kelas="3 tsn">
+            <b>Jadwal ujian:</b> tingkat tsanawiyah — praktik, baca Al-Qur'an &amp; baca kitab ketiganya di 3 tsn
+          </div>
+          <div class="km-note rounded-2xl border border-sky-200 dark:border-sky-500/30 bg-sky-50/70 dark:bg-sky-500/10 p-4 text-sm text-sky-800 dark:text-sky-300 leading-relaxed" data-kelas="1 aly,2 aly,3 aly">
+            <b>Jadwal ujian:</b> tingkat aliyah — ujian praktik tajhiz al-mayit di 1 aly, Ujian Baca Al-Qur'an di 2 aliyah, ujian baca kitab di 3 aliyah.
           </div>
         </div>
         <div id="km-riwayat" class="hidden rounded-2xl border border-amber-200 dark:border-amber-500/30 bg-amber-50/70 dark:bg-amber-500/10 p-4 text-sm text-amber-800 dark:text-amber-300 leading-relaxed">📁 <b>Mode Riwayat</b> — menampilkan data tahun ajaran yang dipilih (hanya bisa dilihat; pilih tahun <b>(aktif)</b> untuk mengubah data).</div>
@@ -450,6 +460,19 @@
             <button id="km-refresh" class="bg-primary hover:bg-primary-hover text-white px-5 py-2 rounded-xl text-sm font-medium shadow-md col-span-2 sm:col-span-1">Tampilkan</button>
             <button id="km-export" class="btn-tambahan bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl text-sm font-medium shadow-md col-span-2 sm:col-span-1" data-fitur="kompetensi">📥 Download</button>
           </div>
+        </div>
+        <!-- Aksi massal Nilai Kompetensi (permintaan owner 2026-10-03):
+             pilih banyak siswi → Lulus/Her/Tidak Lulus sekaligus.
+             Kontrol dirender disabled utk role non-pimpinan (pola tab ini). -->
+        <div id="km-bulk" class="hidden mt-4 flex flex-wrap items-center gap-3 rounded-2xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/60 px-4 py-2.5 text-sm">
+          <label class="inline-flex items-center gap-2 font-medium text-gray-700 dark:text-gray-200 cursor-pointer select-none">
+            <input type="checkbox" id="km-pilih-semua" class="w-4 h-4 accent-teal-600"> Pilih Semua
+          </label>
+          <span id="km-bulk-count" class="text-gray-500 dark:text-gray-400">0 siswi dipilih</span>
+          <button id="km-bulk-lulus" class="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded-xl text-xs font-semibold shadow-sm disabled:opacity-40 disabled:cursor-not-allowed">✔ Tandai Lulus</button>
+          <button id="km-bulk-her" class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-xl text-xs font-semibold shadow-sm disabled:opacity-40 disabled:cursor-not-allowed">⚠ Tandai Her</button>
+          <button id="km-bulk-tidak" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-xl text-xs font-semibold shadow-sm disabled:opacity-40 disabled:cursor-not-allowed">✖ Tandai Tidak Lulus</button>
+          <span id="km-bulk-info" class="text-[11px] text-gray-400"></span>
         </div>
         <div id="km-table" class="glass dark:bg-slate-800/80 rounded-2xl border border-gray-200 dark:border-slate-700 p-4 overflow-x-auto text-sm text-gray-500 dark:text-gray-400">
           Memuat…

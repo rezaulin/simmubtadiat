@@ -513,6 +513,67 @@
   // dipilih user dibalikkan lagi.
   function bolehEditKomp() { return punyaRole(['pimpinan']) && !modeRiwayat('km'); }
 
+  // ── Aksi massal Nilai Kompetensi (permintaan owner 2026-10-03) ───────────
+  // Pilih banyak siswi → Lulus/Her/Tidak Lulus sekaligus. POST dikirim
+  // BERURUTAN (antrean) supaya tidak balik urutan; kategori diambil dari
+  // select baris tsb (backend menyimpan per santri+kategori+tahun).
+  function updateBulkKm() {
+    var bar = $('km-bulk');
+    if (!bar) return;
+    var boxes = document.querySelectorAll('#km-table [data-km-pilih]');
+    var n = document.querySelectorAll('#km-table [data-km-pilih]:checked').length;
+    bar.classList.toggle('hidden', boxes.length === 0);
+    var cnt = $('km-bulk-count');
+    if (cnt) cnt.textContent = n + ' siswi dipilih';
+    var edit = bolehEditKomp();
+    var semua = $('km-pilih-semua');
+    if (semua) {
+      semua.disabled = !edit;
+      if (boxes.length === 0) semua.checked = false;
+    }
+    ['km-bulk-lulus', 'km-bulk-her', 'km-bulk-tidak'].forEach(function (id) {
+      var b = $(id);
+      if (b) b.disabled = !edit || n === 0;
+    });
+  }
+
+  function tandaiMassalKomp(hasil) {
+    if (!bolehEditKomp()) return;
+    var boxes = Array.prototype.slice.call(document.querySelectorAll('#km-table [data-km-pilih]:checked'));
+    var baris = boxes.map(function (c) {
+      var tr = c.closest('tr');
+      if (!tr) return null;
+      var sel = tr.querySelector('.km-select');
+      return sel ? { id: parseInt(tr.dataset.santri, 10), kategori: sel.dataset.kategori } : null;
+    }).filter(Boolean);
+    if (!baris.length) return;
+    var info = $('km-bulk-info');
+    var label = hasil === 'lulus' ? 'Lulus' : hasil === 'her' ? 'Her' : 'Tidak Lulus';
+    var i = 0, gagal = 0;
+    var langkah = function () {
+      if (i >= baris.length) {
+        if (info) info.textContent = '';
+        showToast(gagal ? gagal + ' siswi gagal disimpan' : baris.length + ' siswi ditandai ' + label,
+                  gagal ? 'error' : 'success');
+        loadKompetensi();
+        return;
+      }
+      if (info) info.textContent = 'Menyimpan ' + (i + 1) + '/' + baris.length + '…';
+      var b = baris[i++];
+      fetch('/api/penilaian-tambahan/kompetensi', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tahun_ajaran: '', santri_id: b.id, kategori: b.kategori, hasil: hasil })
+      }).then(function (res) {
+        if (!res.ok) { gagal++; }
+      }).catch(function () {
+        gagal++;
+      }).then(langkah);
+    };
+    langkah();
+  }
+
   function loadKompetensi() {
     var el = $('km-table');
     if (!el) return Promise.resolve();
@@ -524,6 +585,9 @@
     return jget('/api/penilaian-tambahan/kompetensi?' + p.toString()).then(function (rows) {
       var isi = rows.map(function (r, i) {
         return '<tr data-santri="' + r.santri_id + '">' +
+          '<td class="px-3 py-2 text-center">' +
+            '<input type="checkbox" data-km-pilih' + (edit ? '' : ' disabled') +
+            ' class="w-4 h-4 accent-teal-600" title="Pilih ' + esc(r.nama) + '"></td>' +
           '<td class="px-3 py-2 text-gray-400">' + (i + 1) + '</td>' +
           '<td class="px-3 py-2 font-semibold text-gray-800 dark:text-gray-100 whitespace-nowrap">' + esc(r.nama) + '</td>' +
           '<td class="px-3 py-2"><select' + (edit ? '' : ' disabled') +
@@ -539,10 +603,11 @@
           '</tr>';
       }).join('');
       renderTabel(el,
-        ['No', 'Nama', 'Hasil', 'Status'],
+        ['Pilih', 'No', 'Nama', 'Hasil', 'Status'],
         isi,
         'Tidak ada siswi untuk kategori ujian & filter ini.');
-    }).catch(function (e) { el.innerHTML = errHTML(e); });
+      updateBulkKm();
+    }).catch(function (e) { el.innerHTML = errHTML(e); updateBulkKm(); });
   }
 
   // POST satu hasil kompetensi per baris.
@@ -836,16 +901,32 @@
     if (jaSudah) jaSudah.addEventListener('click', function () { tandaiMassal('selesai'); });
     if (jaBelum) jaBelum.addEventListener('click', function () { tandaiMassal('belum'); });
 
-    // Fase 4 — Nilai Kompetensi: select hasil → POST per baris.
+    // Fase 4 — Nilai Kompetensi: checkbox pilih (aksi massal) + select hasil
+    // → POST per baris.
     var kmEl = $('km-table');
     if (kmEl) {
       kmEl.addEventListener('change', function (e) {
         var t = e.target;
-        if (!t || !t.classList || !t.classList.contains('km-select')) return;
+        if (!t) return;
+        if (t.dataset && t.dataset.kmPilih !== undefined) { updateBulkKm(); return; }
+        if (!t.classList || !t.classList.contains('km-select')) return;
         var tr = t.closest('tr');
         if (tr) simpanKompetensi(tr, t);
       });
     }
+
+    // Aksi massal Nilai Kompetensi: "Pilih Semua" + 3 tombol hasil.
+    var kmSemua = $('km-pilih-semua');
+    if (kmSemua) kmSemua.addEventListener('change', function () {
+      document.querySelectorAll('#km-table [data-km-pilih]').forEach(function (c) {
+        if (!c.disabled) c.checked = kmSemua.checked;
+      });
+      updateBulkKm();
+    });
+    [['km-bulk-lulus', 'lulus'], ['km-bulk-her', 'her'], ['km-bulk-tidak', 'tidak_lulus']].forEach(function (pair) {
+      var b = $(pair[0]);
+      if (b) b.addEventListener('click', function () { tandaiMassalKomp(pair[1]); });
+    });
 
     isiBagian().then(function () {
       return fetch('/api/me', { credentials: 'same-origin' })
