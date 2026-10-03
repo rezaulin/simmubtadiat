@@ -115,9 +115,60 @@ async function loadSpreadsheet() {
     if (!res.ok) throw new Error((await res.json()).message || 'Gagal memuat');
     currentData = await res.json();
     renderSpreadsheet();
+    // Nilai raport dihitung ulang OTOMATIS supaya sel raport langsung benar
+    // tanpa perlu klik "Simpan Semua Nilai" (permintaan owner 2026-10-03).
+    autoGenerateRaport(bagianId);
   } catch (err) {
     container.innerHTML = `<p class="text-center text-red-500 py-8">${err.message}</p>`;
   }
+}
+
+// === AUTO-GENERATE RAPORT SAAT TABEL DIMUAT ===
+// Nilai raport (Khos) adalah nilai turunan yang dihitung backend; sebelumnya
+// hasil hitung hanya dipicu tombol Simpan → tabel raport kosong/basi sampai
+// Simpan ditekan. Sekarang dihitung ulang tiap kali "Tampilkan" ditekan:
+//   - hanya jika bagian ini boleh diedit (can_edit_nilai) — mufatish/muroqib
+//     tetap murni baca, backend juga menolak lewat RBAC;
+//   - semester terkunci dilewati backend (nilai final tidak diutak-atik);
+//   - render ulang HANYA bila nilai raport benar-benar berubah, dan dibatalkan
+//     bila user sudah mengetik (tidak boleh menimpa ketikan).
+async function autoGenerateRaport(bagianId) {
+  const activeBagian = cachedBagian.find(b => b.id == bagianId);
+  if (!activeBagian || !activeBagian.can_edit_nilai) return;
+  try {
+    const res = await fetch('/api/penilaian/generate-khos-bulk', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ bagian_id: parseInt(bagianId), tahun_ajaran: tahunAjaran })
+    });
+    if (!res.ok) return; // 401/403 = role tanpa hak — biarkan, tabel tetap tampil
+    if (userTouchedKuartal()) return; // user sudah mengetik → jangan timpa
+    const before = JSON.stringify(currentData?.nilai_khos || {});
+    const res2 = await fetch(`/api/penilaian/spreadsheet?bagian_id=${bagianId}&tahun_ajaran=${encodeURIComponent(tahunAjaran)}`);
+    if (!res2.ok) return;
+    const data2 = await res2.json();
+    if (JSON.stringify(data2.nilai_khos || {}) === before) return; // tidak berubah
+    currentData = data2;
+    renderSpreadsheet();
+  } catch (_) {
+    // Diamkan: tabel tetap menampilkan nilai raport tersimpan terakhir.
+  }
+}
+
+// true bila ada sel nilai kuartal yang sudah disentuh user (fokus/isi berbeda
+// dari data awal) sejak render terakhir — penanda agar refresh otomatis di atas
+// tidak menimpa ketikan yang belum disimpan.
+function userTouchedKuartal() {
+  const inputs = container.querySelectorAll('input[data-k]');
+  for (const inp of inputs) {
+    if (document.activeElement === inp) return true;
+    const q = parseInt(inp.dataset.k, 10);
+    const val = parseFloat(inp.value);
+    const stored = currentData?.nilai_kuartal?.[q]?.[`${inp.dataset.s}_${inp.dataset.m}`];
+    const norm = isNaN(val) ? undefined : val;
+    if (norm !== stored) return true;
+  }
+  return false;
 }
 
 // === RENDER ===
@@ -867,24 +918,17 @@ async function saveAll() {
       }
     }
 
-    // 2. Generate Khos for all santri (only semesters with kuartal data)
-    //    Auto-calculates: Khos = (tamrin + ujian) / 2, clamped to 4-9.
-    const semestersWithData = new Set();
-    kuartalInputs.forEach(k => {
-      const sem = k.kuartal <= 2 ? 1 : 2;
-      semestersWithData.add(sem);
+    // 2. Generate Khos untuk SELURUH bagian dalam SATU request (endpoint bulk,
+    //    pengganti loop per-santri yang lambat). Semester terkunci otomatis
+    //    dilewati backend; gagal total baru dihentikan.
+    const resBulk = await fetch('/api/penilaian/generate-khos-bulk', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ bagian_id: parseInt(bagianId), tahun_ajaran: tahunAjaran })
     });
-    // Always include both semesters if any data exists (for edge cases)
-    const semsToProcess = semestersWithData.size > 0 ? [...semestersWithData] : [1, 2];
-    
-    for (const s of currentData.santri) {
-      for (const sem of semsToProcess) {
-        await fetch('/api/penilaian/generate-khos', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ santri_id: s.id, semester: sem, tahun_ajaran: tahunAjaran })
-        });
-      }
+    if (!resBulk.ok) {
+      const d = await resBulk.json().catch(() => ({}));
+      throw new Error(d.message || 'Gagal menghitung nilai raport');
     }
 
     // 3. Save manual Khos overrides ONLY for cells the user explicitly edited.
@@ -904,7 +948,9 @@ async function saveAll() {
 
     // 4. Generate Nilai Am (rata-rata kelas per mapel) per bagian per semester
     //    Only generate for semesters that have kuartal data
-    const bagianId = selBagian.value;
+    const semestersWithData = new Set();
+    kuartalInputs.forEach(k => semestersWithData.add(k.kuartal <= 2 ? 1 : 2));
+    const semsToProcess = semestersWithData.size > 0 ? [...semestersWithData] : [1, 2];
     for (const sem of semsToProcess) {
       await fetch('/api/penilaian/generate-am', {
         method: 'POST',

@@ -292,6 +292,9 @@ func main() {
 						r.Post("/khos", handlers.BulkInputKhos)
 						r.Post("/bayan", handlers.BulkInputBayan)
 						r.Post("/generate-khos", handlers.GenerateKhos)
+					// Bulk: seluruh bagian sekaligus — dipanggil frontend otomatis
+					// saat tabel dimuat supaya nilai raport langsung benar.
+					r.Post("/generate-khos-bulk", handlers.GenerateKhosBulk)
 						r.Post("/generate-am", handlers.GenerateAm)
 						r.Post("/generate-bayan", handlers.GenerateBayan)
 					})

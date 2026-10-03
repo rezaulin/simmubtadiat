@@ -198,6 +198,45 @@ func GenerateKhos(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, map[string]string{"status": "success", "message": "Nilai Khos berhasil dikalkulasi"})
 }
 
+// GenerateKhosBulk — hitung ulang Nilai Khos untuk SELURUH santri dalam satu
+// bagian dalam SATU request (pengganti loop per-santri).
+//
+// Permintaan owner (2026-10-03): nilai raport jangan menunggu klik "Simpan
+// Semua Nilai". Frontend memanggil endpoint ini otomatis setiap kali tabel
+// penilaian dimuat (klik "Tampilkan"), lalu memuat ulang data — jadi sel raport
+// langsung terisi hasil hitungan terbaru tanpa menulis nilai manual.
+// Dilindungi grup RBAC edit (pimpinan/admin/mustahiq/tim_rapot) + scope guard
+// bagian; semester terkunci dilewati di lapisan models.
+func GenerateKhosBulk(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	var req struct {
+		BagianID    int    `json:"bagian_id"`
+		TahunAjaran string `json:"tahun_ajaran"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.BagianID <= 0 {
+		writeJSONError(w, "bagian_id tidak valid", http.StatusBadRequest)
+		return
+	}
+
+	if penilaianScopeGuardBagianEdit(w, r, req.BagianID) {
+		return
+	}
+
+	tahunAjaran := req.TahunAjaran
+	if tahunAjaran == "" {
+		tahunAjaran = models.GetTahunAjaranAktif(r.Context())
+	}
+
+	processed, err := models.GenerateNilaiKhosBulk(r.Context(), req.BagianID, tahunAjaran)
+	if err != nil && processed == 0 {
+		writeJSONError(w, internalError("", err), http.StatusInternalServerError)
+		return
+	}
+
+	writeJSON(w, map[string]interface{}{"status": "success", "processed": processed})
+}
+
 // GetPenilaianSpreadsheet returns ALL grading data for one bagian in a single response.
 // Query params: bagian_id (required), tahun_ajaran (optional, defaults to active).
 func GetPenilaianSpreadsheet(w http.ResponseWriter, r *http.Request) {
