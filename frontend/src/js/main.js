@@ -1452,6 +1452,24 @@ const WALI_NAMA_SURAT_SAMPAI = {
 };
 const WALI_KATEGORI_KOMP = { ubq: "Ujian Baca Al-Qur'an", praktik: 'Ujian Praktik', kitab: 'Ujian Baca Kitab' };
 
+// Keterangan pengumuman konsekuensi rata² 4,4 ke bawah — TAMPIL DI SEMUA
+// WALI (permintaan owner 2026-10-03), di bawah judul, meski anak tidak
+// termasuk daftar. Teks identik dgn pengumuman tab Akademik (penilaian.html).
+const WALI_PENGUMUMAN_BAWAH_RATA = `
+      <div class="bg-amber-50 dark:bg-amber-900/15 border border-amber-200 dark:border-amber-800/60 rounded-xl p-3.5 text-xs text-amber-900 dark:text-amber-100 leading-relaxed mb-2">
+        <p class="font-bold mb-1">📢 Pengumuman</p>
+        <p class="mb-1">Siswi yang memperoleh nilai rata-rata 4,4 ke bawah, dikenakan konsekuensi berupa:</p>
+        <ol class="list-decimal list-inside space-y-0.5">
+          <li>Tidak diperkenankan menerima kunjungan (sambang)</li>
+          <li>Tidak diperkenankan keluar dari lingkungan P3HM</li>
+          <li>Tidak diperkenankan menerima titipan</li>
+          <li>Tidak diperkenankan melakukan panggilan telepon</li>
+          <li>Tidak diperkenankan menerima panggilan telepon</li>
+          <li>Tidak diperkenankan pulang liburan (khusus Kuartal IV)</li>
+        </ol>
+        <p class="mt-1.5">Ketentuan ini berlaku hingga siswi yang bersangkutan menyetorkan nadhom kepada MPHM.</p>
+      </div>`;
+
 function waliBadgeNilai(nilai, tipe) {
   if (tipe === 'evaluasi') {
     if (nilai === 'lulus') return '<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">Lulus</span>';
@@ -1469,7 +1487,8 @@ function buildNilaiTambahan(juzRows, kompRows, brRows, santriId) {
   const juz = (juzRows || []).filter(r => r.santri_id === santriId);
   const komp = (kompRows || []).filter(r => r.santri_id === santriId);
   const br = (brRows || []).filter(r => r.santri_id === santriId);
-  if (!juz.length && !komp.length && br.length === 0) return '';
+  // Permintaan owner 2026-10-03: blok bawah-rata + pengumuman TAMPIL TERUS
+  // untuk semua wali — termasuk saat anak belum punya data sama sekali.
 
   let sections = '';
 
@@ -1525,7 +1544,8 @@ function buildNilaiTambahan(juzRows, kompRows, brRows, santriId) {
     if (r.jenis_takziran) ket.push('Takziran: ' + r.jenis_takziran);
     sections += `
     <div>
-      <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">📉 Di Bawah Rata-rata (4,4 ke bawah)</h4>
+      <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">📉 Rata² 4,4 ke bawah</h4>
+      ${WALI_PENGUMUMAN_BAWAH_RATA}
       <div class="bg-red-50 dark:bg-red-900/15 rounded-xl p-4 border border-red-200 dark:border-red-800/60">
         <div class="flex flex-wrap justify-between items-center gap-2 mb-1">
           <span class="text-sm font-bold text-red-700 dark:text-red-300">Termasuk daftar bawah rata-rata — Kuartal ${r.kuartal || 1}</span>
@@ -1537,10 +1557,11 @@ function buildNilaiTambahan(juzRows, kompRows, brRows, santriId) {
         </p>
       </div>
     </div>`;
-  } else if (komp.length || juz.length) {
+  } else {
     sections += `
     <div>
-      <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">📉 Di Bawah Rata-rata (4,4 ke bawah)</h4>
+      <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">📉 Rata² 4,4 ke bawah</h4>
+      ${WALI_PENGUMUMAN_BAWAH_RATA}
       <div class="bg-emerald-50 dark:bg-emerald-900/15 rounded-xl p-4 border border-emerald-200 dark:border-emerald-800/60">
         <p class="text-sm font-semibold text-emerald-700 dark:text-emerald-300">✓ Tidak termasuk daftar siswi dengan rata-rata 4,4 ke bawah</p>
       </div>
