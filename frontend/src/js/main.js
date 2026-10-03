@@ -1456,22 +1456,22 @@ const WALI_KATEGORI_KOMP = { ubq: "Ujian Baca Al-Qur'an", praktik: 'Ujian Prakti
 // kartu, PAS DI BAWAH tulisan "Nilai Tambahan", TAMPIL DI SEMUA walisantri.
 const WALI_PENGUMUMAN_BLOK = `
     <div class="px-6 pt-4 space-y-3">
-      <div class="bg-amber-50 dark:bg-amber-900/15 border border-amber-200 dark:border-amber-800/60 rounded-xl p-3.5 text-xs text-amber-900 dark:text-amber-100 leading-relaxed">
-        <p class="font-bold mb-1">📢 Pengumuman 1</p>
+      <div class="bg-emerald-50/70 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 rounded-xl p-3.5 text-xs text-emerald-800 dark:text-emerald-300 leading-relaxed">
+        <p class="font-bold mb-1">Setoran Juz Amma</p>
         <ol class="list-decimal list-inside space-y-0.5">
           <li>Lulus setoran juz amma menjadi persyaratan mengikuti ujian semester genap</li>
           <li>Batas akhir setoran juz amma sampai dengan kuartal 2</li>
         </ol>
       </div>
-      <div class="bg-amber-50 dark:bg-amber-900/15 border border-amber-200 dark:border-amber-800/60 rounded-xl p-3.5 text-xs text-amber-900 dark:text-amber-100 leading-relaxed">
-        <p class="font-bold mb-1">📢 Pengumuman 2</p>
+      <div class="bg-emerald-50/70 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 rounded-xl p-3.5 text-xs text-emerald-800 dark:text-emerald-300 leading-relaxed">
+        <p class="font-bold mb-1">Nilai Kompetensi</p>
         <ol class="list-decimal list-inside space-y-0.5">
           <li>Lulus ujian praktik, ujian baca Al-Qur'an dan ujian baca kitab, menjadi syarat pengambilan ijazah siswi kelas 6 ibt dan kelas 3 tsn</li>
           <li>Lulus ujian praktik, ujian baca Al-Qur'an, ujian baca kitab dan khidmah satu tahun menjadi syarat pengambilan ijazah siswi kelas 3 aliyah</li>
         </ol>
       </div>
-      <div class="bg-amber-50 dark:bg-amber-900/15 border border-amber-200 dark:border-amber-800/60 rounded-xl p-3.5 text-xs text-amber-900 dark:text-amber-100 leading-relaxed">
-        <p class="font-bold mb-1">📢 Pengumuman 3</p>
+      <div class="bg-emerald-50/70 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 rounded-xl p-3.5 text-xs text-emerald-800 dark:text-emerald-300 leading-relaxed">
+        <p class="font-bold mb-1">Nilai Rata-rata 4,4 Ke Bawah</p>
         <p class="mb-1">Siswi yang memperoleh nilai rata-rata 4,4 ke bawah, dikenakan konsekuensi berupa:</p>
         <ol class="list-decimal list-inside space-y-0.5">
           <li>Tidak diperkenankan menerima kunjungan (sambang)</li>
