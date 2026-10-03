@@ -548,6 +548,12 @@ func SaveJuzAmma(ctx context.Context, in JuzAmmaInput) error {
 		args = append(args, *in.Status)
 		setClauses = append(setClauses,
 			fmt.Sprintf("status = CASE WHEN $%d::text = '' THEN NULL ELSE $%d::text END", len(args), len(args)))
+		// Sinkronisasi setor ↔ status (owner 2026-10-03): ceklis per surat
+		// sudah dihapus dari UI, jadi tombol Sudah/Belum adalah satu-satunya
+		// kontrol. Sudah → SEMUA baris surat terisi (hitungan N/N penuh),
+		// Belum → semua dikosongkan. Tanpa ini kartu wali/profil menampilkan
+		// "0/28 (belum dinilai)" padahal status sudah Selesai.
+		setClauses = append(setClauses, fmt.Sprintf("setor = ($%d::text = 'selesai')", len(args)))
 	}
 	q := "UPDATE setoran_juz_amma SET " + strings.Join(setClauses, ", ") +
 		" WHERE santri_id = $1 AND tahun_ajaran = $2"

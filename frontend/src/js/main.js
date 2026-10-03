@@ -1523,7 +1523,7 @@ function buildNilaiTambahan(juzRows, kompRows, brRows, santriId) {
       <div class="bg-gray-50 dark:bg-slate-900/30 rounded-xl p-4 border border-gray-100 dark:border-slate-700">
         <div class="flex flex-wrap justify-between items-center gap-2 mb-2">
           <span class="text-xs text-gray-500 dark:text-gray-400">Target: An-Nas s/d ${waliEscape(nm)}</span>
-          ${waliBadgeNilai(r.evaluasi || '', 'evaluasi')}
+          ${r.evaluasi ? waliBadgeNilai(r.evaluasi, 'evaluasi') : ''}
         </div>
         <div class="h-2.5 bg-gray-200 dark:bg-slate-700 rounded-full overflow-hidden">
           <div class="h-2.5 bg-emerald-500 rounded-full transition-all" style="width:${pct}%"></div>
