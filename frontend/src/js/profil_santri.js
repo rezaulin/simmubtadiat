@@ -536,7 +536,9 @@ function populateRiwayat(riwayatArr, bulanListByTA = {}) {
         if (v == null || v === '') return '<span class="text-gray-300">-</span>';
         const num = parseFloat(v);
         const formatted = isNaN(num) ? String(v) : num.toFixed(1);
-        if (!isNaN(num) && num <= 4.4) {
+        // Merah jika nilai (dibulatkan 1 desimal) 4,4 ke bawah —
+        // 4,44 tampil 4,4 → merah ; 4,45 tampil 4,5 → aman.
+        if (!isNaN(num) && Math.round(num * 10) / 10 <= 4.4) {
           return `<span class="text-red-600 dark:text-red-400">${escapeHtml(formatted)}</span>`;
         }
         return escapeHtml(formatted);
@@ -1101,16 +1103,16 @@ function loadTambahan() {
         }).join('');
         isi += `
         <div>
-          <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">📉 Di Bawah Rata-rata (&lt; 4,4)</h4>
+          <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">📉 Di Bawah Rata-rata (4,4 ke bawah)</h4>
           <div class="bg-red-50 dark:bg-red-900/15 rounded-xl px-4 py-1 border border-red-200 dark:border-red-800/60">${brRows}</div>
         </div>`;
         adaIsi = true;
       } else if (juz.length || komp.length) {
         isi += `
         <div>
-          <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">📉 Di Bawah Rata-rata (&lt; 4,4)</h4>
+          <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">📉 Di Bawah Rata-rata (4,4 ke bawah)</h4>
           <div class="bg-emerald-50 dark:bg-emerald-900/15 rounded-xl p-4 border border-emerald-200 dark:border-emerald-800/60">
-            <p class="text-sm font-semibold text-emerald-700 dark:text-emerald-300">✓ Tidak termasuk daftar siswi di bawah rata-rata 4,4</p>
+            <p class="text-sm font-semibold text-emerald-700 dark:text-emerald-300">✓ Tidak termasuk daftar siswi dengan rata-rata 4,4 ke bawah</p>
           </div>
         </div>`;
       }

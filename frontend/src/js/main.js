@@ -1525,7 +1525,7 @@ function buildNilaiTambahan(juzRows, kompRows, brRows, santriId) {
     if (r.jenis_takziran) ket.push('Takziran: ' + r.jenis_takziran);
     sections += `
     <div>
-      <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">📉 Di Bawah Rata-rata (&lt; 4,4)</h4>
+      <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">📉 Di Bawah Rata-rata (4,4 ke bawah)</h4>
       <div class="bg-red-50 dark:bg-red-900/15 rounded-xl p-4 border border-red-200 dark:border-red-800/60">
         <div class="flex flex-wrap justify-between items-center gap-2 mb-1">
           <span class="text-sm font-bold text-red-700 dark:text-red-300">Termasuk daftar bawah rata-rata — Kuartal ${r.kuartal || 1}</span>
@@ -1540,9 +1540,9 @@ function buildNilaiTambahan(juzRows, kompRows, brRows, santriId) {
   } else if (komp.length || juz.length) {
     sections += `
     <div>
-      <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">📉 Di Bawah Rata-rata (&lt; 4,4)</h4>
+      <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">📉 Di Bawah Rata-rata (4,4 ke bawah)</h4>
       <div class="bg-emerald-50 dark:bg-emerald-900/15 rounded-xl p-4 border border-emerald-200 dark:border-emerald-800/60">
-        <p class="text-sm font-semibold text-emerald-700 dark:text-emerald-300">✓ Tidak termasuk daftar siswi di bawah rata-rata 4,4</p>
+        <p class="text-sm font-semibold text-emerald-700 dark:text-emerald-300">✓ Tidak termasuk daftar siswi dengan rata-rata 4,4 ke bawah</p>
       </div>
     </div>`;
   }
@@ -1698,7 +1698,9 @@ function waliFmtNilaiRed(n) {
   const num = Number(n);
   if (Number.isNaN(num)) return waliEscape(n);
   const str = num.toFixed(1);
-  if (num <= 4.4) {
+  // Aturan 2026-10-03: merah jika nilai (dibulatkan 1 desimal) 4,4 ke bawah.
+  // 4,44 → tampil 4,4 → merah ; 4,45 → tampil 4,5 → aman.
+  if (Math.round(num * 10) / 10 <= 4.4) {
     return `<span class="text-red-600 dark:text-red-400">${str}</span>`;
   }
   return str;

@@ -228,6 +228,23 @@
     <!-- TAB: AKADEMIK — isi lama, TIDAK diubah -->
     <div id="tab-akademik" class="ptab-panel">
 
+    <!-- PENGUMUMAN (permintaan owner 2026-10-03) — di atas filter tingkatan -->
+    <div class="px-6 mb-4">
+      <div class="bg-amber-50 dark:bg-amber-900/15 border border-amber-200 dark:border-amber-800/60 rounded-xl p-3.5 text-xs text-amber-900 dark:text-amber-100 leading-relaxed">
+        <p class="font-bold mb-1">📢 Pengumuman</p>
+        <p class="mb-1">Siswi yang memperoleh nilai rata-rata 4,4 ke bawah, dikenakan konsekuensi berupa:</p>
+        <ol class="list-decimal list-inside space-y-0.5">
+          <li>Tidak diperkenankan menerima kunjungan (sambang)</li>
+          <li>Tidak diperkenankan keluar dari lingkungan P3HM</li>
+          <li>Tidak diperkenankan menerima titipan</li>
+          <li>Tidak diperkenankan melakukan panggilan telepon</li>
+          <li>Tidak diperkenankan menerima panggilan telepon</li>
+          <li>Tidak diperkenankan pulang liburan (khusus Kuartal IV)</li>
+        </ol>
+        <p class="mt-1.5">Ketentuan ini berlaku hingga siswi yang bersangkutan menyetorkan nadhom kepada MPHM.</p>
+      </div>
+    </div>
+
     <!-- FILTER -->
     <div class="px-6 mb-6">
       <div class="glass dark:bg-slate-800/80 rounded-2xl border border-gray-200 dark:border-slate-700 p-4">
@@ -260,11 +277,11 @@
     </div>
     </div><!-- /tab-akademik -->
 
-    <!-- TAB: DI BAWAH RATA-RATA (4,4) -->
+    <!-- TAB: DI BAWAH RATA-RATA (rata² 4,4 ke bawah, pembulatan 1 desimal) -->
     <div id="tab-bawah-rata" class="ptab-panel hidden">
       <div class="px-6 pb-6 space-y-4">
         <div class="rounded-2xl border border-amber-200 dark:border-amber-500/30 bg-amber-50/70 dark:bg-amber-500/10 p-4 text-sm text-amber-800 dark:text-amber-300 leading-relaxed">
-          Rata-rata nilai &lt; <b>4,4</b> dihitung otomatis dari Nilai Akademik — <b>jumlah nilai &amp; rata-ratanya sama persis</b> dengan kolom Jml/Rata² di tab Nilai Akademik. Baris tetap tersimpan meski takziran sudah selesai.
+          Rata-rata nilai <b>4,4 ke bawah</b> dihitung otomatis dari Nilai Akademik — <b>jumlah nilai &amp; rata-ratanya sama persis</b> dengan kolom Jml/Rata² di tab Nilai Akademik. Hitungan memakai pembulatan 1 desimal: <b>4,44 dihitung 4,4 (merah)</b>, <b>4,45 dianggap 4,5 (aman)</b>. Baris tetap tersimpan meski takziran sudah selesai.
         </div>
         <div id="br-riwayat" class="hidden rounded-2xl border border-amber-200 dark:border-amber-500/30 bg-amber-50/70 dark:bg-amber-500/10 p-4 text-sm text-amber-800 dark:text-amber-300 leading-relaxed">📁 <b>Mode Riwayat</b> — menampilkan data tahun ajaran yang dipilih (hanya bisa dilihat; pilih tahun <b>(aktif)</b> untuk mengubah data).</div>
         <div class="glass dark:bg-slate-800/80 rounded-2xl border border-gray-200 dark:border-slate-700 p-4">

@@ -293,7 +293,7 @@
       renderTabel(el,
         ['No', 'Nama', 'Bagian', 'Jumlah Nilai', 'Rata-rata Nilai', 'Konsekuensi', 'Jenis Takziran', 'Dalam Masa Takziran', 'Selesai Melaksanakan Takziran'],
         isi,
-        'Tidak ada siswi dengan rata-rata di bawah 4,4 pada kuartal ini.');
+        'Tidak ada siswi dengan rata-rata 4,4 ke bawah pada kuartal ini.');
     }).catch(function (e) { el.innerHTML = errHTML(e); });
   }
 

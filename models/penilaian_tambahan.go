@@ -18,7 +18,18 @@ import (
 // ─── Tab 2: Nilai Di Bawah Rata² ────────────────────────────────────────────
 
 // BatasRataRata: ambang rata-rata nilai per kuartal (skala 0–10).
-const BatasRataRata = 4.4
+//
+// Aturan owner 2026-10-03 — penilaian AMAN = rata² mencapai 4,5 ; rata² 4,4 ke
+// bawah = MERAH (masuk daftar & kena konsekuensi). Penilaian memakai PEMBULATAN
+// 1 desimal, konsisten dgn tampilan kolom Rata² di frontend (fmtNum/round1):
+//
+//	rata² 4,44 → dibulatkan 4,4 → merah
+//	rata² 4,45 → dianggap 4,5   → aman
+//
+// Karena itu ambang QUERY adalah 4.45 (bukan 4.4): AVG < 4.45 sama persis
+// dgn "dibulatkan 1 desimal ≤ 4.4". Dulu 4.4 — 4,44 bocor (dianggap aman)
+// dan rata² pas 4,4 justru gak masuk daftar (HAVING < 4.4).
+const BatasRataRata = 4.45
 
 type BarisBawahRata struct {
 	SantriID      int     `json:"santri_id"`

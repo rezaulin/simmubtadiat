@@ -268,7 +268,7 @@ function renderSpreadsheet() {
 // Hitung ulang Jml & Rata² untuk satu santri pada satu section (kuartal).
 // Mapel dengan data-excl="1" tidak diikutkan (mis. Quran, Akhlaq).
 function recalcSectionRow(kuartal, santriId) {
-  const AVG_AMBANG = 4.4;
+  const AVG_AMBANG = 4.4; // dibandingkan pada nilai yg SUDAH dibulatkan 1 desimal
   const inputs = container.querySelectorAll(`input[data-k="${kuartal}"][data-s="${santriId}"]`);
   let sum = 0, count = 0;
   inputs.forEach(inp => {
@@ -282,10 +282,13 @@ function recalcSectionRow(kuartal, santriId) {
   if (avgCell) {
     const avgVal = count > 0 ? sum / count : null;
     avgCell.textContent = avgVal !== null ? fmtNum(avgVal) : '-';
-    // Toggle merah jika rata-rata ≤ 4.4
-    avgCell.classList.toggle('text-red-600', avgVal !== null && avgVal <= AVG_AMBANG);
-    avgCell.classList.toggle('dark:text-red-400', avgVal !== null && avgVal <= AVG_AMBANG);
-    avgCell.classList.toggle('text-primary', avgVal === null || avgVal > AVG_AMBANG);
+    // Aturan owner 2026-10-03: AMAN = rata² 4,5 ke atas, MERAH = 4,4 ke bawah,
+    // dinilai dari nilai yg dibulatkan 1 desimal (sama dgn yg ditampilkan):
+    // 4,44 → 4,4 (merah) ; 4,45 → 4,5 (aman).
+    const isRed = avgVal !== null && round1(avgVal) <= AVG_AMBANG;
+    avgCell.classList.toggle('text-red-600', isRed);
+    avgCell.classList.toggle('dark:text-red-400', isRed);
+    avgCell.classList.toggle('text-primary', !isRed);
   }
   // Update nama merah berdasarkan rata-rata terbaru
   refreshRendahMarks();
@@ -457,7 +460,8 @@ function renderSection(title, mapels, santri, nilaiMap, kuartal, canEdit) {
     const sumStr = count > 0 ? fmtNum(sum) : '-';
     const avgVal = count > 0 ? sum / count : null;
     const avgStr = avgVal !== null ? fmtNum(avgVal) : '-';
-    const avgRed = avgVal !== null && avgVal <= 4.4;
+    // Merah jika rata² (dibulatkan 1 desimal) ≤ 4.4 — 4,44 merah, 4,45 aman.
+    const avgRed = avgVal !== null && round1(avgVal) <= 4.4;
     const avgClass = avgRed ? 'text-red-600 dark:text-red-400' : 'text-primary';
     // data-sum-row menandai baris agar Jml & Rata² bisa dihitung ulang saat
     // pengguna mengubah nilai (recalculateSectionRow). data-k membedakan section.
@@ -473,6 +477,13 @@ function renderSection(title, mapels, santri, nilaiMap, kuartal, canEdit) {
 function fmtNum(n) {
   const r = Math.round(n * 10) / 10;
   return Number.isInteger(r) ? String(r) : r.toFixed(1);
+}
+
+// Pembulatan 1 desimal — SATU sumber kebenaran utk penentuan merah/aman.
+// Aturan: rata² aman jika mencapai 4,5 ; 4,4 ke bawah = merah.
+// 4,44 → 4.4 (merah) ; 4,45 → 4.5 (aman, dianggap 4,5).
+function round1(n) {
+  return Math.round(n * 10) / 10;
 }
 
 // Batas atas nilai kuartal per kategori mapel (sinkron dengan backend
@@ -547,33 +558,36 @@ function clampNilaiInput(inp) {
 }
 
 // Tandai sel nilai < ambang dengan .nilai-rendah; nama siswi di baris yang sama
-// diberi .nama-rendah jika RATA-RATA kuartal ≤ 4.4 atau absensi merah.
-// Threshold: cell ≤ 4.4 = merah; rata-rata ≤ 4.4 = nama merah; Bayan ≤ 5 = merah.
+// diberi .nama-rendah jika RATA-RATA kuartal 4,4 ke bawah atau absensi merah.
+// Threshold (pembulatan 1 desimal dulu): cell ≤ 4.4 = merah; rata-rata ≤ 4.4 =
+// nama merah; Bayan ≤ 5 = merah. Aturan 2026-10-03: 4,44 = merah, 4,45 = aman.
 function refreshRendahMarks() {
   const AVG_AMBANG = 4.4;
   container.querySelectorAll('tr[data-mark-row]').forEach(tr => {
-    // 1. Cell individual: merah jika ≤ 4.4 (atau ≤ 5 untuk Bayan).
+    // 1. Cell individual: merah jika (dibulatkan) ≤ 4.4 (atau ≤ 5 untuk Bayan).
     tr.querySelectorAll('input[data-k], input[data-khos-sem], input[data-nilai-display], input[data-bayan-cell]').forEach(inp => {
       const v = parseFloat(inp.value);
       if (isNaN(v)) return;
       const isBayan = inp.hasAttribute('data-bayan-cell');
-      const low = isBayan ? v <= NILAI_RENDAH_AMBANG : v <= AVG_AMBANG;
+      const rv = round1(v);
+      const low = isBayan ? rv <= NILAI_RENDAH_AMBANG : rv <= AVG_AMBANG;
       inp.classList.toggle('nilai-rendah', low);
     });
-    // 2. Nama siswi: merah jika RATA-RATA salah satu kuartal ≤ 4.4 atau absensi merah.
+    // 2. Nama siswi: merah jika RATA-RATA salah satu kuartal 4,4 ke bawah
+    //    (teks kolom sudah dibulatkan 1 desimal) atau absensi merah.
     const namaTd = tr.querySelector('td[data-nama]');
     if (namaTd) {
       const absensiMerah = namaTd.dataset.absensi === 'red';
       let avgLow = false;
       tr.querySelectorAll('td[data-avg-cell]').forEach(avgTd => {
         const v = parseFloat(avgTd.textContent);
-        if (!isNaN(v) && v <= AVG_AMBANG) avgLow = true;
+        if (!isNaN(v) && round1(v) <= AVG_AMBANG) avgLow = true;
       });
       namaTd.classList.toggle('nama-rendah', avgLow || absensiMerah);
       // Tooltip
       const parts = [];
       if (namaTd.dataset.absensiTitle) parts.push(namaTd.dataset.absensiTitle);
-      if (avgLow) parts.push('rata-rata ≤ 4.4');
+      if (avgLow) parts.push('rata-rata 4,4 ke bawah');
       if (parts.length) namaTd.setAttribute('title', parts.join(' • '));
       else namaTd.removeAttribute('title');
     }
@@ -581,7 +595,12 @@ function refreshRendahMarks() {
 }
 
 function renderRaportSection(title, mapels, santri, khosMap, absensiMap, semester, canEdit) {
-  let html = `<h3 class="text-sm font-bold text-indigo-700 dark:text-indigo-400 mt-6 mb-2 px-1">${title}</h3>`;
+  // DIKUNCI (permintaan owner 2026-10-03): tabel nilai raport selalu read-only,
+  // tidak ada akses ubah manual. Nilai Khos hanya dihasilkan otomatis backend
+  // (GenerateNilaiKhos) dari nilai kuartal + koreksi absensi. canEdit tetap
+  // dipakai utk tabel Tamrin/Ujian — bagian raport gak lagi peduli canEdit.
+  let html = `<h3 class="text-sm font-bold text-indigo-700 dark:text-indigo-400 mt-6 mb-1 px-1">${title}</h3>`;
+  html += '<p class="text-[11px] text-gray-500 dark:text-gray-400 mb-2 px-1">🔒 Tabel dikunci — nilai raport dihitung otomatis dari nilai kuartal, tidak bisa diubah manual.</p>';
   html += '<div class="overflow-x-auto border border-indigo-200 dark:border-indigo-800 rounded-xl mb-4"><table class="border-collapse text-xs w-full">';
   html += '<thead class="bg-indigo-50 dark:bg-indigo-900"><tr><th class="px-2 py-2 border text-left sticky left-0 bg-indigo-50 dark:bg-indigo-900 z-10 min-w-[30px]">No</th><th class="px-2 py-2 border text-left sticky left-[30px] bg-indigo-50 dark:bg-indigo-900 z-10 min-w-[120px]">Nama</th>';
   // Header mapel: nama kitab (Arab) di-translasi ke ejaan Latin. Arab asli jadi tooltip.
@@ -635,7 +654,12 @@ function renderRaportSection(title, mapels, santri, khosMap, absensiMap, semeste
       } else if (!canEdit) {
         html += `<td class="px-0 py-0 border border-indigo-200 dark:border-indigo-800 text-center bg-gray-50 dark:bg-slate-800"><input type="text" disabled data-nilai-display value="${valDisplay}" class="w-full text-center text-xs font-semibold text-gray-600 dark:text-gray-300 py-1 bg-transparent border-0 outline-none"></td>`;
       } else {
-        html += `<td class="px-0 py-0 border border-indigo-200 dark:border-indigo-800 text-center"><input type="number" step="0.5" min="4" max="9" data-khos-sem="${semester}" data-s="${s.id}" data-m="${m.id}" data-nilai-display value="${valDisplay}" class="w-full text-center text-xs font-semibold text-indigo-700 dark:text-indigo-400 py-1 bg-transparent border-0 focus:bg-indigo-50 dark:focus:bg-indigo-900/50 outline-none"></td>`;
+        // DIKUNCI: selalu disabled — sama utk semua role/flag can_edit_nilai.
+        // atribut data-khos-sem DIPERTAHANKAN supaya recalcRaportAkhlaq (live
+        // Akhlaq dari input kuartal) tetap bisa menulis nilai ke sel ini.
+        // disabled → event 'input' tak pernah firing → dirtyKhos kosong →
+        // saveAll tak pernah mengirim override manual ke /api/penilaian/khos.
+        html += `<td class="px-0 py-0 border border-indigo-200 dark:border-indigo-800 text-center"><input type="text" disabled data-khos-sem="${semester}" data-s="${s.id}" data-m="${m.id}" data-nilai-display value="${valDisplay}" class="w-full text-center text-xs font-semibold text-gray-600 dark:text-gray-300 py-1 bg-transparent border-0 outline-none cursor-not-allowed"></td>`;
       }
     });
     const sumStr = count > 0 ? (Number.isInteger(jumlah) ? String(jumlah) : String(Math.round(jumlah * 10) / 10)) : '-';

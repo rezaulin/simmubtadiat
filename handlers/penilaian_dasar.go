@@ -155,50 +155,17 @@ func BulkInputKuartal(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, map[string]string{"status": "success", "message": "Nilai Kuartal berhasil disimpan"})
 }
 
-// BulkInputKhos saves an array of Khos (Nilai Raport) scores
+// BulkInputKhos — DIKUNCI (permintaan owner 2026-10-03).
+// Tabel nilai raport pada menu Penilaian dikunci: tidak ada akses ubah manual.
+// Nilai Khos HANYA dihasilkan GenerateNilaiKhos (otomatis dari nilai kuartal +
+// koreksi absensi). Endpoint ini sengaja menolak semua tulisan manual —
+// pola sama dgn BulkInputBayan (Al-Bayan dikunci).
 func BulkInputKhos(w http.ResponseWriter, r *http.Request) {
-	var req []models.NilaiKhosInput
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	sids := make([]int, 0, len(req))
-	for _, it := range req {
-		sids = append(sids, it.SantriID)
-	}
-	if penilaianScopeGuardSantriEdit(w, r, sids) {
-		return
-	}
-
-	tahunAjaran := r.URL.Query().Get("tahun_ajaran")
-	if tahunAjaran == "" {
-		tahunAjaran = models.GetTahunAjaranAktif(r.Context())
-	}
-
-	semesterDicek := map[int]bool{}
-	for _, it := range req {
-		if semesterDicek[it.Semester] {
-			continue
-		}
-		semesterDicek[it.Semester] = true
-		locked, err := models.IsSemesterLocked(r.Context(), tahunAjaran, it.Semester)
-		if err != nil {
-			http.Error(w, internalError("", err), http.StatusInternalServerError)
-			return
-		}
-		if locked {
-			http.Error(w, "nilai semester ini sudah terkunci", http.StatusForbidden)
-			return
-		}
-	}
-
-	if err := models.BulkInputNilaiKhos(r.Context(), req, tahunAjaran); err != nil {
-		http.Error(w, internalError("", err), http.StatusInternalServerError)
-		return
-	}
-
-	writeJSON(w, map[string]string{"status": "success", "message": "Nilai Raport berhasil disimpan"})
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusForbidden)
+	writeJSON(w, map[string]string{
+		"message": "Nilai raport dikunci. Nilai hanya dihitung otomatis dari nilai kuartal dan absensi.",
+	})
 }
 
 // GenerateKhos triggers the calculation of Nilai Khos for a student's semester
