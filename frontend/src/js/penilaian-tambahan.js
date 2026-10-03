@@ -195,10 +195,60 @@
     s.className = 'br-status text-[11px] font-semibold ' + warna;
   }
 
-  // Simpan SATU baris. Payload lengkap 4 field karena backend melakukan upsert
-  // penuh (field yang tidak dikirim akan jadi kosong/false).
+  // ── Konsekuensi: CHECKLIST multi-pilihan (permintaan owner 2026-10-03) ───
+  // Diganti dari input teks bebas → 6 ceklis. Nilai disimpan sebagai label
+  // terpilih dipisah kama (format lama "Tidak boleh disambang" persis opsi 1
+  // → data lama tetap cocok). Jenis Takziran semua baris OTOMATIS
+  // "Setoran Nadhom" — tidak diisi manual (owner 2026-10-03).
+  var OPSI_KONSEKUENSI = [
+    'Tidak boleh disambang',
+    'Tidak boleh keluar dari P3HM',
+    'Tidak boleh menerima titipan',
+    'Tidak boleh menelpon',
+    'Tidak boleh menerima telepon',
+    'Tidak boleh pulang'
+  ];
+  var JENIS_TAKZIRAN = 'Setoran Nadhom';
+
+  // Sel konsekuensi → 6 ceklis (tercentang mengikuti nilai tersimpan).
+  function kolomKonsekuensi(nilai, nonaktif) {
+    var terpilih = String(nilai || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+    return '<td class="px-3 py-2 align-top"><div class="flex flex-col gap-1">' +
+      OPSI_KONSEKUENSI.map(function (lbl, idx) {
+        var cek = terpilih.indexOf(lbl) !== -1;
+        return '<label class="inline-flex items-start gap-1.5 text-[11px] leading-tight text-gray-700 dark:text-gray-200' +
+          (nonaktif ? '' : ' cursor-pointer') + '">' +
+          '<input type="checkbox" data-konsek="' + idx + '"' + (cek ? ' checked' : '') + nonaktif +
+          ' class="mt-0.5 w-3.5 h-3.5 accent-amber-600 shrink-0">' +
+          '<span>' + esc(lbl) + '</span></label>';
+      }).join('') +
+      '</div></td>';
+  }
+
+  // Ambil konsekuensi tercentang → string "A, B, C" utk backend.
+  function daftarKonsekuensi(tr) {
+    var kotak = tr.querySelectorAll('[data-konsek]:checked');
+    return Array.prototype.map.call(kotak, function (c) {
+      return OPSI_KONSEKUENSI[parseInt(c.dataset.konsek, 10)];
+    }).filter(Boolean).join(', ');
+  }
+
+  // Simpan SATU baris — DIANTRE per baris (bug 2026-10-03: 2 POST paralel saat
+  // user cepat mencentang beberapa konsekuensi balik urutan di server → nilai
+  // akhir tertimpa payload lama; terbukti saat E2E restore 2 kotak serentak).
+  // Payload dibuat SAAT dikirim → selalu baca DOM terkini, jadi antrian panjang
+  // tetap berakhir pada keadaan terakhir layar.
   function simpanTakziran(tr) {
     if (!tr) return Promise.resolve();
+    var antre = tr._simpanAntre || Promise.resolve();
+    var jalan = antre.then(function () { return kirimTakziran(tr); });
+    tr._simpanAntre = jalan.then(function () {}, function () {});   // rantai tetap lanjut walau gagal
+    return jalan;
+  }
+
+  // Isi request (payload 4 field — backend melakukan upsert penuh, jadi field
+  // yang tidak dikirim jadi kosong/false). Semua nilai dibaca dari DOM sekarang.
+  function kirimTakziran(tr) {
     var santriID = parseInt(tr.dataset.santri, 10);
     var kuartal = parseInt($('br-kuartal').value, 10) || 1;
     var ambil = function (kolom) {
@@ -211,8 +261,8 @@
       items: [{
         santri_id: santriID,
         kuartal: kuartal,
-        konsekuensi: String(ambil('konsekuensi') || ''),
-        jenis_takziran: String(ambil('jenis_takziran') || ''),
+        konsekuensi: daftarKonsekuensi(tr),
+        jenis_takziran: JENIS_TAKZIRAN,
         dalam_masa: !!ambil('dalam_masa'),
         selesai: !!ambil('selesai')
       }]
@@ -268,9 +318,9 @@
     var nonaktif = edit ? '' : ' disabled';
     return jget('/api/penilaian-tambahan/bawah-rata?' + p.toString()).then(function (rows) {
       var isi = rows.map(function (r, i) {
-        var kolomTeks = function (kolom, nilai) {
+        var kolomTeks = function (kolom, nilai, tambahan) {
           return '<td class="px-3 py-2">' +
-            '<input type="text" data-kolom="' + kolom + '" value="' + esc(nilai || '') + '"' + nonaktif +
+            '<input type="text" data-kolom="' + kolom + '" value="' + esc(nilai || '') + '"' + (tambahan || '') + nonaktif +
             ' placeholder="-"' +
             ' class="glass-input w-full min-w-[120px] px-2 py-1.5 rounded-lg text-xs"' +
             '></td>';
@@ -281,8 +331,8 @@
           '<td class="px-3 py-2 text-gray-600 dark:text-gray-300 whitespace-nowrap">' + esc(r.bagian) + '</td>' +
           '<td class="px-3 py-2 text-right">' + fmt(r.jumlah_nilai, 1) + '</td>' +
           '<td class="px-3 py-2 text-right font-bold text-red-500">' + fmt(r.rata2, 2) + '</td>' +
-          kolomTeks('konsekuensi', r.konsekuensi) +
-          kolomTeks('jenis_takziran', r.jenis_takziran) +
+          kolomKonsekuensi(r.konsekuensi, nonaktif) +
+          kolomTeks('jenis_takziran', JENIS_TAKZIRAN, ' readonly') +
           '<td class="px-3 py-2 text-center"><input type="checkbox" data-kolom="dalam_masa"' + nonaktif +
           ' class="w-4 h-4 accent-amber-500" ' + (r.dalam_masa ? 'checked' : '') + '></td>' +
           '<td class="px-3 py-2 text-center"><input type="checkbox" data-kolom="selesai"' + nonaktif +
@@ -744,7 +794,8 @@
     if (brEl) {
       brEl.addEventListener('change', function (e) {
         var t = e.target;
-        if (!t || !t.dataset || !t.dataset.kolom) return;
+        // Terima input bertanda data-kolom DAN ceklis konsekuensi (data-konsek).
+        if (!t || !t.dataset || (!t.dataset.kolom && t.dataset.konsek === undefined)) return;
         var tr = t.closest('tr');
         if (!tr || !tr.dataset.santri) return;
         // Checkbox memengaruhi keanggotaan baris saat filter aktif.

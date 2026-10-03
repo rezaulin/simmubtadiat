@@ -437,7 +437,10 @@ func ExportTambahan(w http.ResponseWriter, r *http.Request) {
 		for i, b := range data {
 			rows = append(rows, []any{i + 1, b.Bagian, b.Nama, kuartal,
 				b.JumlahNilai, math.Round(b.Rata2*100) / 100,
-				b.Konsekuensi, b.JenisTakziran,
+				// Jenis Takziran selalu "Setoran Nadhom" (permintaan owner
+				// 2026-10-03: tidak diisi manual). Nilai lama di DB tetap
+				// tersimpan, hanya tidak ditampilkan.
+				b.Konsekuensi, "Setoran Nadhom",
 				yaTidak(b.DalamMasa), yaTidak(b.Selesai)})
 		}
 		tulis("Nilai Siswi di Bawah Rata² 4,4",
