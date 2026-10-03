@@ -29,6 +29,12 @@ let tahunAjaran = '';
 // CATATAN: Al-Bayan TIDAK punya dirty-tracking — kolom dikunci, tidak bisa diedit.
 const dirtyKhos = new Set();
 
+// Sel kuartal yang sudah diubah user tapi belum dikirim ke server.
+// Di-flush otomatis saat user melepas sel (blur) — permintaan owner 2026-10-03:
+// nilai raport harus ikut berubah tanpa menunggu klik Simpan.
+const dirtyKuartal = new Set();
+let kuartalFlushTimer = null;
+
 async function loadFilters() {
   // Load tahun ajaran aktif
   let userRoles = [];
@@ -171,6 +177,69 @@ function userTouchedKuartal() {
   return false;
 }
 
+// === AUTO-SAVE KUARTAL SAAT BLUR → RAPORT BERUBAH LANGSUNG ===
+// Permintaan owner (2026-10-03): saat melepas sel kuartal, nilai raport harus
+// langsung berubah. Alur: simpan sel dirty → generate-khos-bulk (rumus tetap
+// di backend = satu sumber kebenaran) → tulis hasil HANYA ke sel raport,
+// tanpa render ulang penuh (ketikan yang belum selesai tidak boleh hilang).
+function scheduleKuartalFlush() {
+  clearTimeout(kuartalFlushTimer);
+  kuartalFlushTimer = setTimeout(flushKuartalToRaport, 500);
+}
+
+async function flushKuartalToRaport() {
+  const bagianId = selBagian.value;
+  if (!bagianId || !currentData) return;
+  const payload = [];
+  container.querySelectorAll('input[data-k]').forEach(inp => {
+    const key = `${inp.dataset.s}_${inp.dataset.m}_${inp.dataset.k}`;
+    if (!dirtyKuartal.has(key)) return;
+    const val = parseFloat(inp.value);
+    if (isNaN(val)) return;
+    payload.push({ santri_id: parseInt(inp.dataset.s), mapel_id: parseInt(inp.dataset.m), kuartal: parseInt(inp.dataset.k), nilai: val, is_her: false });
+  });
+  dirtyKuartal.clear();
+  if (!payload.length) return;
+  try {
+    const resSave = await fetch(`/api/penilaian/kuartal?tahun_ajaran=${encodeURIComponent(tahunAjaran)}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+    });
+    // Ditolak backend (mis. semester terkunci) → jangan generate, biarkan tampilan adanya.
+    if (!resSave.ok) return;
+    const resBulk = await fetch('/api/penilaian/generate-khos-bulk', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ bagian_id: parseInt(bagianId), tahun_ajaran: tahunAjaran })
+    });
+    if (!resBulk.ok) return;
+    const res2 = await fetch(`/api/penilaian/spreadsheet?bagian_id=${bagianId}&tahun_ajaran=${encodeURIComponent(tahunAjaran)}`);
+    if (!res2.ok) return;
+    updateRaportCells(await res2.json());
+  } catch (_) {
+    // Diamkan: nilai raport lama tetap tampil sampai Simpan/Tampilkan berikutnya.
+  }
+}
+
+// Tulis nilai raport terbaru ke sel raport SAJA (patch parsial). Sengaja tidak
+// render ulang penuh: render ulang akan me-reset sel kuartal yang sedang diketik.
+function updateRaportCells(data2) {
+  const khos = data2.nilai_khos || {};
+  currentData.nilai_khos = khos;
+  if (data2.absensi) currentData.absensi = data2.absensi;
+  [1, 2].forEach(sem => {
+    const map = khos[String(sem)] || {};
+    container.querySelectorAll(`input[data-khos-sem="${sem}"]`).forEach(inp => {
+      const v = map[`${inp.dataset.s}_${inp.dataset.m}`];
+      if (v !== undefined && inp.value !== String(v)) {
+        inp.value = v;
+        inp.dataset.nilaiDisplay = v;
+      }
+    });
+  });
+  // Sinkronkan baris Akhlaq (live recalc berbasis input) + tanda nilai rendah.
+  currentData.santri.forEach(s => recalcRaportAkhlaq(s.id));
+  refreshRendahMarks();
+}
+
 // === RENDER ===
 function renderSpreadsheet() {
   if (!currentData || !currentData.mapels || !currentData.santri) {
@@ -295,7 +364,11 @@ function renderSpreadsheet() {
       recalcSectionRow(inp.dataset.k, inp.dataset.s);
       recalcRaportAkhlaq(inp.dataset.s);
       refreshRendahMarks();
+      dirtyKuartal.add(`${inp.dataset.s}_${inp.dataset.m}_${inp.dataset.k}`);
     });
+    // Saat user MELEPAS sel (change = blur dengan nilai berubah) → flush ke
+    // server: simpan kuartal → hitung ulang raport → perbarui sel raport.
+    inp.addEventListener('change', () => scheduleKuartalFlush());
   });
 
   // Clamp khos override (4-9) + refresh tanda nilai rendah live.
@@ -857,6 +930,9 @@ function abbreviate(name) {
 async function saveAll() {
   const bagianId = selBagian.value;
   if (!bagianId || !currentData) return;
+  // Batalkan flush blur yang tertunda — saveAll sudah mengirim SEMUA sel kuartal.
+  clearTimeout(kuartalFlushTimer);
+  dirtyKuartal.clear();
 
   // Collect all kuartal inputs
   const kuartalInputs = [];
@@ -1257,6 +1333,9 @@ if (container) {
         inp.dispatchEvent(new Event('input', { bubbles: true }));
       });
     });
+    // Picu 'change' di sel awal: semua sel hasil paste sudah ter-dirty lewat
+    // event 'input' di atas → flush blur (simpan + hitung ulang raport) jalan.
+    target.dispatchEvent(new Event('change', { bubbles: true }));
   });
 }
 
