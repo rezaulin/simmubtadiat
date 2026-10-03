@@ -298,41 +298,28 @@
   }
 
   // ── Tab: Setoran Juz Amma ─────────────────────────────────────────────────
-  // Fase 3: ceklis chip surat aktif (toggle per surat) + select Evaluasi dan
-  // Selesai/Belum (per santri). Backend POST hanya pimpinan → kontrol tetap
-  // disabled bagi role lain.
+  // Fase 3 (revisi owner 2026-10-03): kolom "Nama Surat" (ceklis per surat)
+  // dan "Evaluasi" DIHAPUS — tabel cukup hasil akhir Sudah/Belum per siswi,
+  // plus aksi massal (pilih banyak → tandai sekaligus). Backend POST hanya
+  // pimpinan → kontrol tetap disabled bagi role lain. Banner Target Hafalan
+  // per kelas TETAP (bukan pengumuman yang diminta dihapus).
   function bolehEditJuz() { return punyaRole(['pimpinan']) && !modeRiwayat('ja'); }
 
-  function chipSurat(s, santriID, edit) {
-    var nama = NAMA_SURAT[s.no] || ('Surat ' + s.no);
-    return '<label class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-gray-100 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 text-[11px] text-gray-700 dark:text-gray-200 ' +
-      (edit ? 'cursor-pointer hover:border-emerald-400' : 'cursor-not-allowed') +
-      '" title="' + s.no + ' · ' + esc(nama) + '">' +
-      '<input type="checkbox"' + (edit ? '' : ' disabled') +
-      ' class="w-3 h-3 accent-emerald-600" data-santri="' + santriID + '" data-surat="' + s.no + '" ' + (s.setor ? 'checked' : '') + '>' +
-      '<span>' + esc(nama) + '</span></label>';
-  }
-
-  // Select per santri (Evaluasi / Selesai-Belum) — menggantikan badge statis.
+  // Select per santri (Sudah/Belum) — menggantikan badge statis.
   function selectHasil(santriID, field, nilai, opsi, edit) {
     var opts = opsi.map(function (o) {
       return '<option value="' + o[0] + '"' + (nilai === o[0] ? ' selected' : '') + '>' + o[1] + '</option>';
     }).join('');
-    var warna = field === 'evaluasi'
-      ? (nilai === 'lulus' ? 'text-emerald-600 dark:text-emerald-400 font-bold'
-        : nilai === 'her' ? 'text-amber-600 dark:text-amber-400 font-bold'
-        : nilai === 'tidak_lulus' ? 'text-red-600 dark:text-red-400 font-bold'
-        : 'text-gray-400')
-      : (nilai === 'selesai' ? 'text-emerald-600 dark:text-emerald-400 font-bold'
-        : 'text-gray-500 dark:text-gray-300');
+    var warna = nilai === 'selesai' ? 'text-emerald-600 dark:text-emerald-400 font-bold'
+      : 'text-gray-500 dark:text-gray-300';
     return '<select data-santri="' + santriID + '" data-field="' + field + '"' + (edit ? '' : ' disabled') +
       ' class="ja-pilih glass-input px-2 py-1.5 rounded-lg text-xs ' + warna + '">' + opts + '</select>';
   }
 
-  // Evaluasi cukup Lulus / Tidak Lulus — pilihan "Her" dihapus (keputusan
-  // owner 2026-10-02; data lama 'her' tetap ditampilkan apa adanya di export).
-  var OPSI_EVALUASI = [['', '(belum)'], ['lulus', 'Lulus'], ['tidak_lulus', 'Tidak Lulus']];
-  var OPSI_STATUS = [['belum', 'Belum'], ['selesai', 'Selesai']];
+  // Hasil akhir cukup Sudah/Belum (permintaan owner 2026-10-03: kolom
+  // Evaluasi dihapus dari tabel). Value DB 'selesai'/'belum' TIDAK berubah;
+  // data evaluasi lama tetap tersimpan & tetap muncul di export.
+  var OPSI_STATUS = [['belum', 'Belum'], ['selesai', 'Sudah']];
 
   // POST satu perubahan. body = {santri_id, surat_no?/setor?/evaluasi?/status?}
   function simpanJuz(tr, body, field) {
@@ -350,11 +337,9 @@
         if (!res.ok) throw new Error(d.message || ('HTTP ' + res.status));
         if (ind) { ind.textContent = '✓ Tersimpan'; ind.className = 'ja-status text-[11px] font-semibold text-emerald-600 dark:text-emerald-400'; }
         showToast('Setoran Juz Amma tersimpan', 'success');
-        // Hitung ulang "N/M surat disetor" tanpa reload bila memungkinkan.
-        if (field === 'setor') hitungSetor(tr);
-        // Filter yang memengaruhi KEANGGOTAAN baris: ja-status & ja-evaluasi.
-        var adaFilter = $('ja-status').value || $('ja-evaluasi').value;
-        if (adaFilter && (field === 'evaluasi' || field === 'status')) {
+        // Filter yang memengaruhi KEANGGOTAAN baris: ja-status saja
+        // (filter Evaluasi dihapus atas permintaan owner 2026-10-03).
+        if ($('ja-status').value && field === 'status') {
           refreshJuzSetelahBlur(tr);
         }
       });
@@ -364,14 +349,6 @@
     });
   }
 
-  function hitungSetor(tr) {
-    var total = tr.querySelectorAll('[data-surat]').length;
-    var n = tr.querySelectorAll('[data-surat]:checked').length;
-    var box = tr.querySelector('.ja-hitung');
-    if (!box || !total) return;
-    var sisa = box.textContent.split('·')[1];
-    box.textContent = n + '/' + total + ' surat disetor' + (sisa ? ' ·' + sisa : '');
-  }
 
   function refreshJuzSetelahBlur(tr) {
     var coba = function () {
@@ -386,6 +363,65 @@
     setTimeout(coba, 300);
   }
 
+  // ── Aksi massal: pilih banyak siswi → tandai Sudah/Belum sekaligus ────────
+  // Permintaan owner 2026-10-03: tidak perlu memilih satu². Kirim POST per
+  // siswi terpilih (backend menerapkan status ke SEMUA baris suratnya dan
+  // membuat baris yang belum ada), lalu muat ulang tabel.
+  function updateBulkBar() {
+    var bar = $('ja-bulk');
+    if (!bar) return;
+    var boxes = document.querySelectorAll('#ja-table [data-pilih]');
+    var n = document.querySelectorAll('#ja-table [data-pilih]:checked').length;
+    bar.classList.toggle('hidden', boxes.length === 0);
+    var cnt = $('ja-bulk-count');
+    if (cnt) cnt.textContent = n + ' siswi dipilih';
+    var edit = bolehEditJuz();
+    var semua = $('ja-pilih-semua');
+    if (semua) {
+      semua.disabled = !edit;
+      if (boxes.length === 0) semua.checked = false;
+    }
+    ['ja-bulk-sudah', 'ja-bulk-belum'].forEach(function (id) {
+      var b = $(id);
+      if (b) b.disabled = !edit || n === 0;
+    });
+  }
+
+  function tandaiMassal(status) {
+    if (!bolehEditJuz()) return;
+    var boxes = Array.prototype.slice.call(document.querySelectorAll('#ja-table [data-pilih]:checked'));
+    var ids = boxes.map(function (c) {
+      var tr = c.closest('tr');
+      return tr ? parseInt(tr.dataset.santri, 10) : 0;
+    }).filter(Boolean);
+    if (!ids.length) return;
+    var info = $('ja-bulk-info');
+    var label = status === 'selesai' ? 'Sudah' : 'Belum';
+    var i = 0, gagal = 0;
+    var langkah = function () {
+      if (i >= ids.length) {
+        if (info) info.textContent = '';
+        showToast(gagal ? gagal + ' siswi gagal disimpan' : ids.length + ' siswi ditandai ' + label,
+                  gagal ? 'error' : 'success');
+        loadJuzAmma();   // refresh kolom status + keanggotaan baris (filter status)
+        return;
+      }
+      if (info) info.textContent = 'Menyimpan ' + (i + 1) + '/' + ids.length + '…';
+      var id = ids[i++];
+      fetch('/api/penilaian-tambahan/juz-amma', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tahun_ajaran: '', santri_id: id, status: status })
+      }).then(function (res) {
+        if (!res.ok) { gagal++; }
+      }).catch(function () {
+        gagal++;
+      }).then(langkah);
+    };
+    langkah();
+  }
+
   function loadJuzAmma() {
     var el = $('ja-table');
     if (!el) return Promise.resolve();
@@ -393,34 +429,32 @@
     var p = new URLSearchParams();
     tambahFilter('ja', p);
     var s = $('ja-status').value; if (s) p.set('status', s);
-    var ev = $('ja-evaluasi').value; if (ev) p.set('evaluasi', ev);
     var qs = p.toString();
     var edit = bolehEditJuz();
     return jget('/api/penilaian-tambahan/juz-amma' + (qs ? '?' + qs : '')).then(function (rows) {
       renderTargetHafalan(rows);
+      // Kolom "Nama Surat" (ceklis) & "Evaluasi" DIHAPUS atas permintaan owner
+      // (2026-10-03) — cukup hasil akhir Sudah/Belum per siswi + pilih massal.
+      // Data per surat & nilai evaluasi tetap tersimpan di backend (export/riwayat aman).
       var isi = rows.map(function (r, i) {
         return '<tr data-santri="' + r.santri_id + '">' +
+          '<td class="px-3 py-2 align-top text-center">' +
+            '<input type="checkbox" data-pilih' + (edit ? '' : ' disabled') +
+            ' class="w-4 h-4 accent-teal-600" title="Pilih ' + esc(r.nama) + '"></td>' +
           '<td class="px-3 py-2 text-gray-400 align-top">' + (i + 1) + '</td>' +
           '<td class="px-3 py-2 text-gray-600 dark:text-gray-300 whitespace-nowrap align-top">' + esc(r.bagian) + '</td>' +
           '<td class="px-3 py-2 font-semibold text-gray-800 dark:text-gray-100 whitespace-nowrap align-top">' + esc(r.nama) + '</td>' +
-          '<td class="px-3 py-2 align-top"><div class="flex flex-wrap gap-1 max-w-[560px]">' +
-            r.surat.map(function (x) { return chipSurat(x, r.santri_id, edit); }).join('') +
-          '</div><div class="ja-hitung text-[11px] text-gray-400 mt-1.5">' +
-            r.surat.filter(function (x) { return x.setor; }).length + '/' + r.jumlah_surat +
-            ' surat disetor · An-Nas s/d ' +
-            esc(NAMA_SURAT[r.surat_sampai] || ('Surat ' + r.surat_sampai)) + '</div></td>' +
-          '<td class="px-3 py-2 align-top text-center">' +
-            selectHasil(r.santri_id, 'evaluasi', r.evaluasi, OPSI_EVALUASI, edit) + '</td>' +
           '<td class="px-3 py-2 align-top text-center">' +
             selectHasil(r.santri_id, 'status', r.status, OPSI_STATUS, edit) +
             '<div class="ja-status text-[11px] font-semibold text-gray-400"></div></td>' +
           '</tr>';
       }).join('');
       renderTabel(el,
-        ['No', 'Bagian', 'Nama Siswi', 'Nama Surat', 'Evaluasi', 'Selesai/Belum Selesai'],
+        ['Pilih', 'No', 'Bagian', 'Nama Siswi', 'Sudah / Belum'],
         isi,
         'Tidak ada data setoran Juz Amma untuk filter ini.');
-    }).catch(function (e) { el.innerHTML = errHTML(e); });
+      updateBulkBar();
+    }).catch(function (e) { el.innerHTML = errHTML(e); updateBulkBar(); });
   }
 
   // ── Tab: Nilai Kompetensi ─────────────────────────────────────────────────
@@ -529,7 +563,6 @@
     } else if (fitur === 'juz-amma') {
       tambahFilter('ja', p);
       var st = $('ja-status').value; if (st) p.set('status', st);
-      var ev = $('ja-evaluasi').value; if (ev) p.set('evaluasi', ev);
     } else if (fitur === 'kompetensi') {
       p.set('kategori', $('km-kategori').value);
       var h = $('km-hasil').value; if (h) p.set('hasil', h);
@@ -720,27 +753,37 @@
       });
     }
 
-    // Fase 3 — Setoran Juz Amma: ceklis chip per surat + select evaluasi/status.
+    // Fase 3 — Setoran Juz Amma: checkbox pilih baris (aksi massal) +
+    // select Sudah/Belum. Ceklis per surat & select evaluasi sudah dihapus.
     var jaEl = $('ja-table');
     if (jaEl) {
       jaEl.addEventListener('change', function (e) {
         var t = e.target;
         if (!t || !t.dataset) return;
+        if (t.dataset.pilih !== undefined) { updateBulkBar(); return; }
         var tr = t.closest('tr');
         if (!tr || !tr.dataset.santri) return;
         var santriID = parseInt(tr.dataset.santri, 10);
-        if (t.dataset.surat) {
-          // toggle satu surat → baris lain ikut dibuat backend (114..target)
-          simpanJuz(tr, { santri_id: santriID, surat_no: parseInt(t.dataset.surat, 10),
-                          setor: t.checked }, 'setor');
-        } else if (t.dataset.field) {
-          // evaluasi / status → diterapkan ke semua baris surat santri tsb
+        if (t.dataset.field) {
+          // status → diterapkan ke semua baris surat santri tsb
           var body = { santri_id: santriID };
           body[t.dataset.field] = t.value;
           simpanJuz(tr, body, t.dataset.field);
         }
       });
     }
+
+    // Aksi massal Juz Amma: "Pilih Semua" (di bar aksi) + 2 tombol tandai.
+    var jaSemua = $('ja-pilih-semua');
+    if (jaSemua) jaSemua.addEventListener('change', function () {
+      document.querySelectorAll('#ja-table [data-pilih]').forEach(function (c) {
+        if (!c.disabled) c.checked = jaSemua.checked;
+      });
+      updateBulkBar();
+    });
+    var jaSudah = $('ja-bulk-sudah'), jaBelum = $('ja-bulk-belum');
+    if (jaSudah) jaSudah.addEventListener('click', function () { tandaiMassal('selesai'); });
+    if (jaBelum) jaBelum.addEventListener('click', function () { tandaiMassal('belum'); });
 
     // Fase 4 — Nilai Kompetensi: select hasil → POST per baris.
     var kmEl = $('km-table');
