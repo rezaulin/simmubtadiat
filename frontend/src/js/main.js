@@ -1452,26 +1452,20 @@ const WALI_NAMA_SURAT_SAMPAI = {
 };
 const WALI_KATEGORI_KOMP = { ubq: "Ujian Baca Al-Qur'an", praktik: 'Ujian Praktik', kitab: 'Ujian Baca Kitab' };
 
-// TIGA PENGUMUMAN (permintaan owner 2026-10-03) — disisipkan di ATAS isi
-// kartu, PAS DI BAWAH tulisan "Nilai Tambahan", TAMPIL DI SEMUA walisantri.
-const WALI_PENGUMUMAN_BLOK = `
-    <div class="px-6 pt-4 space-y-3">
-      <div class="bg-emerald-50/70 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 rounded-xl p-3.5 text-xs text-emerald-800 dark:text-emerald-300 leading-relaxed">
-        <p class="font-bold mb-1">Setoran Juz Amma</p>
+// KETERANGAN TIAP SUB (permintaan owner 2026-10-04): dulu3 blok pengumuman
+// tebal di ATAS kartu — dipindah jadi keterangan kecil di BAWAH sub masing².
+// Warna kotak+font identik dgn keterangan Setoran Juz Amma menu Penilaian.
+const WALI_KET_JUZ = `
         <ol class="list-decimal list-inside space-y-0.5">
           <li>Lulus setoran juz amma menjadi persyaratan mengikuti ujian semester genap</li>
           <li>Batas akhir setoran juz amma sampai dengan kuartal 2</li>
-        </ol>
-      </div>
-      <div class="bg-emerald-50/70 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 rounded-xl p-3.5 text-xs text-emerald-800 dark:text-emerald-300 leading-relaxed">
-        <p class="font-bold mb-1">Nilai Kompetensi</p>
+        </ol>`;
+const WALI_KET_KOMP = `
         <ol class="list-decimal list-inside space-y-0.5">
           <li>Lulus ujian praktik, ujian baca Al-Qur'an dan ujian baca kitab, menjadi syarat pengambilan ijazah siswi kelas 6 ibt dan kelas 3 tsn</li>
           <li>Lulus ujian praktik, ujian baca Al-Qur'an, ujian baca kitab dan khidmah satu tahun menjadi syarat pengambilan ijazah siswi kelas 3 aliyah</li>
-        </ol>
-      </div>
-      <div class="bg-emerald-50/70 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 rounded-xl p-3.5 text-xs text-emerald-800 dark:text-emerald-300 leading-relaxed">
-        <p class="font-bold mb-1">Nilai Rata-rata 4,4 Ke Bawah</p>
+        </ol>`;
+const WALI_KET_BR = `
         <p class="mb-1">Siswi yang memperoleh nilai rata-rata 4,4 ke bawah, dikenakan konsekuensi berupa:</p>
         <ol class="list-decimal list-inside space-y-0.5">
           <li>Tidak diperkenankan menerima kunjungan (sambang)</li>
@@ -1481,9 +1475,13 @@ const WALI_PENGUMUMAN_BLOK = `
           <li>Tidak diperkenankan menerima panggilan telepon</li>
           <li>Tidak diperkenankan pulang liburan (khusus Kuartal IV)</li>
         </ol>
-        <p class="mt-1.5">Ketentuan ini berlaku hingga siswi yang bersangkutan menyetorkan nadhom kepada MPHM.</p>
-      </div>
-    </div>`;
+        <p class="mt-1.5">Ketentuan ini berlaku hingga siswi yang bersangkutan menyetorkan nadhom kepada MPHM.</p>`;
+
+// Kotak keterangan hijau — isi `inner` dibungkus judul "Ketentuan".
+function waliKet(inner) {
+  return `<div class="mt-2 rounded-xl border border-emerald-200 dark:border-emerald-500/30 bg-emerald-50/70 dark:bg-emerald-500/10 p-3 text-xs text-emerald-800 dark:text-emerald-300 leading-relaxed">
+        <p class="font-bold mb-1">Ketentuan</p>${inner}</div>`;
+}
 
 function waliBadgeNilai(nilai, tipe) {
   if (tipe === 'evaluasi') {
@@ -1502,12 +1500,13 @@ function buildNilaiTambahan(juzRows, kompRows, brRows, santriId) {
   const juz = (juzRows || []).filter(r => r.santri_id === santriId);
   const komp = (kompRows || []).filter(r => r.santri_id === santriId);
   const br = (brRows || []).filter(r => r.santri_id === santriId);
-  // Permintaan owner 2026-10-03: blok bawah-rata + pengumuman TAMPIL TERUS
-  // untuk semua wali — termasuk saat anak belum punya data sama sekali.
+  // Permintaan owner 2026-10-03/04: ketiga sub + keterangannya TAMPIL TERUS
+  // untuk semua wali — termasuk saat anak belum punya data (kotak "Belum ada data").
 
   let sections = '';
 
-  // — Setoran Juz Amma —
+  // — Setoran Juz Amma — SELALU tampil; belum ada data → "Belum ada data".
+  let kotakJuz;
   if (juz.length) {
     const r = juz[0];
     const disetor = (r.surat || []).filter(x => x.setor).length;
@@ -1517,10 +1516,7 @@ function buildNilaiTambahan(juzRows, kompRows, brRows, santriId) {
     const statusBadge = r.status === 'selesai'
       ? '<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">Selesai</span>'
       : '<span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">Belum Selesai</span>';
-    sections += `
-    <div>
-      <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">📖 Setoran Juz Amma</h4>
-      <div class="bg-gray-50 dark:bg-slate-900/30 rounded-xl p-4 border border-gray-100 dark:border-slate-700">
+    kotakJuz = `
         <div class="flex flex-wrap justify-between items-center gap-2 mb-2">
           <span class="text-xs text-gray-500 dark:text-gray-400">Target: An-Nas s/d ${waliEscape(nm)}</span>
           ${r.evaluasi ? waliBadgeNilai(r.evaluasi, 'evaluasi') : ''}
@@ -1531,36 +1527,43 @@ function buildNilaiTambahan(juzRows, kompRows, brRows, santriId) {
         <div class="flex flex-wrap justify-between items-center gap-2 mt-2">
           <span class="text-xs font-bold text-gray-700 dark:text-gray-300">${disetor}/${total} surat disetor (${pct}%)</span>
           ${statusBadge}
-        </div>
-      </div>
-    </div>`;
+        </div>`;
+  } else {
+    kotakJuz = '<p class="text-xs italic text-gray-500 dark:text-gray-400">Belum ada data</p>';
   }
+  sections += `
+    <div>
+      <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">📖 Setoran Juz Amma</h4>
+      <div class="bg-gray-50 dark:bg-slate-900/30 rounded-xl p-4 border border-gray-100 dark:border-slate-700">${kotakJuz}
+      </div>
+      ${waliKet(WALI_KET_JUZ)}
+    </div>`;
 
-  // — Nilai Kompetensi —
-  if (komp.length) {
-    const items = komp.map(k => `
+  // — Nilai Kompetensi — SELALU tampil; belum ada data → "Belum ada data".
+  const itemsKomp = komp.length
+    ? komp.map(k => `
       <div class="flex flex-wrap justify-between items-center gap-2 py-1.5 border-b border-gray-100 dark:border-slate-700 last:border-0">
         <span class="text-sm text-gray-700 dark:text-gray-300">${waliEscape(WALI_KATEGORI_KOMP[k.kategori] || k.kategori)}</span>
         ${waliBadgeNilai(k.hasil || '', 'hasil')}
-      </div>`).join('');
-    sections += `
+      </div>`).join('')
+    : '<p class="text-xs italic text-gray-500 dark:text-gray-400 py-3">Belum ada data</p>';
+  sections += `
     <div>
       <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">🎯 Nilai Kompetensi</h4>
-      <div class="bg-gray-50 dark:bg-slate-900/30 rounded-xl px-4 py-1 border border-gray-100 dark:border-slate-700">${items}
+      <div class="bg-gray-50 dark:bg-slate-900/30 rounded-xl px-4 py-1 border border-gray-100 dark:border-slate-700">${itemsKomp}
       </div>
+      ${waliKet(WALI_KET_KOMP)}
     </div>`;
-  }
 
-  // — Di Bawah Rata-rata — selalu tampil: masuk daftar ATAU "tidak termasuk".
+  // — Di Bawah Rata-rata — SELALU tampil: masuk daftar ATAU "tidak termasuk".
+  let kotakBr, kelasBr;
   if (br.length) {
     const r = br[0];
     const ket = [];
     if (r.konsekuensi) ket.push('Konsekuensi: ' + r.konsekuensi);
     if (r.jenis_takziran) ket.push('Takziran: ' + r.jenis_takziran);
-    sections += `
-    <div>
-      <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">📉 Rata² 4,4 ke bawah</h4>
-      <div class="bg-red-50 dark:bg-red-900/15 rounded-xl p-4 border border-red-200 dark:border-red-800/60">
+    kelasBr = 'bg-red-50 dark:bg-red-900/15 rounded-xl p-4 border border-red-200 dark:border-red-800/60';
+    kotakBr = `
         <div class="flex flex-wrap justify-between items-center gap-2 mb-1">
           <span class="text-sm font-bold text-red-700 dark:text-red-300">Termasuk daftar bawah rata-rata — Kuartal ${r.kuartal || 1}</span>
           <span class="text-sm font-bold text-red-600 dark:text-red-400">Rata² ${waliFmtNilai(r.rata2)}</span>
@@ -1568,18 +1571,18 @@ function buildNilaiTambahan(juzRows, kompRows, brRows, santriId) {
         ${ket.length ? '<p class="text-xs text-red-700 dark:text-red-300">' + waliEscape(ket.join(' • ')) + '</p>' : ''}
         <p class="text-xs mt-1 ${r.selesai ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : (r.dalam_masa ? 'text-amber-600 dark:text-amber-400 font-semibold' : 'text-gray-500 dark:text-gray-400')}">
           ${r.selesai ? '✓ Takziran sudah selesai' : (r.dalam_masa ? '⏳ Dalam masa takziran' : 'Belum dalam masa takziran')}
-        </p>
-      </div>
-    </div>`;
+        </p>`;
   } else {
-    sections += `
+    kelasBr = 'bg-emerald-50 dark:bg-emerald-900/15 rounded-xl p-4 border border-emerald-200 dark:border-emerald-800/60';
+    kotakBr = '<p class="text-sm font-semibold text-emerald-700 dark:text-emerald-300">✓ Tidak termasuk daftar siswi dengan rata-rata 4,4 ke bawah</p>';
+  }
+  sections += `
     <div>
       <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">📉 Rata² 4,4 ke bawah</h4>
-      <div class="bg-emerald-50 dark:bg-emerald-900/15 rounded-xl p-4 border border-emerald-200 dark:border-emerald-800/60">
-        <p class="text-sm font-semibold text-emerald-700 dark:text-emerald-300">✓ Tidak termasuk daftar siswi dengan rata-rata 4,4 ke bawah</p>
+      <div class="${kelasBr}">${kotakBr}
       </div>
+      ${waliKet(WALI_KET_BR)}
     </div>`;
-  }
 
   if (!sections) return '';
   return `
@@ -1588,7 +1591,6 @@ function buildNilaiTambahan(juzRows, kompRows, brRows, santriId) {
       <h3 class="text-lg font-bold text-gray-900 dark:text-white">Nilai Tambahan</h3>
       <p class="text-sm text-indigo-600 dark:text-indigo-400">Setoran Juz Amma, Nilai Kompetensi & Bawah Rata-rata</p>
     </div>
-    ${WALI_PENGUMUMAN_BLOK}
     <div class="p-6 space-y-5">${sections}</div>
   </div>`;
 }
