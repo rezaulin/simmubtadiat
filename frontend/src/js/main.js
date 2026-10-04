@@ -1434,7 +1434,7 @@ async function loadAnakDetail(santriId) {
     const kompRows = resKomp.ok ? ((await resKomp.json()) || []) : [];
     const brRows = resBr.ok ? ((await resBr.json()) || []) : [];
 
-    home.innerHTML = buildAnakBiodata(s) + buildAlphaAlert(riwayat) + buildCatatanAnak(catatan) +
+    home.innerHTML = buildAnakBiodata(s) + buildPeringatanMusbat(riwayat) + buildAlphaAlert(riwayat) + buildCatatanAnak(catatan) +
       buildNilaiTambahan(juzRows, kompRows, brRows, santriId) + buildRiwayatAkademik(riwayat);
     if (window.lucide) window.lucide.createIcons();
   } catch (err) {
@@ -1720,6 +1720,79 @@ function buildAlphaAlert(riwayat) {
       <div>
         <p class="font-bold text-red-800 dark:text-red-300">Ada ${totalAlpha} hari alpha (tanpa izin / bi ghoiri idzin)</p>
         <p class="text-sm text-red-700 dark:text-red-400 mt-0.5">Rincian: ${perTahun.join(' — ')}</p>
+      </div>
+    </div>`;
+}
+
+// ── Peringatan ketidakhadiran → musbat (permintaan owner 2026-10-04) ────────
+// Menjumlah Sakit + Izin + Tanpa Ket (HARI) pada DUA kuartal berturut-turut.
+// Semua pasangan kuartal berturut dicek → ambil TOTAL TERTINGGI (keputusan
+// owner: opsi A). Lintas tahun ajaran dianggap nyambung: KQ4 TA lama + KQ1 TA
+// baru = berturut-turut. Tampil HANYA bila total >= 50 hari; angka mengikuti
+// data (50, 51, 52, ...); >= 60 hari kalimat konsekuensi berubah jadi
+// "dinyatakan musbat". Kartu alpha lama (buildAlphaAlert) TIDAK berubah.
+const MUSBAT_AMBANG = 50; // mulai tampil peringatan
+const MUSBAT_BATAS = 60;  // batas musbat
+
+function hitungDuaKuartalTertinggi(riwayat) {
+  // Susun daftar kuartal berurutan (kronologis) lintas tahun ajaran.
+  const daftar = [];
+  [...(riwayat || [])]
+    .sort((a, b) => String(a.tahun_ajaran).localeCompare(String(b.tahun_ajaran)))
+    .forEach(ta => {
+      const total = { 1: 0, 2: 0, 3: 0, 4: 0 };
+      const ada = { 1: false, 2: false, 3: false, 4: false };
+      (Array.isArray(ta.absensi) ? ta.absensi : []).forEach(m => {
+        const kq = WALI_KUARTAL_MAP[m.bulan_angka] || 0;
+        if (!kq) return; // bulan di luar kuartal (Ramadhan) ikut aturan rekap
+        total[kq] += (m.s || 0) + (m.i || 0) + (m.t || 0);
+        ada[kq] = true;
+      });
+      [1, 2, 3, 4].forEach(kq => { if (ada[kq]) daftar.push({ ta: ta.tahun_ajaran, kq, total: total[kq] }); });
+    });
+
+  let best = 0, pasangan = null;
+  for (let i = 0; i + 1 < daftar.length; i++) {
+    const a = daftar[i], b = daftar[i + 1];
+    const berturut = (a.ta === b.ta && b.kq === a.kq + 1) ||
+                     (a.ta !== b.ta && a.kq === 4 && b.kq === 1);
+    if (!berturut) continue;
+    const jml = a.total + b.total;
+    if (jml > best) { best = jml; pasangan = [a, b]; }
+  }
+  return { best, pasangan };
+}
+
+function buildPeringatanMusbat(riwayat) {
+  const { best, pasangan } = hitungDuaKuartalTertinggi(riwayat);
+  if (!pasangan || best < MUSBAT_AMBANG) return '';
+  const tembus = best >= MUSBAT_BATAS;
+
+  const tone = tembus
+    ? { box: 'bg-red-50 dark:bg-red-900/20 border-red-300 dark:border-red-700',
+        icon: 'bg-red-100 dark:bg-red-800/40 text-red-600 dark:text-red-300',
+        title: 'text-red-800 dark:text-red-300', body: 'text-red-700 dark:text-red-400' }
+    : { box: 'bg-amber-50 dark:bg-amber-900/15 border-amber-300 dark:border-amber-700/70',
+        icon: 'bg-amber-100 dark:bg-amber-800/40 text-amber-600 dark:text-amber-300',
+        title: 'text-amber-900 dark:text-amber-200', body: 'text-amber-800 dark:text-amber-300' };
+
+  const kalimatKonsekuensi = tembus
+    ? 'Sesuai ketentuan, jumlah ketidakhadiran telah mencapai 60 hari, maka siswi dinyatakan musbat dan pada tahun berikutnya tetap berada di kelas yang sama.'
+    : 'Sesuai ketentuan, apabila jumlah ketidakhadiran mencapai 60 hari, maka siswi dinyatakan musbat dan pada tahun berikutnya tetap berada di kelas yang sama.';
+
+  const [a, b] = pasangan;
+  const samaTa = a.ta === b.ta;
+  const rincian = `Rincian: KQ${a.kq}${samaTa ? '' : ' ' + waliEscape(a.ta)} + KQ${b.kq}${samaTa ? ' (' + waliEscape(a.ta) + ')' : ' (' + waliEscape(b.ta) + ')'} = ${a.total} + ${b.total} hari`;
+
+  return `
+    <div class="${tone.box} border rounded-2xl p-5 mb-6 flex items-start gap-4">
+      <div class="w-11 h-11 rounded-full ${tone.icon} flex items-center justify-center shrink-0"><i data-lucide="alert-triangle" class="w-6 h-6"></i></div>
+      <div>
+        <p class="font-bold ${tone.title}">⚠️ Peringatan</p>
+        <p class="text-sm ${tone.body} mt-1">Ketidakhadiran Putri Bapak/Ibu telah tercatat tidak masuk sekolah sebanyak <b>${best} hari</b> dalam dua kuartal berturut-turut, baik dengan keterangan Sakit, Izin, maupun Tanpa Keterangan.</p>
+        <p class="text-sm ${tone.body} mt-1">${kalimatKonsekuensi}</p>
+        <p class="text-sm ${tone.body} mt-1">Mohon perhatian dan kerja sama Bapak/Ibu untuk memantau kehadiran putrinya.</p>
+        <p class="text-xs ${tone.body} opacity-80 mt-2">${rincian}</p>
       </div>
     </div>`;
 }
