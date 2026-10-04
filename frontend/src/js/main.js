@@ -1788,7 +1788,7 @@ function buildPeringatanMusbat(riwayat) {
     <div class="${tone.box} border rounded-2xl p-5 mb-6 flex items-start gap-4">
       <div class="w-11 h-11 rounded-full ${tone.icon} flex items-center justify-center shrink-0"><i data-lucide="alert-triangle" class="w-6 h-6"></i></div>
       <div>
-        <p class="font-bold ${tone.title}">⚠️ Peringatan</p>
+        <p class="font-bold ${tone.title}">Peringatan</p>
         <p class="text-sm ${tone.body} mt-1">Ketidakhadiran Putri Bapak/Ibu telah tercatat tidak masuk sekolah sebanyak <b>${best} hari</b> dalam dua kuartal berturut-turut, baik dengan keterangan Sakit, Izin, maupun Tanpa Keterangan.</p>
         <p class="text-sm ${tone.body} mt-1">${kalimatKonsekuensi}</p>
         <p class="text-sm ${tone.body} mt-1">Mohon perhatian dan kerja sama Bapak/Ibu untuk memantau kehadiran putrinya.</p>
