@@ -146,6 +146,11 @@ Disilang ulang dgn spek asli owner. Seluruh kolom/filter/rentang/akses dites:
      aliyah") — 3 blok `.km-note[data-kelas]` + `updateKmNotes()` mengikuti
      filter `#km-bagian` (map `BAGIAN_KELAS` dari `/api/penilaian/bagian`);
      "Semua Bagian" → semua blok. E2E: semua→3 blok, 3aly→2, 6ibt→1, 1tsn→0.
+     **UPDATE 2026-10-04 (permintaan owner): jadi 2 blok** — "Syarat Ijazah"
+     (3 baris per kelas, `data-kelas="6 ibt,3 tsn,3 aly"`) + "Syarat Ujian"
+     (3 baris per tingkatan, `data-kelas="6 ibt,3 tsn,1 aly,2 aly,3 aly"`),
+     isi pakai `<ul>` bullet. E2E baru 17/17: semua→2 blok, 3tsn/6ibt/3aly→2,
+     1aly/2aly→1 (cuma blok ujian), 1tsn→0, mobile tanpa overflow (commit `e9a6657`).
   2. Label kolom disamakan persis spek: "Selesai Melaksanakan Takziran" (A),
      "Selesai/Belum Selesai" (B).
 
