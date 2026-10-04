@@ -398,27 +398,27 @@
     <div id="tab-kompetensi" class="ptab-panel hidden">
       <div class="px-6 pb-6 space-y-4">
         <div class="space-y-2" id="km-notes">
-          <!-- Syarat ijazah per kelas — ditampilkan sesuai spek:
-               6 ibt & 3 tsn → blok tsn; 3 aly → blok aliyah (blok disorot
-               mengikuti filter #km-bagian; 'Semua Bagian' → tampil semua). -->
-          <div class="km-note rounded-2xl border border-sky-200 dark:border-sky-500/30 bg-sky-50/70 dark:bg-sky-500/10 p-4 text-sm text-sky-800 dark:text-sky-300 leading-relaxed" data-kelas="6 ibt,3 tsn">
-            <b>Syarat ijazah kelas 6 ibt &amp; 3 tsn:</b> Lulus Ujian Baca Al-Qur'an + Ujian Praktik + Ujian Baca Kitab.
+          <!-- Catatan tab Kompetensi DIPERMUDAH jadi 2 blok (permintaan owner
+               2026-10-04): Blok Ijazah (syarat per kelas) + Blok Syarat Ujian
+               (jadwal per tingkatan) — isi berupa daftar per kelas/tingkatan
+               (sebelumnya 5 blok terpisah). Tiap blok tetap punya data-kelas →
+               mengikuti filter #km-bagian; 'Semua Bagian' → tampil semua
+               (pola .km-note, lihat updateKmNotes). -->
+          <div class="km-note rounded-2xl border border-sky-200 dark:border-sky-500/30 bg-sky-50/70 dark:bg-sky-500/10 p-4 text-sm text-sky-800 dark:text-sky-300 leading-relaxed" data-kelas="6 ibt,3 tsn,3 aly">
+            <b>Syarat Ijazah</b>
+            <ul class="mt-1.5 space-y-0.5 list-disc list-inside">
+              <li>Kelas 6 Ibtidaiyah — Lulus Ujian Baca Al-Qur'an + Ujian Praktik + Ujian Baca Kitab</li>
+              <li>Kelas 3 Tsanawiyah — Lulus Ujian Baca Al-Qur'an + Ujian Praktik + Ujian Baca Kitab</li>
+              <li>Kelas 3 Aliyah — Lulus Ujian Baca Al-Qur'an + Ujian Praktik + Ujian Baca Kitab <b>dan khidmah satu tahun</b></li>
+            </ul>
           </div>
-          <div class="km-note rounded-2xl border border-sky-200 dark:border-sky-500/30 bg-sky-50/70 dark:bg-sky-500/10 p-4 text-sm text-sky-800 dark:text-sky-300 leading-relaxed" data-kelas="3 aly">
-            <b>Syarat ijazah kelas 3 aliyah:</b> Lulus Ujian Baca Al-Qur'an + Ujian Praktik + Ujian Baca Kitab <b>dan khidmah satu tahun</b>.
-          </div>
-          <!-- Jadwal ujian DIPETAKAN per tingkatan (permintaan owner
-               2026-10-03): ibt, tsn, aliyah dipisah — tidak dijadikan satu
-               baris. Tiap blok punya data-kelas sendiri → tiap tingkatan
-               melihat jadwalnya sendiri (pola .km-note, lihat updateKmNotes). -->
-          <div class="km-note rounded-2xl border border-sky-200 dark:border-sky-500/30 bg-sky-50/70 dark:bg-sky-500/10 p-4 text-sm text-sky-800 dark:text-sky-300 leading-relaxed" data-kelas="6 ibt">
-            <b>Jadwal ujian:</b> tingkat ibtidaiyah — ujian praktik, baca Al-Qur'an &amp; ujian baca kitab ketiganya di kelas 6 ibtidaiyah
-          </div>
-          <div class="km-note rounded-2xl border border-sky-200 dark:border-sky-500/30 bg-sky-50/70 dark:bg-sky-500/10 p-4 text-sm text-sky-800 dark:text-sky-300 leading-relaxed" data-kelas="3 tsn">
-            <b>Jadwal ujian:</b> tingkat tsanawiyah — praktik, baca Al-Qur'an &amp; baca kitab ketiganya di 3 tsn
-          </div>
-          <div class="km-note rounded-2xl border border-sky-200 dark:border-sky-500/30 bg-sky-50/70 dark:bg-sky-500/10 p-4 text-sm text-sky-800 dark:text-sky-300 leading-relaxed" data-kelas="1 aly,2 aly,3 aly">
-            <b>Jadwal ujian:</b> tingkat aliyah — ujian praktik tajhiz al-mayit di 1 aly, Ujian Baca Al-Qur'an di 2 aliyah, ujian baca kitab di 3 aliyah.
+          <div class="km-note rounded-2xl border border-sky-200 dark:border-sky-500/30 bg-sky-50/70 dark:bg-sky-500/10 p-4 text-sm text-sky-800 dark:text-sky-300 leading-relaxed" data-kelas="6 ibt,3 tsn,1 aly,2 aly,3 aly">
+            <b>Syarat Ujian</b>
+            <ul class="mt-1.5 space-y-0.5 list-disc list-inside">
+              <li>Tingkat ibtidaiyah — ujian praktik, baca Al-Qur'an &amp; ujian baca kitab ketiganya di kelas 6 ibtidaiyah</li>
+              <li>Tingkat tsanawiyah — praktik, baca Al-Qur'an &amp; baca kitab ketiganya di 3 tsn</li>
+              <li>Tingkat aliyah — ujian praktik tajhiz al-mayit di 1 aly, Ujian Baca Al-Qur'an di 2 aliyah, ujian baca kitab di 3 aliyah</li>
+            </ul>
           </div>
         </div>
         <div id="km-riwayat" class="hidden rounded-2xl border border-amber-200 dark:border-amber-500/30 bg-amber-50/70 dark:bg-amber-500/10 p-4 text-sm text-amber-800 dark:text-amber-300 leading-relaxed">📁 <b>Mode Riwayat</b> — menampilkan data tahun ajaran yang dipilih (hanya bisa dilihat; pilih tahun <b>(aktif)</b> untuk mengubah data).</div>
