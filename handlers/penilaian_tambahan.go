@@ -246,7 +246,7 @@ func SaveJuzAmma(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetKompetensi — GET /api/penilaian-tambahan/kompetensi
-// Query: tahun_ajaran, kategori (ubq|praktik|kitab), hasil (lulus|her|tidak_lulus), bagian_id
+// Query: tahun_ajaran, kategori (ubq|praktik|kitab), hasil (lulus|her|tidak_lulus|belum), bagian_id
 func GetKompetensi(w http.ResponseWriter, r *http.Request) {
 	ta := queryTA(r)
 	kategori := r.URL.Query().Get("kategori")
@@ -255,7 +255,9 @@ func GetKompetensi(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	hasil := r.URL.Query().Get("hasil")
-	if hasil != "" && hasil != "lulus" && hasil != "her" && hasil != "tidak_lulus" {
+	// "belum" = filter BELUM DINILAI (hasil NULL / baris belum ada) — permintaan
+	// owner 2026-10-04, antisipasi koreksi salah input.
+	if hasil != "" && hasil != "belum" && hasil != "lulus" && hasil != "her" && hasil != "tidak_lulus" {
 		writeJSONError(w, "filter hasil tidak valid", http.StatusBadRequest)
 		return
 	}
@@ -290,8 +292,11 @@ func SaveKompetensi(w http.ResponseWriter, r *http.Request) {
 		writeJSONError(w, "kategori harus ubq/praktik/kitab", http.StatusBadRequest)
 		return
 	}
-	if req.Hasil != "lulus" && req.Hasil != "her" && req.Hasil != "tidak_lulus" {
-		writeJSONError(w, "hasil harus lulus/her/tidak_lulus", http.StatusBadRequest)
+	// Hasil kosong ("" ) DIIZINKAN = membatalkan nilai → disimpan sebagai NULL
+	// ("belum dinilai") — koreksi input salah (permintaan owner 2026-10-04).
+	// CHECK constraint di DB hanya menerima enum/NULL, makanya "" harus jadi NULL.
+	if req.Hasil != "" && req.Hasil != "lulus" && req.Hasil != "her" && req.Hasil != "tidak_lulus" {
+		writeJSONError(w, "hasil harus lulus/her/tidak_lulus atau kosong (belum dinilai)", http.StatusBadRequest)
 		return
 	}
 	if err := models.SaveKompetensi(r.Context(), req); err != nil {
@@ -499,7 +504,7 @@ func ExportTambahan(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		hasil := q.Get("hasil")
-		if hasil != "" && hasil != "lulus" && hasil != "her" && hasil != "tidak_lulus" {
+		if hasil != "" && hasil != "belum" && hasil != "lulus" && hasil != "her" && hasil != "tidak_lulus" {
 			writeJSONError(w, "filter hasil tidak valid", http.StatusBadRequest)
 			return
 		}
@@ -510,8 +515,11 @@ func ExportTambahan(w http.ResponseWriter, r *http.Request) {
 		}
 		rows := make([][]any, 0, len(data))
 		for i, d := range data {
-			rows = append(rows, []any{i + 1, d.Bagian, d.Nama,
-				judulHasilEnum(d.Hasil)})
+			hLabel := judulHasilEnum(d.Hasil)
+			if d.Hasil == "" {
+				hLabel = "Belum Dinilai"   // hasil NULL → kolom Excel tetap terbaca
+			}
+			rows = append(rows, []any{i + 1, d.Bagian, d.Nama, hLabel})
 		}
 		// kolom "Kategori Ujian" dihapus — kategori jadi JUDUL data
 		// (keputusan owner 2026-10-02); tahun ajaran menyusul di judul

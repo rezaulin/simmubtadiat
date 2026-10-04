@@ -508,9 +508,9 @@
   }
 
   // ── Tab: Nilai Kompetensi ─────────────────────────────────────────────────
-  // Fase 4: select hasil aktif utk pimpinan → POST per baris. Backend hanya
-  // menerima lulus/her/tidak_lulus ("" ditolak 400) → "(belum dinilai)" yang
-  // dipilih user dibalikkan lagi.
+  // Fase 4: select hasil aktif utk pimpinan → POST per baris. Backend
+  // menerima lulus/her/tidak_lulus ATAU "" (koreksi input salah → disimpan
+  // sebagai NULL / belum dinilai; permintaan owner 2026-10-04).
   function bolehEditKomp() { return punyaRole(['pimpinan']) && !modeRiwayat('km'); }
 
   // ── Aksi massal Nilai Kompetensi (permintaan owner 2026-10-03) ───────────
@@ -617,12 +617,7 @@
     var setStatus = function (teks, warna) {
       if (ind) { ind.textContent = teks; ind.className = 'km-status text-[11px] font-semibold ' + warna; }
     };
-    if (!sel.value) {
-      // backend menolak hasil kosong → kembalikan pilihan lama
-      sel.value = sel.dataset.awal || '';
-      showToast('Hasil harus Lulus / Her / Tidak Lulus', 'error');
-      return;
-    }
+    // "" = "(belum dinilai)" — koreksi salah input; backend menyimpan NULL.
     setStatus('Menyimpan…', 'text-gray-400');
     fetch('/api/penilaian-tambahan/kompetensi', {
       method: 'POST',

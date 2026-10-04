@@ -743,7 +743,13 @@ func GetKompetensi(ctx context.Context, tahunAjaran, kategori, hasil string, fil
 			if m := hasilMap[s.id]; m != nil {
 				h = m[kat]
 			}
-			if hasil != "" && h != hasil {
+			// hasil "belum" = filter BELUM DINILAI (NULL / belum ada baris) —
+			// dipakai utk koreksi salah input (permintaan owner 2026-10-04).
+			if hasil == "belum" {
+				if h != "" {
+					continue
+				}
+			} else if hasil != "" && h != hasil {
 				continue
 			}
 			out = append(out, BarisKompetensi{
@@ -787,12 +793,20 @@ func SaveKompetensi(ctx context.Context, in KompetensiInput) error {
 	if !KompetensiEligible(tn, kelas, in.Kategori) {
 		return ErrKompetensiTidakBerlaku
 	}
+	// "" (belum dinilai) → NULL, sebab CHECK constraint di DB hanya menerima
+	// 'lulus'/'her'/'tidak_lulus' atau NULL — string kosong ditolak Postgres.
+	var h any
+	if in.Hasil == "" {
+		h = nil
+	} else {
+		h = in.Hasil
+	}
 	_, err = config.DB.Exec(ctx, `
 		INSERT INTO nilai_kompetensi (santri_id, kategori, hasil, tahun_ajaran)
 		VALUES ($1, $2, $3, $4)
 		ON CONFLICT (santri_id, kategori, tahun_ajaran)
 				DO UPDATE SET hasil = EXCLUDED.hasil, updated_at = now()`,
-		in.SantriID, in.Kategori, in.Hasil, in.TahunAjaran)
+		in.SantriID, in.Kategori, h, in.TahunAjaran)
 	return err
 }
 
