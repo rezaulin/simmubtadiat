@@ -301,19 +301,18 @@ async function loadReactivatableSantri() {
   populateStatusSantriDatalist();
 }
 
-// Daftar santri yang relevan dengan status tujuan terpilih:
-// - target 'aktif' (Reaktivasi) → tampilkan santri cuti/boyong,
-// - target lain (cuti/boyong)   → tampilkan santri aktif.
-function relevantStatusSantri() {
-  const target = selStatusTarget ? selStatusTarget.value : '';
-  if (target === 'aktif') return reactivatableSantri || [];
-  return allSantri || [];
-}
-
+// Daftar nama untuk form Ubah Status — OPSI A (client 2026-10-05):
+// urutan dipakai NAMA dulu, baru status → datalist selalu diisi GABUNGAN
+// santri aktif + arsip (cuti/boyong/dikeluarkan), tanpa peduli status tujuan.
+// Kecocokan santri ↔ status tujuan divalidasi saat submit (blok
+// "Validasi kecocokan status" di handler submit).
 function populateStatusSantriDatalist() {
   if (!statusSantriDatalist) return;
   statusSantriDatalist.innerHTML = '';
-  relevantStatusSantri().forEach(s => {
+  const seen = new Set();
+  [...(allSantri || []), ...(reactivatableSantri || [])].forEach(s => {
+    if (!s || s.id == null || seen.has(s.id)) return; // dedup krn bisa muncul 2x
+    seen.add(s.id);
     const opt = document.createElement('option');
     opt.value = `${s.nama} (${s.stambuk || 'tanpa stambuk'})`;
     statusSantriDatalist.appendChild(opt);
@@ -324,7 +323,9 @@ function populateStatusSantriDatalist() {
 // Tampilkan/sembunyikan field alasan untuk boyong/keluar/dikeluarkan.
 if (selStatusTarget) {
   selStatusTarget.addEventListener('change', () => {
-    if (inputStatusSantriNama) inputStatusSantriNama.value = '';
+    // OPSI A (client 2026-10-05): nama TIDAK dikosongkan saat status berubah —
+    // urutan pemakaian = nama dulu, baru status. Datalist isinya gabungan
+    // semua santri, jadi pilihan nama tetap valid apa pun status tujuannya.
     populateStatusSantriDatalist();
     // Tampilkan alasan hanya untuk boyong, dikeluarkan (bukan cuti atau aktif)
     const needsAlasan = selStatusTarget.value === 'boyong' || selStatusTarget.value === 'dikeluarkan';
@@ -670,6 +671,24 @@ formStatus.addEventListener('submit', async (e) => {
     alasan: formData.get('alasan') || ''
   };
 
+  const btnSubmit = formStatus.querySelector('button');
+
+  // Validasi kecocokan status ↔ santri (OPSI A, client 2026-10-05):
+  // daftar nama sekarang menampilkan semua santri (aktif + arsip), jadi
+  // kombinasi yang tidak valid harus ditolak di sini sebelum kirim ke API.
+  const bisaReaktivasi = (reactivatableSantri || []).some(s => s.id === santriId);
+  const sedangAktif = (allSantri || []).some(s => s.id === santriId);
+  if (payload.status === 'aktif' && !bisaReaktivasi) {
+    statusError.textContent = 'Santri ini berstatus aktif — tidak perlu Aktif Kembali. Pilih santri yang sedang cuti, boyong, atau dikeluarkan.';
+    statusError.classList.remove('hidden');
+    return;
+  }
+  if (payload.status !== 'aktif' && !sedangAktif) {
+    statusError.textContent = 'Santri ini tidak berstatus aktif — ubah dulu menjadi "Aktif Kembali (Reaktivasi)".';
+    statusError.classList.remove('hidden');
+    return;
+  }
+
   // Validasi: alasan wajib untuk boyong/dikeluarkan
   if ((payload.status === 'boyong' || payload.status === 'dikeluarkan') && !payload.alasan.trim()) {
     statusError.textContent = 'Alasan wajib diisi untuk status Boyong/Dikeluarkan.';
@@ -678,8 +697,6 @@ formStatus.addEventListener('submit', async (e) => {
     btnSubmit.textContent = "Simpan Perubahan Status";
     return;
   }
-  
-  const btnSubmit = formStatus.querySelector('button');
 
   btnSubmit.disabled = true;
   btnSubmit.textContent = "Memproses...";
