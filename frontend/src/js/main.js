@@ -1729,8 +1729,10 @@ function buildAlphaAlert(riwayat) {
 // Semua pasangan kuartal berturut dicek → ambil TOTAL TERTINGGI (keputusan
 // owner: opsi A). Lintas tahun ajaran dianggap nyambung: KQ4 TA lama + KQ1 TA
 // baru = berturut-turut. Tampil HANYA bila total >= 50 hari; angka mengikuti
-// data (50, 51, 52, ...); >= 60 hari kalimat konsekuensi berubah jadi
-// "dinyatakan musbat". Kartu alpha lama (buildAlphaAlert) TIDAK berubah.
+// data (50, 51, 52, ...). DUA naskah (client 2026-10-05): 50–59 = judul
+// "Peringatan" (amber, tanpa konsekuensi); >= 60 = judul "Pemberitahuan"
+// (merah, paragraf konsekuensi 60 hardcode + terima kasih). Kartu alpha lama
+// (buildAlphaAlert) TIDAK berubah.
 const MUSBAT_AMBANG = 50; // mulai tampil peringatan
 const MUSBAT_BATAS = 60;  // batas musbat
 
@@ -1776,9 +1778,19 @@ function buildPeringatanMusbat(riwayat) {
         icon: 'bg-amber-100 dark:bg-amber-800/40 text-amber-600 dark:text-amber-300',
         title: 'text-amber-900 dark:text-amber-200', body: 'text-amber-800 dark:text-amber-300' };
 
+  // Naskah DUA varian (client 2026-10-05):
+  // A (50–59) = judul "Peringatan", TANPA paragraf konsekuensi,
+  //             ditutup "Mohon perhatian ... memantau kehadiran putrinya".
+  // B (>=60)  = judul "Pemberitahuan", paragraf konsekuensi (angka 60
+  //             hardcode sesuai draft client), ditutup "kami sampaikan
+  //             terimakasih". Angka paragraf 1 tetap ikut data (best).
   const kalimatKonsekuensi = tembus
-    ? 'Sesuai ketentuan, jumlah ketidakhadiran telah mencapai 60 hari, maka siswi dinyatakan musbat dan pada tahun berikutnya tetap berada di kelas yang sama.'
-    : 'Sesuai ketentuan, apabila jumlah ketidakhadiran mencapai 60 hari, maka siswi dinyatakan musbat dan pada tahun berikutnya tetap berada di kelas yang sama.';
+    ? 'Sesuai ketentuan yang berlaku, siswi yang tidak masuk sekolah selama 60 hari dalam dua kuartal berturut-turut (baik dengan keterangan sakit, izin/ tanpa keterangan), dinyatakan musbat dan pada tahun berikutnya tetap di kelas semula.'
+    : '';
+  const judul = tembus ? 'Pemberitahuan' : 'Peringatan';
+  const kalimatTutup = tembus
+    ? 'Atas perhatian dan kerja sama Bapak/Ibu, kami sampaikan terimakasih.'
+    : 'Mohon perhatian dan kerja sama Bapak/Ibu untuk memantau kehadiran putrinya.';
 
   const [a, b] = pasangan;
   const samaTa = a.ta === b.ta;
@@ -1788,10 +1800,10 @@ function buildPeringatanMusbat(riwayat) {
     <div class="${tone.box} border rounded-2xl p-5 mb-6 flex items-start gap-4">
       <div class="w-11 h-11 rounded-full ${tone.icon} flex items-center justify-center shrink-0"><i data-lucide="alert-triangle" class="w-6 h-6"></i></div>
       <div>
-        <p class="font-bold ${tone.title}">Peringatan</p>
-        <p class="text-sm ${tone.body} mt-1">Ketidakhadiran Putri Bapak/Ibu telah tercatat tidak masuk sekolah sebanyak <b>${best} hari</b> dalam dua kuartal berturut-turut, baik dengan keterangan Sakit, Izin, maupun Tanpa Keterangan.</p>
-        <p class="text-sm ${tone.body} mt-1">${kalimatKonsekuensi}</p>
-        <p class="text-sm ${tone.body} mt-1">Mohon perhatian dan kerja sama Bapak/Ibu untuk memantau kehadiran putrinya.</p>
+        <p class="font-bold ${tone.title}">${judul}</p>
+        <p class="text-sm ${tone.body} mt-1">Ketidakhadiran siswi telah tercatat tidak masuk sekolah selama <b>${best} hari</b> dalam dua kuartal berturut-turut, baik dengan keterangan sakit, izin, maupun tanpa keterangan.</p>
+        ${kalimatKonsekuensi ? `<p class="text-sm ${tone.body} mt-1">${kalimatKonsekuensi}</p>` : ''}
+        <p class="text-sm ${tone.body} mt-1">${kalimatTutup}</p>
         <p class="text-xs ${tone.body} opacity-80 mt-2">${rincian}</p>
       </div>
     </div>`;
