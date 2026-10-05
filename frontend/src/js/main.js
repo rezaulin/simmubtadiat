@@ -1434,7 +1434,12 @@ async function loadAnakDetail(santriId) {
     const kompRows = resKomp.ok ? ((await resKomp.json()) || []) : [];
     const brRows = resBr.ok ? ((await resBr.json()) || []) : [];
 
-    home.innerHTML = buildAnakBiodata(s) + buildPeringatanMusbat(riwayat) + buildAlphaAlert(riwayat) + buildCatatanAnak(catatan) +
+    // Kartu peringatan/pemberitahuan dihitung sekali: bila ADA, varian hijau
+    // buildAlphaAlert ("Alhamdulillah, belum ada alpha") disembunyikan — owner
+    // 2026-10-05: "di atas dapat peringatan, di bawah Alhamdulillah → ngece".
+    // Kartu alpha MERAH (ada alpha) tetap tampil walau ada peringatan.
+    const kartuMusbat = buildPeringatanMusbat(riwayat);
+    home.innerHTML = buildAnakBiodata(s) + kartuMusbat + buildAlphaAlert(riwayat, !!kartuMusbat) + buildCatatanAnak(catatan) +
       buildNilaiTambahan(juzRows, kompRows, brRows, santriId) + buildRiwayatAkademik(riwayat);
     if (window.lucide) window.lucide.createIcons();
   } catch (err) {
@@ -1693,7 +1698,10 @@ function buildAnakBiodata(s) {
     </div>`;
 }
 
-function buildAlphaAlert(riwayat) {
+// sembunyiHijau = true bila kartu peringatan/pemberitahuan musbat tampil di
+// atasnya (owner 2026-10-05) → varian "Alhamdulillah" jangan ikut nongol.
+// Kartu MERAH (totalAlpha > 0) selalu dirender, apa pun nilai flag.
+function buildAlphaAlert(riwayat, sembunyiHijau) {
   let totalAlpha = 0;
   const perTahun = [];
   (riwayat || []).forEach(ta => {
@@ -1704,6 +1712,7 @@ function buildAlphaAlert(riwayat) {
   });
 
   if (totalAlpha === 0) {
+    if (sembunyiHijau) return '';
     return `
       <div class="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-2xl p-5 mb-6 flex items-center gap-4">
         <div class="w-11 h-11 rounded-full bg-emerald-100 dark:bg-emerald-800/40 flex items-center justify-center text-emerald-600 dark:text-emerald-300"><i data-lucide="check-circle" class="w-6 h-6"></i></div>
