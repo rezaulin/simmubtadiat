@@ -146,6 +146,12 @@ func GetRaportSantri(ctx context.Context, santriID int, semester int, tahunAjara
 		 LEFT JOIN kelas k ON b.kelas_id = k.id
 		 LEFT JOIN tingkatan t ON b.tingkatan_id = t.id
 		 WHERE s.id = $1`, santriID).Scan(&bagianID, &bagianNama, &kelasNama, &tingkatanNama)
+	// Ambil kelas/bagian PADA tahun ajaran yang dicetak, bukan posisi sekarang —
+	// raport tahun lama salah kelas setelah santri naik kelas (owner 2026-10-05).
+	// Bila santri tak punya riwayat untuk TA itu, dipertahankan hasil query atas.
+	if p, err := KelasPadaTA1(ctx, santriID, tahunAjaran); err == nil && p.Kelas != "" {
+		bagianNama, kelasNama, tingkatanNama = p.BagianRincian, p.Kelas, p.Tingkatan
+	}
 	result.BagianNama = bagianNama
 	result.KelasNama = kelasNama
 	result.TingkatanNama = tingkatanNama

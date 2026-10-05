@@ -411,15 +411,39 @@ func GetJuzAmma(ctx context.Context, tahunAjaran string, filter FilterBagian, st
 		if tingkatan != nil {
 			c.tingkatan = *tingkatan
 		}
-		// I'dadiyah (dan kelas tanpa rentang) tidak ikut — keputusan owner.
-		if _, ok := SuratTargetJuz(c.tingkatan, c.kelas); !ok {
-			continue
-		}
 		kands = append(kands, c)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
+	if len(kands) == 0 {
+		return []BarisJuzAmma{}, nil
+	}
+
+	// Kelas santri PADA tahun ajaran ini (riwayat bagian ∩ kalender TA), bukan
+	// kelas sekarang. Filter "kelas punya rentang Juz Amma" harus muncul SETELAH
+	// ini, sebab santri yang kelas barunya tak punya rentang (mis. pindah ke
+	// I'dadiyah) tetap punya kewajiban setoran pada tahun lamanya.
+	idsSemua := make([]int, 0, len(kands))
+	for _, c := range kands {
+		idsSemua = append(idsSemua, c.id)
+	}
+	padaTA, err := KelasPadaTA(ctx, idsSemua, tahunAjaran)
+	if err != nil {
+		padaTA = map[int]PenempatanTA{}
+	}
+	filtered := make([]kandidat, 0, len(kands))
+	for _, c := range kands {
+		if p, ok := padaTA[c.id]; ok {
+			c.tingkatan, c.kelas, c.bagian = p.Tingkatan, p.Kelas, p.NamaBagian
+		}
+		// I'dadiyah (dan kelas tanpa rentang) tidak ikut — keputusan owner.
+		if _, ok := SuratTargetJuz(c.tingkatan, c.kelas); !ok {
+			continue
+		}
+		filtered = append(filtered, c)
+	}
+	kands = filtered
 	if len(kands) == 0 {
 		return []BarisJuzAmma{}, nil
 	}
@@ -586,6 +610,12 @@ func ensureSetoranRows(ctx context.Context, santriID int, tahunAjaran string) (i
 	if tingkatan != nil {
 		tn = *tingkatan
 	}
+	// Rentang surat dibuat sesuai kelas santri PADA tahun ajaran ini — kalau
+	// pakai kelas sekarang, riwayat tahun lama ikut melebar/menyesuaikan kelas
+	// baru setelah naik kelas (bug owner 2026-10-05).
+	if p, err := KelasPadaTA1(ctx, santriID, tahunAjaran); err == nil && p.Kelas != "" {
+		tn, kelas = p.Tingkatan, p.Kelas
+	}
 	target, ok := SuratTargetJuz(tn, kelas)
 	if !ok {
 		return 0, ErrJuzTidakBerlaku
@@ -704,6 +734,12 @@ func GetKompetensi(ctx context.Context, tahunAjaran, kategori, hasil string, fil
 	for _, s := range sis {
 		ids = append(ids, s.id)
 	}
+	// Kelas santri PADA tahun ajaran ini (dari riwayat bagian). Kosong bila
+	// riwayat tak ada → fallback kelas sekarang, tampilan lama tetap jalan.
+	padaTA, err := KelasPadaTA(ctx, ids, tahunAjaran)
+	if err != nil {
+		padaTA = map[int]PenempatanTA{}
+	}
 	nrows, err := config.DB.Query(ctx, `
 		SELECT santri_id, kategori, COALESCE(hasil, '')
 		FROM nilai_kompetensi
@@ -735,8 +771,13 @@ func GetKompetensi(ctx context.Context, tahunAjaran, kategori, hasil string, fil
 	}
 	out := []BarisKompetensi{}
 	for _, s := range sis {
+		// Kelas & label bagian pada TA ini (fallback: penempatan sekarang).
+		tk, kl, bid, bag := s.tingkatan, s.kelas, s.bagianID, s.bagian
+		if p, ok := padaTA[s.id]; ok {
+			tk, kl, bid, bag = p.Tingkatan, p.Kelas, p.BagianID, p.NamaBagian
+		}
 		for _, kat := range kats {
-			if !KompetensiEligible(s.tingkatan, s.kelas, kat) {
+			if !KompetensiEligible(tk, kl, kat) {
 				continue
 			}
 			h := ""
@@ -753,7 +794,7 @@ func GetKompetensi(ctx context.Context, tahunAjaran, kategori, hasil string, fil
 				continue
 			}
 			out = append(out, BarisKompetensi{
-				SantriID: s.id, Nama: s.nama, BagianID: s.bagianID, Bagian: s.bagian,
+				SantriID: s.id, Nama: s.nama, BagianID: bid, Bagian: bag,
 				Kategori: kat, Hasil: h,
 			})
 		}
@@ -789,6 +830,12 @@ func SaveKompetensi(ctx context.Context, in KompetensiInput) error {
 	tn := ""
 	if tingkatan != nil {
 		tn = *tingkatan
+	}
+	// Kelas yang berlaku bagi TA INI — bukan kelas sekarang. Tanpa ini, nilai
+	// tahun lama divalidasi memakai kelas BARU setelah santri naik kelas, jadi
+	// kategori yang salah bisa tersimpan (dan kategori benar justru ditolak).
+	if p, err := KelasPadaTA1(ctx, in.SantriID, in.TahunAjaran); err == nil && p.Kelas != "" {
+		tn, kelas = p.Tingkatan, p.Kelas
 	}
 	if !KompetensiEligible(tn, kelas, in.Kategori) {
 		return ErrKompetensiTidakBerlaku

@@ -197,16 +197,38 @@ func GetSantriAktif(ctx context.Context, userRoles []string, userID int, filter 
 // are assigned to as mustahiq, muroqib, subject teacher (jadwal), or mufatish.
 // This lets a subject teacher take attendance for a class shown in their daily
 // schedule even though they are not the class's mustahiq.
-func GetSantriByBagian(ctx context.Context, bagianID int, userRoles []string, userID int) ([]Santri, error) {
+func GetSantriByBagian(ctx context.Context, bagianID int, userRoles []string, userID int, tahunAjaran string) ([]Santri, error) {
+	args := []interface{}{bagianID}
+
+	// tahunAjaran tidak kosong -> sertakan juga santri yang PERNAH menempati
+	// bagian ini pada tahun ajaran tsb walaupun kini sudah pindah/naik kelas.
+	// Tanpa ini, menu Raport untuk tahun sebelumnya kehilangan nama siswa yang
+	// sudah naik kelas (laporan owner 2026-10-05).
+	bagianCond := "s.bagian_id = $1"
+	if tahunAjaran != "" {
+		var mulai, selesai time.Time
+		if err := config.DB.QueryRow(ctx,
+			`SELECT MIN(tgl_mulai), MAX(tgl_selesai) FROM kalender_kuartal WHERE tahun_ajaran = $1`,
+			tahunAjaran).Scan(&mulai, &selesai); err == nil && !mulai.IsZero() {
+			args = append(args, mulai, selesai) // $2 = mulai, $3 = selesai
+			bagianCond = `(
+				s.bagian_id = $1
+				OR EXISTS (
+					SELECT 1 FROM riwayat_bagian r
+					WHERE r.santri_id = s.id AND r.bagian_id = $1
+					  AND r.tanggal_mulai <= $3
+					  AND (r.tanggal_selesai IS NULL OR r.tanggal_selesai >= $2)
+				))`
+		}
+	}
+
 	baseQuery := `SELECT ` + santriSelectCols + `,
 		 t.nama, b.nama_bagian, k.nama
 		 FROM santri s
 		 LEFT JOIN bagian b ON s.bagian_id = b.id
 		 LEFT JOIN tingkatan t ON b.tingkatan_id = t.id
 		 LEFT JOIN kelas k ON b.kelas_id = k.id
-		 WHERE s.status = 'aktif' AND s.bagian_id = $1 `
-
-	args := []interface{}{bagianID}
+		 WHERE s.status = 'aktif' AND ` + bagianCond + ` `
 
 	isGlobal := false
 	for _, r := range userRoles {
@@ -217,22 +239,24 @@ func GetSantriByBagian(ctx context.Context, bagianID int, userRoles []string, us
 	}
 
 	// Pimpinan and admin bypass the authorization check. Everyone else must prove they
-	// are linked to this bagian in some capacity.
+	// are linked to the bagian yang DIPILIH ($1) -- bukan s.bagian_id, sebab santri
+	// riwayat boleh jadi sudah pindah ke bagian lain.
 	if !isGlobal {
-		baseQuery += ` AND (
-			EXISTS (SELECT 1 FROM pengajar_bagian pb WHERE pb.bagian_id = s.bagian_id AND pb.pengajar_id = (SELECT pengajar_id FROM users WHERE id = $2))
-			OR EXISTS (SELECT 1 FROM jadwal_pelajaran jp WHERE jp.bagian_id = s.bagian_id AND jp.pengajar_id = (SELECT pengajar_id FROM users WHERE id = $2))
+		roleIdx := len(args) + 1
+		args = append(args, userID)
+		baseQuery += fmt.Sprintf(` AND (
+			EXISTS (SELECT 1 FROM pengajar_bagian pb WHERE pb.bagian_id = $1 AND pb.pengajar_id = (SELECT pengajar_id FROM users WHERE id = $%[1]d))
+			OR EXISTS (SELECT 1 FROM jadwal_pelajaran jp WHERE jp.bagian_id = $1 AND jp.pengajar_id = (SELECT pengajar_id FROM users WHERE id = $%[1]d))
 			OR EXISTS (
 				SELECT 1 FROM mustahiq_bagian msub 
 				JOIN bagian b_msub ON msub.bagian_id = b_msub.id
-				JOIN bagian b_santri ON b_santri.id = s.bagian_id
-				WHERE b_msub.kelas_id = b_santri.kelas_id 
-				  AND b_msub.tingkatan_id = b_santri.tingkatan_id
-				  AND (msub.user_id = $2 OR msub.pengajar_id = (SELECT pengajar_id FROM users WHERE id = $2))
+				JOIN bagian b_sel ON b_sel.id = $1
+				WHERE b_msub.kelas_id = b_sel.kelas_id 
+				  AND b_msub.tingkatan_id = b_sel.tingkatan_id
+				  AND (msub.user_id = $%[1]d OR msub.pengajar_id = (SELECT pengajar_id FROM users WHERE id = $%[1]d))
 			)
-			OR EXISTS (SELECT 1 FROM mufatish_kelas mk JOIN bagian b2 ON b2.kelas_id = mk.kelas_id AND b2.tingkatan_id = mk.tingkatan_id WHERE b2.id = s.bagian_id AND (mk.user_id = $2 OR mk.pengajar_id = (SELECT pengajar_id FROM users WHERE id = $2)))
-		) `
-		args = append(args, userID)
+			OR EXISTS (SELECT 1 FROM mufatish_kelas mk JOIN bagian b2 ON b2.kelas_id = mk.kelas_id AND b2.tingkatan_id = mk.tingkatan_id WHERE b2.id = $1 AND (mk.user_id = $%[1]d OR mk.pengajar_id = (SELECT pengajar_id FROM users WHERE id = $%[1]d)))
+		) `, roleIdx)
 	}
 
 	query := baseQuery + ` ORDER BY s.nama ASC`

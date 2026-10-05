@@ -63,6 +63,10 @@ func GetSantriAktif(w http.ResponseWriter, r *http.Request) {
 // GetSantriByBagian returns active students for a specific bagian, authorized
 // against the requesting user. Used by the attendance page so a subject teacher
 // can load students for a class in their daily schedule.
+//
+// Query opsional tahun_ajaran: dipakai menu Raport untuk tahun sebelumnya —
+// menambahkan santri yang dahulu menempati bagian ini tetapi kini sudah naik
+// kelas/pindah (lihat models.GetSantriByBagian).
 func GetSantriByBagian(w http.ResponseWriter, r *http.Request) {
 	user, ok := r.Context().Value(appMiddleware.UserContextKey).(appMiddleware.UserSession)
 	if !ok {
@@ -74,7 +78,8 @@ func GetSantriByBagian(w http.ResponseWriter, r *http.Request) {
 		writeJSONError(w, "bagian_id tidak valid", http.StatusBadRequest)
 		return
 	}
-	res, err := models.GetSantriByBagian(r.Context(), bagianID, user.Roles, user.ID)
+	tahunAjaran := r.URL.Query().Get("tahun_ajaran")
+	res, err := models.GetSantriByBagian(r.Context(), bagianID, user.Roles, user.ID, tahunAjaran)
 	if err != nil {
 		writeJSONError(w, internalError("", err), http.StatusInternalServerError)
 		return

@@ -290,7 +290,11 @@ btnLoad.addEventListener('click', async () => {
   btnLoad.disabled = true;
 
   try {
-    const res = await fetch(`/api/santri/by-bagian/${bagianId}`);
+    // tahun_ajaran ikut dikirim: daftar untuk tahun sebelumnya juga menampilkan
+    // santri yang kini sudah naik kelas/pindah (lihat models.GetSantriByBagian).
+    const taDipilih = filterTahunAjaran.value || '';
+    const qsTa = taDipilih ? `?tahun_ajaran=${encodeURIComponent(taDipilih)}` : '';
+    const res = await fetch(`/api/santri/by-bagian/${bagianId}${qsTa}`);
     if (res.ok) {
       currentSantri = (await res.json()) || [];
       renderSantriList();
@@ -306,6 +310,14 @@ btnLoad.addEventListener('click', async () => {
   } finally {
     btnLoad.textContent = prevText;
     btnLoad.disabled = false;
+  }
+});
+
+// Ganti tahun ajaran → muat ulang daftar (bila bagian sudah dipilih), supaya
+// pindah ke tahun sebelumnya tidak perlu klik "Tampilkan" ulang tanpa sadar.
+filterTahunAjaran.addEventListener('change', () => {
+  if (filterBagian.value && !btnLoad.disabled) {
+    btnLoad.click();
   }
 });
 
