@@ -13,7 +13,12 @@ func GetLogAbsensiPengajar(w http.ResponseWriter, r *http.Request) {
 	tahunHijri, _ := strconv.Atoi(r.URL.Query().Get("tahun_hijri"))
 	bulanHijri, _ := strconv.Atoi(r.URL.Query().Get("bulan_hijri"))
 
+	// Default: tahun ajaran aktif — tanpa default, query kosong = semua
+	// tahun tercampur dalam satu rekap.
 	if tahunAjaran == "" && tahunHijri == 0 {
+		tahunAjaran = models.GetTahunAjaranAktif(r.Context())
+	}
+	if tahunAjaran == "" {
 		http.Error(w, "tahun_ajaran atau tahun_hijri required", http.StatusBadRequest)
 		return
 	}
@@ -50,6 +55,11 @@ func GetRekapAbsensiSiswaRentang(w http.ResponseWriter, r *http.Request) {
 	if bagianIDStr == "" {
 		http.Error(w, "bagian_id required", http.StatusBadRequest)
 		return
+	}
+	// Default: tahun ajaran aktif — tanpa default, rentang rekap menghitung
+	// lintas tahun sekaligus (dobel saat santri naik tingkat).
+	if tahunAjaran == "" && tahunHijri == 0 {
+		tahunAjaran = models.GetTahunAjaranAktif(r.Context())
 	}
 
 	var bagianID int

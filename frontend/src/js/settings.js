@@ -1128,7 +1128,10 @@ loadMudirTingkatan();
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ tahun_ajaran_aktif: ta }),
         });
-        if (!res.ok) throw new Error('Gagal menyimpan tahun ajaran aktif');
+        if (!res.ok) {
+          const msg = await res.text().catch(() => '');
+          throw new Error(msg.trim() || 'Gagal menyimpan tahun ajaran aktif');
+        }
         await refreshActiveTA();
         alert('Tahun ajaran aktif berhasil disimpan!');
       } catch (err) {
@@ -1173,7 +1176,10 @@ loadMudirTingkatan();
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ tahun_ajaran_aktif: currentTA || inpTA.value.trim(), tahun_hijri_aktif: th }),
         });
-        if (!res.ok) throw new Error('Gagal menyimpan tahun Hijri');
+        if (!res.ok) {
+          const msg = await res.text().catch(() => '');
+          throw new Error(msg.trim() || 'Gagal menyimpan tahun Hijri');
+        }
         await refreshActiveHijri();
         alert('Tahun Hijriyah aktif berhasil disimpan!');
       } catch (err) {

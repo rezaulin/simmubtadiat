@@ -30,7 +30,13 @@ func GetCatatan(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user, _ := r.Context().Value(appMiddleware.UserContextKey).(appMiddleware.UserSession)
-	res, err := models.GetRekapCatatan(r.Context(), r.URL.Query().Get("q"), user.Roles, user.PengajarID, user.ID)
+	// Rekap dihitung per tahun ajaran; default = tahun ajaran aktif
+	// (bisa di-override dengan ?tahun_ajaran=2025/2026).
+	ta := r.URL.Query().Get("tahun_ajaran")
+	if ta == "" {
+		ta = models.GetTahunAjaranAktif(r.Context())
+	}
+	res, err := models.GetRekapCatatan(r.Context(), r.URL.Query().Get("q"), ta, user.Roles, user.PengajarID, user.ID)
 	if err != nil {
 		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return

@@ -181,7 +181,7 @@ func ListCatatan(ctx context.Context, jenis, keyword string) ([]CatatanSantri, e
 }
 
 // GetRekapCatatan mengembalikan agregat catatan per santri.
-func GetRekapCatatan(ctx context.Context, keyword string, roles []string, pengajarID *int, userID int) ([]RekapCatatan, error) {
+func GetRekapCatatan(ctx context.Context, keyword, tahunAjaran string, roles []string, pengajarID *int, userID int) ([]RekapCatatan, error) {
 	q := `SELECT c.santri_id, s.nama, COALESCE(t.nama, ''), COALESCE(k.nama, ''), COALESCE(b.nama_bagian, ''),
 	             SUM(CASE WHEN c.jenis = 'pelanggaran' THEN 1 ELSE 0 END) AS total_pelanggaran,
 	             SUM(CASE WHEN c.jenis = 'prestasi' THEN 1 ELSE 0 END) AS total_prestasi,
@@ -200,6 +200,14 @@ func GetRekapCatatan(ctx context.Context, keyword string, roles []string, pengaj
 	      LEFT JOIN kelas k ON b.kelas_id = k.id
 	      WHERE 1=1`
 	args := []interface{}{}
+
+	// Filter tahun ajaran (default diisi pemanggil: tahun ajaran aktif).
+	// Tanpa filter ini total pelanggaran/prestasi LINTAS tahun tercampur —
+	// santri yang sudah naik tingkat tahun baru ikut terhitung ganda.
+	if tahunAjaran != "" {
+		args = append(args, tahunAjaran)
+		q += " AND c.tahun_ajaran = $" + strconv.Itoa(len(args))
+	}
 
 	isGlobal := false
 	for _, role := range roles {

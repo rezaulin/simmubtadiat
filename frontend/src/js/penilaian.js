@@ -24,6 +24,45 @@ let currentData = null;
 let userRolesPen = [];
 let tahunAjaran = '';
 
+// === PENJAGA TAHUN AJARAN ===
+// Halaman ini menyimpan tahun ajaran di memori saat dimuat. Jika admin ganti
+// tahun ajaran di tab lain, tab lama bisa menyimpan nilai ke tahun yang SALAH.
+// Pengaman:
+//   - sebelum Muat tabel: tahun ajaran aktif ditarik ulang dari server;
+//   - sebelum Simpan/flush/auto-generate: bila tahun aktif sudah berbeda,
+//     operasi DIBATALKAN dan halaman dimuat ulang ke tahun baru
+//     (lebih baik ketikan hilang daripada tersimpan di tahun yang salah);
+//   - saat tab kembali terlihat: cek + tawarkan reload.
+async function fetchTahunAjaranAktif() {
+  try {
+    const r = await fetch('/api/settings/umum', { cache: 'no-store' });
+    if (!r.ok) return '';
+    const d = await r.json();
+    return (d && d.tahun_ajaran_aktif) || '';
+  } catch (_) { return ''; }
+}
+
+// true = aman lanjut; false = tahun ajaran sudah berganti (halaman reload).
+async function guardTahunAjaranSebelumSimpan() {
+  const taAktif = await fetchTahunAjaranAktif();
+  if (taAktif && taAktif !== tahunAjaran) {
+    alert('Tahun ajaran sudah diganti ke ' + taAktif + '.\nHalaman dimuat ulang — nilai yang tadi diketik BELUM tersimpan.');
+    location.reload();
+    return false;
+  }
+  return true;
+}
+
+document.addEventListener('visibilitychange', async () => {
+  if (document.visibilityState !== 'visible') return;
+  const taAktif = await fetchTahunAjaranAktif();
+  if (taAktif && taAktif !== tahunAjaran) {
+    if (confirm('Tahun ajaran telah diganti ke ' + taAktif + '. Muat ulang halaman Penilaian?')) {
+      location.reload();
+    }
+  }
+});
+
 // Track khos cells that the user explicitly edited (dirty).
 // Keys: "santriId_mapelId_semester".
 // CATATAN: Al-Bayan TIDAK punya dirty-tracking — kolom dikunci, tidak bisa diedit.
@@ -114,6 +153,15 @@ async function loadSpreadsheet() {
   const bagianId = selBagian.value;
   if (!bagianId) { alert('Pilih bagian terlebih dahulu'); return; }
 
+  // Tarik ulang tahun ajaran aktif SEBELUM memuat — tab lama harus selalu
+  // menampilkan & menyimpan tahun terbaru, bukan tahun saat tab dibuka.
+  const taBaru = await fetchTahunAjaranAktif();
+  if (taBaru && taBaru !== tahunAjaran) {
+    tahunAjaran = taBaru;
+    const elTA = document.getElementById('display-tahun-ajaran');
+    if (elTA) elTA.textContent = taBaru;
+  }
+
   container.innerHTML = '<p class="text-center text-gray-500 dark:text-gray-400 py-8">Memuat data...</p>';
 
   try {
@@ -141,6 +189,8 @@ async function loadSpreadsheet() {
 async function autoGenerateRaport(bagianId) {
   const activeBagian = cachedBagian.find(b => b.id == bagianId);
   if (!activeBagian || !activeBagian.can_edit_nilai) return;
+  // Hindari menulis hasil hitung ke tahun ajaran yang sudah diganti.
+  if (!(await guardTahunAjaranSebelumSimpan())) return;
   try {
     const res = await fetch('/api/penilaian/generate-khos-bulk', {
       method: 'POST',
@@ -190,6 +240,8 @@ function scheduleKuartalFlush() {
 async function flushKuartalToRaport() {
   const bagianId = selBagian.value;
   if (!bagianId || !currentData) return;
+  // Tahun ajaran wajib masih sama dengan saat tabel dimuat.
+  if (!(await guardTahunAjaranSebelumSimpan())) return;
   const payload = [];
   container.querySelectorAll('input[data-k]').forEach(inp => {
     const key = `${inp.dataset.s}_${inp.dataset.m}_${inp.dataset.k}`;
@@ -930,6 +982,9 @@ function abbreviate(name) {
 async function saveAll() {
   const bagianId = selBagian.value;
   if (!bagianId || !currentData) return;
+  // Tahun ajaran wajib masih sama dengan saat tabel dimuat — kalau sudah
+  // diganti, batal simpan + reload (jangan tulis nilai ke tahun yang salah).
+  if (!(await guardTahunAjaranSebelumSimpan())) return;
   // Batalkan flush blur yang tertunda — saveAll sudah mengirim SEMUA sel kuartal.
   clearTimeout(kuartalFlushTimer);
   dirtyKuartal.clear();

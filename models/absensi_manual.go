@@ -74,11 +74,30 @@ func SaveAbsensiManualBulanan(ctx context.Context, entries []AbsensiManualBulana
 			continue
 		}
 
+		// Tahun baris diturunkan dari bulan Hijriyah yang disimpan (bukan dari
+		// tahun ajaran aktif): mengedit bulan lama setelah ganti tahun ajaran
+		// tidak memindahkan riwayat ke tahun baru.
+		ta := TahunAjaranDariHijri(ctx, e.TahunHijri, e.BulanHijri)
+		if ta == "" {
+			ta = e.TahunAjaran // fallback: tahun ajaran aktif dari frontend
+		}
 		// Resolve semester dari kalender semester Hijri tahun ajaran ini (0 = belum/di luar rentang).
-		sem := SemesterDariBulanHijri(ctx, e.TahunAjaran, e.TahunHijri, e.BulanHijri)
+		sem := SemesterDariBulanHijri(ctx, ta, e.TahunHijri, e.BulanHijri)
 		var semVal interface{}
 		if sem > 0 {
 			semVal = sem
+		}
+
+		// Jika bulan TIDAK ditaungi kalender mana pun, baris lama dipertahankan
+		// tahunnya (tidak ikut tahun ajaran aktif). Baris baru tetap memakai
+		// tahun ajaran aktif sebagai fallback.
+		updTA := "EXCLUDED.tahun_ajaran"
+		if ta == "" {
+			updTA = "COALESCE(NULLIF(absensi_manual_bulanan.tahun_ajaran, ''), EXCLUDED.tahun_ajaran)"
+		}
+		taSimpan := ta
+		if taSimpan == "" {
+			taSimpan = e.TahunAjaran
 		}
 
 		_, err2 := tx.Exec(ctx, `
@@ -89,10 +108,10 @@ func SaveAbsensiManualBulanan(ctx context.Context, entries []AbsensiManualBulana
 			             total_izin = EXCLUDED.total_izin,
 			             total_alpha = EXCLUDED.total_alpha,
 			             total_hadir = EXCLUDED.total_hadir,
-			             tahun_ajaran = EXCLUDED.tahun_ajaran,
+			             tahun_ajaran = `+updTA+`,
 			             semester = EXCLUDED.semester,
 			             updated_at = CURRENT_TIMESTAMP`,
-			e.SantriID, e.TahunHijri, e.BulanHijri, e.TahunAjaran, e.TotalSakit, e.TotalIzin, e.TotalAlpha, e.TotalHadir, semVal)
+			e.SantriID, e.TahunHijri, e.BulanHijri, taSimpan, e.TotalSakit, e.TotalIzin, e.TotalAlpha, e.TotalHadir, semVal)
 		if err2 != nil {
 			return 0, 0, err2
 		}
@@ -189,11 +208,30 @@ func SaveAbsensiManualPengajarBulanan(ctx context.Context, entries []AbsensiManu
 			continue
 		}
 
+		// Tahun baris diturunkan dari bulan Hijriyah yang disimpan (bukan dari
+		// tahun ajaran aktif): mengedit bulan lama setelah ganti tahun ajaran
+		// tidak memindahkan riwayat ke tahun baru.
+		ta := TahunAjaranDariHijri(ctx, e.TahunHijri, e.BulanHijri)
+		if ta == "" {
+			ta = e.TahunAjaran // fallback: tahun ajaran aktif dari frontend
+		}
 		// Resolve semester dari kalender semester Hijri tahun ajaran ini (0 = belum/di luar rentang).
-		sem := SemesterDariBulanHijri(ctx, e.TahunAjaran, e.TahunHijri, e.BulanHijri)
+		sem := SemesterDariBulanHijri(ctx, ta, e.TahunHijri, e.BulanHijri)
 		var semVal interface{}
 		if sem > 0 {
 			semVal = sem
+		}
+
+		// Jika bulan TIDAK ditaungi kalender mana pun, baris lama dipertahankan
+		// tahunnya (tidak ikut tahun ajaran aktif). Baris baru tetap memakai
+		// tahun ajaran aktif sebagai fallback.
+		updTA := "EXCLUDED.tahun_ajaran"
+		if ta == "" {
+			updTA = "COALESCE(NULLIF(absensi_manual_pengajar_bulanan.tahun_ajaran, ''), EXCLUDED.tahun_ajaran)"
+		}
+		taSimpan := ta
+		if taSimpan == "" {
+			taSimpan = e.TahunAjaran
 		}
 
 		_, err2 := tx.Exec(ctx, `
@@ -204,10 +242,10 @@ func SaveAbsensiManualPengajarBulanan(ctx context.Context, entries []AbsensiManu
 			             total_izin = EXCLUDED.total_izin,
 			             total_alpha = EXCLUDED.total_alpha,
 			             total_hadir = EXCLUDED.total_hadir,
-			             tahun_ajaran = EXCLUDED.tahun_ajaran,
+			             tahun_ajaran = `+updTA+`,
 			             semester = EXCLUDED.semester,
 			             updated_at = CURRENT_TIMESTAMP`,
-			e.PengajarID, e.TahunHijri, e.BulanHijri, e.TahunAjaran, e.TotalSakit, e.TotalIzin, e.TotalAlpha, e.TotalHadir, semVal)
+			e.PengajarID, e.TahunHijri, e.BulanHijri, taSimpan, e.TotalSakit, e.TotalIzin, e.TotalAlpha, e.TotalHadir, semVal)
 		if err2 != nil {
 			return 0, 0, err2
 		}

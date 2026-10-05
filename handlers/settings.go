@@ -2,12 +2,20 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"regexp"
 	"strings"
 
 	"github.com/mubtadiaat/app/config"
 	"github.com/mubtadiaat/app/models"
 )
+
+// Format tahun ajaran: "YYYY/YYYY" (contoh 2027/2028).
+var reTahunAjaran = regexp.MustCompile(`^\d{4}/\d{4}$`)
+
+// Format tahun Hijriyah: "1447" atau pasangan "1447/1448".
+var reTahunHijri = regexp.MustCompile(`^\d{3,4}(/\d{3,4})?$`)
 
 // GetRaportSettings retrieves the current settings for Raport
 func GetRaportSettings(w http.ResponseWriter, r *http.Request) {
@@ -139,10 +147,46 @@ func UpdateSettingsUmum(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "tahun_ajaran_aktif wajib diisi", http.StatusBadRequest)
 		return
 	}
+	if !reTahunAjaran.MatchString(ta) {
+		http.Error(w, "Format tahun ajaran salah. Gunakan YYYY/YYYY, contoh: 2027/2028", http.StatusBadRequest)
+		return
+	}
+
+	// === PENJAGA PINDAH TAHUN AJARAN ===
+	// Mengganti tahun ajaran hanya mengubah 1 baris settings — tidak ada data
+	// yang dipindahkan. Agar data tahun baru tidak "nyasar", tahun baru WAJIB
+	// sudah punya kalender kuartal lengkap sebelum boleh diaktifkan.
+	var taSekarang string
+	_ = config.DB.QueryRow(r.Context(),
+		`SELECT value FROM settings WHERE key = 'tahun_ajaran_aktif'`).Scan(&taSekarang)
+
+	warning := ""
+	if taSekarang != ta {
+		var nKuartal, nSem int
+		if err := config.DB.QueryRow(r.Context(),
+			`SELECT COUNT(*) FROM kalender_kuartal WHERE tahun_ajaran = $1`, ta).Scan(&nKuartal); err != nil {
+			http.Error(w, internalError("", err), http.StatusInternalServerError)
+			return
+		}
+		if nKuartal < 4 {
+			http.Error(w, fmt.Sprintf(
+				"Tahun ajaran %s belum punya kalender kuartal lengkap (%d/4). Lengkapi dulu di Pengaturan > Kalender sebelum mengganti tahun ajaran.",
+				ta, nKuartal), http.StatusBadRequest)
+			return
+		}
+		if err := config.DB.QueryRow(r.Context(),
+			`SELECT COUNT(*) FROM kalender_semester_hijri WHERE tahun_ajaran = $1`, ta).Scan(&nSem); err != nil {
+			http.Error(w, internalError("", err), http.StatusInternalServerError)
+			return
+		}
+		if nSem == 0 {
+			warning = " Perhatian: kalender semester Hijriyah tahun ini belum diisi — absensi bulanan bisa tersimpan tanpa semester. Isi di Pengaturan > Kalender."
+		}
+	}
 
 	_, err := config.DB.Exec(r.Context(), `
 		INSERT INTO settings (key, value) VALUES ('tahun_ajaran_aktif', $1) 
-		ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
+		ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = CURRENT_TIMESTAMP
 	`, ta)
 
 	if err != nil {
@@ -152,11 +196,18 @@ func UpdateSettingsUmum(w http.ResponseWriter, r *http.Request) {
 
 	// Simpan tahun Hijri aktif (opsional)
 	if th, ok := req["tahun_hijri_aktif"]; ok && th != "" {
+		if !reTahunHijri.MatchString(th) {
+			http.Error(w, "Format tahun Hijriyah salah. Gunakan 1447 atau 1447/1448", http.StatusBadRequest)
+			return
+		}
 		_, _ = config.DB.Exec(r.Context(), `
 			INSERT INTO settings (key, value) VALUES ('tahun_hijri_aktif', $1)
-			ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
+			ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = CURRENT_TIMESTAMP
 		`, th)
 	}
 
-	writeJSON(w, map[string]string{"status": "success", "message": "Pengaturan umum berhasil disimpan"})
+	writeJSON(w, map[string]string{
+		"status":  "success",
+		"message": "Pengaturan umum berhasil disimpan." + warning,
+	})
 }

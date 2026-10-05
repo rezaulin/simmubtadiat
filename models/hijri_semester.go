@@ -182,3 +182,39 @@ func SemesterDariBulanHijri(ctx context.Context, tahunAjaran string, tahunHijri,
 	}
 	return 0
 }
+
+// TahunAjaranDariHijri mencari tahun ajaran yang menaungi sebuah bulan
+// Hijriyah berdasarkan kalender semester SEMUA tahun ajaran (rentang terbaru
+// yang cocok menang). Mengembalikan "" jika tidak ada kalender yang menaungi.
+//
+// Dipakai absensi manual supaya kolom tahun_ajaran sebuah baris diturunkan
+// dari BULAN YANG DISIMPAN, bukan dari tahun ajaran aktif. Akibatnya mengedit
+// bulan lama setelah ganti tahun ajaran TIDAK memindahkan baris riwayat itu
+// ke tahun baru (dan sebaliknya data bulan baru tidak nyasar ke tahun lama).
+func TahunAjaranDariHijri(ctx context.Context, tahunHijri, bulanHijri int) string {
+	rows, err := config.DB.Query(ctx, `
+		SELECT tahun_ajaran,
+		       mulai_tahun_hijri*360 + mulai_bulan_hijri*30 + mulai_tanggal     AS mulai_ord,
+		       selesai_tahun_hijri*360 + selesai_bulan_hijri*30 + selesai_tanggal AS selesai_ord
+		  FROM kalender_semester_hijri
+		 ORDER BY mulai_ord DESC`)
+	if err != nil {
+		return ""
+	}
+	defer rows.Close()
+
+	bulanMulai := hijriOrdinal(tahunHijri, bulanHijri, 1)
+	bulanAkhir := hijriOrdinal(tahunHijri, bulanHijri, 30)
+	for rows.Next() {
+		var ta string
+		var mulaiOrd, selesaiOrd int
+		if err := rows.Scan(&ta, &mulaiOrd, &selesaiOrd); err != nil {
+			return ""
+		}
+		// Overlap: bulan berpotongan dengan rentang semester mana pun.
+		if bulanMulai <= selesaiOrd && bulanAkhir >= mulaiOrd {
+			return ta
+		}
+	}
+	return ""
+}
