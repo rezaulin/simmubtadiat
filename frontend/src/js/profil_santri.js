@@ -40,6 +40,12 @@ const santriId = urlParams.get('id');
 // akademik (per kehadiran santri di tahun itu) — bukan semua kalender.
 let riwayatTahunList = [];
 let tambahanDimuat = false;
+// Guard race 2026-10-06: tab bisa diklik SEBELUM loadProfile selesai →
+// riwayatTahunList masih kosong → status "sudah dimuat" tersimpan → kartu
+// tahun lama tidak pernah muncul walau data sudah tiba. Kini muat hanya
+// boleh terjadi setelah profil dimuat, dan permintaan tab dicatat terpisah.
+let profilDimuat = false;
+let tambahanDiminta = false;
 
 // Pemetaan Status_Santri → label & kelas warna badge pada detail profil.
 // Nilai DB: aktif, cuti, pengabdian, lulus, boyong, keluar.
@@ -265,6 +271,10 @@ async function loadData() {
     populateBiodata(s);
     populateRiwayat(riwayat, bulanListByTA);
     populateCatatan(catatan, canWriteCatatan);
+    // Profil siap → riwayatTahunList sudah terisi. Bila tab Nilai Tambahan
+    // sudah diklik tadi (sebelum siap), muat sekarang.
+    profilDimuat = true;
+    if (tambahanDiminta) loadTambahan();
 
     loadingIndicator.classList.add('hidden');
     profilContent.classList.remove('hidden');
@@ -994,7 +1004,11 @@ function _badgeT(v) {
 }
 
 function loadTambahan() {
+  tambahanDiminta = true;
   if (tambahanDimuat) return;
+  // Profil belum selesai dimuat → jangan kunci status; akan dipanggil ulang
+  // oleh loadProfile setelah riwayatTahunList terisi.
+  if (!profilDimuat) return;
   tambahanDimuat = true;
   const loading = document.getElementById('tambahan-loading');
   const container = document.getElementById('tambahan-container');
@@ -1026,7 +1040,9 @@ function loadTambahan() {
 
   Promise.all(jobs.map((p) => p.catch(() => []))).then((hasil) => {
     if (loading) loading.classList.add('hidden');
-    let html = '';
+    // Kartu per tahun disimpan terpisah → dropdown memilih satu tahun (spek
+    // owner 2026-10-06: admin pakai dropdown, wali tumpuk semua).
+    const kartuPerTA = {};
     let adaIsi = false;
 
     tahun.forEach((ta, i) => {
@@ -1119,7 +1135,7 @@ function loadTambahan() {
 
       if (!isi) isi = '<p class="text-sm text-gray-500 dark:text-gray-400">Belum ada data penilaian tambahan tahun ini.</p>';
 
-      html += `
+      kartuPerTA[ta] = `
       <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex flex-wrap items-center justify-between gap-2">
           <div>
@@ -1132,11 +1148,29 @@ function loadTambahan() {
       </div>`;
     });
 
-    if (adaIsi) {
-      container.innerHTML = html;
-    } else if (empty) {
-      empty.classList.remove('hidden');
-    }
+    // Dropdown tahun ajaran (admin): default = TA AKTIF, bila tidak ada di
+    // daftar pakai tahun terbaru. Ganti pilihan → ganti kartu, tanpa muat ulang.
+    const selT = document.getElementById('tambahan-tahun');
+    const wrapT = document.getElementById('tambahan-tahun-wrap');
+    fetch('/api/settings/umum').then((r) => (r.ok ? r.json() : null)).catch(() => null).then((umum) => {
+      const aktif = (umum && umum.tahun_ajaran_aktif) || '';
+      if (selT) {
+        selT.innerHTML = tahun.map((t) =>
+          `<option value="${t}">${t}${t === aktif ? ' (aktif)' : ''}</option>`).join('');
+        selT.value = tahun.includes(aktif) ? aktif : tahun[0];
+        if (!selT.dataset.bound) {
+          selT.dataset.bound = '1';
+          selT.addEventListener('change', () => {
+            container.innerHTML = kartuPerTA[selT.value] || '';
+            if (empty) empty.classList.add('hidden');
+          });
+        }
+      }
+      if (wrapT) { wrapT.classList.remove('hidden'); wrapT.classList.add('flex'); }
+      const pilih = (selT && selT.value) || tahun[0];
+      container.innerHTML = kartuPerTA[pilih] || '';
+      if (empty) empty.classList.add('hidden');
+    });
   }).catch((e) => {
     console.error('loadTambahan gagal:', e);
     if (loading) loading.classList.add('hidden');

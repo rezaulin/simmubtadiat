@@ -214,9 +214,33 @@ func GetRiwayatAkademik(ctx context.Context, santriID int) ([]RiwayatAkademikTah
 			var r rawBayan
 			if err := rowsBayan.Scan(&r.TA, &r.Label); err == nil {
 				bayans = append(bayans, r)
+				addTA(r.TA)
 			}
 		}
 		rowsBayan.Close()
+	}
+
+	// 3.6 Penilaian tambahan (setoran juz amma, kompetensi, takziran) — TA-nya
+	//     ikut dijadikan kartu riwayat supaya tahun yang datanya CUMA ada di
+	//     sini (mis. setoran tahun lama) tetap muncul di tab Riwayat maupun
+	//     tab Nilai Tambahan (permintaan owner 2026-10-06: A, B, C harus
+	//     semuanya menampilkan tahun sebelumnya).
+	if rowsT, err := config.DB.Query(ctx, `
+		SELECT DISTINCT tahun_ajaran FROM (
+			SELECT tahun_ajaran FROM setoran_juz_amma   WHERE santri_id = $1
+			UNION ALL
+			SELECT tahun_ajaran FROM nilai_kompetensi   WHERE santri_id = $1
+			UNION ALL
+			SELECT tahun_ajaran FROM penilaian_takziran WHERE santri_id = $1
+		) x
+		WHERE tahun_ajaran IS NOT NULL AND tahun_ajaran <> ''`, santriID); err == nil {
+		for rowsT.Next() {
+			var ta string
+			if err := rowsT.Scan(&ta); err == nil {
+				addTA(ta)
+			}
+		}
+		rowsT.Close()
 	}
 
 	bulanHijriNames := []string{"", "Muharram", "Safar", "Rabiul Awal", "Rabiul Akhir", "Jumadil Awal", "Jumadil Akhir", "Rajab", "Sya'ban", "Ramadhan", "Syawwal", "Dzulqa'dah", "Dzulhijjah"}
@@ -246,9 +270,31 @@ func GetRiwayatAkademik(ctx context.Context, santriID int) ([]RiwayatAkademikTah
 			if err := rowsRB.Scan(&rb.Bagian, &rb.Mulai, &rb.Selesai); err == nil {
 				rbRows = append(rbRows, rb)
 				addTA(findTA(rb.Mulai))
+				// Baris yang tanggal SELESAInya jatuh di tahun lain ikut
+				// menambah kartu tahun itu (santri pindah di tengah TA).
+				if rb.Selesai != nil {
+					addTA(findTA(*rb.Selesai))
+				}
 			}
 		}
 		rowsRB.Close()
+		// Urut: tanggal_selesai DESC (NULL = masih aktif duluan), lalu
+		// tanggal_mulai DESC — SEMANTIK SAMA dengan models.KelasPadaTA
+		// (penempatan saat TA berakhir yang dipakai utk penilaian/raport),
+		// supaya label kelas di kartu riwayat tidak beda dengan tempat lain.
+		sort.SliceStable(rbRows, func(i, j int) bool {
+			si, sj := rbRows[i].Selesai, rbRows[j].Selesai
+			if si == nil && sj != nil {
+				return true
+			}
+			if si != nil && sj == nil {
+				return false
+			}
+			if si != nil && sj != nil && !si.Equal(*sj) {
+				return si.After(*sj)
+			}
+			return rbRows[i].Mulai.After(rbRows[j].Mulai)
+		})
 	} else {
 		return nil, err
 	}
@@ -272,7 +318,7 @@ func GetRiwayatAkademik(ctx context.Context, santriID int) ([]RiwayatAkademikTah
 	//      fallback terakhir agar label kelas tak kosong ("-").
 	bagianForTA := func(ta string) string {
 		if b, ok := taBounds[ta]; ok {
-			for _, rb := range rbRows { // sudah urut mulai DESC
+			for _, rb := range rbRows { // urut: selesai DESC (NULL duluan), lalu mulai DESC
 				selesai := rb.Mulai
 				if rb.Selesai != nil {
 					selesai = *rb.Selesai

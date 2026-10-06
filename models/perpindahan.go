@@ -9,14 +9,28 @@ import (
 )
 
 // batasTanggalNaikKelas menghitung tanggal tutup riwayat lama & buka riwayat
-// baru untuk proses naik kelas, berdasarkan TAHUN AJARAN AKTIF (Pengaturan).
+// baru untuk proses naik kelas, berdasarkan TAHUN AJARAN AKTIF (Pengaturan)
+// dan POSISINYA terhadap hari ini.
 //
-//	riwayat lama ditutup  = hari TERAKHIR TA aktif      (mis. 2027-03-24)
-//	riwayat baru dibuka   = hari PERTAMA TA berikutnya  (mis. 2027-03-25)
+// Dua alur yang didukung (owner 2026-10-06):
 //
-// Bila TA aktif tak punya kalender (atau TA berikutnya tak diketahui),
-// kembalikan (""," ") agar pemanggil memakai CURRENT_DATE seperti perilaku lama.
-// Ini yang membuat uji coba naik kelas tidak perlu menggeser jam server.
+//  A. TA aktif = tahun berjalan (atau mundur) → naik kelas menyeberangi
+//     AKHIR TA aktif (mis. masih 2026/2027, siapkan kelas tahun depan):
+//       tutup = hari TERAKHIR TA aktif   (mis. 2027-03-24)
+//       buka  = hari PERTAMA TA berikutnya (mis. 2027-03-25)
+//
+//  B. TA aktif sudah MAJU ke depan (owner ganti TA ke depan dulu, lalu naik
+//     kelas — alur uji coba yang disarankan) → naik kelas menyeberangi batas
+//     MASUK TA aktif:
+//       tutup = hari TERAKHIR TA sebelum aktif (mis. 2027-03-24)
+//       buka  = hari PERTAMA TA aktif          (mis. 2027-03-25)
+//
+// Tanpa cabang B, alur uji menghasilkan tutup = akhir TA depan (2028-01-01)
+// dan buka = CURRENT_DATE karena "TA berikutnya" belum punya kalender —
+// riwayat lama & baru jadi tumpang tindih dan kelas baru bocor ke tahun lama.
+//
+// Bila TA aktif tak punya kalender sama sekali, kembalikan ("","") agar
+// pemanggil memakai CURRENT_DATE seperti perilaku lama.
 func batasTanggalNaikKelas(ctx context.Context) (tutup, buka string) {
 	ta := GetTahunAjaranAktif(ctx)
 	if ta == "" {
@@ -33,12 +47,42 @@ func batasTanggalNaikKelas(ctx context.Context) (tutup, buka string) {
 		return "", ""
 	}
 	tutup = akhir.Format("2006-01-02")
-	// Awal TA berikutnya = hari pertama kalender setelah TA aktif berakhir.
+
+	// TA yang memuat hari ini ("" = hari di luar semua kalender).
+	var hariIni time.Time
+	var taHariIni string
+	if err := config.DB.QueryRow(ctx, `SELECT CURRENT_DATE`).Scan(&hariIni); err == nil {
+		_ = config.DB.QueryRow(ctx,
+			`SELECT tahun_ajaran FROM kalender_kuartal
+			  WHERE tgl_mulai <= $1 AND tgl_selesai >= $1
+			  ORDER BY tgl_mulai LIMIT 1`, hariIni).Scan(&taHariIni)
+	}
+
+	// Cabang B: TA aktif di depan tahun berjalan → seberangi batas TA aktif.
+	// Format "YYYY/YYYY" urut lexikografis = urut kronologis, jadi ">" aman.
+	if taHariIni != "" && ta > taHariIni {
+		var akhirSebelumnya time.Time
+		if err := config.DB.QueryRow(ctx,
+			`SELECT MAX(tgl_selesai) FROM kalender_kuartal WHERE tahun_ajaran < $1`,
+			ta).Scan(&akhirSebelumnya); err != nil || akhirSebelumnya.IsZero() {
+			return "", ""
+		}
+		tutup = akhirSebelumnya.Format("2006-01-02")
+		// Hari setelah akhir TA sebelumnya = hari pertama TA aktif (kalender
+		// berurutan); tetap benar walau kalender TA aktif belum diisi.
+		buka = akhirSebelumnya.AddDate(0, 0, 1).Format("2006-01-02")
+		return tutup, buka
+	}
+
+	// Cabang A: awal TA berikutnya = hari pertama kalender setelah TA aktif.
 	var awalNext time.Time
 	if err := config.DB.QueryRow(ctx,
 		`SELECT MIN(tgl_mulai) FROM kalender_kuartal WHERE tgl_mulai > $1`,
 		akhir).Scan(&awalNext); err != nil || awalNext.IsZero() {
-		return tutup, "" // tutup saja; buka pakai CURRENT_DATE lewat fallback
+		// Kalender TA berikutnya belum ada → pakai hari setelah akhir TA aktif.
+		// JANGAN jatuh ke CURRENT_DATE: tanggal campur (tutup kalender, buka
+		// hari server) membuat riwayat tumpang tindih.
+		return tutup, akhir.AddDate(0, 0, 1).Format("2006-01-02")
 	}
 	return tutup, awalNext.Format("2006-01-02")
 }

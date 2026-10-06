@@ -133,6 +133,9 @@
       </div>
 
       <!-- TAB SANTRI -->
+      <div id="ta-view-banner" class="hidden mb-4 px-4 py-3 rounded-xl bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700/50 text-sm text-amber-800 dark:text-amber-300 font-medium">
+        📅 Mode lihat — menampilkan riwayat tahun ajaran <span id="ta-view-banner-ta" class="font-bold"></span>. Tahun ajaran aktif saat ini <span id="ta-view-banner-aktif" class="font-bold"></span>; data tahun ini hanya bisa dilihat, tidak bisa diubah.
+      </div>
       <div id="panel-santri">
         <div class="glass dark:bg-slate-800/80 rounded-2xl border border-gray-200 dark:border-slate-700 p-4 mb-4">
           <div class="grid grid-cols-2 sm:flex sm:flex-row gap-3 sm:flex-wrap sm:items-end">
@@ -150,7 +153,7 @@
             </div>
             <div class="flex flex-col gap-1">
               <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">Tahun Ajaran</label>
-              <input type="text" id="sel-tahun-ajaran" class="glass-input px-3 py-2 rounded-lg text-sm w-full" readonly>
+              <select id="sel-tahun-ajaran" class="glass-input px-3 py-2 rounded-lg text-sm w-full"></select>
             </div>
             <div class="flex flex-col gap-1">
               <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">Tahun Hijriyah</label>
@@ -193,7 +196,7 @@
             </div>
             <div class="flex flex-col gap-1">
               <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">Tahun Ajaran</label>
-              <input type="text" id="sel-tahun-ajaran-p" class="glass-input px-3 py-2 rounded-lg text-sm min-w-[120px]" readonly>
+              <select id="sel-tahun-ajaran-p" class="glass-input px-3 py-2 rounded-lg text-sm min-w-[120px]"></select>
             </div>
             <div class="flex flex-col gap-1 hidden">
               <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">Tahun Hijriyah</label>

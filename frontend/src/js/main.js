@@ -1415,24 +1415,50 @@ async function loadAnakDetail(santriId) {
   home.innerHTML = `<div class="text-center py-10 text-gray-500 dark:text-gray-400 text-sm">Memuat detail anak...</div>`;
 
   try {
-    // 6 fetch paralel: profil + riwayat + catatan + 3 nilai tambahan.
+    // 4 fetch paralel: profil + riwayat + catatan + pengaturan (TA aktif utk badge).
     // Jalur A (keputusan owner 2026-10-02): endpoint penilaian-tambahan
     // sudah meng-filter wali_santri → HANYA anaknya (backend tak diubah).
-    const [resS, resR, resC, resJuz, resKomp, resBr] = await Promise.all([
+    const [resS, resR, resC, resU] = await Promise.all([
       fetch(`/api/santri/${santriId}`),
       fetch(`/api/santri/${santriId}/riwayat-akademik`),
       fetch(`/api/wali/catatan?santri_id=${santriId}`),
-      fetch('/api/penilaian-tambahan/juz-amma'),
-      fetch('/api/penilaian-tambahan/kompetensi'),
-      fetch('/api/penilaian-tambahan/bawah-rata')
+      fetch('/api/settings/umum')
     ]);
     if (!resS.ok) throw new Error('Gagal memuat profil anak');
     const s = await resS.json();
     const riwayat = resR.ok ? ((await resR.json()) || []) : [];
     const catatan = resC.ok ? ((await resC.json()) || []) : [];
-    const juzRows = resJuz.ok ? ((await resJuz.json()) || []) : [];
-    const kompRows = resKomp.ok ? ((await resKomp.json()) || []) : [];
-    const brRows = resBr.ok ? ((await resBr.json()) || []) : [];
+    const umum = resU.ok ? ((await resU.json()) || {}) : {};
+    const taAktifWali = umum.tahun_ajaran_aktif || '';
+
+    // SEMUA tahun ajaran anak — riwayat-akademik sudah mencakup tahun yang
+    // datanya cuma ada di penilaian tambahan (fix backend 2026-10-06).
+    // Tanpa riwayat sama sekali → tetap tampil utk tahun aktif.
+    let tahunList = [...new Set((riwayat || []).map(t => t.tahun_ajaran).filter(Boolean))];
+    tahunList.sort().reverse();
+    if (!tahunList.length) tahunList = [taAktifWali];
+
+    // Nilai tambahan diambil PER TAHUN (dulu cuma tahun aktif → riwayat
+    // tahun sebelumnya hilang saat TA sudah maju; permintaan owner 2026-10-06).
+    const jobs = [];
+    tahunList.forEach(ta => {
+      const q = ta ? `?tahun_ajaran=${encodeURIComponent(ta)}` : '';
+      jobs.push(fetch('/api/penilaian-tambahan/juz-amma' + q).then(r => (r.ok ? r.json() : [])).catch(() => []));
+      jobs.push(fetch('/api/penilaian-tambahan/kompetensi' + q).then(r => (r.ok ? r.json() : [])).catch(() => []));
+      jobs.push(fetch('/api/penilaian-tambahan/bawah-rata' + q).then(r => (r.ok ? r.json() : [])).catch(() => []));
+    });
+    const hasilTambahan = await Promise.all(jobs);
+    const grupTahun = tahunList.map((ta, i) => {
+      const rw = (riwayat || []).find(t => t.tahun_ajaran === ta);
+      return {
+        ta: ta || '',
+        kelas: rw ? (rw.nama_bagian || '') : '',
+        juz: hasilTambahan[i * 3] || [],
+        komp: hasilTambahan[i * 3 + 1] || [],
+        br: hasilTambahan[i * 3 + 2] || [],
+        aktif: !!ta && ta === taAktifWali
+      };
+    });
 
     // Kartu peringatan/pemberitahuan dihitung sekali: bila ADA, varian hijau
     // buildAlphaAlert ("Alhamdulillah, belum ada alpha") disembunyikan — owner
@@ -1440,7 +1466,7 @@ async function loadAnakDetail(santriId) {
     // Kartu alpha MERAH (ada alpha) tetap tampil walau ada peringatan.
     const kartuMusbat = buildPeringatanMusbat(riwayat);
     home.innerHTML = buildAnakBiodata(s) + kartuMusbat + buildAlphaAlert(riwayat, !!kartuMusbat) + buildCatatanAnak(catatan) +
-      buildNilaiTambahan(juzRows, kompRows, brRows, santriId) + buildRiwayatAkademik(riwayat);
+      buildNilaiTambahan(grupTahun, santriId) + buildRiwayatAkademik(riwayat);
     if (window.lucide) window.lucide.createIcons();
   } catch (err) {
     home.innerHTML = `<div class="text-center py-10 text-red-500 text-sm">${waliEscape(err.message)}</div>`;
@@ -1501,13 +1527,11 @@ function waliBadgeNilai(nilai, tipe) {
   return '<span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-500 dark:bg-slate-700 dark:text-gray-400">(belum dinilai)</span>';
 }
 
-function buildNilaiTambahan(juzRows, kompRows, brRows, santriId) {
-  const juz = (juzRows || []).filter(r => r.santri_id === santriId);
-  const komp = (kompRows || []).filter(r => r.santri_id === santriId);
-  const br = (brRows || []).filter(r => r.santri_id === santriId);
-  // Permintaan owner 2026-10-03/04: ketiga sub + keterangannya TAMPIL TERUS
-  // untuk semua wali — termasuk saat anak belum punya data (kotak "Belum ada data").
-
+// waliTambahanSections — merangkai 3 sub (Juz Amma, Kompetensi, Bawah Rata),
+// masing-masing disusul kotak Ketentuan (urutan sub→ket, spek owner 2026-10-04).
+// Permintaan owner 2026-10-03/04: ketiga sub + keterangannya TAMPIL TERUS
+// untuk semua wali — termasuk saat anak belum punya data (kotak "Belum ada data").
+function waliTambahanSections(juz, komp, br) {
   let sections = '';
 
   // — Setoran Juz Amma — SELALU tampil; belum ada data → "Belum ada data".
@@ -1589,14 +1613,45 @@ function buildNilaiTambahan(juzRows, kompRows, brRows, santriId) {
       ${waliKet(WALI_KET_BR)}
     </div>`;
 
-  if (!sections) return '';
+  return sections;
+}
+
+// buildNilaiTambahan — kartu Nilai Tambahan dashboard wali, ditumpuk PER TAHUN
+// AJARAN (terbaru di atas) supaya riwayat tahun sebelumnya tetap terlihat walau
+// TA aktif sudah maju (permintaan owner 2026-10-06: A, B, C sama-sama tampil).
+// grupTahun: [{ta, kelas, juz, komp, br, aktif}].
+function buildNilaiTambahan(grupTahun, santriId) {
+  const groups = (Array.isArray(grupTahun) && grupTahun.length)
+    ? grupTahun
+    : [{ ta: '', kelas: '', juz: [], komp: [], br: [], aktif: false }];
+  let body = '';
+  groups.forEach((g, idx) => {
+    const juz = (g.juz || []).filter(r => r.santri_id === santriId);
+    const komp = (g.komp || []).filter(r => r.santri_id === santriId);
+    const br = (g.br || []).filter(r => r.santri_id === santriId);
+    const sections = waliTambahanSections(juz, komp, br);
+    if (!sections) return;
+    const pemisah = idx > 0 ? 'mt-6 pt-5 border-t border-gray-100 dark:border-slate-700' : '';
+    const header = g.ta
+      ? `
+      <div class="flex flex-wrap items-center gap-2 ${pemisah}">
+        <h4 class="text-sm font-bold text-gray-900 dark:text-white">TA ${waliEscape(g.ta)}</h4>
+        ${g.kelas ? `<span class="text-xs text-indigo-600 dark:text-indigo-400">Kelas saat itu: ${waliEscape(g.kelas)}</span>` : ''}
+        ${g.aktif
+          ? '<span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300">Tahun Ajaran Aktif</span>'
+          : '<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-gray-100 text-gray-500 dark:bg-slate-700 dark:text-gray-400">Riwayat</span>'}
+      </div>`
+      : (pemisah ? `<div class="${pemisah}"></div>` : '');
+    body += `<div>${header}<div class="space-y-5">${sections}</div></div>`;
+  });
+  if (!body) return '';
   return `
   <div class="bg-white dark:bg-slate-800 rounded-3xl border border-gray-100 dark:border-slate-700/60 shadow-sm overflow-hidden mb-6">
     <div class="px-6 py-4 border-b border-gray-100 dark:border-slate-700">
       <h3 class="text-lg font-bold text-gray-900 dark:text-white">Nilai Tambahan</h3>
       <p class="text-sm text-indigo-600 dark:text-indigo-400">Setoran Juz Amma, Nilai Kompetensi & Bawah Rata-rata</p>
     </div>
-    <div class="p-6 space-y-5">${sections}</div>
+    <div class="p-6">${body}</div>
   </div>`;
 }
 

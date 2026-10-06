@@ -126,26 +126,97 @@ const selTahunHijri = document.getElementById('sel-tahun-hijri');
 const selBulanHijri = document.getElementById('sel-bulan-hijri');
 
 let cachedTingkatan = [], cachedKelas = [], cachedBagian = [];
+
+// TA aktif (dari Pengaturan) = SATU-SATUNYA tahun yang boleh ditulis.
+// activeTahunAjaran = tahun yang SEDANG DILIHAT (bisa tahun lama → mode lihat).
+let taAktifGlobal = '';
 let activeTahunAjaran = '';
 let activeTahunHijri = '';
+const selTahunAjaran = document.getElementById('sel-tahun-ajaran');
+const selTahunAjaranP = document.getElementById('sel-tahun-ajaran-p');
+const selTahunHijriP = document.getElementById('sel-tahun-hijri-p');
+const taViewBanner = document.getElementById('ta-view-banner');
+
+function modeLihat() {
+  return !!taAktifGlobal && activeTahunAjaran !== taAktifGlobal;
+}
+
+function updateTaViewBanner() {
+  const on = modeLihat();
+  if (taViewBanner) {
+    taViewBanner.classList.toggle('hidden', !on);
+    const a = document.getElementById('ta-view-banner-ta');
+    const b = document.getElementById('ta-view-banner-aktif');
+    if (a) a.textContent = activeTahunAjaran || '-';
+    if (b) b.textContent = taAktifGlobal || '-';
+  }
+  // Mode lihat: tombol simpan disembunyikan (grid memanggil ulang saat muat).
+  btnSaveSantri?.classList.toggle('hidden', on);
+  btnSavePengajar?.classList.toggle('hidden', on);
+}
 
 async function loadSettings() {
   try {
-    const res = await fetch('/api/settings/umum');
+    const [res, resT] = await Promise.all([
+      fetch('/api/settings/umum'),
+      fetch('/api/kalender/tahun')
+    ]);
     const data = await res.json();
-    activeTahunAjaran = data.tahun_ajaran_aktif || '';
+    taAktifGlobal = data.tahun_ajaran_aktif || '';
+    activeTahunAjaran = taAktifGlobal;
     activeTahunHijri = data.tahun_hijri_aktif || '1447';
+    // Daftar tahun dari kalender (DESC) — persis menu Penilaian.
+    let tahunList = resT.ok ? await resT.json() : [];
+    if (!Array.isArray(tahunList)) tahunList = [];
+    if (taAktifGlobal && !tahunList.includes(taAktifGlobal)) tahunList.unshift(taAktifGlobal);
+    const ops = tahunList.map(t =>
+      `<option value="${t}">${t}${t === taAktifGlobal ? ' (aktif)' : ''}</option>`).join('');
+    [selTahunAjaran, selTahunAjaranP].forEach(sel => {
+      if (!sel) return;
+      sel.innerHTML = ops;
+      sel.value = activeTahunAjaran;
+    });
   } catch (_) {
-    activeTahunAjaran = '';
+    activeTahunAjaran = taAktifGlobal || '';
     activeTahunHijri = '1447';
   }
 
   // Set readonly fields
-  document.getElementById('sel-tahun-ajaran').value = activeTahunAjaran;
   selTahunHijri.value = activeTahunHijri;
-  document.getElementById('sel-tahun-ajaran-p').value = activeTahunAjaran;
-  document.getElementById('sel-tahun-hijri-p').value = activeTahunHijri;
+  if (selTahunHijriP) selTahunHijriP.value = activeTahunHijri;
+  updateTaViewBanner();
 }
+
+// Ganti tahun ajaran yang DILIHAT: muat ulang kalender Hijri, daftar bulan,
+// dan grid yang sedang terbuka. Menulis data hanya boleh di tahun aktif.
+async function onTahunAjaranChange(ta) {
+  if (!ta || ta === activeTahunAjaran) return;
+  activeTahunAjaran = ta;
+  if (selTahunAjaran && selTahunAjaran.value !== ta) selTahunAjaran.value = ta;
+  if (selTahunAjaranP && selTahunAjaranP.value !== ta) selTahunAjaranP.value = ta;
+  kalenderRange = null;
+  await loadKalenderRange();
+  // Pair Hijri mengikuti tahun yang dipilih (dari kalender semester TA itu).
+  if (kalenderRange) {
+    activeTahunHijri = kalenderRange.mulai.thn === kalenderRange.selesai.thn
+      ? String(kalenderRange.mulai.thn)
+      : `${kalenderRange.mulai.thn}/${kalenderRange.selesai.thn}`;
+    selTahunHijri.value = activeTahunHijri;
+    if (selTahunHijriP) selTahunHijriP.value = activeTahunHijri;
+  }
+  populateBulanDropdown(selBulanHijri);
+  updateTaViewBanner();
+  // Muat ulang grid yang sedang terbuka supaya langsung ganti tahun.
+  if (gridContainer && !gridContainer.classList.contains('hidden') && selBagian.value) {
+    await loadGridSantri();
+  }
+  if (gridContainerP && !gridContainerP.classList.contains('hidden') && selTingkatanP.value) {
+    await loadGridPengajar();
+  }
+}
+[selTahunAjaran, selTahunAjaranP].forEach(sel => {
+  sel?.addEventListener('change', () => onTahunAjaranChange(sel.value));
+});
 
 // 2. Auth Check
 let currentRoles = [];
@@ -342,9 +413,9 @@ async function loadGridSantri() {
   const activeBagian = cachedBagian.find(b => b.id == bagianId);
   const canEdit = activeBagian ? activeBagian.can_edit_absensi : false;
 
-  renderGridSantri(canEdit);
+  renderGridSantri(canEdit && !modeLihat());
   gridContainer.classList.remove('hidden');
-  btnSaveSantri?.classList.toggle('hidden', !canEdit || santriList.length === 0);
+  btnSaveSantri?.classList.toggle('hidden', !canEdit || modeLihat() || santriList.length === 0);
 }
 
 // Navigasi santri (◀ ▶)
@@ -354,7 +425,7 @@ function moveSantri(delta) {
   syncSantriGridFromDOM();
   currentSantriIdx = (currentSantriIdx + delta + santriList.length) % santriList.length;
   const activeBagian = cachedBagian.find(b => b.id == currentBagianId);
-  renderGridSantri(activeBagian ? activeBagian.can_edit_absensi : false);
+  renderGridSantri(activeBagian ? (activeBagian.can_edit_absensi && !modeLihat()) : false);
 }
 window.moveSantri = moveSantri;
 
@@ -435,7 +506,8 @@ function renderGridSantri(canEdit = false) {
 
 btnSaveSantri?.addEventListener('click', async () => {
   if (!santriList.length) return;
-  const tahunAjaran = activeTahunAjaran;
+  if (modeLihat()) { alert('Mode lihat — absensi hanya bisa diubah pada tahun ajaran aktif (' + taAktifGlobal + ').'); return; }
+  const tahunAjaran = taAktifGlobal;
   const entries = [];
 
   gridEl.querySelectorAll('input[data-bulan]').forEach(inp => {
@@ -521,7 +593,7 @@ async function loadGridPengajar() {
   currentKelasP = kelasId;
 
   const isAdminOrPimpinan = currentRoles.includes('admin') || currentRoles.includes('pimpinan');
-  const canEdit = isAdminOrPimpinan || currentRoles.includes('mufatish') || currentRoles.includes('muroqib');
+  const canEdit = (isAdminOrPimpinan || currentRoles.includes('mufatish') || currentRoles.includes('muroqib')) && !modeLihat();
 
   renderGridPengajar(canEdit);
   gridContainerP.classList.remove('hidden');
@@ -576,6 +648,7 @@ function renderGridPengajar(canEdit = false) {
 
 btnSavePengajar?.addEventListener('click', async () => {
   if (!pengajarKuartalList.length) return;
+  if (modeLihat()) { alert('Mode lihat — absensi hanya bisa diubah pada tahun ajaran aktif (' + taAktifGlobal + ').'); return; }
 
   // Kumpulkan nilai per pengajar dari input K1/K23/K4.
   const byPid = {};
@@ -596,7 +669,7 @@ btnSavePengajar?.addEventListener('click', async () => {
     const res = await fetch('/api/absensi-pengajar-kuartal', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tahun_ajaran: activeTahunAjaran, data })
+      body: JSON.stringify({ tahun_ajaran: taAktifGlobal, data })
     });
     if (!res.ok) throw new Error(await res.text());
     await res.json();
