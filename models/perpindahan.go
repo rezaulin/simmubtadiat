@@ -3,6 +3,7 @@ package models
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/mubtadiaat/app/config"
 )
@@ -21,19 +22,25 @@ func batasTanggalNaikKelas(ctx context.Context) (tutup, buka string) {
 	if ta == "" {
 		return "", ""
 	}
+	// CATATAN PENTING: kolomnya bertipe DATE. pgx mengirimnya sebagai date biner
+	// (OID 1082) dan GAGAL di-scan ke *string ("cannot scan date in binary format
+	// into *string"). Harus lewat time.Time dulu. Ini pernah bikin fitur ini
+	// seolah tidak jalan padahal logikanya benar.
+	var akhir time.Time
 	if err := config.DB.QueryRow(ctx,
 		`SELECT MAX(tgl_selesai) FROM kalender_kuartal WHERE tahun_ajaran = $1`,
-		ta).Scan(&tutup); err != nil || tutup == "" {
+		ta).Scan(&akhir); err != nil || akhir.IsZero() {
 		return "", ""
 	}
-	// Awal TA berikutnya = hari setelah TA aktif berakhir. Cari dari kalender:
-	// baris kalender pertama yang tgl_mulainya > akhir TA aktif.
+	tutup = akhir.Format("2006-01-02")
+	// Awal TA berikutnya = hari pertama kalender setelah TA aktif berakhir.
+	var awalNext time.Time
 	if err := config.DB.QueryRow(ctx,
-		`SELECT MIN(tgl_mulai) FROM kalender_kuartal WHERE tgl_mulai > $1::date`,
-		tutup).Scan(&buka); err != nil || buka == "" {
+		`SELECT MIN(tgl_mulai) FROM kalender_kuartal WHERE tgl_mulai > $1`,
+		akhir).Scan(&awalNext); err != nil || awalNext.IsZero() {
 		return tutup, "" // tutup saja; buka pakai CURRENT_DATE lewat fallback
 	}
-	return tutup, buka
+	return tutup, awalNext.Format("2006-01-02")
 }
 
 // PindahBagian memindahkan santri (satu atau banyak) ke bagian baru dengan menutup riwayat lama.
