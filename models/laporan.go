@@ -148,9 +148,13 @@ func GetRaportSantri(ctx context.Context, santriID int, semester int, tahunAjara
 		 WHERE s.id = $1`, santriID).Scan(&bagianID, &bagianNama, &kelasNama, &tingkatanNama)
 	// Ambil kelas/bagian PADA tahun ajaran yang dicetak, bukan posisi sekarang —
 	// raport tahun lama salah kelas setelah santri naik kelas (owner 2026-10-05).
-	// Bila santri tak punya riwayat untuk TA itu, dipertahankan hasil query atas.
+	// BagianID ikut ditimpa ke bagian pada TA itu: seluruh isi raport (mapel,
+	// nomor tamrin, nama mudarris) harus memakai kelas & bagian tahun yang
+	// dicetak, bukan kelas sekarang — kalau tidak, muncul dua kelas bercampur.
 	if p, err := KelasPadaTA1(ctx, santriID, tahunAjaran); err == nil && p.Kelas != "" {
 		bagianNama, kelasNama, tingkatanNama = p.BagianRincian, p.Kelas, p.Tingkatan
+		bid := p.BagianID
+		bagianID = &bid
 	}
 	result.BagianNama = bagianNama
 	result.KelasNama = kelasNama
@@ -171,16 +175,17 @@ func GetRaportSantri(ctx context.Context, santriID int, semester int, tahunAjara
 		}
 
 		var mudarris string
-		// Mustahiq bagian diambil dari tabel mustahiq_bagian (tabel penugasan
-		// resmi; pengajar_bagian WHERE peran='mustahiq' isinya kosong).
-		// Diurutkan tahun_ajaran DESC agar TA terbaru menang (2026-08 fix).
+		// Mustahiq bagian (ttd المدرس) diambil per (bagian, TAHUN AJARAN) supaya
+		// raport tahun lama menampilkan pengajar tahun itu, bukan pengajar
+		// sekarang (owner 2026-10-05, opsi A). Bila TA itu belum punya baris,
+		// jatuh ke baris terbaru bagian tsb agar ttd tak kosong.
 		config.DB.QueryRow(ctx,
 			`SELECT COALESCE(NULLIF(p.nama_arab, ''), p.nama)
 			 FROM mustahiq_bagian mb
 			 JOIN pengajar p ON mb.pengajar_id = p.id
 			 WHERE mb.bagian_id = $1
-			 ORDER BY mb.tahun_ajaran DESC
-			 LIMIT 1`, *bagianID).Scan(&mudarris)
+			 ORDER BY (mb.tahun_ajaran = $2) DESC, mb.tahun_ajaran DESC, mb.created_at DESC
+			 LIMIT 1`, *bagianID, tahunAjaran).Scan(&mudarris)
 		result.NamaMudarris = mudarris
 
 		// Nama Mudir (مدير المعهد) berdasarkan tingkatan bagian santri.
@@ -205,13 +210,20 @@ func GetRaportSantri(ctx context.Context, santriID int, semester int, tahunAjara
 		q1, q2 = 3, 4
 	}
 
+	// Kelas & bagian sumber mapel = bagian pada TA yang DICETAK (bagianID sudah
+	// ditimpa di langkah 2b). Tanpa ini, raport tahun lama mencampur mapel kelas
+	// lama + kelas sekarang ("2 kelas" — laporan owner 2026-10-05).
+	mapelBagianID := 0
+	if bagianID != nil {
+		mapelBagianID = *bagianID
+	}
+
 	rows, err := config.DB.Query(ctx,
 		`SELECT m.nama_mapel, COALESCE(m.nama_kitab, ''), m.kategori, nk.nilai_akhir, na.nilai_am
 		 FROM mata_pelajaran m
-		 JOIN santri s ON s.id = $1
-		 JOIN bagian b ON s.bagian_id = b.id
+		 JOIN bagian b ON b.id = $4
 		 LEFT JOIN nilai_khos nk ON m.id = nk.mapel_id AND nk.santri_id = $1 AND nk.semester = $2 AND nk.tahun_ajaran = $3
-		 LEFT JOIN nilai_am na ON m.id = na.mapel_id AND na.bagian_id = s.bagian_id AND na.semester = $2 AND na.tahun_ajaran = $3
+		 LEFT JOIN nilai_am na ON m.id = na.mapel_id AND na.bagian_id = $4 AND na.semester = $2 AND na.tahun_ajaran = $3
 		 WHERE ((m.kelas_id = b.kelas_id AND m.tingkatan_id = b.tingkatan_id)
 		        OR (
 		            -- Mapel kelas lama hanya muncul jika santri BELUM punya nilai apapun
@@ -230,8 +242,8 @@ func GetRaportSantri(ctx context.Context, santriID int, semester int, tahunAjara
 		       -- Mapel yang hanya diajar 1 kuartal/1 semester tetap muncul, nilainya
 		       -- kosong ("-") di semester yang tidak diajarkan. Filter aktif_kuartal
 		       -- dinonaktifkan (OR TRUE) — $4/$5 tetap dikirim agar placeholder valid.
-		       AND (m.aktif_kuartal @> to_jsonb($4::int) OR m.aktif_kuartal @> to_jsonb($5::int) OR TRUE)
-		 ORDER BY m.urutan ASC, m.id ASC`, santriID, semester, tahunAjaran, q1, q2)
+		       AND (m.aktif_kuartal @> to_jsonb($5::int) OR m.aktif_kuartal @> to_jsonb($6::int) OR TRUE)
+		 ORDER BY m.urutan ASC, m.id ASC`, santriID, semester, tahunAjaran, mapelBagianID, q1, q2)
 
 	if err == nil {
 		defer rows.Close()

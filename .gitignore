@@ -43,3 +43,5 @@ tmp_deploy_folder/
 # Backup harian (dump & log jangan masuk repo)
 backup/dumps/
 backup/logs/
+backup/*.sql
+backup/*.csv

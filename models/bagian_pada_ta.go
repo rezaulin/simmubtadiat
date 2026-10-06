@@ -66,6 +66,20 @@ func KelasPadaTA(ctx context.Context, santriIDs []int, tahunAjaran string) (map[
 	defer rows.Close()
 
 	seen := map[int]bool{}
+	// hitung berapa baris yang beririsan dengan TA ini per santri — supaya
+	// baris "ganda" (riwayat bolak-balik pada tanggal sama, sisa pindah-pindah
+	// kelas) bisa dikesampingkan.
+	irisan := map[int]int{}
+	type hit struct {
+		bid           int
+		tingkatan     string
+		kelas         string
+		bagianRincian string
+		namaBagian    string
+		selesai       *time.Time
+		mulai         time.Time
+	}
+	perSantri := map[int][]hit{}
 	for rows.Next() {
 		var sid, bid int
 		var tglMulai time.Time
@@ -74,11 +88,6 @@ func KelasPadaTA(ctx context.Context, santriIDs []int, tahunAjaran string) (map[
 		if err := rows.Scan(&sid, &bid, &tglMulai, &tglSelesai, &tingkatan, &kelas, &bagianRincian, &namaBagian); err != nil {
 			return nil, err
 		}
-		// Baris sudah terurut; yang pertama kali beririsan itulah penempatan
-		// pada TA ini, jadi santri yang sudah keisi tidak diproses lagi.
-		if seen[sid] {
-			continue
-		}
 		akhir := time.Now().AddDate(100, 0, 0) // masih aktif
 		if tglSelesai != nil {
 			akhir = *tglSelesai
@@ -86,13 +95,34 @@ func KelasPadaTA(ctx context.Context, santriIDs []int, tahunAjaran string) (map[
 		if tglMulai.After(selesai) || akhir.Before(mulai) {
 			continue // tidak beririsan
 		}
+		irisan[sid]++
+		perSantri[sid] = append(perSantri[sid], hit{bid, tingkatan, kelas, bagianRincian, namaBagian, tglSelesai, tglMulai})
+	}
+	for sid, hits := range perSantri {
+		if seen[sid] {
+			continue
+		}
+		// Baris sudah terurut selesai DESC, mulai DESC. Kalau ada baris dengan
+		// tanggal_mulai = tanggal_selesai (rimbun: santri pindah masuk & keluar
+		// di hari yang sama), baris itu menandakan riwayat yang saling menimpa.
+		// Pilih baris pertama yang TIDAK rimbun bila mayoritas bukan rimbun;
+		// kalau semua rimbun, pakai yang pertama agar data tidak kosong.
+		pilih := hits[0]
+		if irisan[sid] > 1 {
+			for _, h := range hits {
+				if h.selesai == nil || !h.selesai.Equal(h.mulai) {
+					pilih = h
+					break
+				}
+			}
+		}
 		seen[sid] = true
 		out[sid] = PenempatanTA{
-			BagianID:      bid,
-			Tingkatan:     tingkatan,
-			Kelas:         kelas,
-			NamaBagian:    namaBagian,
-			BagianRincian: bagianRincian,
+			BagianID:      pilih.bid,
+			Tingkatan:     pilih.tingkatan,
+			Kelas:         pilih.kelas,
+			NamaBagian:    pilih.namaBagian,
+			BagianRincian: pilih.bagianRincian,
 		}
 	}
 	return out, rows.Err()

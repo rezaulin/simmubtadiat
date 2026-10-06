@@ -434,9 +434,15 @@ func GetJuzAmma(ctx context.Context, tahunAjaran string, filter FilterBagian, st
 	}
 	filtered := make([]kandidat, 0, len(kands))
 	for _, c := range kands {
-		if p, ok := padaTA[c.id]; ok {
-			c.tingkatan, c.kelas, c.bagian = p.Tingkatan, p.Kelas, p.NamaBagian
+		p, ok := padaTA[c.id]
+		if !ok {
+			// TIDAK ada riwayat penempatan pada TA ini → santri belum punya
+			// kelas pada tahun itu. JANGAN jatuh ke kelas sekarang (itu yang
+			// dulu membuat target tahun lama ikut berubah setelah naik kelas).
+			// Tahun berikutnya harus tampil kosong sampai ada penilaian.
+			continue
 		}
+		c.tingkatan, c.kelas, c.bagian = p.Tingkatan, p.Kelas, p.NamaBagian
 		// I'dadiyah (dan kelas tanpa rentang) tidak ikut — keputusan owner.
 		if _, ok := SuratTargetJuz(c.tingkatan, c.kelas); !ok {
 			continue
@@ -613,9 +619,13 @@ func ensureSetoranRows(ctx context.Context, santriID int, tahunAjaran string) (i
 	// Rentang surat dibuat sesuai kelas santri PADA tahun ajaran ini — kalau
 	// pakai kelas sekarang, riwayat tahun lama ikut melebar/menyesuaikan kelas
 	// baru setelah naik kelas (bug owner 2026-10-05).
-	if p, err := KelasPadaTA1(ctx, santriID, tahunAjaran); err == nil && p.Kelas != "" {
-		tn, kelas = p.Tingkatan, p.Kelas
+	p, err := KelasPadaTA1(ctx, santriID, tahunAjaran)
+	if err != nil || p.Kelas == "" {
+		// Tidak ada penempatan pada TA tsb → jangan pakai kelas sekarang
+		// (baris setoran akan lahir di tahun ajaran yang salah).
+		return 0, ErrJuzTidakBerlaku
 	}
+	tn, kelas = p.Tingkatan, p.Kelas
 	target, ok := SuratTargetJuz(tn, kelas)
 	if !ok {
 		return 0, ErrJuzTidakBerlaku
@@ -771,11 +781,14 @@ func GetKompetensi(ctx context.Context, tahunAjaran, kategori, hasil string, fil
 	}
 	out := []BarisKompetensi{}
 	for _, s := range sis {
-		// Kelas & label bagian pada TA ini (fallback: penempatan sekarang).
-		tk, kl, bid, bag := s.tingkatan, s.kelas, s.bagianID, s.bagian
-		if p, ok := padaTA[s.id]; ok {
-			tk, kl, bid, bag = p.Tingkatan, p.Kelas, p.BagianID, p.NamaBagian
+		// Kelas & label bagian pada TA ini. TANPA baris riwayat = santri belum
+		// menempati kelas apa pun pada tahun itu → lewati (tahun berikutnya
+		// kosong sampai ada penilaian). Jangan fallback ke kelas sekarang.
+		p, ok := padaTA[s.id]
+		if !ok {
+			continue
 		}
+		tk, kl, bid, bag := p.Tingkatan, p.Kelas, p.BagianID, p.NamaBagian
 		for _, kat := range kats {
 			if !KompetensiEligible(tk, kl, kat) {
 				continue
@@ -834,8 +847,13 @@ func SaveKompetensi(ctx context.Context, in KompetensiInput) error {
 	// Kelas yang berlaku bagi TA INI — bukan kelas sekarang. Tanpa ini, nilai
 	// tahun lama divalidasi memakai kelas BARU setelah santri naik kelas, jadi
 	// kategori yang salah bisa tersimpan (dan kategori benar justru ditolak).
-	if p, err := KelasPadaTA1(ctx, in.SantriID, in.TahunAjaran); err == nil && p.Kelas != "" {
+	p, err := KelasPadaTA1(ctx, in.SantriID, in.TahunAjaran)
+	if err == nil && p.Kelas != "" {
 		tn, kelas = p.Tingkatan, p.Kelas
+	} else {
+		// Tidak ada penempatan pada TA tsb → jangan pakai kelas sekarang,
+		// sebab itu menulis nilai ke tahun ajaran yang bukan miliknya.
+		return ErrKompetensiTidakBerlaku
 	}
 	if !KompetensiEligible(tn, kelas, in.Kategori) {
 		return ErrKompetensiTidakBerlaku
