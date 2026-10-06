@@ -7,14 +7,55 @@ import (
 	"github.com/mubtadiaat/app/config"
 )
 
+// batasTanggalNaikKelas menghitung tanggal tutup riwayat lama & buka riwayat
+// baru untuk proses naik kelas, berdasarkan TAHUN AJARAN AKTIF (Pengaturan).
+//
+//	riwayat lama ditutup  = hari TERAKHIR TA aktif      (mis. 2027-03-24)
+//	riwayat baru dibuka   = hari PERTAMA TA berikutnya  (mis. 2027-03-25)
+//
+// Bila TA aktif tak punya kalender (atau TA berikutnya tak diketahui),
+// kembalikan (""," ") agar pemanggil memakai CURRENT_DATE seperti perilaku lama.
+// Ini yang membuat uji coba naik kelas tidak perlu menggeser jam server.
+func batasTanggalNaikKelas(ctx context.Context) (tutup, buka string) {
+	ta := GetTahunAjaranAktif(ctx)
+	if ta == "" {
+		return "", ""
+	}
+	if err := config.DB.QueryRow(ctx,
+		`SELECT MAX(tgl_selesai) FROM kalender_kuartal WHERE tahun_ajaran = $1`,
+		ta).Scan(&tutup); err != nil || tutup == "" {
+		return "", ""
+	}
+	// Awal TA berikutnya = hari setelah TA aktif berakhir. Cari dari kalender:
+	// baris kalender pertama yang tgl_mulainya > akhir TA aktif.
+	if err := config.DB.QueryRow(ctx,
+		`SELECT MIN(tgl_mulai) FROM kalender_kuartal WHERE tgl_mulai > $1::date`,
+		tutup).Scan(&buka); err != nil || buka == "" {
+		return tutup, "" // tutup saja; buka pakai CURRENT_DATE lewat fallback
+	}
+	return tutup, buka
+}
+
 // PindahBagian memindahkan santri (satu atau banyak) ke bagian baru dengan menutup riwayat lama.
 // Digunakan untuk naik kelas (batch) maupun mutasi (individu).
+//
+// Tanggal riwayat TIDAK memakai CURRENT_DATE, melainkan batas TAHUN AJARAN
+// AKTIF (Pengaturan > Tahun Ajaran, opsi "sumber TA = TA aktif"):
+//   - riwayat lama ditutup pada HARI TERAKHIR TA aktif
+//   - riwayat baru dibuka pada HARI PERTAMA TA berikutnya
+// Dengan begitu naik kelas yang dilakukan kapan pun tetap tercatat di tahun
+// ajaran yang benar, tanpa perlu menggeser jam server. Bila kalender TA tidak
+// lengkap, jatuh kembali ke CURRENT_DATE (perilaku lama) supaya tidak gagal.
 func PindahBagian(ctx context.Context, bagianAsalID int, santriIDs []int, bagianBaruID int, pindahMustahiq bool, roles []string, userID int) error {
 	tx, err := config.DB.Begin(ctx)
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback(ctx)
+
+	// Batas tanggal untuk riwayat: hari terakhir TA aktif & hari pertama TA
+	// berikutnya. Kosong = kalender belum lengkap → pakai CURRENT_DATE.
+	tglTutup, tglBuka := batasTanggalNaikKelas(ctx)
 
 	// Cek otorisasi mustahiq
 	isGlobal := false
@@ -45,18 +86,34 @@ func PindahBagian(ctx context.Context, bagianAsalID int, santriIDs []int, bagian
 
 	for _, sID := range santriIDs {
 		// 1. Update riwayat_bagian lama yang belum selesai
-		_, err := tx.Exec(ctx,
-			`UPDATE riwayat_bagian 
-			 SET tanggal_selesai = CURRENT_DATE 
-			 WHERE santri_id = $1 AND tanggal_selesai IS NULL`, sID)
-		if err != nil {
-			return err
+		if tglTutup != "" {
+			_, err := tx.Exec(ctx,
+				`UPDATE riwayat_bagian
+				 SET tanggal_selesai = $2::date
+				 WHERE santri_id = $1 AND tanggal_selesai IS NULL`, sID, tglTutup)
+			if err != nil {
+				return err
+			}
+		} else {
+			_, err := tx.Exec(ctx,
+				`UPDATE riwayat_bagian 
+				 SET tanggal_selesai = CURRENT_DATE 
+				 WHERE santri_id = $1 AND tanggal_selesai IS NULL`, sID)
+			if err != nil {
+				return err
+			}
 		}
 
-		// 2. Buat riwayat_bagian baru
-		_, err = tx.Exec(ctx,
-			`INSERT INTO riwayat_bagian (santri_id, bagian_id, tanggal_mulai) 
-			 VALUES ($1, $2, CURRENT_DATE)`, sID, bagianBaruID)
+		// 2. Buat riwayat_bagian baru (mulai = hari pertama TA berikutnya)
+		if tglBuka != "" {
+			_, err = tx.Exec(ctx,
+				`INSERT INTO riwayat_bagian (santri_id, bagian_id, tanggal_mulai) 
+				 VALUES ($1, $2, $3::date)`, sID, bagianBaruID, tglBuka)
+		} else {
+			_, err = tx.Exec(ctx,
+				`INSERT INTO riwayat_bagian (santri_id, bagian_id, tanggal_mulai) 
+				 VALUES ($1, $2, CURRENT_DATE)`, sID, bagianBaruID)
+		}
 		if err != nil {
 			return err
 		}
