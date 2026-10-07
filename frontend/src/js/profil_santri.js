@@ -471,6 +471,10 @@ function populateRiwayat(riwayatArr, bulanListByTA = {}) {
   // Sort descending by tahun_ajaran
   riwayatArr.sort((a, b) => b.tahun_ajaran.localeCompare(a.tahun_ajaran));
 
+  // Blok HTML per TA disimpan terpisah → dropdown filter memilih satu tahun
+  // (spek bos 2026-10-07, pola sama dengan tab Nilai Tambahan).
+  const sectionPerTA = {};
+
   riwayatArr.forEach(taData => {
     const isLatest = riwayatArr.indexOf(taData) === 0;
     
@@ -696,8 +700,34 @@ function populateRiwayat(riwayatArr, bulanListByTA = {}) {
       </div>
     `;
 
-    riwayatContainer.innerHTML += cardHtml;
+    sectionPerTA[taData.tahun_ajaran] = cardHtml;
   });
+
+  // Filter Tahun Ajaran (spek bos 2026-10-07): default TA AKTIF, ganti
+  // pilihan → tampilkan blok tahun itu saja (raport + rekap absensi ikut
+  // terfilter), tanpa reload. Bila TA aktif tak ada di riwayat santri,
+  // pakai tahun terbaru — sama persis dengan tab Nilai Tambahan.
+  const tahun = riwayatArr.map((t) => t.tahun_ajaran);
+  const renderTA = (ta) => { riwayatContainer.innerHTML = sectionPerTA[ta] || ''; };
+  const selA = document.getElementById('akademik-tahun');
+  const wrapA = document.getElementById('akademik-tahun-wrap');
+  fetch('/api/settings/umum')
+    .then((r) => (r.ok ? r.json() : null))
+    .catch(() => null)
+    .then((umum) => {
+      const aktif = (umum && umum.tahun_ajaran_aktif) || '';
+      if (selA) {
+        selA.innerHTML = tahun.map((t) =>
+          `<option value="${t}">${t}${t === aktif ? ' (aktif)' : ''}</option>`).join('');
+        selA.value = tahun.includes(aktif) ? aktif : tahun[0];
+        if (!selA.dataset.bound) {
+          selA.dataset.bound = '1';
+          selA.addEventListener('change', () => renderTA(selA.value));
+        }
+      }
+      if (wrapA) { wrapA.classList.remove('hidden'); wrapA.classList.add('flex'); }
+      renderTA((selA && selA.value) || tahun[0]);
+    });
 }
 
 document.addEventListener('DOMContentLoaded', loadData);
