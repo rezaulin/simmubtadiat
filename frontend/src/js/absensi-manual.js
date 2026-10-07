@@ -382,8 +382,11 @@ async function loadGridSantri() {
   bulanListTA = buildBulanListTA();
   if (bulanListTA.length === 0) { alert('Kalender akademik belum diset (Settings).'); return; }
 
-  // Load santri di bagian
-  const resSantri = await fetch(`/api/santri/by-bagian/${bagianId}`);
+  // Load santri di bagian — tahun ajaran yang sedang dilihat ikut dikirim,
+  // supaya daftar santri mengikuti riwayat keanggotaan tahun itu (lihat
+  // models.GetSantriByBagian ?tahun_ajaran=), bukan hanya anggota sekarang.
+  const resSantri = await fetch(`/api/santri/by-bagian/${bagianId}` +
+      (activeTahunAjaran ? `?tahun_ajaran=${encodeURIComponent(activeTahunAjaran)}` : ''));
   const santriJson = await resSantri.json();
   santriList = (Array.isArray(santriJson) ? santriJson : []).sort((a, b) => (a.nama || '').localeCompare(b.nama || ''));
 

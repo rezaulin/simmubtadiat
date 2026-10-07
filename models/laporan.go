@@ -156,6 +156,65 @@ func GetRaportSantri(ctx context.Context, santriID int, semester int, tahunAjara
 		bid := p.BagianID
 		bagianID = &bid
 	}
+
+	// Pencocokan kelas ↔ nilai (laporan owner 2026-10-07): bila kelas hasil
+	// riwayat di atas TIDAK punya nilai sama sekali untuk TA ini, sedangkan
+	// santri punya nilai khos di kelas lain pada TA yang sama (nilainya
+	// tercatat di kelas lama/baru saat pindah), seluruh kepala raport ikut
+	// dipindah ke kelas yang berisi nilai itu. Tanpa ini rapot tampil "-"
+	// padahal di detail santri nilainya ada (contoh: Erika Kamelia — nilai
+	// tersimpan di 1 Aliyah, rapot mengambil 3 Tsanawiyah → semua kosong).
+	// Bila di mana pun tidak ada nilai, posisi tetap seperti semula.
+	if bagianID != nil && tahunAjaran != "" {
+		var kelasID, tingID int
+		if err := config.DB.QueryRow(ctx,
+			`SELECT kelas_id, tingkatan_id FROM bagian WHERE id = $1`, *bagianID).
+			Scan(&kelasID, &tingID); err == nil {
+			var adaNilai bool
+			_ = config.DB.QueryRow(ctx, `
+				SELECT EXISTS (SELECT 1 FROM nilai_khos nk
+				               JOIN mata_pelajaran m ON m.id = nk.mapel_id
+				               WHERE nk.santri_id = $1 AND nk.tahun_ajaran = $2
+				                 AND m.kelas_id = $3 AND m.tingkatan_id = $4)`,
+				santriID, tahunAjaran, kelasID, tingID).Scan(&adaNilai)
+
+			if !adaNilai {
+				var altID int
+				var altBagian, altKelas, altTing string
+				// Cari kelas lain pada santri ini yang BERISI nilai khos untuk
+				// TA ini. Tanggal riwayat tidak diwajibkan beririsan dengan TA
+				// (kadang tanggal naik kelas diisi belakangan) — yang beririsan
+				// tetap diprioritaskan, lalu yang masih aktif / terbaru.
+				errAlt := config.DB.QueryRow(ctx, `
+					SELECT b.id, COALESCE(b.nama_bagian, ''), COALESCE(k.nama, ''), COALESCE(t.nama, '')
+					FROM riwayat_bagian r
+					JOIN bagian b         ON b.id = r.bagian_id
+					JOIN kelas k          ON k.id = b.kelas_id
+					LEFT JOIN tingkatan t ON t.id = b.tingkatan_id
+					WHERE r.santri_id = $1
+					  AND EXISTS (SELECT 1 FROM nilai_khos nk
+					              JOIN mata_pelajaran m ON m.id = nk.mapel_id
+					              WHERE nk.santri_id = r.santri_id
+					                AND nk.tahun_ajaran = $2
+					                AND m.kelas_id = b.kelas_id
+					                AND m.tingkatan_id = b.tingkatan_id)
+					ORDER BY (r.tanggal_mulai <= (SELECT MAX(tgl_selesai) FROM kalender_kuartal
+					                               WHERE tahun_ajaran = $2)
+					          AND (r.tanggal_selesai IS NULL
+					               OR r.tanggal_selesai >= (SELECT MIN(tgl_mulai) FROM kalender_kuartal
+					                                        WHERE tahun_ajaran = $2))) DESC,
+					         (r.tanggal_selesai IS NULL) DESC, r.tanggal_selesai DESC,
+					         r.tanggal_mulai DESC
+					LIMIT 1`, santriID, tahunAjaran).
+					Scan(&altID, &altBagian, &altKelas, &altTing)
+				if errAlt == nil && altID > 0 && altID != *bagianID {
+					bid := altID
+					bagianID = &bid
+					bagianNama, kelasNama, tingkatanNama = altBagian, altKelas, altTing
+				}
+			}
+		}
+	}
 	result.BagianNama = bagianNama
 	result.KelasNama = kelasNama
 	result.TingkatanNama = tingkatanNama

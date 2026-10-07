@@ -354,8 +354,11 @@ btnLoadSiswa.addEventListener('click', async () => {
         await loadRekapKalenderRange(tahunAjaran);
         rekapBulanList = buildBulanListTA(tahunAjaran);
 
-        // Santri list
-        const resSantri = await fetch(`/api/santri/by-bagian/${bagianId}`);
+        // Santri list — tahun ajaran ikut dikirim supaya daftar mengikuti
+        // riwayat keanggotaan tahun itu (santri pindah/naik kelas tetap
+        // tampil di kelas lamanya), sama seperti menu Cetak Rapot.
+        const resSantri = await fetch(`/api/santri/by-bagian/${bagianId}` +
+            (tahunAjaran ? `?tahun_ajaran=${encodeURIComponent(tahunAjaran)}` : ''));
         const santriJson = await resSantri.json();
         rekapSiswaList = (Array.isArray(santriJson) ? santriJson : [])
             .sort((a, b) => (a.nama || '').localeCompare(b.nama || ''));

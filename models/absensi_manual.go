@@ -24,13 +24,52 @@ type AbsensiManualBulanan struct {
 
 // GetAbsensiManualBulanan mengambil data absensi manual untuk satu bagian pada
 // tahun Hijriyah tertentu. Mengembalikan slice per santri per bulan.
+//
+// Penempatan baris mengikuti KELAS PADA BULAN ABSENSI DICATAT (opsi C,
+// permintaan owner 2026-10-07): bulan Hijri dipetakan ke tanggal Masehi
+// (tengah bulan) lewat kalender_semester_hijri, lalu dicek riwayat_bagian
+// yang menutupi tanggal itu. Dengan begitu riwayat santri yang sudah naik
+// kelas tetap tampil di kelas lamanya, dan angka yang sama tidak dobel.
+//
+// Jaring pengaman (data lama tidak boleh hilang): bila bulan tidak
+// ditaungi kalender mana pun, santri tidak punya riwayat, atau riwayatnya
+// bolong pada tanggal itu — baris jatuh ke aturan lama (kelas santri
+// sekarang / s.bagian_id).
 func GetAbsensiManualBulanan(ctx context.Context, bagianID, tahunHijri int) ([]AbsensiManualBulanan, error) {
 	rows, err := config.DB.Query(ctx, `
 		SELECT am.id, am.santri_id, am.tahun_hijri, am.bulan_hijri, am.tahun_ajaran,
 		       am.total_sakit, am.total_izin, am.total_alpha, am.total_hadir
 		FROM absensi_manual_bulanan am
 		JOIN santri s ON am.santri_id = s.id
-		WHERE s.bagian_id = $1 AND am.tahun_hijri = $2
+		LEFT JOIN LATERAL (
+			-- Tanggal Masehi perkiraan hari ke-15 bulan Hijri tsb.
+			SELECT k.masehi_mulai
+			       + ((((am.tahun_hijri * 12 + am.bulan_hijri)
+			          - (k.mulai_tahun_hijri * 12 + k.mulai_bulan_hijri)) * 29.53)::int)
+			       + (15 - k.mulai_tanggal) AS tgl
+			FROM kalender_semester_hijri k
+			WHERE (k.mulai_tahun_hijri * 12 + k.mulai_bulan_hijri)
+			      <= (am.tahun_hijri * 12 + am.bulan_hijri)
+			  AND (k.selesai_tahun_hijri * 12 + k.selesai_bulan_hijri)
+			      >= (am.tahun_hijri * 12 + am.bulan_hijri)
+			ORDER BY k.tahun_ajaran DESC, k.semester DESC
+			LIMIT 1
+		) mid ON TRUE
+		WHERE am.tahun_hijri = $2
+		  AND (
+		    -- Utama: santri berada di bagian ini pada bulan tsb.
+		    EXISTS (SELECT 1 FROM riwayat_bagian r
+		            WHERE r.santri_id = am.santri_id AND r.bagian_id = $1
+		              AND r.tanggal_mulai <= mid.tgl
+		              AND (r.tanggal_selesai IS NULL OR r.tanggal_selesai >= mid.tgl))
+		    -- Fallback: tidak ada riwayat yang menutupi tanggal tsb (kalender
+		    -- bolong / riwayat belum lengkap) → aturan lama: kelas sekarang.
+		    OR (NOT EXISTS (SELECT 1 FROM riwayat_bagian r2
+		                   WHERE r2.santri_id = am.santri_id
+		                     AND r2.tanggal_mulai <= mid.tgl
+		                     AND (r2.tanggal_selesai IS NULL OR r2.tanggal_selesai >= mid.tgl))
+		        AND s.bagian_id = $1)
+		  )
 		ORDER BY s.nama, am.bulan_hijri`, bagianID, tahunHijri)
 	if err != nil {
 		return nil, err
