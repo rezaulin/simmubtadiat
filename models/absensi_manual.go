@@ -62,13 +62,48 @@ func GetAbsensiManualBulanan(ctx context.Context, bagianID, tahunHijri int) ([]A
 		            WHERE r.santri_id = am.santri_id AND r.bagian_id = $1
 		              AND r.tanggal_mulai <= mid.tgl
 		              AND (r.tanggal_selesai IS NULL OR r.tanggal_selesai >= mid.tgl))
-		    -- Fallback: tidak ada riwayat yang menutupi tanggal tsb (kalender
-		    -- bolong / riwayat belum lengkap) → aturan lama: kelas sekarang.
+		    -- Baris yang TIDAK punya riwayat penempatan pada bulan tsb
+		    -- (santri pindah sebelum riwayat dicatat / bulan di luar riwayat):
+		    -- taruh di KELAS PADA TAHUN AJARAN baris itu bila ada riwayat yang
+		    -- beririsan dengannya — supaya kelas lama tahun sebelumnya ikut
+		    -- terisi (laporan owner 2026-10-07). Baru jatuh ke kelas sekarang
+		    -- kalau santri tidak punya riwayat beririsan TA baris (riwayat
+		    -- belum lengkap / tahun kosong) — aturan lama.
 		    OR (NOT EXISTS (SELECT 1 FROM riwayat_bagian r2
-		                   WHERE r2.santri_id = am.santri_id
-		                     AND r2.tanggal_mulai <= mid.tgl
-		                     AND (r2.tanggal_selesai IS NULL OR r2.tanggal_selesai >= mid.tgl))
-		        AND s.bagian_id = $1)
+		                    WHERE r2.santri_id = am.santri_id
+		                      AND r2.tanggal_mulai <= mid.tgl
+		                      AND (r2.tanggal_selesai IS NULL OR r2.tanggal_selesai >= mid.tgl))
+		        AND (
+		          CASE WHEN am.tahun_ajaran <> ''
+		                   AND EXISTS (SELECT 1 FROM riwayat_bagian ra
+		                               WHERE ra.santri_id = am.santri_id
+		                                 AND ra.tanggal_mulai <= (SELECT MAX(tgl_selesai) FROM kalender_kuartal
+		                                                          WHERE tahun_ajaran = am.tahun_ajaran)
+		                                 AND (ra.tanggal_selesai IS NULL OR ra.tanggal_selesai >=
+		                                      (SELECT MIN(tgl_mulai) FROM kalender_kuartal
+		                                       WHERE tahun_ajaran = am.tahun_ajaran)))
+		               THEN EXISTS (SELECT 1 FROM riwayat_bagian r3
+		                            WHERE r3.santri_id = am.santri_id AND r3.bagian_id = $1
+		                              AND r3.tanggal_mulai <= (SELECT MAX(tgl_selesai) FROM kalender_kuartal
+		                                                       WHERE tahun_ajaran = am.tahun_ajaran)
+		                              AND (r3.tanggal_selesai IS NULL OR r3.tanggal_selesai >=
+		                                   (SELECT MIN(tgl_mulai) FROM kalender_kuartal
+		                                    WHERE tahun_ajaran = am.tahun_ajaran))
+		                              -- Pilih SATU penempatan saja (yang paling awal mulainya,
+		                              -- kalahkan tie dengan id terkecil) supaya satu baris tidak
+		                              -- tampil di dua kelas sekaligus.
+		                              AND NOT EXISTS (SELECT 1 FROM riwayat_bagian r4
+		                                              WHERE r4.santri_id = am.santri_id
+		                                                AND r4.tanggal_mulai <= (SELECT MAX(tgl_selesai) FROM kalender_kuartal
+		                                                                         WHERE tahun_ajaran = am.tahun_ajaran)
+		                                                AND (r4.tanggal_selesai IS NULL OR r4.tanggal_selesai >=
+		                                                     (SELECT MIN(tgl_mulai) FROM kalender_kuartal
+		                                                      WHERE tahun_ajaran = am.tahun_ajaran))
+		                                                AND (r4.tanggal_mulai < r3.tanggal_mulai
+		                                                     OR (r4.tanggal_mulai = r3.tanggal_mulai AND r4.bagian_id < r3.bagian_id))))
+		               ELSE s.bagian_id = $1
+		          END
+		        ))
 		  )
 		ORDER BY s.nama, am.bulan_hijri`, bagianID, tahunHijri)
 	if err != nil {

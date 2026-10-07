@@ -211,14 +211,27 @@ func GetSantriByBagian(ctx context.Context, bagianID int, userRoles []string, us
 			`SELECT MIN(tgl_mulai), MAX(tgl_selesai) FROM kalender_kuartal WHERE tahun_ajaran = $1`,
 			tahunAjaran).Scan(&mulai, &selesai); err == nil && !mulai.IsZero() {
 			args = append(args, mulai, selesai) // $2 = mulai, $3 = selesai
+			// Keanggotaan TA: BILA santri punya riwayat beririsan dengan TA ini,
+			// yang berlaku adalah riwayat itu (santri tampil di kelas tempat dia
+			// berada tahun itu — bukan kelasnya sekarang). Baru jatuh ke anggota
+			// sekarang kalau santri sama sekali tidak punya riwayat beririsan
+			// (riwayat belum lengkap / TA tanpa kalender). Tanpa ini, siswi yang
+			// sudah naik kelas ikut tercantum di kelas BARunya untuk tahun lalu →
+			// namanya muncul tapi datanya tidak ada (laporan owner 2026-10-07).
 			bagianCond = `(
-				s.bagian_id = $1
-				OR EXISTS (
+				EXISTS (
 					SELECT 1 FROM riwayat_bagian r
 					WHERE r.santri_id = s.id AND r.bagian_id = $1
 					  AND r.tanggal_mulai <= $3
-					  AND (r.tanggal_selesai IS NULL OR r.tanggal_selesai >= $2)
-				))`
+					  AND (r.tanggal_selesai IS NULL OR r.tanggal_selesai >= $2))
+				OR (
+					NOT EXISTS (
+						SELECT 1 FROM riwayat_bagian r2
+						WHERE r2.santri_id = s.id
+						  AND r2.tanggal_mulai <= $3
+						  AND (r2.tanggal_selesai IS NULL OR r2.tanggal_selesai >= $2))
+					AND s.bagian_id = $1)
+			)`
 		}
 	}
 

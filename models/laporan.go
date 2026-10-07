@@ -162,15 +162,38 @@ func GetRaportSantri(ctx context.Context, santriID int, semester int, tahunAjara
 
 	if bagianID != nil {
 		// Nomor Tamrin = nomor urut absen dalam BAGIAN, diurutkan alfabet nama (A-Z).
-		// Bersifat dinamis: otomatis tersusun ulang setiap tahun / saat santri pindah
-		// bagian, karena selalu diturunkan dari keanggotaan bagian saat ini.
+		// Keanggotaan mengikuti tahun ajaran yang DICETAK: santri yang pernah
+		// menempati bagian ini pada TA tsb (riwayat) ikut dihitung walaupun kini
+		// sudah naik kelas — kalau tidak, siswi pindahan tidak punya nomor
+		// tamrin (laporan owner 2026-10-07). Tanpa riwayat beririsan → anggota
+		// sekarang (aturan lama). Syaratnya sama dengan GetSantriByBagian.
 		var tamrin int
-		if err := config.DB.QueryRow(ctx,
-			`SELECT urut FROM (
+		tamrinArgs := []interface{}{*bagianID, santriID}
+		tamrinQuery := `SELECT urut FROM (
 			   SELECT id, ROW_NUMBER() OVER (ORDER BY nama ASC, id ASC) AS urut
 			   FROM santri
 			   WHERE bagian_id = $1 AND status = 'aktif'
-			 ) t WHERE id = $2`, *bagianID, santriID).Scan(&tamrin); err == nil && tamrin > 0 {
+			 ) t WHERE id = $2`
+		if tahunAjaran != "" {
+			tamrinQuery = `SELECT urut FROM (
+				   SELECT s.id, ROW_NUMBER() OVER (ORDER BY s.nama ASC, s.id ASC) AS urut
+				   FROM santri s
+				   WHERE s.status = 'aktif'
+				     AND (
+				       EXISTS (SELECT 1 FROM riwayat_bagian r
+				               WHERE r.santri_id = s.id AND r.bagian_id = $1
+				                 AND r.tanggal_mulai <= (SELECT MAX(tgl_selesai) FROM kalender_kuartal WHERE tahun_ajaran = $3)
+				                 AND (r.tanggal_selesai IS NULL OR r.tanggal_selesai >= (SELECT MIN(tgl_mulai) FROM kalender_kuartal WHERE tahun_ajaran = $3)))
+				       OR ( NOT EXISTS (SELECT 1 FROM riwayat_bagian r2
+				                        WHERE r2.santri_id = s.id
+				                          AND r2.tanggal_mulai <= (SELECT MAX(tgl_selesai) FROM kalender_kuartal WHERE tahun_ajaran = $3)
+				                          AND (r2.tanggal_selesai IS NULL OR r2.tanggal_selesai >= (SELECT MIN(tgl_mulai) FROM kalender_kuartal WHERE tahun_ajaran = $3)))
+				           AND s.bagian_id = $1 )
+				     )
+				 ) t WHERE id = $2`
+			tamrinArgs = append(tamrinArgs, tahunAjaran)
+		}
+		if err := config.DB.QueryRow(ctx, tamrinQuery, tamrinArgs...).Scan(&tamrin); err == nil && tamrin > 0 {
 			result.Santri["nomor_tamrin"] = tamrin
 		}
 
