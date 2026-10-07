@@ -124,20 +124,22 @@ func GetRiwayatAkademik(ctx context.Context, santriID int) ([]RiwayatAkademikTah
 		Urutan       int
 		Semester     int
 		Nilai        string
+		KelasID      int
+		TingID       int
 	}
 	var raports []rawRaport
 	// Kirim NAMA KITAB (Arab) + nama_indo + urutan. Frontend menampilkan
 	// nama_indo bila ada, jika kosong fallback ke Arab (owner 2026-08).
 	// Urutan mapel disamakan dengan raport (ORDER BY m.urutan).
 	if rowsRaport, err := config.DB.Query(ctx, `
-		SELECT n.tahun_ajaran, COALESCE(NULLIF(m.nama_kitab, ''), m.nama_mapel), COALESCE(m.nama_indo, ''), m.nama_mapel, m.kategori, m.urutan, n.semester, n.nilai_akhir
+		SELECT n.tahun_ajaran, COALESCE(NULLIF(m.nama_kitab, ''), m.nama_mapel), COALESCE(m.nama_indo, ''), m.nama_mapel, m.kategori, m.urutan, n.semester, n.nilai_akhir, m.kelas_id, m.tingkatan_id
 		FROM nilai_khos n
 		JOIN mata_pelajaran m ON n.mapel_id = m.id
 		WHERE n.santri_id = $1`, santriID); err == nil {
 		for rowsRaport.Next() {
 			var r rawRaport
 			var nilai float64
-			if err := rowsRaport.Scan(&r.TA, &r.Mapel, &r.NamaIndo, &r.NamaMapelRaw, &r.Kategori, &r.Urutan, &r.Semester, &nilai); err == nil {
+			if err := rowsRaport.Scan(&r.TA, &r.Mapel, &r.NamaIndo, &r.NamaMapelRaw, &r.Kategori, &r.Urutan, &r.Semester, &nilai, &r.KelasID, &r.TingID); err == nil {
 				r.Nilai = fmt.Sprintf("%v", nilai)
 				raports = append(raports, r)
 				addTA(r.TA)
@@ -158,17 +160,19 @@ func GetRiwayatAkademik(ctx context.Context, santriID int) ([]RiwayatAkademikTah
 		Urutan       int
 		Kuartal      int
 		Nilai        string
+		KelasID      int
+		TingID       int
 	}
 	var kuartals []rawKuartal
 	if rowsK, err := config.DB.Query(ctx, `
-		SELECT nk.tahun_ajaran, COALESCE(NULLIF(m.nama_kitab, ''), m.nama_mapel), COALESCE(m.nama_indo, ''), m.nama_mapel, m.kategori, m.urutan, nk.kuartal, nk.nilai
+		SELECT nk.tahun_ajaran, COALESCE(NULLIF(m.nama_kitab, ''), m.nama_mapel), COALESCE(m.nama_indo, ''), m.nama_mapel, m.kategori, m.urutan, nk.kuartal, nk.nilai, m.kelas_id, m.tingkatan_id
 		FROM nilai_kuartal nk
 		JOIN mata_pelajaran m ON nk.mapel_id = m.id
 		WHERE nk.santri_id = $1`, santriID); err == nil {
 		for rowsK.Next() {
 			var r rawKuartal
 			var nilai float64
-			if err := rowsK.Scan(&r.TA, &r.Mapel, &r.NamaIndo, &r.NamaMapelRaw, &r.Kategori, &r.Urutan, &r.Kuartal, &nilai); err == nil {
+			if err := rowsK.Scan(&r.TA, &r.Mapel, &r.NamaIndo, &r.NamaMapelRaw, &r.Kategori, &r.Urutan, &r.Kuartal, &nilai, &r.KelasID, &r.TingID); err == nil {
 				r.Nilai = fmt.Sprintf("%v", nilai)
 				kuartals = append(kuartals, r)
 				addTA(r.TA)
@@ -250,6 +254,8 @@ func GetRiwayatAkademik(ctx context.Context, santriID int) ([]RiwayatAkademikTah
 		Bagian  string
 		Mulai   time.Time
 		Selesai *time.Time
+		KelasID int
+		TingID  int
 	}
 	var rbRows []rbRow
 	// Bangun label kelas lengkap: "Tingkatan Kelas - Bagian" (misal "Aliyah 3 - Bagian A1").
@@ -258,7 +264,7 @@ func GetRiwayatAkademik(ctx context.Context, santriID int) ([]RiwayatAkademikTah
 		SELECT
 			COALESCE(t.nama, '') || CASE WHEN COALESCE(k.nama,'') <> '' THEN ' ' || k.nama ELSE '' END
 				|| CASE WHEN COALESCE(b.nama_bagian,'') <> '' THEN ' - Bagian ' || b.nama_bagian ELSE '' END AS label,
-			r.tanggal_mulai, r.tanggal_selesai
+			r.tanggal_mulai, r.tanggal_selesai, b.kelas_id, b.tingkatan_id
 		FROM riwayat_bagian r
 		JOIN bagian b ON r.bagian_id = b.id
 		LEFT JOIN kelas k ON b.kelas_id = k.id
@@ -267,7 +273,7 @@ func GetRiwayatAkademik(ctx context.Context, santriID int) ([]RiwayatAkademikTah
 		ORDER BY r.tanggal_mulai DESC`, santriID); err == nil {
 		for rowsRB.Next() {
 			var rb rbRow
-			if err := rowsRB.Scan(&rb.Bagian, &rb.Mulai, &rb.Selesai); err == nil {
+			if err := rowsRB.Scan(&rb.Bagian, &rb.Mulai, &rb.Selesai, &rb.KelasID, &rb.TingID); err == nil {
 				rbRows = append(rbRows, rb)
 				addTA(findTA(rb.Mulai))
 				// Baris yang tanggal SELESAInya jatuh di tahun lain ikut
@@ -349,6 +355,36 @@ func GetRiwayatAkademik(ctx context.Context, santriID int) ([]RiwayatAkademikTah
 		return ""
 	}
 
+	// kelasYangPernah(ta) = himpunan (kelas, tingkatan) tempat santri PERNAH
+	// berada selama TA tsb (irisan riwayat_bagian dengan kalender TA).
+	// Dipakai untuk menyaring nilai: kurikulum kelas yang bukan milik tahun itu
+	// tidak boleh tampil (laporan owner 2026-10-07 — detail "Nilai Akademik"
+	// tahun sebelumnya kecampur kelas baru setelah siswi dinaikkan).
+	// Mengembalikan nil bila TA tanpa kalender / riwayat tidak mencakup —
+	// dalam hal itu SEMUA nilai ditampilkan (perilaku lama, tidak ada data hilang).
+	kelasYangPernah := func(ta string) map[[2]int]bool {
+		b, ok := taBounds[ta]
+		if !ok {
+			return nil
+		}
+		out := map[[2]int]bool{}
+		for _, rb := range rbRows {
+			selesai := rb.Mulai
+			if rb.Selesai != nil {
+				selesai = *rb.Selesai
+			} else {
+				selesai = time.Now().AddDate(100, 0, 0)
+			}
+			if !rb.Mulai.After(b.Max) && !selesai.Before(b.Min) {
+				out[[2]int{rb.KelasID, rb.TingID}] = true
+			}
+		}
+		if len(out) == 0 {
+			return nil
+		}
+		return out
+	}
+
 	// 5b. Range bulan per TA dari kalender_semester_hijri — dipakai untuk
 	//     menampilkan SEMUA bulan TA (termasuk yang belum ada catatan).
 	//     Key k = tahun_hijri*12 + (bulan-1) agar urut secara numerik.
@@ -388,11 +424,15 @@ func GetRiwayatAkademik(ctx context.Context, santriID int) ([]RiwayatAkademikTah
 		}
 
 		// Raport per mapel (Nilai Khos).
+		kelasBoleh := kelasYangPernah(ta)
 		mapelMap := make(map[string]*RiwayatRaport)
 		var mapelOrder []string
 		for _, r := range raports {
 			if r.TA != ta {
 				continue
+			}
+			if kelasBoleh != nil && !kelasBoleh[[2]int{r.KelasID, r.TingID}] {
+				continue // kelas ini bukan tempat santri pada TA tsb
 			}
 			m, ok := mapelMap[r.Mapel]
 			if !ok {
@@ -412,6 +452,9 @@ func GetRiwayatAkademik(ctx context.Context, santriID int) ([]RiwayatAkademikTah
 		for _, k := range kuartals {
 			if k.TA != ta {
 				continue
+			}
+			if kelasBoleh != nil && !kelasBoleh[[2]int{k.KelasID, k.TingID}] {
+				continue // kelas ini bukan tempat santri pada TA tsb
 			}
 			m, ok := mapelMap[k.Mapel]
 			if !ok {

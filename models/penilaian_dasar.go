@@ -132,25 +132,47 @@ func GenerateNilaiKhos(ctx context.Context, santriID int, semester int, tahunAja
 	}
 	defer tx.Rollback(ctx)
 
+	// 1.4 Kelas ACUAN dihitung dari penempatan santri PADA TAHUN AJARAN YANG
+	// SEDANG DIHITUNG (riwayat_bagian beririsan kalender TA), bukan kelas
+	// santri hari ini (laporan owner 2026-10-07: siswi sudah dinaikkan → khos
+	// tahun lama ikut terhapus/digenerate ke kelas baru, kurikulum 2 tahun
+	// tergabung di detail). Bila riwayat tidak ada, fallback ke kelas sekarang.
+	var kelasAcuan, tingAcuan int
+	acuanOK := false
+	if p, errP := KelasPadaTA1(ctx, santriID, tahunAjaran); errP == nil && p.BagianID > 0 {
+		if errK := config.DB.QueryRow(ctx,
+			`SELECT kelas_id, tingkatan_id FROM bagian WHERE id = $1`, p.BagianID).
+			Scan(&kelasAcuan, &tingAcuan); errK == nil {
+			acuanOK = true
+		}
+	}
+	if !acuanOK {
+		if errK := config.DB.QueryRow(ctx,
+			`SELECT b.kelas_id, b.tingkatan_id FROM santri s
+			 JOIN bagian b ON b.id = s.bagian_id WHERE s.id = $1`, santriID).
+			Scan(&kelasAcuan, &tingAcuan); errK != nil {
+			// Tanpa kelas acuan sama sekali → tidak ada yang bisa dihitung.
+			return nil
+		}
+	}
+
 	// 1.5 Cleanup khos: hapus semua baris khos milik mapel kelas lama jika santri
-	// sudah punya nilai kuartal di kelas SEKARANG. nilai_kuartal (sumber data)
+	// sudah punya nilai kuartal di kelas ACUAN TA ini. nilai_kuartal (sumber data)
 	// tidak disentuh — tetap tersimpan sebagai arsip.
 	_, err = tx.Exec(ctx,
 		`DELETE FROM nilai_khos nk
 		 WHERE nk.santri_id = $1 AND nk.tahun_ajaran = $2
 		   AND EXISTS (
 		       SELECT 1 FROM mata_pelajaran m
-		       JOIN santri s ON s.id = $1
-		       JOIN bagian b ON b.id = s.bagian_id
 		       WHERE m.id = nk.mapel_id
-		         AND NOT (m.kelas_id = b.kelas_id AND m.tingkatan_id = b.tingkatan_id)
+		         AND NOT (m.kelas_id = $3 AND m.tingkatan_id = $4)
 		         AND EXISTS (
 		             SELECT 1 FROM nilai_kuartal nk4
 		             JOIN mata_pelajaran m4 ON m4.id = nk4.mapel_id
 		             WHERE nk4.santri_id = $1 AND nk4.tahun_ajaran = $2
-		               AND m4.kelas_id = b.kelas_id AND m4.tingkatan_id = b.tingkatan_id
+		               AND m4.kelas_id = $3 AND m4.tingkatan_id = $4
 		         )
-		   )`, santriID, tahunAjaran)
+		   )`, santriID, tahunAjaran, kelasAcuan, tingAcuan)
 	if err != nil {
 		return err
 	}
@@ -170,26 +192,24 @@ func GenerateNilaiKhos(ctx context.Context, santriID int, semester int, tahunAja
 			MAX(CASE WHEN nk.kuartal = $1 THEN nk.nilai END) as nilai_q1,
 			MAX(CASE WHEN nk.kuartal = $2 THEN nk.nilai END) as nilai_q2
 		 FROM mata_pelajaran m
-		 JOIN santri s ON s.id = $3
-		 JOIN bagian b ON b.id = s.bagian_id
 		 LEFT JOIN nilai_kuartal nk ON m.id = nk.mapel_id AND nk.santri_id = $3 AND nk.tahun_ajaran = $4
-		 WHERE ((m.kelas_id = b.kelas_id AND m.tingkatan_id = b.tingkatan_id)
+		 WHERE ((m.kelas_id = $5 AND m.tingkatan_id = $6)
 		        OR (
 		            -- Mapel kelas lama hanya dihitung jika santri BELUM punya nilai
-		            -- apapun di kelas SEKARANG (mis. AINI). Begitu ada nilai di kelas
-		            -- sekarang, SEMUA mapel kelas lama diabaikan — nilai kuartal kelas
+		            -- apapun di kelas ACUAN TA ini (mis. AINI). Begitu ada nilai di kelas
+		            -- acuan, SEMUA mapel kelas lama diabaikan — nilai kuartal kelas
 		            -- lama tetap tersimpan sebagai arsip, tapi tidak dihitung.
 		            NOT EXISTS (
 		                SELECT 1 FROM nilai_kuartal nk4
 		                JOIN mata_pelajaran m4 ON m4.id = nk4.mapel_id
 		                WHERE nk4.santri_id = $3 AND nk4.tahun_ajaran = $4
-		                  AND m4.kelas_id = b.kelas_id AND m4.tingkatan_id = b.tingkatan_id
+		                  AND m4.kelas_id = $5 AND m4.tingkatan_id = $6
 		            )
 		            AND EXISTS (SELECT 1 FROM nilai_kuartal nk2
 		                        WHERE nk2.mapel_id = m.id AND nk2.santri_id = $3 AND nk2.tahun_ajaran = $4)
 		        ))
 		       AND (m.aktif_kuartal @> to_jsonb($1::int) OR m.aktif_kuartal @> to_jsonb($2::int))
-		 GROUP BY m.id`, q1, q2, santriID, tahunAjaran)
+		 GROUP BY m.id`, q1, q2, santriID, tahunAjaran, kelasAcuan, tingAcuan)
 
 	if err != nil {
 		return err
