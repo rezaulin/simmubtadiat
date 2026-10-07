@@ -2,9 +2,16 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
+	"regexp"
+
 	"github.com/mubtadiaat/app/models"
 )
+
+// polaTAValid membatasi tahun ajaran pada format YYYY/YYYY (contoh: 2026/2027).
+// Mencegah entri bebas merambat ke kalender_kuartal lewat form kalender.
+var polaTAValid = regexp.MustCompile(`^\d{4}/\d{4}$`)
 
 func GetKalenderKuartal(w http.ResponseWriter, r *http.Request) {
 	tahunAjaran := r.URL.Query().Get("tahun_ajaran")
@@ -31,6 +38,10 @@ func SaveKalenderKuartal(w http.ResponseWriter, r *http.Request) {
 
 	for _, k := range input {
 		if err := models.UpsertKalender(r.Context(), k); err != nil {
+			if errors.Is(err, models.ErrKalenderBentrok) {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
 			http.Error(w, internalError("", err), http.StatusInternalServerError)
 			return
 		}
@@ -75,6 +86,10 @@ func SaveKalenderSemesterHijri(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	for _, e := range entries {
+		if !polaTAValid.MatchString(e.TahunAjaran) {
+			http.Error(w, "Tahun Ajaran tidak valid (format harus YYYY/YYYY, contoh 2026/2027)", http.StatusBadRequest)
+			return
+		}
 		if e.Semester != 1 && e.Semester != 2 {
 			http.Error(w, "semester harus 1 atau 2", http.StatusBadRequest)
 			return
@@ -86,6 +101,12 @@ func SaveKalenderSemesterHijri(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if err := models.SaveKalenderSemesterHijri(r.Context(), entries); err != nil {
+		if errors.Is(err, models.ErrKalenderBentrok) {
+			// Pesan bentrok dibalikkan apa adanya (400) supaya user paham
+			// tahun ajaran mana yang tertimpa, bukan "kesalahan server".
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
 		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}

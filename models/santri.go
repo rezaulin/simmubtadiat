@@ -600,8 +600,10 @@ func AssignSantriToBagian(ctx context.Context, santriIDs []int, bagianID int) er
 
 	// We'll update each santri
 	for _, sID := range santriIDs {
-		// Close previous riwayat_bagian
-		_, err = tx.Exec(ctx, "UPDATE riwayat_bagian SET tanggal_selesai = CURRENT_DATE WHERE santri_id = $1 AND tanggal_selesai IS NULL", sID)
+		// Close previous riwayat_bagian — tutup tanpa baris kebalik, lalu
+		// buka riwayat baru tidak lebih awal dari hari tutup efektifnya
+		// (guard: GREATEST(CURRENT_DATE, tanggal_mulai); lihat riwayat_guard.go).
+		tutupEff, err := tutupRiwayatTerbuka(ctx, tx, sID, time.Now())
 		if err != nil {
 			return err
 		}
@@ -616,9 +618,11 @@ func AssignSantriToBagian(ctx context.Context, santriIDs []int, bagianID int) er
 			return err
 		}
 
-		// Create new riwayat_bagian
+		// Create new riwayat_bagian (mulai hari ini, tapi tidak pernah
+		// sebelum riwayat lama ditutup agar urutan riwayat monoton).
 		if bagianID > 0 {
-			_, err = tx.Exec(ctx, "INSERT INTO riwayat_bagian (santri_id, bagian_id, tanggal_mulai) VALUES ($1, $2, CURRENT_DATE)", sID, bagianID)
+			buka := tanggalPalingAwal(time.Now(), tutupEff)
+			_, err = tx.Exec(ctx, "INSERT INTO riwayat_bagian (santri_id, bagian_id, tanggal_mulai) VALUES ($1, $2, $3::date)", sID, bagianID, buka.Format("2006-01-02"))
 			if err != nil {
 				return err
 			}

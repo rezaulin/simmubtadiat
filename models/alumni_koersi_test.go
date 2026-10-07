@@ -109,7 +109,10 @@ func TestProsesKeluarKoersiKelasAkhir(t *testing.T) {
 	}
 
 	// Muncul pada arsip boyong.
-	arsip, err := GetArsipSantri(ctx, "boyong", "admin", 0)
+	// (Panggilan diperbarui mengikuti signature baru:
+	//  GetArsipSantri(ctx, userRoles []string, userID int, filter SantriArsipFilter)
+	//  — sebelumnya "boyong","admin",0 melanggar tipe argumen.)
+	arsip, err := GetArsipSantri(ctx, []string{"admin"}, 0, SantriArsipFilter{Status: "boyong"})
 	if err != nil {
 		t.Fatalf("GetArsipSantri('boyong') gagal: %v", err)
 	}

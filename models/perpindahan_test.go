@@ -31,7 +31,7 @@ func TestPindahBagian(t *testing.T) {
 	db.Exec(ctx, `INSERT INTO riwayat_bagian (santri_id, bagian_id, tanggal_mulai) VALUES ($1, $2, CURRENT_DATE)`, santriID, bagianAsalID)
 
 	// Pindah Bagian
-	err := PindahBagian(ctx, bagianAsalID, []int{santriID}, bagianBaruID, false)
+	err := PindahBagian(ctx, bagianAsalID, []int{santriID}, bagianBaruID, false, []string{"admin"}, 0)
 	if err != nil {
 		t.Fatalf("PindahBagian failed: %v", err)
 	}

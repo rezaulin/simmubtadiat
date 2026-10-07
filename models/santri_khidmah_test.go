@@ -27,7 +27,7 @@ func TestGetSantriByIDKhidmah(t *testing.T) {
 		t.Fatalf("insert santri pengabdian: %v", err)
 	}
 
-	s, err := GetSantriByID(ctx, strconv.Itoa(santriID), "pimpinan", 0)
+	s, err := GetSantriByID(ctx, strconv.Itoa(santriID), []string{"pimpinan"}, 0)
 	if err != nil {
 		t.Fatalf("GetSantriByID failed: %v", err)
 	}
@@ -83,7 +83,7 @@ func TestGetSantriAktifExcludesPengabdian(t *testing.T) {
 		t.Fatalf("insert santri pengabdian: %v", err)
 	}
 
-	list, err := GetSantriAktif(ctx, "pimpinan", 0, SantriFilter{})
+	list, err := GetSantriAktif(ctx, []string{"pimpinan"}, 0, SantriFilter{})
 	if err != nil {
 		t.Fatalf("GetSantriAktif failed: %v", err)
 	}

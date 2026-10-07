@@ -136,35 +136,31 @@ func PindahBagian(ctx context.Context, bagianAsalID int, santriIDs []int, bagian
 	}
 
 	for _, sID := range santriIDs {
-		// 1. Update riwayat_bagian lama yang belum selesai
-		if tglTutup != "" {
-			_, err := tx.Exec(ctx,
-				`UPDATE riwayat_bagian
-				 SET tanggal_selesai = $2::date
-				 WHERE santri_id = $1 AND tanggal_selesai IS NULL`, sID, tglTutup)
-			if err != nil {
-				return err
-			}
-		} else {
-			_, err := tx.Exec(ctx,
-				`UPDATE riwayat_bagian 
-				 SET tanggal_selesai = CURRENT_DATE 
-				 WHERE santri_id = $1 AND tanggal_selesai IS NULL`, sID)
-			if err != nil {
-				return err
-			}
+		// 1. Tutup riwayat lama TANPA membuat baris kebalik (insiden
+		//    2026-10-07: kalender/TA aktif berubah di tengah uji coba →
+		//    tanggal tutup bisa jatuh sebelum tanggal_mulai baris tsb).
+		//    tutupRiwayatTerbuka memakai GREATEST(acuan, tanggal_mulai)
+		//    dan mengembalikan hari tutup efektif per santri.
+		acuan := tglTutup
+		if acuan == "" {
+			acuan = time.Now().Format("2006-01-02")
+		}
+		tutupEff, err := tutupRiwayatTerbuka(ctx, tx, sID, parseTanggalAMAN(acuan))
+		if err != nil {
+			return err
 		}
 
-		// 2. Buat riwayat_bagian baru (mulai = hari pertama TA berikutnya)
-		if tglBuka != "" {
-			_, err = tx.Exec(ctx,
-				`INSERT INTO riwayat_bagian (santri_id, bagian_id, tanggal_mulai) 
-				 VALUES ($1, $2, $3::date)`, sID, bagianBaruID, tglBuka)
-		} else {
-			_, err = tx.Exec(ctx,
-				`INSERT INTO riwayat_bagian (santri_id, bagian_id, tanggal_mulai) 
-				 VALUES ($1, $2, CURRENT_DATE)`, sID, bagianBaruID)
+		// 2. Buat riwayat_bagian baru (mulai = hari pertama TA berikutnya);
+		//    tidak pernah lebih awal dari hari tutup riwayat lama supaya
+		//    riwayat selalu monoton — tidak tumpang tindih & tidak kebalik.
+		acuanBuka := tglBuka
+		if acuanBuka == "" {
+			acuanBuka = time.Now().Format("2006-01-02")
 		}
+		buka := tanggalPalingAwal(parseTanggalAMAN(acuanBuka), tutupEff)
+		_, err = tx.Exec(ctx,
+			`INSERT INTO riwayat_bagian (santri_id, bagian_id, tanggal_mulai) 
+			 VALUES ($1, $2, $3::date)`, sID, bagianBaruID, buka.Format("2006-01-02"))
 		if err != nil {
 			return err
 		}
@@ -273,10 +269,10 @@ func UbahStatusStatusSantri(ctx context.Context, santriID int, status string, ta
 	}
 
 	if status != "aktif" {
-		_, err = tx.Exec(ctx,
-			`UPDATE riwayat_bagian 
-			 SET tanggal_selesai = CURRENT_DATE 
-			 WHERE santri_id = $1 AND tanggal_selesai IS NULL`, santriID)
+		// Tutup riwayat berjalan tanpa baris kebalik: bila tanggal_mulai
+		// baris terbuka ternyata di masa depan (sisa uji coba uji-coba),
+		// tutup pada tanggal_mulai itu sendiri, bukan CURRENT_DATE.
+		_, err = tutupRiwayatTerbuka(ctx, tx, santriID, time.Now())
 		if err != nil {
 			return err
 		}

@@ -2,8 +2,10 @@ package models
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/mubtadiaat/app/config"
 )
 
@@ -133,6 +135,27 @@ func SaveKalenderSemesterHijri(ctx context.Context, entries []KalenderSemesterHi
 		return err
 	}
 	if err := backfillQ("absensi_manual_pengajar_bulanan"); err != nil {
+		return err
+	}
+
+	// Guard insiden 2026-10-07: cek dulu apakah kalender yang baru disimpan
+	// (mau disinkronkan ke kalender_kuartal) menimpa tanggal milik tahun
+	// ajaran LAIN. Penyebabnya biasanya form kalender dimuat untuk TA-X lalu
+	// kolom Tahun Ajaran diganti ke TA-Y sebelum Simpan. Bila bentrok,
+	// SELURUH transaksi dibatalkan (termasuk upsert kalender_semester_hijri
+	// & backfill absensi di atas) dengan pesan yang bisa dibaca user.
+	var bentrokTa, bentrokAsal string
+	if err := tx.QueryRow(ctx, `
+		SELECT gen.tahun_ajaran, kk.tahun_ajaran
+		  FROM (SELECT tahun_ajaran, masehi_mulai::DATE AS mulai, masehi_selesai::DATE AS selesai
+		          FROM kalender_semester_hijri
+		         WHERE masehi_mulai IS NOT NULL AND masehi_selesai IS NOT NULL) gen
+		  JOIN kalender_kuartal kk
+		    ON kk.tahun_ajaran <> gen.tahun_ajaran
+		   AND kk.tgl_mulai <= gen.selesai AND kk.tgl_selesai >= gen.mulai
+		 LIMIT 1`).Scan(&bentrokTa, &bentrokAsal); err == nil {
+		return fmt.Errorf("%w: kalender TA %s menimpa tanggal milik TA %s — periksa kolom Tahun Ajaran di form (harus TA yang sama dengan yang dimuat lewat tombol Muat)", ErrKalenderBentrok, bentrokTa, bentrokAsal)
+	} else if !errors.Is(err, pgx.ErrNoRows) {
 		return err
 	}
 

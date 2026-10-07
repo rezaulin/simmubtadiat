@@ -939,6 +939,12 @@ loadMudirTingkatan();
   const spanActive = document.getElementById('kalender-ta-active');
   const preview = document.getElementById('kalender-preview');
 
+  // TA yang datanya BENAR-BENAR sedang tampil di form (hasil tombol Muat).
+  // Simpan hanya boleh menulis ke TA ini — insiden 2026-10-07: TA diganti
+  // setelah Muat membuat tanggal TA-X tertulis ke TA-Y dan menimpa kalender
+  // TA-X. Backend juga mengguard (cek bentrok antar-TA), ini lapisan depan.
+  let loadedTA = '';
+
   const BULAN = ['Muharram', 'Safar', 'Rabiul Awal', 'Rabiul Akhir', 'Jumadil Awal',
     'Jumadil Akhir', 'Rajab', "Sya'ban", 'Ramadhan', 'Syawal', "Dzulqa'dah", 'Dzulhijjah'];
 
@@ -1085,6 +1091,7 @@ loadMudirTingkatan();
       const res = await fetch(`/api/kalender/hijri-semester?tahun_ajaran=${encodeURIComponent(ta)}`);
       if (!res.ok) throw new Error('Gagal memuat kalender');
       const data = (await res.json()) || [];
+      loadedTA = ta;
       TRIPLES.forEach((p) => writeTriple(p, '', '', ''));
       data.forEach((row) => {
         if (row.semester === 1) {
@@ -1097,6 +1104,7 @@ loadMudirTingkatan();
       });
       renderPreview();
     } catch (e) {
+      loadedTA = '';
       alert(e.message);
     }
   }
@@ -1192,6 +1200,18 @@ loadMudirTingkatan();
     e.preventDefault();
     const ta = inpTA.value.trim();
     if (!ta) { alert('Isi Tahun Ajaran dulu.'); return; }
+    // Kunci TA: tanggal yang tampil di form WA milik TA yang dikunci.
+    // Tanpa ini, muat TA-X lalu ganti kolom ke TA-Y akan menulis tanggal
+    // TA-X ke TA-Y (insiden 2026-10-07 yang menimpa kalender 2026/2027).
+    if (ta !== loadedTA) {
+      alert(
+        `Tahun Ajaran diubah setelah kalender dimuat.\n\n` +
+        `Yang tampil di form sekarang adalah data ${loadedTA || 'lama'} — ` +
+        `menyimpannya ke ${ta} akan menimpa kalender ${ta} dengan tanggal yang salah.\n\n` +
+        `Tekan "Muat" dulu untuk ${ta}, atau kembalikan kolom ke ${loadedTA || 'TA yang benar'}.`
+      );
+      return;
+    }
     const b = buildEntries();
     if (b.error) { alert(b.error); return; }
     if (!confirm(`Simpan kalender akademik ${ta}?\nDaftar hadir akan otomatis masuk semester sesuai rentang ini.`)) return;

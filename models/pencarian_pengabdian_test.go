@@ -28,7 +28,7 @@ func TestGlobalSearchIncludesPengabdian(t *testing.T) {
 	}
 
 	// Cari berdasarkan nama.
-	results, err := GlobalSearch(ctx, "Santri Pengabdian Search", "pimpinan")
+	results, err := GlobalSearch(ctx, "Santri Pengabdian Search", []string{"pimpinan"}, nil)
 	if err != nil {
 		t.Fatalf("GlobalSearch failed: %v", err)
 	}
@@ -65,7 +65,7 @@ func TestGlobalSearchIncludesPengabdian(t *testing.T) {
 	}
 
 	// Cari juga berdasarkan stambuk untuk memastikan match keduanya.
-	byStambuk, err := GlobalSearch(ctx, "STBSR001", "pimpinan")
+	byStambuk, err := GlobalSearch(ctx, "STBSR001", []string{"pimpinan"}, nil)
 	if err != nil {
 		t.Fatalf("GlobalSearch by stambuk failed: %v", err)
 	}
