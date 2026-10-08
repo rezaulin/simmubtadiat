@@ -1451,41 +1451,55 @@ async function loadAnakDetail(santriId) {
 
     // Nilai tambahan diambil PER TAHUN (dulu cuma tahun aktif → riwayat
     // tahun sebelumnya hilang saat TA sudah maju; permintaan owner 2026-10-06).
+    // Urutan fetch per tahun = juz, komp, bawah-rata KQ1..KQ4 (6 job/TA).
+    // Bawah-rata HARUS per kuartal: backend DEFAULT kuartal=1 bila param
+    // kosong → selama ini wali tak pernah menerima data KQ2/3/4 (padahal
+    // admin detail merangkum kuartal 1–4) — spek bos 2026-10-08.
     const jobs = [];
-    tahunList.forEach(ta => {
+    tahunList.forEach((ta) => {
       const q = ta ? `?tahun_ajaran=${encodeURIComponent(ta)}` : '';
       jobs.push(fetch('/api/penilaian-tambahan/juz-amma' + q).then(r => (r.ok ? r.json() : [])).catch(() => []));
       jobs.push(fetch('/api/penilaian-tambahan/kompetensi' + q).then(r => (r.ok ? r.json() : [])).catch(() => []));
-      jobs.push(fetch('/api/penilaian-tambahan/bawah-rata' + q).then(r => (r.ok ? r.json() : [])).catch(() => []));
+      [1, 2, 3, 4].forEach((k) => {
+        const sep = q ? '&' : '?';
+        jobs.push(fetch(`/api/penilaian-tambahan/bawah-rata${q}${sep}kuartal=${k}`).then(r => (r.ok ? r.json() : [])).catch(() => []));
+      });
     });
     const hasilTambahan = await Promise.all(jobs);
     const grupTahun = tahunList.map((ta, i) => {
-      const rw = (riwayat || []).find(t => t.tahun_ajaran === ta);
+      const base = i * 6;
+      const rw = (riwayat || []).find((t) => t.tahun_ajaran === ta);
+      const br = [];
+      [1, 2, 3, 4].forEach((k, j) => {
+        (hasilTambahan[base + 2 + j] || []).forEach((r) => {
+          br.push(Object.assign({}, r, { kuartal: k }));
+        });
+      });
       return {
         ta: ta || '',
         kelas: rw ? (rw.nama_bagian || '') : '',
-        juz: hasilTambahan[i * 3] || [],
-        komp: hasilTambahan[i * 3 + 1] || [],
-        br: hasilTambahan[i * 3 + 2] || [],
+        juz: hasilTambahan[base] || [],
+        komp: hasilTambahan[base + 1] || [],
+        br,
         aktif: !!ta && ta === taAktifWali
       };
     });
 
-    // Kartu peringatan/pemberitahuan dihitung sekali: bila ADA, varian hijau
-    // buildAlphaAlert ("Alhamdulillah, belum ada alpha") disembunyikan — owner
-    // 2026-10-05: "di atas dapat peringatan, di bawah Alhamdulillah → ngece".
-    // Kartu alpha MERAH (ada alpha) tetap tampil walau ada peringatan.
-    const kartuMusbat = buildPeringatanMusbat(riwayat);
-
-    // Filter tahun ajaran (spek bos 2026-10-07): dashboard default hanya
-    // tahun AKTIF; tahun lama dipilih lewat menu sidebar (localStorage).
-    // Peringatan & kartu alpha TETAP lintas tahun (spek owner 2026-10-04/05:
-    // dua kuartal berturut boleh lintas TA) — yang difilter hanya bagian
-    // panjang: nilai tambahan + transkrip/absensi (biang scroll panjang).
+    // Filter tahun ajaran (spek bos 2026-10-07; perluasan 2026-10-08 opsi A):
+    // SEMUA isi ikut tahun terpilih — peringatan/alpha dihitung dari tahun tsb
+    // (TA 2026/2027 → 50 hari, TA 2027/2028 → 55; pasangan kuartal berlaku
+    // dalam 1 TA, ganti spek lintas-TA 2026-10-04), catatan juga difilter.
+    // Default tahun AKTIF; pilihan disimpan di menu sidebar (localStorage).
     waliAnakAktif = santriId;
     let pilihTa = '';
     try { pilihTa = localStorage.getItem(WALI_TA_KEY) || ''; } catch (_) {}
     if (!tahunList.includes(pilihTa)) pilihTa = tahunList.includes(taAktifWali) ? taAktifWali : tahunList[0];
+
+    const riwayatTampil = riwayat.filter((r) => r.tahun_ajaran === pilihTa);
+    // Kartu peringatan: bila ADA, varian hijau buildAlphaAlert
+    // ("Alhamdulillah, belum ada alpha") disembunyikan — owner 2026-10-05.
+    // Kartu alpha MERAH (ada alpha) tetap tampil walau ada peringatan.
+    const kartuMusbat = buildPeringatanMusbat(riwayatTampil);
 
     const bannerTa = (taAktifWali && pilihTa && pilihTa !== taAktifWali) ? `
       <div class="mb-6 flex flex-wrap items-center justify-between gap-3 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-500/30 rounded-2xl px-5 py-3">
@@ -1493,9 +1507,12 @@ async function loadAnakDetail(santriId) {
         <button id="wali-ta-kembali" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-700 transition-colors">Kembali ke ${waliEscape(taAktifWali)}</button>
       </div>` : '';
 
-    home.innerHTML = bannerTa + buildAnakBiodata(s) + kartuMusbat + buildAlphaAlert(riwayat, !!kartuMusbat) + buildCatatanAnak(catatan) +
+    // Catatan: ikut tahun terpilih; baris tanpa tahun_ajaran lama tetap tampil.
+    const catatanTampil = (catatan || []).filter((c) => !pilihTa || !c.tahun_ajaran || c.tahun_ajaran === pilihTa);
+
+    home.innerHTML = bannerTa + buildAnakBiodata(s) + kartuMusbat + buildAlphaAlert(riwayatTampil, !!kartuMusbat) + buildCatatanAnak(catatanTampil) +
       buildNilaiTambahan(grupTahun.filter((g) => g.ta === pilihTa), santriId) +
-      buildRiwayatAkademik(riwayat.filter((r) => r.tahun_ajaran === pilihTa));
+      buildRiwayatAkademik(riwayatTampil);
     const btnTaKembali = document.getElementById('wali-ta-kembali');
     if (btnTaKembali) btnTaKembali.addEventListener('click', () => pilihTahunWali(taAktifWali));
     renderMenuTahunWali(tahunList, pilihTa, taAktifWali);
