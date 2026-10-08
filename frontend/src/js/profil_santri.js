@@ -8,6 +8,11 @@ const riwayatContainer = document.getElementById('riwayat-container');
 const riwayatEmpty = document.getElementById('riwayat-empty');
 const catatanContainer = document.getElementById('catatan-container');
 const catatanEmpty = document.getElementById('catatan-empty');
+// Filter Tahun Ajaran tab Pelanggaran & Prestasi (spek client via bos
+// 2026-10-08): daftar LENGKAP disimpan di memori, dropdown menyaring render.
+const catatanTahunSel = document.getElementById('catatan-tahun');
+let catatanSemua = [];
+let catatanCanWrite = false;
 
 const pFoto = document.getElementById('p-foto');
 const pNama = document.getElementById('p-nama');
@@ -94,6 +99,11 @@ function populateCatatan(list, canWrite) {
       ? 'border-red-200 dark:border-red-800'
       : 'border-green-200 dark:border-green-800';
     const kategori = c.kategori ? ` · ${c.kategori}` : '';
+    // Tag tahun ajaran (spek client 2026-10-08): supaya jelas catatan ini TA
+    // berapa walau sedang melihat "Semua Tahun".
+    const taTag = c.tahun_ajaran
+      ? `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">TA ${c.tahun_ajaran}</span>`
+      : '';
     const pencatat = c.pencatat
       ? `<div class="mt-1 text-xs text-gray-500 dark:text-gray-400">Dicatat oleh: ${c.pencatat}</div>`
       : '';
@@ -106,6 +116,7 @@ function populateCatatan(list, canWrite) {
           <div class="flex items-center gap-3">
             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${badgeCls}">${badgeTxt}</span>
             <span class="text-xs text-gray-500 dark:text-gray-400">${c.tanggal}${kategori}</span>
+            ${taTag}
           </div>
           ${aksi}
         </div>
@@ -113,6 +124,39 @@ function populateCatatan(list, canWrite) {
         ${pencatat}
       </div>`;
   });
+}
+
+// Simpan daftar LENGKAP catatan + bangun dropdown Tahun Ajaran (opsi
+// "Semua Tahun" + tiap TA yang punya catatan), lalu render sesuai pilihan.
+// Semua add/hapus catatan melewati sini supaya pilihan user TIDAK reset.
+function setCatatanData(list, canWrite) {
+  catatanSemua = Array.isArray(list) ? list : [];
+  catatanCanWrite = !!canWrite;
+  const sel = catatanTahunSel;
+  if (sel) {
+    const tas = [...new Set(catatanSemua.map((c) => c.tahun_ajaran).filter(Boolean))]
+      .sort((a, b) => b.localeCompare(a));
+    const prev = sel.value;
+    sel.innerHTML = '<option value="semua">Semua Tahun</option>' +
+      tas.map((t) => `<option value="${t}">${t}</option>`).join('');
+    if (prev && (prev === 'semua' || tas.includes(prev))) sel.value = prev;
+    if (!sel.dataset.bound) {
+      sel.dataset.bound = '1';
+      sel.addEventListener('change', renderCatatanFiltered);
+    }
+    const wrap = document.getElementById('catatan-tahun-wrap');
+    if (wrap && tas.length > 0) { wrap.classList.remove('hidden'); wrap.classList.add('flex'); }
+  }
+  renderCatatanFiltered();
+}
+
+// Render catatan sesuai filter tahun terpilih ("semua" → tampilkan semua).
+function renderCatatanFiltered() {
+  const ta = catatanTahunSel ? catatanTahunSel.value : 'semua';
+  const list = (!ta || ta === 'semua')
+    ? catatanSemua
+    : catatanSemua.filter((c) => c.tahun_ajaran === ta);
+  populateCatatan(list, catatanCanWrite);
 }
 
 // Kelas aktif/nonaktif untuk tombol tab.
@@ -270,7 +314,7 @@ async function loadData() {
     currentSantriData = s;
     populateBiodata(s);
     populateRiwayat(riwayat, bulanListByTA);
-    populateCatatan(catatan, canWriteCatatan);
+    setCatatanData(catatan, canWriteCatatan);
     // Profil siap → riwayatTahunList sudah terisi. Bila tab Nilai Tambahan
     // sudah diklik tadi (sebelum siap), muat sekarang.
     profilDimuat = true;
@@ -960,7 +1004,7 @@ if (formCatatan) {
       const resCat = await fetch(`/api/catatan?santri_id=${santriId}`);
       if (resCat.ok) {
         const cat = await resCat.json();
-        populateCatatan(cat || [], true);
+        setCatatanData(cat || [], true);
       }
     } catch (err) {
       alert('Error: ' + err.message);
@@ -983,7 +1027,7 @@ if (catatanContainer) {
         const resCat = await fetch(`/api/catatan?santri_id=${santriId}`);
         if (resCat.ok) {
           const cat = await resCat.json();
-          populateCatatan(cat || [], true); // We know it's true because they clicked delete
+          setCatatanData(cat || [], true); // We know it's true because they clicked delete
         }
       } catch (err) {
         alert('Error: ' + err.message);
