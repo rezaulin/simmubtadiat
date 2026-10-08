@@ -1360,6 +1360,13 @@ function waliFmtNilai(n) {
   return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1);
 }
 
+// ── Filter tahun ajaran dashboard wali (spek bos 2026-10-07) ─────────────
+// Dashboard default hanya menampilkan TAHUN AKTIF (scrol jadi pendek saat
+// anak sudah naik kelas). Tahun lama dipilih dari blok "Tahun Ajaran" di
+// menu sidebar (garis tiga); pilihan tersimpan di localStorage.
+const WALI_TA_KEY = 'wali_ta_ditampilkan';
+let waliAnakAktif = 0;
+
 async function renderWaliHome() {
   const metrics = document.getElementById('dash-metrics');
   const quick = document.getElementById('dash-quickactions');
@@ -1369,6 +1376,10 @@ async function renderWaliHome() {
   if (!home) return;
   home.classList.remove('hidden');
   home.innerHTML = `<div class="text-center py-10 text-gray-500 dark:text-gray-400 text-sm">Memuat data anak...</div>`;
+  // Sembunyikan blok Tahun Ajaran di menu sampai detail anak siap
+  // (juga menutupi kasus pemilih banyak anak sebelum anak dipilih).
+  const wrapTaAwal = document.getElementById('wali-tahun-wrap');
+  if (wrapTaAwal) wrapTaAwal.classList.add('hidden');
 
   try {
     const res = await fetch('/api/wali/anak');
@@ -1465,12 +1476,58 @@ async function loadAnakDetail(santriId) {
     // 2026-10-05: "di atas dapat peringatan, di bawah Alhamdulillah → ngece".
     // Kartu alpha MERAH (ada alpha) tetap tampil walau ada peringatan.
     const kartuMusbat = buildPeringatanMusbat(riwayat);
-    home.innerHTML = buildAnakBiodata(s) + kartuMusbat + buildAlphaAlert(riwayat, !!kartuMusbat) + buildCatatanAnak(catatan) +
-      buildNilaiTambahan(grupTahun, santriId) + buildRiwayatAkademik(riwayat);
+
+    // Filter tahun ajaran (spek bos 2026-10-07): dashboard default hanya
+    // tahun AKTIF; tahun lama dipilih lewat menu sidebar (localStorage).
+    // Peringatan & kartu alpha TETAP lintas tahun (spek owner 2026-10-04/05:
+    // dua kuartal berturut boleh lintas TA) — yang difilter hanya bagian
+    // panjang: nilai tambahan + transkrip/absensi (biang scroll panjang).
+    waliAnakAktif = santriId;
+    let pilihTa = '';
+    try { pilihTa = localStorage.getItem(WALI_TA_KEY) || ''; } catch (_) {}
+    if (!tahunList.includes(pilihTa)) pilihTa = tahunList.includes(taAktifWali) ? taAktifWali : tahunList[0];
+
+    const bannerTa = (taAktifWali && pilihTa && pilihTa !== taAktifWali) ? `
+      <div class="mb-6 flex flex-wrap items-center justify-between gap-3 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-500/30 rounded-2xl px-5 py-3">
+        <p class="text-sm font-bold text-indigo-800 dark:text-indigo-300">📂 Menampilkan tahun ajaran ${waliEscape(pilihTa)} (riwayat)</p>
+        <button id="wali-ta-kembali" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-700 transition-colors">Kembali ke ${waliEscape(taAktifWali)}</button>
+      </div>` : '';
+
+    home.innerHTML = bannerTa + buildAnakBiodata(s) + kartuMusbat + buildAlphaAlert(riwayat, !!kartuMusbat) + buildCatatanAnak(catatan) +
+      buildNilaiTambahan(grupTahun.filter((g) => g.ta === pilihTa), santriId) +
+      buildRiwayatAkademik(riwayat.filter((r) => r.tahun_ajaran === pilihTa));
+    const btnTaKembali = document.getElementById('wali-ta-kembali');
+    if (btnTaKembali) btnTaKembali.addEventListener('click', () => pilihTahunWali(taAktifWali));
+    renderMenuTahunWali(tahunList, pilihTa, taAktifWali);
     if (window.lucide) window.lucide.createIcons();
   } catch (err) {
     home.innerHTML = `<div class="text-center py-10 text-red-500 text-sm">${waliEscape(err.message)}</div>`;
   }
+}
+
+// Blok "Tahun Ajaran" di menu sidebar (khusus wali). Tampil hanya bila
+// riwayat anak punya ≥2 tahun; menandai pilihan yang sedang ditampilkan.
+function renderMenuTahunWali(tahunList, pilihTa, taAktif) {
+  const wrap = document.getElementById('wali-tahun-wrap');
+  const list = document.getElementById('wali-tahun-list');
+  if (!wrap || !list) return;
+  if (!Array.isArray(tahunList) || tahunList.length < 2) { wrap.classList.add('hidden'); return; }
+  list.innerHTML = tahunList.map((ta, i) => `
+    <button type="button" data-i="${i}" class="wali-ta-pick text-left text-sm px-3 py-2 rounded-xl transition-colors flex items-center justify-between gap-2 ${ta === pilihTa ? 'bg-indigo-50/80 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-semibold' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-700/50 font-medium'}">
+      <span>${waliEscape(ta || '-')}</span>
+      ${ta === taAktif ? '<span class="text-[10px] font-bold uppercase tracking-wide opacity-70">aktif</span>' : ''}
+    </button>`).join('');
+  wrap.classList.remove('hidden');
+  list.querySelectorAll('.wali-ta-pick').forEach((btn) => {
+    btn.addEventListener('click', () => pilihTahunWali(tahunList[parseInt(btn.dataset.i, 10)]));
+  });
+}
+
+// Terapkan pilihan tahun dari menu → simpan, render ulang, tutup drawer.
+function pilihTahunWali(ta) {
+  try { localStorage.setItem(WALI_TA_KEY, ta || ''); } catch (_) {}
+  if (waliAnakAktif) loadAnakDetail(waliAnakAktif); else renderWaliHome();
+  if (window.closeSidebar) window.closeSidebar();
 }
 
 // ── Nilai Tambahan utk dashboard wali (Jalur A, keputusan owner 2026-10-02) ─

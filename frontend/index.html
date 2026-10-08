@@ -187,6 +187,13 @@
           <i data-lucide="settings" class="w-5 h-5"></i>
           Pengaturan
         </a>
+
+        <!-- TAHUN AJARAN (khusus wali_santri; diisi main.js — spek bos 2026-10-07):
+             dashboard wali default hanya tahun aktif; tahun lama dipilih di sini. -->
+        <div id="wali-tahun-wrap" class="hidden mt-4 pt-3 border-t border-gray-100 dark:border-slate-700/60">
+          <p class="text-[10px] font-bold text-gray-400 dark:text-gray-500 mb-2 px-3 tracking-widest uppercase">Tahun Ajaran Ditampilkan</p>
+          <div id="wali-tahun-list" class="flex flex-col gap-1"></div>
+        </div>
       </nav>
       
       <!-- User Profile / Logout -->
