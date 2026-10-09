@@ -58,13 +58,70 @@ func GetPengajarBagian(ctx context.Context, tahunAjaran string, bagianID string,
 			return nil, err
 		}
 		result = append(result, map[string]interface{}{
-			"id": id,
+			"id":            id,
 			"nama_pengajar": nama,
-			"nama_bagian": bagian,
-			"peran": peran,
+			"nama_bagian":   bagian,
+			"peran":         peran,
+			"tahun_ajaran":  tahunAjaran,
+			"bagian_id":     bagianID,
+			"pengajar_id":   pengajarID,
+		})
+	}
+	return result, nil
+}
+
+// Riwayat penugasan SATU pengajar, digabung dari ketiga sumber penugasan:
+// mufatish_kelas (mufatish), mustahiq_bagian (mustahiq) dan pengajar_bagian
+// (munawwib / peran lain). Dipakai modal "Info Detail Pengajar" supaya semua
+// jenis penugasan ikut terbaca — sebelumnya hanya pengajar_bagian yang dibaca,
+// sehingga pengajar mufatish/mustahiq tampil "Belum ada riwayat penugasan".
+func GetRiwayatPenugasan(ctx context.Context, pengajarID string) ([]map[string]interface{}, error) {
+	query := `
+		SELECT jenis, penugasan, tahun_ajaran FROM (
+			SELECT 1 AS urut, 'Mufatish' AS jenis,
+			       t.nama || ' / Kelas ' || k.nama AS penugasan,
+			       mk.tahun_ajaran
+			FROM mufatish_kelas mk
+			JOIN kelas k ON mk.kelas_id = k.id
+			JOIN tingkatan t ON mk.tingkatan_id = t.id
+			WHERE mk.pengajar_id = $1
+			UNION ALL
+			SELECT 2, 'Mustahiq',
+			       t.nama || ' / Kelas ' || k.nama || ' / Bagian ' || b.nama_bagian,
+			       mb.tahun_ajaran
+			FROM mustahiq_bagian mb
+			JOIN bagian b ON mb.bagian_id = b.id
+			JOIN kelas k ON b.kelas_id = k.id
+			JOIN tingkatan t ON b.tingkatan_id = t.id
+			WHERE mb.pengajar_id = $1
+			UNION ALL
+			SELECT 3, INITCAP(pb.peran),
+			       t.nama || ' / Kelas ' || k.nama || ' / Bagian ' || b.nama_bagian,
+			       pb.tahun_ajaran
+			FROM pengajar_bagian pb
+			JOIN bagian b ON pb.bagian_id = b.id
+			JOIN kelas k ON b.kelas_id = k.id
+			JOIN tingkatan t ON b.tingkatan_id = t.id
+			WHERE pb.pengajar_id = $1
+		) x
+		ORDER BY urut, tahun_ajaran DESC, penugasan`
+
+	rows, err := config.DB.Query(ctx, query, pengajarID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var result []map[string]interface{}
+	for rows.Next() {
+		var jenis, penugasan, tahunAjaran string
+		if err := rows.Scan(&jenis, &penugasan, &tahunAjaran); err != nil {
+			return nil, err
+		}
+		result = append(result, map[string]interface{}{
+			"jenis":        jenis,
+			"penugasan":    penugasan,
 			"tahun_ajaran": tahunAjaran,
-			"bagian_id": bagianID,
-			"pengajar_id": pengajarID,
 		})
 	}
 	return result, nil

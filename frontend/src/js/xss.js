@@ -933,7 +933,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="overflow-x-auto">
             <table class="w-full text-left text-sm text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-slate-700 rounded-xl">
               <thead class="bg-gray-50 dark:bg-slate-700/50 text-gray-500 dark:text-gray-400 uppercase font-semibold text-xs border-b dark:border-slate-700">
-                <tr><th class="px-6 py-4">Tingkatan</th><th class="px-6 py-4">Peran</th><th class="px-6 py-4 text-center">Tahun Ajaran</th></tr>
+                <tr><th class="px-6 py-4">Jenis</th><th class="px-6 py-4">Penugasan</th><th class="px-6 py-4 text-center">Tahun Ajaran</th></tr>
               </thead>
               <tbody id="global-tbody-riwayat-pengajar" class="divide-y divide-gray-100 dark:divide-slate-700/50">
               </tbody>
@@ -1012,12 +1012,16 @@ window.openGlobalDetailPengajar = async function(id, nama) {
       return;
     }
     tbodyRiwayat.innerHTML = '';
+    // escaping kecil: penugasan berisi nama tingkatan/kelas/bagian dari DB.
+    const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => (
+      { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+    ));
     data.forEach(p => {
       tbodyRiwayat.innerHTML += `
         <tr>
-          <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">${p.nama_bagian}</td>
-          <td class="px-4 py-3 uppercase text-xs font-bold text-gray-600 dark:text-gray-400">${p.peran}</td>
-          <td class="px-4 py-3 text-center">${p.tahun_ajaran}</td>
+          <td class="px-6 py-3 uppercase text-xs font-bold text-gray-600 dark:text-gray-400">${esc(p.jenis)}</td>
+          <td class="px-6 py-3 font-medium text-gray-900 dark:text-white">${esc(p.penugasan)}</td>
+          <td class="px-6 py-3 text-center">${esc(p.tahun_ajaran)}</td>
         </tr>`;
     });
   } catch(e) {

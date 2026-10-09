@@ -33,6 +33,18 @@ func GetPenugasan(w http.ResponseWriter, r *http.Request) {
 	bagianID := r.URL.Query().Get("bagian_id")
 	pengajarID := r.URL.Query().Get("pengajar_id")
 
+	// Modal detail pengajar: kirim pengajar_id → riwayat digabung dari
+	// ketiga sumber penugasan (mufatish/mustahiq/munawwib).
+	if pengajarID != "" {
+		riwayat, err := models.GetRiwayatPenugasan(r.Context(), pengajarID)
+		if err != nil {
+			http.Error(w, internalError("", err), http.StatusInternalServerError)
+			return
+		}
+		writeJSON(w, riwayat)
+		return
+	}
+
 	res, err := models.GetPengajarBagian(r.Context(), tahunAjaran, bagianID, pengajarID)
 	if err != nil {
 		http.Error(w, internalError("", err), http.StatusInternalServerError)

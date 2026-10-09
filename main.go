@@ -230,10 +230,14 @@ func main() {
 				})
 
 				r.Route("/penugasan", func(r chi.Router) {
-					// Baca penugasan: pimpinan + mufatish + mustahiq.
-					// admin sengaja TIDAK termasuk — menu Penugasan di luar cakupan admin.
+					// Baca penugasan: pimpinan + mufatish + mustahiq + admin/muroqib.
+					// admin & muroqib read-only supaya modal Info Detail Pengajar
+					// (dibuka dari menu Pengajar yang bisa diakses keduanya)
+					// tidak error 403 pada bagian riwayat penugasan.
+					// admin sengaja TIDAK boleh MENULIS penugasan — menu Penugasan
+					// (tab kelola) tetap di luar cakupan admin.
 					r.Group(func(r chi.Router) {
-						r.Use(appMiddleware.RequireRoles("pimpinan", "mufatish", "mustahiq"))
+						r.Use(appMiddleware.RequireRoles("pimpinan", "mufatish", "mustahiq", "admin", "muroqib"))
 						r.Get("/", handlers.GetPenugasan)
 					})
 					// Kelola penugasan (assign/hapus): pimpinan saja.
