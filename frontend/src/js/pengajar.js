@@ -298,7 +298,7 @@ function renderTable(pengajarArray) {
         ${alamat}
       </td>
       <td data-label="Aksi" class="px-6 py-4 text-right">
-        <button onclick="openDetailPengajar(${p.id}, '${nama}')" class="text-blue-500 hover:underline text-sm font-medium mr-3">Info</button>
+        <button type="button" data-info-pengajar="${p.id}" class="text-blue-500 hover:underline text-sm font-medium mr-3">Info</button>
         ${window.isAdminRole(userRole) ? `
           <button onclick="editPengajar(${p.id})" class="text-primary dark:text-accent-emerald hover:underline text-sm font-medium mr-3">Edit</button>
           ${window.isPimpinanRole(userRole) ? `
@@ -310,6 +310,12 @@ function renderTable(pengajarArray) {
       </td>
     `;
     tableBody.appendChild(tr);
+
+    // Tombol Info diikat lewat event, bukan onclick inline: nama pengajar
+    // bisa berisi kutip (mis. "Syifa'ul") yang mematikan onclick inline.
+    tr.querySelector('[data-info-pengajar]').addEventListener('click', () => {
+      openDetailPengajar(p.id, p.nama || '-');
+    });
   });
   updatePurnaBulkBar();
 }
