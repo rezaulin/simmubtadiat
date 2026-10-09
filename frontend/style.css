@@ -389,3 +389,24 @@
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+/* ================= FONT ARAB (teks kitab / mapel) =================
+   Sumber: frontend/public/fonts/UthmanTN.ttf (KFGQPC Uthman Taha Naskh),
+   font yang sama dengan rapot. Tanpa ini, teks Arab jatuh ke font bawaan
+   sistem → tampilannya beda tiap perangkat.
+   `unicode-range` membatasi font INI hanya untuk karakter Arab, jadi teks
+   Latin tetap memakai Plus Jakarta Sans. Dipakai lewat class .font-arab
+   (lihat renderJadwalCard di main.js). */
+@font-face {
+  font-family: 'Uthman TN';
+  src: url('/fonts/UthmanTN.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0600-06FF, U+0750-077F, U+0870-089E, U+08A0-08FF,
+    U+FB50-FDFF, U+FE70-FEFF;
+}
+
+.font-arab {
+  font-family: 'Uthman TN', 'Plus Jakarta Sans', system-ui, sans-serif;
+}

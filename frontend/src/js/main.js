@@ -653,7 +653,7 @@ function renderJadwalCard(entry, today) {
         </div>
         <span data-tingkatan class="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary shrink-0">${tingkatan}</span>
       </div>
-      <div data-nama-mapel class="mt-2 font-bold text-gray-900 dark:text-white">${namaMapel}</div>
+      <div data-nama-mapel class="mt-2 font-bold text-gray-900 dark:text-white font-arab">${namaMapel}</div>
       <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">
         <span data-nama-bagian>${namaBagian}</span>
         <span class="mx-1">•</span>
@@ -1054,7 +1054,7 @@ async function loadJadwalHariIni(target, today, opts) {
     const cards = sorted.map((entry) => renderJadwalCard(entry, base)).join('');
     el.innerHTML = `
       <div data-widget="jadwal" class="space-y-3">
-        <h3 class="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Jadwal Hari Ini</h3>
+        <h3 class="text-sm md:text-base font-extrabold text-gray-900 dark:text-white uppercase tracking-wide">Jadwal Hari Ini</h3>
         ${cards}
       </div>`;
     refreshIcons();
