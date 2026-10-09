@@ -287,11 +287,13 @@
            peran tak dikenal: pesan konten tidak tersedia). Req 4.1, 4.2, 4.5. -->
       <div id="dash-role-region" class="space-y-8">
 
+        <!-- Jadwal Hari Ini — diisi loadJadwalHariIni. Dinyalakan kembali
+             (permintaan owner 2026-10): tampil di ATAS grid menu untuk peran
+             yang punya jadwal; bila kosong widget disembunyikan. -->
+        <div id="dash-jadwal"></div>
+
         <!-- Menu launcher: grid ikon menu sesuai role (menggantikan statistik) -->
         <div id="dash-menu-grid"></div>
-
-        <!-- Jadwal Hari Ini (Peran_Guru, paling atas) — diisi renderJadwalCard/loadJadwalHariIni -->
-        <div id="dash-jadwal"></div>
 
         <!-- Widget_Statistik (Peran_Admin) — diisi renderMetrics -->
         <div id="dash-metrics" class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6"></div>

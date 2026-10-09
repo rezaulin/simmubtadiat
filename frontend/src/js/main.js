@@ -1014,9 +1014,10 @@ async function loadSantriCharts(targets) {
 // (sortJadwal) & render tiap Kartu_Jadwal (Req 5.3, 5.4); `jadwal[]` kosong →
 // Empty_State (Req 5.8); gagal/timeout → error + "Muat ulang" (Req 5.9).
 // (Requirements 5.1, 5.2, 5.3, 5.4, 5.8, 5.9)
-async function loadJadwalHariIni(target, today) {
+async function loadJadwalHariIni(target, today, opts) {
   const el = resolveWidgetTarget(target, 'dash-jadwal');
   if (!el) return;
+  const hideWhenEmpty = !!(opts && opts.hideWhenEmpty);
   const base = today instanceof Date ? today : new Date();
   el.innerHTML = loadingMarkup('Memuat jadwal hari ini...');
   try {
@@ -1025,12 +1026,21 @@ async function loadJadwalHariIni(target, today) {
     const data = (await res.json()) || {};
     const jadwal = Array.isArray(data) ? data : (Array.isArray(data.jadwal) ? data.jadwal : []);
     if (jadwal.length === 0) {
+      // Opsi `hideWhenEmpty`: peran yang bukan pengajar (admin/pimpinan tanpa
+      // jadwal) tidak perlu melihat widget kosong — cukup sembunyikan.
+      if (hideWhenEmpty) {
+        el.innerHTML = '';
+        el.classList.add('hidden');
+        return;
+      }
       el.innerHTML = `
         <div data-widget="jadwal" class="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-gray-100 dark:border-slate-700/60 shadow-sm">
           ${emptyStateMarkup('Tidak ada jadwal mengajar hari ini.')}
         </div>`;
       return;
     }
+    // Ada jadwal → pastikan widget terlihat lagi (bila sebelumnya tersembunyi).
+    el.classList.remove('hidden');
     // Data API sudah di-escape global oleh xss.js. Decode field string di batas ini
     // agar nilai seperti tingkatan "I'dadiyyah" tidak ter-escape ganda (tampil
     // "I&#39;dadiyyah") saat renderJadwalCard meng-escape ulang.
@@ -1216,14 +1226,20 @@ function initRoleAwareDashboard(role) {
   const hasAdmin = roles.some(r => ADMIN_DASHBOARD_ROLES.includes(r));
   const hasGuru = roles.some(r => GURU_DASHBOARD_ROLES.includes(r));
 
-  // Dashboard = menu launcher grid (statistik/grafik dihapus total, jadwal
-  // guru juga tidak ditampilkan — keputusan owner 2026-08). Widget jadwal,
-  // statistik, grafik, dan kolom samping semuanya disembunyikan.
+  // Dashboard = menu launcher grid (statistik/grafik dihapus total — keputusan
+  // owner 2026-08). Widget jadwal DINYALAKAN KEMBALI per permintaan owner
+  // (2026-10): kartu "Jadwal Hari Ini" tampil di atas grid menu untuk siapa
+  // pun yang punya jadwal hari ini; tanpa jadwal → widget disembunyikan
+  // (peran guru tetap melihat empty-state "Tidak ada jadwal mengajar hari ini").
   hide(side);
   hide(metrics);
   hide(chartsCol);
-  hide(jadwal);
   renderMenuGrid(roles);
+
+  if (jadwal) {
+    show(jadwal);
+    loadJadwalHariIni(jadwal, undefined, { hideWhenEmpty: !hasGuru });
+  }
 
   if (!hasAdmin && !hasGuru) {
     if (region) {
