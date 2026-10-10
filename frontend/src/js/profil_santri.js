@@ -814,6 +814,7 @@ function openEditModal() {
   f.desa.value = currentSantriData.desa || '';
   f.alamat.value = currentSantriData.alamat || '';
   if (f.kamar) f.kamar.value = currentSantriData.kamar || '';
+  if (f.tahun_masuk) f.tahun_masuk.value = currentSantriData.tahun_masuk || '';
   
   // Wilayah
   document.getElementById('edit-input-provinsi').value = currentSantriData.provinsi_nama || '';
@@ -913,7 +914,10 @@ if (formEditSantri) {
       kecamatan_nama: formData.get('kecamatan_nama'),
       desa: formData.get('desa'),
       alamat: formData.get('alamat'),
-      kamar: formData.get('kamar')
+      kamar: formData.get('kamar'),
+      // Issue Pak Di: tahun masuk bisa diedit dari modal Edit Data Santri.
+      // Kosong = tidak diubah (backend pakai COALESCE(NULLIF(...,''))).
+      tahun_masuk: formData.get('tahun_masuk')
     };
 
     try {

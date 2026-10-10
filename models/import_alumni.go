@@ -87,7 +87,9 @@ func ImportAlumniFromExcel(ctx context.Context, reader io.Reader) (*AlumniImport
 		khidmahRaw := strings.ToLower(get(idx([]string{"khidmah"}, 7)))
 		tempatKhidmah := get(idx([]string{"tempat khidmah"}, 8))
 		ijazahRaw := strings.ToLower(get(idx([]string{"pengambilan ijazah", "status ijazah"}, 9)))
-		keterangan := get(idx([]string{"keterangan"}, 10))
+		// "Keterangan" (template lama) tetap diterima; template baru memakai
+		// "Keterangan Alumni" agar tidak tertukar dengan "Alasan Belum Diambil".
+		keterangan := get(idx([]string{"keterangan alumni", "keterangan"}, 10))
 		tahunMasuk := get(idx([]string{"tahun masuk"}, 11))
 		tahunKeluar := get(idx([]string{"tahun keluar"}, 12))
 		kamar := get(idx([]string{"kamar"}, 13))
@@ -97,6 +99,8 @@ func ImportAlumniFromExcel(ctx context.Context, reader io.Reader) (*AlumniImport
 		if tahunLulus == "" {
 			tahunLulus = tahunKeluar
 		}
+		// Kolom "Alasan Belum Diambil" — hanya ada di template baru (fallback -1).
+		alasan := get(idx([]string{"alasan belum diambil", "alasan ijazah belum diambil"}, -1))
 
 		// Skip empty rows
 		if nama == "" && stambuk == "" {
@@ -156,12 +160,16 @@ func ImportAlumniFromExcel(ctx context.Context, reader io.Reader) (*AlumniImport
 			}
 			// Upsert alumni
 			_, _ = config.DB.Exec(ctx,
-				`INSERT INTO alumni (santri_id, tahun_lulus, khidmah, status_ijazah, keterangan)
-				 VALUES ($1, $2, $3, $4, $5)
+				`INSERT INTO alumni (santri_id, tahun_lulus, khidmah, status_ijazah, keterangan, alasan_ijazah_belum_diambil)
+				 VALUES ($1, $2, $3, $4, $5, $6)
 				 ON CONFLICT (santri_id) DO UPDATE SET
 				   khidmah = EXCLUDED.khidmah, status_ijazah = EXCLUDED.status_ijazah,
-				   keterangan = EXCLUDED.keterangan, updated_at = CURRENT_TIMESTAMP`,
-				santriID, nilIfEmpty(tahunLulus), khidmah, statusIjazah, nilIfEmpty(keterangan))
+				   keterangan = EXCLUDED.keterangan,
+				   -- Alasan: file template lama tidak punya kolom ini (NULL) →
+				   -- jangan menimpa alasan yang sudah tersimpan.
+				   alasan_ijazah_belum_diambil = COALESCE(EXCLUDED.alasan_ijazah_belum_diambil, alumni.alasan_ijazah_belum_diambil),
+				   updated_at = CURRENT_TIMESTAMP`,
+				santriID, nilIfEmpty(tahunLulus), khidmah, statusIjazah, nilIfEmpty(keterangan), nilIfEmpty(alasan))
 			if tempatKhidmah != "" {
 				_, _ = config.DB.Exec(ctx, `UPDATE santri SET khidmah_tempat = $1 WHERE id = $2`, tempatKhidmah, santriID)
 			}
@@ -185,12 +193,14 @@ func ImportAlumniFromExcel(ctx context.Context, reader io.Reader) (*AlumniImport
 
 		// Insert alumni record
 		_, err = config.DB.Exec(ctx,
-			`INSERT INTO alumni (santri_id, tahun_lulus, khidmah, status_ijazah, keterangan)
-			 VALUES ($1, $2, $3, $4, $5)
+			`INSERT INTO alumni (santri_id, tahun_lulus, khidmah, status_ijazah, keterangan, alasan_ijazah_belum_diambil)
+			 VALUES ($1, $2, $3, $4, $5, $6)
 			 ON CONFLICT (santri_id) DO UPDATE SET
 			   khidmah = EXCLUDED.khidmah, status_ijazah = EXCLUDED.status_ijazah,
-			   keterangan = EXCLUDED.keterangan, updated_at = CURRENT_TIMESTAMP`,
-			santriID, nilIfEmpty(tahunLulus), khidmah, statusIjazah, nilIfEmpty(keterangan))
+			   keterangan = EXCLUDED.keterangan,
+			   alasan_ijazah_belum_diambil = COALESCE(EXCLUDED.alasan_ijazah_belum_diambil, alumni.alasan_ijazah_belum_diambil),
+			   updated_at = CURRENT_TIMESTAMP`,
+			santriID, nilIfEmpty(tahunLulus), khidmah, statusIjazah, nilIfEmpty(keterangan), nilIfEmpty(alasan))
 		if err != nil {
 			result.Skipped++
 			result.Errors = append(result.Errors, fmt.Sprintf("Baris %d (%s) alumni: %v", rowNum+1, nama, err))

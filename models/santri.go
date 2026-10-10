@@ -479,12 +479,14 @@ func UpdateSantri(ctx context.Context, id int, s Santri) error {
 		 SET nik = $1, stambuk = $2, nisn = $3, nama = $4, nama_wali = $5, 
 		     ttl_tempat = $6, ttl_tanggal = $7, alamat = $8, no_hp_wali = $9, kamar = $10,
 		     provinsi_kode = $11, provinsi_nama = $12, kabupaten_kode = $13, kabupaten_nama = $14,
-		     kecamatan_kode = $15, kecamatan_nama = $16, desa = $17, nama_ayah = $18, nama_ibu = $19
-		 WHERE id = $20`,
-		s.NIK, s.Stambuk, s.NISN, s.Nama, s.NamaWali,
-		s.TTLTempat, s.TTLTanggal, s.Alamat, s.NoHPWali, s.Kamar,
-		s.ProvinsiKode, s.ProvinsiNama, s.KabupatenKode, s.KabupatenNama,
-		s.KecamatanKode, s.KecamatanNama, s.Desa, s.NamaAyah, s.NamaIbu, id)
+		     kecamatan_kode = $15, kecamatan_nama = $16, desa = $17, nama_ayah = $18, nama_ibu = $19,
+		     -- tahun_masuk: kosong/tidak dikirim = biarkan nilai lama (issue edit tahun masuk).
+		     tahun_masuk = COALESCE(NULLIF($21, ''), tahun_masuk)
+		     WHERE id = $20`,
+		     s.NIK, s.Stambuk, s.NISN, s.Nama, s.NamaWali,
+		     s.TTLTempat, s.TTLTanggal, s.Alamat, s.NoHPWali, s.Kamar,
+		     s.ProvinsiKode, s.ProvinsiNama, s.KabupatenKode, s.KabupatenNama,
+		     s.KecamatanKode, s.KecamatanNama, s.Desa, s.NamaAyah, s.NamaIbu, id, s.TahunMasuk)
 	return err
 }
 

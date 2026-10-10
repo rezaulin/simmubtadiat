@@ -982,7 +982,14 @@ formUpdateAlumni.addEventListener('submit', async (e) => {
     tahun_masuk: getVal('edit-alumni-tahun-masuk'),
     tahun_lulus: getVal('edit-alumni-tahun-lulus'),
     tahun_keluar: getVal('edit-alumni-tahun-keluar'),
-    tempat_khidmah: getVal('edit-alumni-tempat-khidmah')
+    tempat_khidmah: getVal('edit-alumni-tempat-khidmah'),
+    // Wajib ikut terkirim: backend memakai NULLIF(...,'') sehingga field yang
+    // tidak dikirim = string kosong = nilai lama di-NULL-in. (Issue Pak Di:
+    // alasan belum diambil tidak tampil setelah save — asal_daerah &
+    // tingkatan_akhir ikut terhapus karena kelewat di payload lama.)
+    alasan_ijazah_belum_diambil: getVal('input-alasan-ijazah'),
+    asal_daerah: getVal('edit-alumni-asal-daerah'),
+    tingkatan_akhir: getVal('edit-alumni-tingkatan-akhir')
   };
 
   try {
