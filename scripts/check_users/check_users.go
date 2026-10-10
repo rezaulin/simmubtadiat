@@ -13,7 +13,7 @@ func main() {
 
 	fmt.Println("GetDashboardStats(pengajar 5):")
 	pID := 5
-	stats, err := models.GetDashboardStats(context.Background(), "mustahiq", &pID)
+	stats, err := models.GetDashboardStats(context.Background(), []string{"mustahiq"}, &pID)
 	if err != nil {
 		fmt.Println("Error:", err)
 		return
