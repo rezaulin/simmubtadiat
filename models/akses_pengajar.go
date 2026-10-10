@@ -8,10 +8,9 @@ import (
 
 // Assign Mufatish to Kelas (replacing the old one for this tingkatan+kelas)
 func AssignMufatish(ctx context.Context, pengajarID, kelasID, tingkatanID int) error {
+	// GetTahunAjaranAktif tidak pernah kosong (punya fallback absolut),
+	// jadi fallback lokal "2024/2025" lama dihapus — jebakan tahun basi.
 	tahunAjaran := GetTahunAjaranAktif(ctx)
-	if tahunAjaran == "" {
-		tahunAjaran = "2024/2025" // Fallback
-	}
 
 	query := `
 		INSERT INTO mufatish_kelas (pengajar_id, kelas_id, tingkatan_id, user_id, tahun_ajaran) 
