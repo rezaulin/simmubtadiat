@@ -141,6 +141,8 @@ func main() {
 					r.Use(appMiddleware.DenyRoles("wali_santri"))
 					r.Get("/", handlers.GetKalenderKuartal)
 					r.Get("/tahun", handlers.GetTahunAjaran)
+					// TA aktif — untuk default filter dropdown (menu Pelanggaran dkk).
+					r.Get("/tahun-aktif", handlers.GetTahunAjaranAktifAPI)
 					r.Get("/hijri-semester", handlers.GetKalenderSemesterHijri)
 					r.Group(func(r chi.Router) {
 						r.Use(appMiddleware.RequireRoles("pimpinan", "admin"))

@@ -13,6 +13,7 @@ const detailSantriName = document.getElementById('detail-santri-name');
 const detailTableBody = document.getElementById('detail-table-body');
 
 // Filters
+const filterTahun = document.getElementById('filter-tahun');
 const filterTingkatan = document.getElementById('filter-tingkatan');
 const filterKelas = document.getElementById('filter-kelas');
 const filterBagian = document.getElementById('filter-bagian');
@@ -30,6 +31,9 @@ let allSantri = [];
 let cachedCatatan = [];
 let cachedBagian = [];
 let searchTimer = null;
+// Tahun ajaran aktif — nilai awal dropdown filter tahun ajaran (Permintaan
+// Pak Di: data selalu tampil tapi bisa difilter per tahun ajaran).
+let tahunAktif = '';
 
 async function init() {
   try {
@@ -50,10 +54,36 @@ async function init() {
       if (filterKelas) filterKelas.disabled = true;
     }
 
+    await loadTahunAjaranOptions();
     await loadBagianOptions();
     await loadCatatan();
   } catch (e) {
     console.error('Init failed', e);
+  }
+}
+
+// Dropdown Tahun Ajaran: "Semua Tahun Ajaran" + daftar TA dari kalender.
+// Default = tahun ajaran aktif (seperti tampilan lama), user bisa pindah
+// ke TA sebelumnya / semua.
+async function loadTahunAjaranOptions() {
+  if (!filterTahun) return;
+  try {
+    const [resTA, resAktif] = await Promise.all([
+      fetch('/api/kalender/tahun'),
+      fetch('/api/kalender/tahun-aktif')
+    ]);
+    const daftarTA = resTA.ok ? (await resTA.json()) || [] : [];
+    if (resAktif.ok) tahunAktif = (await resAktif.json()).tahun_ajaran || '';
+
+    filterTahun.innerHTML = '';
+    daftarTA.forEach(ta => {
+      filterTahun.innerHTML += `<option value="${ta}">${ta}${ta === tahunAktif ? ' (aktif)' : ''}</option>`;
+    });
+    filterTahun.innerHTML += '<option value="semua">Semua Tahun Ajaran</option>';
+    if (tahunAktif && daftarTA.includes(tahunAktif)) filterTahun.value = tahunAktif;
+  } catch (e) {
+    console.error('Gagal memuat tahun ajaran', e);
+    if (filterTahun) filterTahun.innerHTML = '<option value="semua">Semua Tahun Ajaran</option>';
   }
 }
 
@@ -111,18 +141,24 @@ function populateFilterBagian() {
 if (filterTingkatan) filterTingkatan.addEventListener('change', populateFilterKelas);
 if (filterKelas) filterKelas.addEventListener('change', populateFilterBagian);
 if (filterBagian) filterBagian.addEventListener('change', filterCatatan);
+// Ganti tahun ajaran → muat ulang rekap (rekap dihitung server per TA).
+if (filterTahun) filterTahun.addEventListener('change', loadCatatan);
 
 if (btnResetFilter) {
   btnResetFilter.addEventListener('click', () => {
+    if (filterTahun) filterTahun.value = tahunAktif || 'semua';
     if (filterTingkatan) filterTingkatan.value = '';
-    populateFilterKelas(); 
+    populateFilterKelas();
+    loadCatatan();
   });
 }
 
 async function loadCatatan() {
   tableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Memuat data...</td></tr>`;
   try {
-    const res = await fetch(`/api/catatan`);
+    // Filter tahun ajaran (dropdown) — default tahun aktif, "semua" = lintas tahun.
+    const taParam = encodeURIComponent((filterTahun && filterTahun.value) || 'semua');
+    const res = await fetch(`/api/catatan?tahun_ajaran=${taParam}`);
     if (!res.ok) throw new Error('Gagal memuat catatan');
     cachedCatatan = (await res.json()) || [];
     filterCatatan();
@@ -152,6 +188,14 @@ function escJenis(s) {
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
 }
 
+// Format tanggal YYYY-MM-DD → "02 Okt 2026" (id-ID).
+function fmtTanggal(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
 function renderRows(list) {
   if (!list || list.length === 0) {
     tableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Belum ada catatan.</td></tr>`;
@@ -163,9 +207,9 @@ function renderRows(list) {
     if (c.tingkatan) infoArr.push(c.tingkatan);
     if (c.kelas) infoArr.push(c.kelas);
     if (c.bagian_nama) infoArr.push(c.bagian_nama);
-    
-    const bagian = infoArr.length > 0 
-      ? `<div class="text-xs font-medium text-gray-600 dark:text-gray-400 mt-0.5">${infoArr.join(' - ')}</div>` 
+
+    const bagian = infoArr.length > 0
+      ? `<div class="text-xs font-medium text-gray-600 dark:text-gray-400 mt-0.5">${infoArr.join(' - ')}</div>`
       : '';
     const btnRiwayat = `<button data-riwayat="${c.santri_id}" data-nama="${c.santri_nama}" class="px-3 py-1 bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-200 rounded-lg text-xs font-semibold transition-colors">Riwayat</button>`;
     // Deskripsi catatan terakhir tampil langsung di tabel (tanpa perlu klik Riwayat).
@@ -175,14 +219,22 @@ function renderRows(list) {
     const jenisCell = badges.length
       ? `<div class="flex flex-col items-center gap-1">${badges.join('')}</div>`
       : '<span class="text-gray-400 dark:text-gray-500">-</span>';
+    // Permintaan Pak Di: kolom total diganti menampilkan tanggal
+    // (tanggal catatan terakhir tiap jenis).
+    const tglPel = c.tanggal_pelanggaran
+      ? fmtTanggal(c.tanggal_pelanggaran)
+      : '<span class="text-gray-400 dark:text-gray-500">-</span>';
+    const tglPres = c.tanggal_prestasi
+      ? fmtTanggal(c.tanggal_prestasi)
+      : '<span class="text-gray-400 dark:text-gray-500">-</span>';
     tableBody.innerHTML += `
       <tr class="hover:bg-gray-50/50 dark:hover:bg-slate-700/30 transition-colors">
         <td data-label="Santri" class="px-6 py-4">
           <div class="font-semibold text-gray-800 dark:text-gray-200">${c.santri_nama || '-'}</div>
           ${bagian}
         </td>
-        <td data-label="Total Pelanggaran" class="px-6 py-4 text-center font-bold text-red-600 dark:text-red-400">${c.total_pelanggaran || 0}</td>
-        <td data-label="Total Prestasi" class="px-6 py-4 text-center font-bold text-green-600 dark:text-green-400">${c.total_prestasi || 0}</td>
+        <td data-label="Tgl. Pelanggaran" class="px-6 py-4 text-center text-red-600 dark:text-red-400 font-medium">${tglPel}</td>
+        <td data-label="Tgl. Prestasi" class="px-6 py-4 text-center text-green-600 dark:text-green-400 font-medium">${tglPres}</td>
         <td data-label="Deskripsi" class="px-6 py-4 text-center">${jenisCell}</td>
         <td data-label="Aksi" class="px-6 py-4 text-right">
           <div class="flex justify-end gap-2">
@@ -219,7 +271,11 @@ async function openRiwayatModal(santriId, santriNama) {
   modalDetail.classList.remove('hidden');
 
   try {
-    const res = await fetch(`/api/catatan?santri_id=${santriId}`);
+    // Ikuti filter tahun ajaran yang sedang aktif di tabel utama
+    // ("semua" = seluruh riwayat) supaya jelas catatan itu TA berapa.
+    const ta = (filterTahun && filterTahun.value && filterTahun.value !== 'semua')
+      ? `&tahun_ajaran=${encodeURIComponent(filterTahun.value)}` : '';
+    const res = await fetch(`/api/catatan?santri_id=${santriId}${ta}`);
     if (!res.ok) throw new Error('Gagal memuat detail');
     const data = await res.json() || [];
     renderDetailRows(data, santriId);
@@ -245,6 +301,7 @@ function renderDetailRows(list, santriId) {
         <td class="px-6 py-3">${badge}</td>
         <td class="px-6 py-3 text-gray-600 dark:text-gray-300 text-xs">${c.kategori || '-'}</td>
         <td class="px-6 py-3 text-gray-600 dark:text-gray-300 text-xs max-w-xs"><div class="whitespace-pre-line">${c.deskripsi}</div></td>
+        <td class="px-6 py-3 text-gray-500 dark:text-gray-400 text-xs whitespace-nowrap">${c.tahun_ajaran || '-'}</td>
         <td class="px-6 py-3 text-gray-500 dark:text-gray-400 text-xs">${c.pencatat || '-'}</td>
       </tr>`;
   });

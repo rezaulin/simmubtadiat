@@ -51,6 +51,7 @@ func SaveKalenderKuartal(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(`{"status":"success"}`))
 }
 
+// GetTahunAjaran mengembalikan daftar tahun ajaran (untuk filter).
 func GetTahunAjaran(w http.ResponseWriter, r *http.Request) {
 	res, err := models.GetTahunAjaran(r.Context())
 	if err != nil {
@@ -60,6 +61,12 @@ func GetTahunAjaran(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	writeJSON(w, res)
+}
+
+// GetTahunAjaranAktifAPI mengembalikan tahun ajaran aktif saat ini —
+// dipakai UI (mis. menu Pelanggaran) sebagai nilai default filter tahun ajaran.
+func GetTahunAjaranAktifAPI(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, map[string]string{"tahun_ajaran": models.GetTahunAjaranAktif(r.Context())})
 }
 
 // GetKalenderSemesterHijri mengembalikan kalender semester Hijriyah suatu tahun ajaran.

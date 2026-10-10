@@ -20,7 +20,13 @@ func GetCatatan(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "santri_id tidak valid", http.StatusBadRequest)
 			return
 		}
-		res, err := models.GetCatatanBySantri(r.Context(), santriID)
+		// Filter tahun ajaran opsional (menu Pelanggaran):
+		// "semua" atau tanpa param = seluruh riwayat.
+		ta := r.URL.Query().Get("tahun_ajaran")
+		if ta == "semua" {
+			ta = ""
+		}
+		res, err := models.GetCatatanBySantri(r.Context(), santriID, ta)
 		if err != nil {
 			http.Error(w, internalError("", err), http.StatusInternalServerError)
 			return
@@ -30,10 +36,12 @@ func GetCatatan(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user, _ := r.Context().Value(appMiddleware.UserContextKey).(appMiddleware.UserSession)
-	// Rekap dihitung per tahun ajaran; default = tahun ajaran aktif
-	// (bisa di-override dengan ?tahun_ajaran=2025/2026).
+	// Rekap dihitung per tahun ajaran; default = tahun ajaran aktif.
+	// ?tahun_ajaran=2025/2026 → TA itu; ?tahun_ajaran=semua → lintas tahun.
 	ta := r.URL.Query().Get("tahun_ajaran")
-	if ta == "" {
+	if ta == "semua" {
+		ta = ""
+	} else if ta == "" {
 		ta = models.GetTahunAjaranAktif(r.Context())
 	}
 	res, err := models.GetRekapCatatan(r.Context(), r.URL.Query().Get("q"), ta, user.Roles, user.PengajarID, user.ID)

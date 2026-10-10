@@ -51,6 +51,11 @@ type RekapCatatan struct {
 	// jenis — tampil di kolom tabel utama (tanpa buka modal Riwayat).
 	DeskripsiPelanggaran string `json:"deskripsi_pelanggaran"`
 	DeskripsiPrestasi    string `json:"deskripsi_prestasi"`
+	// TanggalPelanggaran / TanggalPrestasi: tanggal catatan TERAKHIR per
+	// jenis (Permintaan Pak Di: kolom total pelanggaran/prestasi diganti
+	// menampilkan tanggal saja). Format YYYY-MM-DD, kosong bila tak ada.
+	TanggalPelanggaran string `json:"tanggal_pelanggaran"`
+	TanggalPrestasi    string `json:"tanggal_prestasi"`
 }
 
 func validJenisCatatan(j string) bool {
@@ -132,16 +137,23 @@ func CreateCatatan(ctx context.Context, in CatatanInput, roles []string, userID 
 	return err
 }
 
-// GetCatatanBySantri mengembalikan seluruh catatan seorang santri (untuk detail).
-func GetCatatanBySantri(ctx context.Context, santriID int) ([]CatatanSantri, error) {
-	rows, err := config.DB.Query(ctx,
-		`SELECT c.id, c.santri_id, c.jenis, to_char(c.tanggal, 'YYYY-MM-DD'), c.kategori, c.deskripsi,
+// GetCatatanBySantri mengembalikan catatan seorang santri (untuk detail).
+// tahunAjaran kosong = semua tahun; terisi = hanya catatan TA tersebut
+// (menu Pelanggaran punya filter tahun ajaran).
+func GetCatatanBySantri(ctx context.Context, santriID int, tahunAjaran string) ([]CatatanSantri, error) {
+	q := `SELECT c.id, c.santri_id, c.jenis, to_char(c.tanggal, 'YYYY-MM-DD'), c.kategori, c.deskripsi,
 		        c.tahun_ajaran, COALESCE(p.nama, u.nama)
 		 FROM catatan_santri c
 		 LEFT JOIN pengajar p ON c.pengajar_id = p.id
 		 LEFT JOIN users u ON c.user_id = u.id
-		 WHERE c.santri_id = $1
-		 ORDER BY c.tanggal DESC, c.id DESC`, santriID)
+		 WHERE c.santri_id = $1`
+	args := []interface{}{santriID}
+	if tahunAjaran != "" {
+		args = append(args, tahunAjaran)
+		q += ` AND c.tahun_ajaran = $` + strconv.Itoa(len(args))
+	}
+	q += ` ORDER BY c.tanggal DESC, c.id DESC`
+	rows, err := config.DB.Query(ctx, q, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -192,7 +204,9 @@ func GetRekapCatatan(ctx context.Context, keyword, tahunAjaran string, roles []s
 	                      COALESCE((ARRAY_AGG(NULLIF(TRIM(c.deskripsi), '') ORDER BY c.tanggal DESC, c.id DESC)
 	                       FILTER (WHERE c.jenis = 'pelanggaran'))[1], '') AS deskripsi_pelanggaran,
 	                      COALESCE((ARRAY_AGG(NULLIF(TRIM(c.deskripsi), '') ORDER BY c.tanggal DESC, c.id DESC)
-	                       FILTER (WHERE c.jenis = 'prestasi'))[1], '') AS deskripsi_prestasi
+	                       FILTER (WHERE c.jenis = 'prestasi'))[1], '') AS deskripsi_prestasi,
+	                      COALESCE(to_char(MAX(CASE WHEN c.jenis = 'pelanggaran' THEN c.tanggal END), 'YYYY-MM-DD'), '') AS tgl_pelanggaran,
+	                      COALESCE(to_char(MAX(CASE WHEN c.jenis = 'prestasi' THEN c.tanggal END), 'YYYY-MM-DD'), '') AS tgl_prestasi
 	                      FROM catatan_santri c
 	      JOIN santri s ON c.santri_id = s.id
 	      LEFT JOIN bagian b ON s.bagian_id = b.id
@@ -262,7 +276,7 @@ func GetRekapCatatan(ctx context.Context, keyword, tahunAjaran string, roles []s
 	res := make([]RekapCatatan, 0)
 	for rows.Next() {
 		var r RekapCatatan
-		if err := rows.Scan(&r.SantriID, &r.SantriNama, &r.Tingkatan, &r.Kelas, &r.BagianNama, &r.TotalPelanggaran, &r.TotalPrestasi, &r.JenisPelanggaran, &r.JenisPrestasi, &r.DeskripsiPelanggaran, &r.DeskripsiPrestasi); err != nil {
+		if err := rows.Scan(&r.SantriID, &r.SantriNama, &r.Tingkatan, &r.Kelas, &r.BagianNama, &r.TotalPelanggaran, &r.TotalPrestasi, &r.JenisPelanggaran, &r.JenisPrestasi, &r.DeskripsiPelanggaran, &r.DeskripsiPrestasi, &r.TanggalPelanggaran, &r.TanggalPrestasi); err != nil {
 			return nil, err
 		}
 		res = append(res, r)
