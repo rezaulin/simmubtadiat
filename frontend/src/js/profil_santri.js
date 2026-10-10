@@ -736,8 +736,15 @@ function populateRiwayat(riwayatArr, bulanListByTA = {}) {
 
             <h4 class="text-md font-semibold text-gray-800 dark:text-gray-200 mt-8 mb-3 border-b border-gray-200 dark:border-gray-700 pb-2">Nilai Al-Bayan</h4>
             <div class="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 rounded-lg p-4 text-center">
-               <div class="text-lg font-bold ${taData.al_bayan && taData.al_bayan.includes('الرديء') ? 'text-red-600 dark:text-red-400' : 'text-indigo-900 dark:text-indigo-200'}" dir="rtl">
-                  البيان (Al-Bayan): ${taData.al_bayan ? escapeHtml(taData.al_bayan) : 'Belum ada'}
+               <div class="text-lg font-bold text-indigo-900 dark:text-indigo-200" dir="rtl">
+                  البيان (Al-Bayan): ${(function () {
+                     // Owner 2026-10 (Pak Di): الرديء (rodli', <=5) ditulis المثبت (Musbat)
+                     // — sama dengan tampilan raport cetak. Warna merah tidak dipakai
+                     // karena musbat bukan kondisi buruk. Menu Penilaian tetap الرديء.
+                     let label = taData.al_bayan || '';
+                     if (label && label.includes('الرديء')) label = 'المثبت';
+                     return label ? escapeHtml(label) : 'Belum ada';
+                  })()}
                </div>
             </div>
          </div>

@@ -12,7 +12,7 @@ func AssignMufatish(ctx context.Context, pengajarID, kelasID, tingkatanID int) e
 	if tahunAjaran == "" {
 		tahunAjaran = "2024/2025" // Fallback
 	}
-	
+
 	query := `
 		INSERT INTO mufatish_kelas (pengajar_id, kelas_id, tingkatan_id, user_id, tahun_ajaran) 
 		VALUES ($1, $2, $3, (SELECT u.id FROM users u JOIN user_roles ur ON ur.user_id = u.id WHERE u.pengajar_id = $1 AND ur.role = 'mufatish' AND u.username NOT LIKE '%__deleted_%' LIMIT 1), $4)
@@ -68,6 +68,7 @@ func GetMufatishAssignments(ctx context.Context) ([]map[string]interface{}, erro
 }
 
 func AssignMustahiq(ctx context.Context, pengajarID, bagianID int) error {
+	tahunAjaran := GetTahunAjaranAktif(ctx)
 	query := `
 		INSERT INTO mustahiq_bagian (pengajar_id, bagian_id, user_id, tahun_ajaran) 
 		VALUES ($1, $2, (SELECT u.id FROM users u JOIN user_roles ur ON ur.user_id = u.id WHERE u.pengajar_id = $1 AND ur.role = 'mustahiq' AND u.username NOT LIKE '%__deleted_%' LIMIT 1), $3)
@@ -77,7 +78,7 @@ func AssignMustahiq(ctx context.Context, pengajarID, bagianID int) error {
 		  tahun_ajaran = EXCLUDED.tahun_ajaran,
 		  created_at = NOW()
 	`
-	_, err := config.DB.Exec(ctx, query, pengajarID, bagianID, "2024/2025")
+	_, err := config.DB.Exec(ctx, query, pengajarID, bagianID, tahunAjaran)
 	return err
 }
 
@@ -126,6 +127,7 @@ func GetMustahiqAssignments(ctx context.Context) ([]map[string]interface{}, erro
 }
 
 func AssignMunawwibs(ctx context.Context, bagianID int, pengajarIDs []int) error {
+	tahunAjaran := GetTahunAjaranAktif(ctx)
 	tx, err := config.DB.Begin(ctx)
 	if err != nil {
 		return err
@@ -140,7 +142,7 @@ func AssignMunawwibs(ctx context.Context, bagianID int, pengajarIDs []int) error
 
 	// Insert yang baru
 	for _, pid := range pengajarIDs {
-		_, err = tx.Exec(ctx, "INSERT INTO pengajar_bagian (pengajar_id, bagian_id, tahun_ajaran, peran) VALUES ($1, $2, $3, 'munawwib')", pid, bagianID, "2024/2025")
+		_, err = tx.Exec(ctx, "INSERT INTO pengajar_bagian (pengajar_id, bagian_id, tahun_ajaran, peran) VALUES ($1, $2, $3, 'munawwib')", pid, bagianID, tahunAjaran)
 		if err != nil {
 			return err
 		}
@@ -169,17 +171,15 @@ func GetMunawwibAssignments(ctx context.Context) ([]map[string]interface{}, erro
 			return nil, err
 		}
 		result = append(result, map[string]interface{}{
-			"bagian_id": bagianID,
-			"pengajar_id": pengajarID,
+			"bagian_id":     bagianID,
+			"pengajar_id":   pengajarID,
 			"pengajar_nama": pengajarNama,
 		})
 	}
 	return result, nil
 }
 
-
 func RemoveMunawwib(ctx context.Context, bagianID, pengajarID int) error {
 	_, err := config.DB.Exec(ctx, "DELETE FROM pengajar_bagian WHERE bagian_id = $1 AND pengajar_id = $2 AND peran = 'munawwib'", bagianID, pengajarID)
 	return err
 }
-

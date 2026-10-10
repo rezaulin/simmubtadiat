@@ -2054,10 +2054,13 @@ function buildRiwayatAkademik(riwayat) {
       </tr>`).join('');
 
     // Al-Bayan badge
+    // Owner 2026-10 (Pak Di): الرديء (rodli', <=5) ditulis المثبت (Musbat) —
+    // sama dengan raport cetak & Menu Data Santri.
+    const bayaanLabelWali = ta.al_bayan && ta.al_bayan.includes('الرديء') ? 'المثبت' : ta.al_bayan;
     const bayaanBadge = ta.al_bayan ? `
       <div class="flex items-center gap-2 mt-4 p-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl">
         <span class="text-sm font-semibold text-indigo-700 dark:text-indigo-300">Al-Bayan:</span>
-        <span class="px-3 py-1 bg-indigo-100 dark:bg-indigo-800/40 text-indigo-800 dark:text-indigo-200 rounded-full text-sm font-bold">${waliEscape(ta.al_bayan)}</span>
+        <span class="px-3 py-1 bg-indigo-100 dark:bg-indigo-800/40 text-indigo-800 dark:text-indigo-200 rounded-full text-sm font-bold">${waliEscape(bayaanLabelWali)}</span>
       </div>` : '';
 
     return `
