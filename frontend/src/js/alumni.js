@@ -1089,6 +1089,18 @@ function openTambahAlumniModal() {
   modalTambahAlumniContent.classList.add('scale-100', 'opacity-100');
   formTambahAlumni.reset();
   document.getElementById('modal-tambah-alumni-error').classList.add('hidden');
+  // Sinkronkan visibilitas Alasan Belum Diambil (default select = "belum").
+  syncTambahAlasanIjazah();
+}
+
+// Issue Pak Di: input manual punya kolom Alasan Belum Diambil; muncul hanya
+// saat status ijazah = Belum / Tidak (sama seperti form edit).
+function syncTambahAlasanIjazah() {
+  const sel = document.getElementById('tambah-ijazah-status');
+  const grp = document.getElementById('tambah-group-alasan-ijazah');
+  if (!sel || !grp) return;
+  const show = sel.value === 'belum' || sel.value === 'tidak';
+  grp.classList.toggle('hidden', !show);
 }
 
 function closeTambahAlumniModal() {
@@ -1101,6 +1113,7 @@ btnTambahAlumni?.addEventListener('click', openTambahAlumniModal);
 document.getElementById('modal-tambah-alumni-close')?.addEventListener('click', closeTambahAlumniModal);
 document.getElementById('modal-tambah-alumni-cancel')?.addEventListener('click', closeTambahAlumniModal);
 document.getElementById('modal-tambah-alumni-overlay')?.addEventListener('click', closeTambahAlumniModal);
+document.getElementById('tambah-ijazah-status')?.addEventListener('change', syncTambahAlasanIjazah);
 
 formTambahAlumni?.addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -1129,6 +1142,8 @@ formTambahAlumni?.addEventListener('submit', async (e) => {
     tempat_khidmah: fd.get('tempat_khidmah')?.trim() || '',
     status_ijazah: fd.get('status_ijazah') || 'belum',
     keterangan: fd.get('keterangan')?.trim() || '',
+    // Kolom Alasan Belum Diambil di form tambah manual (issue Pak Di).
+    alasan_ijazah_belum_diambil: fd.get('alasan_ijazah_belum_diambil')?.trim() || '',
     tahun_masuk: fd.get('tahun_masuk')?.trim() || '',
     tahun_keluar: fd.get('tahun_keluar')?.trim() || '',
     tahun_lulus: fd.get('tahun_lulus')?.trim() || ''

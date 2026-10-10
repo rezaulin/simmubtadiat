@@ -7,10 +7,11 @@ import (
 )
 
 // DownloadTemplateAlumni mengembalikan file Excel (.xlsx) template import alumni.
-// Format: NAMA | Stambuk | NISN | TTL | WALI | ALAMAT | NO HP WS | KHIDMAH | TEMPAT KHIDMAH | PENGAMBILAN IJAZAH | KETERANGAN ALUMNI | TAHUN MASUK | TAHUN KELUAR | TAHUN LULUS | KAMAR | ALASAN BELUM DIAMBIL
+// Format: NAMA | Stambuk | NISN | TTL | WALI | ALAMAT | NO HP WS | KHIDMAH | TEMPAT KHIDMAH | PENGAMBILAN IJAZAH | ALASAN BELUM DIAMBIL | KETERANGAN ALUMNI | TAHUN MASUK | TAHUN KELUAR | TAHUN LULUS | KAMAR
 // Kolom dibaca berdasar nama header, sehingga urutan boleh berubah.
 // Issue Pak Di: "Keterangan" dipisah jadi "Keterangan Alumni" (menikah/membantu
-// ortu/dll) dan "Alasan Belum Diambil" (alasan ijazah belum/tidak diambil).
+// ortu/dll) dan "Alasan Belum Diambil" (alasan ijazah belum/tidak diambil);
+// alasan sengaja diletakkan tepat setelah "Pengambilan Ijazah" agar nyambung.
 func DownloadTemplateAlumni(w http.ResponseWriter, r *http.Request) {
 	f := excelize.NewFile()
 	defer f.Close()
@@ -19,8 +20,8 @@ func DownloadTemplateAlumni(w http.ResponseWriter, r *http.Request) {
 
 	headers := []string{
 		"Nama", "Stambuk", "NISN", "TTL", "Wali", "Alamat", "No HP WS",
-		"Khidmah", "Tempat Khidmah", "Pengambilan Ijazah", "Keterangan Alumni",
-		"Tahun Masuk", "Tahun Keluar", "Tahun Lulus", "Kamar", "Alasan Belum Diambil",
+		"Khidmah", "Tempat Khidmah", "Pengambilan Ijazah", "Alasan Belum Diambil",
+		"Keterangan Alumni", "Tahun Masuk", "Tahun Keluar", "Tahun Lulus", "Kamar",
 	}
 
 	headerStyle, _ := f.NewStyle(&excelize.Style{
@@ -40,8 +41,8 @@ func DownloadTemplateAlumni(w http.ResponseWriter, r *http.Request) {
 	example := []interface{}{
 		"Fatimah", "4576", "0012345678", "Kediri, 21 Juli 2000", "Muhammad",
 		"Mojoroto, Kediri, Jawa Timur", "085691985001",
-		"Khidmah", "Ustadzah", "Belum", "Membantu Orang Tua", "2020", "2025", "2025", "Kamar A1",
-		"Menunggu proses wisuda tahun depan",
+		"Khidmah", "Ustadzah", "Belum", "Menunggu proses wisuda tahun depan",
+		"Membantu Orang Tua", "2020", "2025", "2025", "Kamar A1",
 	}
 	for i, v := range example {
 		cell, _ := excelize.CoordinatesToCellName(i+1, 2)
@@ -62,8 +63,8 @@ func DownloadTemplateAlumni(w http.ResponseWriter, r *http.Request) {
 		"6. TTL format bebas (Kota, Tanggal).",
 		"7. Tahun Lulus = tahun wisuda/ijazah; boleh dikosongkan (fallback ke Tahun Keluar).",
 		"8. Jika Stambuk sudah ada di sistem, data akan di-update.",
-		"9. Keterangan Alumni = kondisi setelah lulus. Contoh: Menikah, Membantu Orang Tua, Bekerja, Kuliah, Lainnya.",
-		"10. Alasan Belum Diambil = alasan ijazah belum/tidak diambil. Contoh: Menunggu proses wisuda, Ijazah diambil orang tua. Diisi bila Pengambilan Ijazah = Belum/Tidak.",
+		"9. Alasan Belum Diambil = alasan ijazah belum/tidak diambil. Contoh: Menunggu proses wisuda, Ijazah diambil orang tua. Diisi bila Pengambilan Ijazah = Belum/Tidak.",
+		"10. Keterangan Alumni = kondisi setelah lulus. Contoh: Menikah, Membantu Orang Tua, Bekerja, Kuliah, Lainnya.",
 	}
 	for i, row := range guide {
 		cell, _ := excelize.CoordinatesToCellName(1, i+1)

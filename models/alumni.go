@@ -309,7 +309,7 @@ func buildAsalDaerah(kabupaten, provinsi, alamat *string) string {
 // TambahAlumniManual menambahkan satu alumni secara manual (tanpa proses keluar).
 // Insert ke tabel santri (status=lulus) + tabel alumni.
 // tahunLulus diisi ke kolom alumni.tahun_lulus (terpisah dari santri.tahun_keluar).
-func TambahAlumniManual(ctx context.Context, nama, stambuk, nisn, ttl, wali, alamat, noHP, khidmah, tempatKhidmah, statusIjazah, keterangan, tahunMasuk, tahunKeluar, tahunLulus string) error {
+func TambahAlumniManual(ctx context.Context, nama, stambuk, nisn, ttl, wali, alamat, noHP, khidmah, tempatKhidmah, statusIjazah, keterangan, alasan, tahunMasuk, tahunKeluar, tahunLulus string) error {
 	// Generate NIK placeholder
 	nik := "ALM_" + stambuk + "_" + time.Now().Format("20060102150405")
 
@@ -339,12 +339,15 @@ func TambahAlumniManual(ctx context.Context, nama, stambuk, nisn, ttl, wali, ala
 		tahunLulusAkhir = tahunKeluar
 	}
 	_, err = config.DB.Exec(ctx,
-		`INSERT INTO alumni (santri_id, tahun_lulus, khidmah, status_ijazah, keterangan)
-		 VALUES ($1, $2, $3, $4, $5)
+		`INSERT INTO alumni (santri_id, tahun_lulus, khidmah, status_ijazah, keterangan, alasan_ijazah_belum_diambil)
+		 VALUES ($1, $2, $3, $4, $5, $6)
 		 ON CONFLICT (santri_id) DO UPDATE SET
 		   khidmah = EXCLUDED.khidmah, status_ijazah = EXCLUDED.status_ijazah,
-		   keterangan = EXCLUDED.keterangan, updated_at = CURRENT_TIMESTAMP`,
-		santriID, nilIfEmpty2(tahunLulusAkhir), khidmah, statusIjazah, nilIfEmpty2(keterangan))
+		   keterangan = EXCLUDED.keterangan,
+		   -- Input manual tanpa alasan (NULL) jangan menghapus alasan lama.
+		   alasan_ijazah_belum_diambil = COALESCE(EXCLUDED.alasan_ijazah_belum_diambil, alumni.alasan_ijazah_belum_diambil),
+		   updated_at = CURRENT_TIMESTAMP`,
+		santriID, nilIfEmpty2(tahunLulusAkhir), khidmah, statusIjazah, nilIfEmpty2(keterangan), nilIfEmpty2(alasan))
 	return err
 }
 

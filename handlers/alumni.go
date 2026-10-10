@@ -104,6 +104,9 @@ func TambahAlumniManual(w http.ResponseWriter, r *http.Request) {
 		TempatKhidmah string `json:"tempat_khidmah"`
 		StatusIjazah  string `json:"status_ijazah"`
 		Keterangan    string `json:"keterangan"`
+		// Issue Pak Di: input manual juga harus bisa mengisi alasan
+		// ijazah belum/tidak diambil (sudah ada di form edit).
+		AlasanIjazah  string `json:"alasan_ijazah_belum_diambil"`
 		TahunMasuk    string `json:"tahun_masuk"`
 		TahunKeluar   string `json:"tahun_keluar"`
 		TahunLulus    string `json:"tahun_lulus"`
@@ -121,7 +124,7 @@ func TambahAlumniManual(w http.ResponseWriter, r *http.Request) {
 
 	err := models.TambahAlumniManual(r.Context(), req.Nama, req.Stambuk, req.NISN, req.TTL, req.Wali,
 		req.Alamat, req.NoHP, req.Khidmah, req.TempatKhidmah, req.StatusIjazah, req.Keterangan,
-		req.TahunMasuk, req.TahunKeluar, req.TahunLulus)
+		req.AlasanIjazah, req.TahunMasuk, req.TahunKeluar, req.TahunLulus)
 	if err != nil {
 		writeJSONError(w, internalError("", err), http.StatusInternalServerError)
 		return
