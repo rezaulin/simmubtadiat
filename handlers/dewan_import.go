@@ -13,13 +13,13 @@ import (
 
 // templateHeadersDewan adalah urutan kolom pada template impor dewan harian.
 var templateHeadersDewan = []string{
-	"Nama",         // wajib
-	"Nama Wali",    // opsional
-	"Alamat",       // opsional
-	"No HP",        // opsional
-	"Jabatan",      // wajib
-	"Lembaga",      // wajib (P3HM / MPHM / M3PHM)
-	"Tahun Aktif",  // wajib (format: 2025/2026)
+	"Nama",        // wajib
+	"Nama Wali",   // opsional
+	"Alamat",      // opsional
+	"No HP",       // opsional
+	"Jabatan",     // wajib
+	"Lembaga",     // wajib (P3HM / MPHM / M3PHM)
+	"Tahun Aktif", // wajib (format: 2025/2026)
 }
 
 // DownloadTemplateDewan menghasilkan file .xlsx template impor dewan harian.
@@ -237,6 +237,7 @@ func optStrDewan(s string) *string {
 	}
 	return &s
 }
+
 // ExportDewanHarian mengunduh seluruh data pengurus dewan harian sebagai
 // berkas .xlsx (baca-saja). Tersedia bagi semua role yang boleh melihat
 // tabel dewan harian — berbeda dengan /template yang hanya format kosong.

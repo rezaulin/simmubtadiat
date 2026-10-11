@@ -13,15 +13,15 @@ import (
 
 // AnakWali adalah ringkasan santri yang tertaut ke akun wali yang sedang login.
 type AnakWali struct {
-	ID           int            `json:"id"`
-	Nama         string         `json:"nama"`
-	Stambuk      pgtype.Text    `json:"stambuk"`
-	NIK          string         `json:"nik"`
-	Status       string         `json:"status"`
-	FotoURL      pgtype.Text    `json:"foto_url"`
-	Tingkatan    pgtype.Text    `json:"tingkatan_nama"`
-	Kelas        pgtype.Text    `json:"kelas_nama"`
-	Bagian       pgtype.Text    `json:"bagian_nama"`
+	ID        int         `json:"id"`
+	Nama      string      `json:"nama"`
+	Stambuk   pgtype.Text `json:"stambuk"`
+	NIK       string      `json:"nik"`
+	Status    string      `json:"status"`
+	FotoURL   pgtype.Text `json:"foto_url"`
+	Tingkatan pgtype.Text `json:"tingkatan_nama"`
+	Kelas     pgtype.Text `json:"kelas_nama"`
+	Bagian    pgtype.Text `json:"bagian_nama"`
 }
 
 // GetAnakWali mengembalikan daftar santri yang tertaut ke akun wali yang login.

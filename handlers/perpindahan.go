@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/mubtadiaat/app/models"
 	appMiddleware "github.com/mubtadiaat/app/middleware"
+	"github.com/mubtadiaat/app/models"
 )
 
 func NaikKelas(w http.ResponseWriter, r *http.Request) {

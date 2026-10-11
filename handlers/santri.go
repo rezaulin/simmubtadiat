@@ -20,7 +20,8 @@ import (
 // http.Error/writeJSONError sehingga memaparkan skema database.
 //
 // Pakai: http.Error(w, internalError("", err), http.StatusInternalServerError)
-//       http.Error(w, internalError("Gagal mengambil data", err), 500)
+//
+//	http.Error(w, internalError("Gagal mengambil data", err), 500)
 func internalError(msg string, err error) string {
 	if msg == "" {
 		msg = "Terjadi kesalahan pada server"
@@ -46,7 +47,10 @@ func GetSantriAktif(w http.ResponseWriter, r *http.Request) {
 		writeJSONError(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
-	tingkatanID, _ := strconv.Atoi(r.URL.Query().Get("tingkatan"))
+	tingkatanID, okQ := parseIntQuery(w, r, "tingkatan")
+	if !okQ {
+		return
+	}
 	filter := models.SantriFilter{
 		ProvinsiKode:  r.URL.Query().Get("provinsi"),
 		KabupatenKode: r.URL.Query().Get("kabupaten"),
@@ -108,9 +112,18 @@ func GetArsipSantri(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	status := r.URL.Query().Get("status")
-	tingkatanID, _ := strconv.Atoi(r.URL.Query().Get("tingkatan_id"))
-	kelasID, _ := strconv.Atoi(r.URL.Query().Get("kelas_id"))
-	bagianID, _ := strconv.Atoi(r.URL.Query().Get("bagian_id"))
+	tingkatanID, okQ := parseIntQuery(w, r, "tingkatan_id")
+	if !okQ {
+		return
+	}
+	kelasID, okQ := parseIntQuery(w, r, "kelas_id")
+	if !okQ {
+		return
+	}
+	bagianID, okQ := parseIntQuery(w, r, "bagian_id")
+	if !okQ {
+		return
+	}
 	tahunAjaran := r.URL.Query().Get("tahun_ajaran")
 
 	filter := models.SantriArsipFilter{

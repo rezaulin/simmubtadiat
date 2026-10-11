@@ -3,7 +3,6 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
-	"strconv"
 
 	appMiddleware "github.com/mubtadiaat/app/middleware"
 	"github.com/mubtadiaat/app/models"
@@ -18,8 +17,14 @@ func GetAbsensiPengajarKuartal(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tingkatanID, _ := strconv.Atoi(r.URL.Query().Get("tingkatan_id"))
-	kelasID, _ := strconv.Atoi(r.URL.Query().Get("kelas_id"))
+	tingkatanID, okQ := parseIntQuery(w, r, "tingkatan_id")
+	if !okQ {
+		return
+	}
+	kelasID, okQ := parseIntQuery(w, r, "kelas_id")
+	if !okQ {
+		return
+	}
 
 	// Butir D — validasi cakupan per role di LEVEL API.
 	// Tanpa tingkatan_id, models.GetAbsensiPengajarKuartal mengembalikan
@@ -48,9 +53,12 @@ func GetAbsensiPengajarKuartal(w http.ResponseWriter, r *http.Request) {
 // ditolak (respons sudah ditulis).
 //
 // Cakupan penuh  : pimpinan, admin, tim_rapot, muroqib (sama dengan
-//                  models.GetBagianForPenilaian).
+//
+//	models.GetBagianForPenilaian).
+//
 // Cakupan terbatas: mustahiq  -> tingkatan+kelas penugasannya (angkatannya)
-//                   mufatish -> tingkatan+kelas yang dibawahi
+//
+//	mufatish -> tingkatan+kelas yang dibawahi
 //
 // Role terbatas wajib memilih tingkatan: tanpa tingkatan_id endpoint ini
 // mengembalikan seluruh pengajar. Tingkatan di luar cakupan -> 403.
@@ -91,7 +99,7 @@ func SaveAbsensiPengajarKuartal(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req struct {
-		TahunAjaran string                            `json:"tahun_ajaran"`
+		TahunAjaran string                          `json:"tahun_ajaran"`
 		Data        []models.AbsensiPengajarKuartal `json:"data"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {

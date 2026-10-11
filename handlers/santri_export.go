@@ -19,7 +19,7 @@ func ExportSantri(w http.ResponseWriter, r *http.Request) {
 		ProvinsiKode:  r.URL.Query().Get("provinsi"),
 		KabupatenKode: r.URL.Query().Get("kabupaten"),
 	}
-	
+
 	// Admin asked for "data santri dan pengajar aktif"
 	data, err := models.GetSantriAktif(r.Context(), user.Roles, user.ID, filter)
 	if err != nil {
@@ -46,14 +46,28 @@ func ExportSantri(w http.ResponseWriter, r *http.Request) {
 	// Rows
 	for i, s := range data {
 		row := i + 2
-		if s.Stambuk != nil { f.SetCellValue(sheet, cellName(1, row), *s.Stambuk) }
+		if s.Stambuk != nil {
+			f.SetCellValue(sheet, cellName(1, row), *s.Stambuk)
+		}
 		f.SetCellValue(sheet, cellName(2, row), s.Nama)
-		if s.Kamar != nil { f.SetCellValue(sheet, cellName(3, row), *s.Kamar) }
-		if s.BagianNama != nil { f.SetCellValue(sheet, cellName(4, row), *s.BagianNama) }
-		if s.KelasNama != nil { f.SetCellValue(sheet, cellName(5, row), *s.KelasNama) }
-		if s.TingkatanNama != nil { f.SetCellValue(sheet, cellName(6, row), *s.TingkatanNama) }
-		if s.ProvinsiNama != nil { f.SetCellValue(sheet, cellName(7, row), *s.ProvinsiNama) }
-		if s.KabupatenNama != nil { f.SetCellValue(sheet, cellName(8, row), *s.KabupatenNama) }
+		if s.Kamar != nil {
+			f.SetCellValue(sheet, cellName(3, row), *s.Kamar)
+		}
+		if s.BagianNama != nil {
+			f.SetCellValue(sheet, cellName(4, row), *s.BagianNama)
+		}
+		if s.KelasNama != nil {
+			f.SetCellValue(sheet, cellName(5, row), *s.KelasNama)
+		}
+		if s.TingkatanNama != nil {
+			f.SetCellValue(sheet, cellName(6, row), *s.TingkatanNama)
+		}
+		if s.ProvinsiNama != nil {
+			f.SetCellValue(sheet, cellName(7, row), *s.ProvinsiNama)
+		}
+		if s.KabupatenNama != nil {
+			f.SetCellValue(sheet, cellName(8, row), *s.KabupatenNama)
+		}
 		f.SetCellValue(sheet, cellName(9, row), s.Status)
 	}
 

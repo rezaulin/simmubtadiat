@@ -1,11 +1,13 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -117,6 +119,27 @@ func main() {
 	if port == "" {
 		port = "8080"
 	}
+
+	// Pembersih session kadaluarsa — jalan saat start + tiap 6 jam (temuan
+	// audit 2026-10-11: 716 dari 723 baris sessionsExpired menumpuk karena
+	// hapusnya cuma terjadi saat user itu login lagi).
+	bersihkanSession := func() {
+		res, err := config.DB.Exec(context.Background(),
+			`DELETE FROM sessions WHERE expired_at < now()`)
+		if err != nil {
+			log.Printf("[SESSION-CLEANUP] gagal: %v", err)
+			return
+		}
+		if n := res.RowsAffected(); n > 0 {
+			log.Printf("[SESSION-CLEANUP] %d sesi kadaluarsa dihapus", n)
+		}
+	}
+	bersihkanSession()
+	go func() {
+		for range time.Tick(6 * time.Hour) {
+			bersihkanSession()
+		}
+	}()
 
 	log.Printf("Server is running on port %s", port)
 	if err := http.ListenAndServe(":"+port, r); err != nil {

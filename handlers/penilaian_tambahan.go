@@ -549,7 +549,7 @@ func ExportTambahan(w http.ResponseWriter, r *http.Request) {
 		for i, d := range data {
 			hLabel := judulHasilEnum(d.Hasil)
 			if d.Hasil == "" {
-				hLabel = "Belum Dinilai"   // hasil NULL → kolom Excel tetap terbaca
+				hLabel = "Belum Dinilai" // hasil NULL → kolom Excel tetap terbaca
 			}
 			rows = append(rows, []any{i + 1, d.Bagian, d.Nama, hLabel})
 		}

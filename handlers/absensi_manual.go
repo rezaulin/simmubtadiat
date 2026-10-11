@@ -3,7 +3,6 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
-	"strconv"
 
 	"github.com/mubtadiaat/app/config"
 	appMiddleware "github.com/mubtadiaat/app/middleware"
@@ -39,8 +38,14 @@ func absensiScopeGuardBagianEdit(w http.ResponseWriter, r *http.Request, bagianI
 
 // GET /api/absensi-manual/santri?bagian_id=X&tahun_hijri=1447
 func GetAbsensiManualSantri(w http.ResponseWriter, r *http.Request) {
-	bagianID, _ := strconv.Atoi(r.URL.Query().Get("bagian_id"))
-	tahunHijri, _ := strconv.Atoi(r.URL.Query().Get("tahun_hijri"))
+	bagianID, okQ := parseIntQuery(w, r, "bagian_id")
+	if !okQ {
+		return
+	}
+	tahunHijri, okQ := parseIntQuery(w, r, "tahun_hijri")
+	if !okQ {
+		return
+	}
 	if bagianID == 0 || tahunHijri == 0 {
 		http.Error(w, "bagian_id dan tahun_hijri wajib", http.StatusBadRequest)
 		return
@@ -87,10 +92,22 @@ func SaveAbsensiManualSantri(w http.ResponseWriter, r *http.Request) {
 
 // GET /api/absensi-manual/pengajar?tahun_hijri=1447&bagian_id=X
 func GetAbsensiManualPengajar(w http.ResponseWriter, r *http.Request) {
-	tahunHijri, _ := strconv.Atoi(r.URL.Query().Get("tahun_hijri"))
-	bagianID, _ := strconv.Atoi(r.URL.Query().Get("bagian_id"))
-	tingkatanID, _ := strconv.Atoi(r.URL.Query().Get("tingkatan_id"))
-	kelasID, _ := strconv.Atoi(r.URL.Query().Get("kelas_id"))
+	tahunHijri, okQ := parseIntQuery(w, r, "tahun_hijri")
+	if !okQ {
+		return
+	}
+	bagianID, okQ := parseIntQuery(w, r, "bagian_id")
+	if !okQ {
+		return
+	}
+	tingkatanID, okQ := parseIntQuery(w, r, "tingkatan_id")
+	if !okQ {
+		return
+	}
+	kelasID, okQ := parseIntQuery(w, r, "kelas_id")
+	if !okQ {
+		return
+	}
 
 	if tahunHijri == 0 {
 		http.Error(w, "tahun_hijri wajib", http.StatusBadRequest)
@@ -110,7 +127,10 @@ func GetAbsensiManualPengajar(w http.ResponseWriter, r *http.Request) {
 
 // POST /api/absensi-manual/pengajar?bagian_id=X
 func SaveAbsensiManualPengajar(w http.ResponseWriter, r *http.Request) {
-	bagianID, _ := strconv.Atoi(r.URL.Query().Get("bagian_id"))
+	bagianID, okQ := parseIntQuery(w, r, "bagian_id")
+	if !okQ {
+		return
+	}
 	if bagianID > 0 {
 		if absensiScopeGuardBagianEdit(w, r, bagianID) {
 			return

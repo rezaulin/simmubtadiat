@@ -3,9 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
-	"strconv"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/mubtadiaat/app/middleware"
 	"github.com/mubtadiaat/app/models"
 )
@@ -38,7 +36,10 @@ func CreateTingkatan(w http.ResponseWriter, r *http.Request) {
 }
 
 func UpdateTingkatan(w http.ResponseWriter, r *http.Request) {
-	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
+	id, okID := parseIDParam(w, r, "id")
+	if !okID {
+		return
+	}
 	var req struct {
 		Nama     string `json:"nama"`
 		Urutan   int    `json:"urutan"`
@@ -57,14 +58,16 @@ func UpdateTingkatan(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteTingkatan(w http.ResponseWriter, r *http.Request) {
-	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
+	id, okID := parseIDParam(w, r, "id")
+	if !okID {
+		return
+	}
 	if err := models.DeleteTingkatan(r.Context(), id); err != nil {
 		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
 	writeJSON(w, map[string]string{"status": "success"})
 }
-
 
 // --- Kelas ---
 func GetKelas(w http.ResponseWriter, r *http.Request) {
@@ -90,7 +93,10 @@ func CreateKelas(w http.ResponseWriter, r *http.Request) {
 }
 
 func UpdateKelas(w http.ResponseWriter, r *http.Request) {
-	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
+	id, okID := parseIDParam(w, r, "id")
+	if !okID {
+		return
+	}
 	var req struct {
 		Nama       string `json:"nama"`
 		TahunMasuk string `json:"tahun_masuk"`
@@ -108,7 +114,10 @@ func UpdateKelas(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteKelas(w http.ResponseWriter, r *http.Request) {
-	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
+	id, okID := parseIDParam(w, r, "id")
+	if !okID {
+		return
+	}
 	if err := models.DeleteKelas(r.Context(), id); err != nil {
 		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
@@ -141,7 +150,10 @@ func CreateBagian(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteBagian(w http.ResponseWriter, r *http.Request) {
-	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
+	id, okID := parseIDParam(w, r, "id")
+	if !okID {
+		return
+	}
 	if err := models.DeleteBagian(r.Context(), id); err != nil {
 		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return

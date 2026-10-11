@@ -1,17 +1,23 @@
 package handlers
 
-import (	"fmt"
+import (
+	"fmt"
 	"net/http"
-	"strconv"
 
-	"github.com/mubtadiaat/app/models"
 	appMiddleware "github.com/mubtadiaat/app/middleware"
+	"github.com/mubtadiaat/app/models"
 )
 
 func GetLogAbsensiPengajar(w http.ResponseWriter, r *http.Request) {
 	tahunAjaran := r.URL.Query().Get("tahun_ajaran")
-	tahunHijri, _ := strconv.Atoi(r.URL.Query().Get("tahun_hijri"))
-	bulanHijri, _ := strconv.Atoi(r.URL.Query().Get("bulan_hijri"))
+	tahunHijri, okQ := parseIntQuery(w, r, "tahun_hijri")
+	if !okQ {
+		return
+	}
+	bulanHijri, okQ := parseIntQuery(w, r, "bulan_hijri")
+	if !okQ {
+		return
+	}
 
 	// Default: tahun ajaran aktif — tanpa default, query kosong = semua
 	// tahun tercampur dalam satu rekap.
@@ -49,8 +55,14 @@ func GetLogAbsensiPengajar(w http.ResponseWriter, r *http.Request) {
 func GetRekapAbsensiSiswaRentang(w http.ResponseWriter, r *http.Request) {
 	bagianIDStr := r.URL.Query().Get("bagian_id")
 	tahunAjaran := r.URL.Query().Get("tahun_ajaran")
-	tahunHijri, _ := strconv.Atoi(r.URL.Query().Get("tahun_hijri"))
-	bulanHijri, _ := strconv.Atoi(r.URL.Query().Get("bulan_hijri"))
+	tahunHijri, okQ := parseIntQuery(w, r, "tahun_hijri")
+	if !okQ {
+		return
+	}
+	bulanHijri, okQ := parseIntQuery(w, r, "bulan_hijri")
+	if !okQ {
+		return
+	}
 
 	if bagianIDStr == "" {
 		http.Error(w, "bagian_id required", http.StatusBadRequest)
@@ -74,4 +86,3 @@ func GetRekapAbsensiSiswaRentang(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	writeJSON(w, res)
 }
-

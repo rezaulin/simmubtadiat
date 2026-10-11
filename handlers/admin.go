@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/mubtadiaat/app/middleware"
 	"github.com/mubtadiaat/app/models"
 )
@@ -57,7 +56,10 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func UpdateUser(w http.ResponseWriter, r *http.Request) {
-	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
+	id, okID := parseIDParam(w, r, "id")
+	if !okID {
+		return
+	}
 	var u models.User
 	if err := json.NewDecoder(r.Body).Decode(&u); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -71,7 +73,10 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteUser(w http.ResponseWriter, r *http.Request) {
-	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
+	id, okID := parseIDParam(w, r, "id")
+	if !okID {
+		return
+	}
 	if err := models.DeleteUser(r.Context(), id); err != nil {
 		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
@@ -83,7 +88,10 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 // Body: {"password":"..."}. Sandi wajib lolos validasi kompleksitas.
 // Setelah reset, user WAJIB mengganti sandi sendiri saat login (lihat models.ResetPassword).
 func ResetPassword(w http.ResponseWriter, r *http.Request) {
-	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
+	id, okID := parseIDParam(w, r, "id")
+	if !okID {
+		return
+	}
 	var req struct {
 		Password string `json:"password"`
 	}
@@ -185,7 +193,10 @@ func CreateDynamicColumn(w http.ResponseWriter, r *http.Request) {
 }
 
 func UpdateDynamicColumn(w http.ResponseWriter, r *http.Request) {
-	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
+	id, okID := parseIDParam(w, r, "id")
+	if !okID {
+		return
+	}
 	var dc models.DynamicColumn
 	if err := json.NewDecoder(r.Body).Decode(&dc); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -199,7 +210,10 @@ func UpdateDynamicColumn(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteDynamicColumn(w http.ResponseWriter, r *http.Request) {
-	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
+	id, okID := parseIDParam(w, r, "id")
+	if !okID {
+		return
+	}
 	if err := models.DeleteDynamicColumn(r.Context(), id); err != nil {
 		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return

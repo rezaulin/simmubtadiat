@@ -219,12 +219,12 @@ func DownloadTemplatePengajarPurna(w http.ResponseWriter, r *http.Request) {
 // {ids: [...]} untuk bulk. Status purna auto-copy dari status terakhir pengajar.
 func PindahPengajarPurna(w http.ResponseWriter, r *http.Request) {
 	var req struct {
-		IDs            []int  `json:"ids"`             // bulk: daftar ID pengajar
-		TahunKeluar    string `json:"tahun_keluar"`
-		ProvinsiKode   string `json:"provinsi_kode"`
-		ProvinsiNama   string `json:"provinsi_nama"`
-		KabupatenKode  string `json:"kabupaten_kode"`
-		KabupatenNama  string `json:"kabupaten_nama"`
+		IDs           []int  `json:"ids"` // bulk: daftar ID pengajar
+		TahunKeluar   string `json:"tahun_keluar"`
+		ProvinsiKode  string `json:"provinsi_kode"`
+		ProvinsiNama  string `json:"provinsi_nama"`
+		KabupatenKode string `json:"kabupaten_kode"`
+		KabupatenNama string `json:"kabupaten_nama"`
 	}
 
 	// Single: ID dari URL param; bulk: dari body.

@@ -32,17 +32,17 @@ func UpdateAlumni(w http.ResponseWriter, r *http.Request) {
 		Keterangan   string `json:"keterangan"`
 		// Biodata inti (opsional). Bila `nama` terisi, biodata santri ikut
 		// diperbarui sehingga admin bisa mengoreksi data alumni yang salah.
-		Nama          string `json:"nama"`
-		TTLTempat     string `json:"ttl_tempat"`
-		TTLTanggal    string `json:"ttl_tanggal"`
-		NamaWali      string `json:"nama_wali"`
-		NoHP          string `json:"no_hp_wali"`
-		Alamat        string `json:"alamat"`
-		Kamar         string `json:"kamar"`
-		TahunMasuk    string `json:"tahun_masuk"`
-		TahunKeluar   string `json:"tahun_keluar"`
-		TahunLulus    string `json:"tahun_lulus"`
-		TempatKhidmah string `json:"tempat_khidmah"`
+		Nama           string `json:"nama"`
+		TTLTempat      string `json:"ttl_tempat"`
+		TTLTanggal     string `json:"ttl_tanggal"`
+		NamaWali       string `json:"nama_wali"`
+		NoHP           string `json:"no_hp_wali"`
+		Alamat         string `json:"alamat"`
+		Kamar          string `json:"kamar"`
+		TahunMasuk     string `json:"tahun_masuk"`
+		TahunKeluar    string `json:"tahun_keluar"`
+		TahunLulus     string `json:"tahun_lulus"`
+		TempatKhidmah  string `json:"tempat_khidmah"`
 		AsalDaerah     string `json:"asal_daerah"`
 		TingkatanAkhir string `json:"tingkatan_akhir"`
 		AlasanIjazah   string `json:"alasan_ijazah_belum_diambil"`
@@ -106,10 +106,10 @@ func TambahAlumniManual(w http.ResponseWriter, r *http.Request) {
 		Keterangan    string `json:"keterangan"`
 		// Issue Pak Di: input manual juga harus bisa mengisi alasan
 		// ijazah belum/tidak diambil (sudah ada di form edit).
-		AlasanIjazah  string `json:"alasan_ijazah_belum_diambil"`
-		TahunMasuk    string `json:"tahun_masuk"`
-		TahunKeluar   string `json:"tahun_keluar"`
-		TahunLulus    string `json:"tahun_lulus"`
+		AlasanIjazah string `json:"alasan_ijazah_belum_diambil"`
+		TahunMasuk   string `json:"tahun_masuk"`
+		TahunKeluar  string `json:"tahun_keluar"`
+		TahunLulus   string `json:"tahun_lulus"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {

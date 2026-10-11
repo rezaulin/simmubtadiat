@@ -1,6 +1,7 @@
 package handlers
 
-import (	"io"
+import (
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -58,7 +59,7 @@ func UploadFotoSantri(w http.ResponseWriter, r *http.Request) {
 	// Fetch old photo URL to delete it if exists (Fix 16 requirement)
 	// Let's get the santri data to see old foto url
 	// Assuming GetSantriByID requires context, role and userID, but we can do a direct query in models
-	
+
 	oldUrl, _ := models.GetSantriFotoURL(r.Context(), idStr)
 	if oldUrl != "" {
 		oldPath := filepath.Join(workDir, "public", "dist", filepath.FromSlash(oldUrl))

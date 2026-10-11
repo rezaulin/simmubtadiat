@@ -1,17 +1,22 @@
 package handlers
 
-import (	"net/http"
-	"strconv"
+import (
+	"net/http"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/mubtadiaat/app/config"
 	"github.com/mubtadiaat/app/middleware"
 	"github.com/mubtadiaat/app/models"
 )
 
 func GetRaport(w http.ResponseWriter, r *http.Request) {
-	santriID, _ := strconv.Atoi(chi.URLParam(r, "santri_id"))
-	semester, _ := strconv.Atoi(r.URL.Query().Get("semester"))
+	santriID, okID := parseIDParam(w, r, "santri_id")
+	if !okID {
+		return
+	}
+	semester, okQ := parseIntQuery(w, r, "semester")
+	if !okQ {
+		return
+	}
 	if semester == 0 {
 		semester = 1 // default
 	}

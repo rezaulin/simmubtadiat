@@ -27,11 +27,11 @@ type ChangePasswordRequest struct {
 }
 
 type AuthResponse struct {
-	Status             string   `json:"status"`
-	Message            string   `json:"message"`
-	Role               string   `json:"role,omitempty"`
-	Roles              []string `json:"roles,omitempty"`
-	IsPasswordChanged  bool     `json:"is_password_changed"`
+	Status            string   `json:"status"`
+	Message           string   `json:"message"`
+	Role              string   `json:"role,omitempty"`
+	Roles             []string `json:"roles,omitempty"`
+	IsPasswordChanged bool     `json:"is_password_changed"`
 }
 
 // Login handles user authentication
@@ -96,7 +96,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	_, err = config.DB.Exec(context.Background(),
 		"INSERT INTO sessions (id, user_id, expired_at) VALUES ($1, $2, $3)",
 		sessionID, id, expires)
-	
+
 	if err != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
@@ -188,7 +188,7 @@ func LoginWali(w http.ResponseWriter, r *http.Request) {
 	err = config.DB.QueryRow(context.Background(),
 		"SELECT id, password_hash, role, is_password_changed FROM users WHERE username=$1",
 		req.Nik).Scan(&userID, &hash, &role, &isPasswordChanged)
-	
+
 	if err != nil {
 		// User doesn't exist, create it on the fly
 		newHash, _ := bcrypt.GenerateFromPassword([]byte(req.Nik), 12)
@@ -200,12 +200,12 @@ func LoginWali(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Internal server error creating wali account", http.StatusInternalServerError)
 			return
 		}
-		
+
 		// Link it in wali_santri_link table
 		_, err = config.DB.Exec(context.Background(),
 			`INSERT INTO wali_santri_link (user_id, santri_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
 			userID, santriID)
-		
+
 		if err != nil {
 			http.Error(w, "Internal server error linking santri", http.StatusInternalServerError)
 			return
@@ -247,7 +247,7 @@ func LoginWali(w http.ResponseWriter, r *http.Request) {
 	_, err = config.DB.Exec(context.Background(),
 		"INSERT INTO sessions (id, user_id, expired_at) VALUES ($1, $2, $3)",
 		sessionID, userID, expires)
-	
+
 	if err != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return

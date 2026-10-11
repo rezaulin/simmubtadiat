@@ -1,6 +1,7 @@
 package handlers
 
-import (	"net/http"
+import (
+	"net/http"
 
 	"github.com/mubtadiaat/app/middleware"
 	"github.com/mubtadiaat/app/models"

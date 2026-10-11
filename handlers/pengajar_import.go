@@ -1,10 +1,11 @@
 package handlers
 
-import (	"net/http"
+import (
+	"net/http"
 	"strconv"
 
-	"github.com/mubtadiaat/app/models"
 	appMiddleware "github.com/mubtadiaat/app/middleware"
+	"github.com/mubtadiaat/app/models"
 	"github.com/xuri/excelize/v2"
 )
 
@@ -42,7 +43,7 @@ func ExportPengajar(w http.ResponseWriter, r *http.Request) {
 	for i, p := range data {
 		row := i + 2
 		f.SetCellValue(sheet, cellName(1, row), p.Nama)
-		
+
 		if p.NamaArab != nil {
 			f.SetCellValue(sheet, cellName(2, row), *p.NamaArab)
 		}
@@ -116,7 +117,7 @@ func ImportPengajar(w http.ResponseWriter, r *http.Request) {
 		}
 
 		nama := row[0]
-		
+
 		var namaArab, noHp, alamat, ttl, namaWali, tahunMengajar, status *string
 
 		if len(row) > 1 && row[1] != "" {

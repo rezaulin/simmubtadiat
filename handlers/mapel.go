@@ -4,24 +4,22 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"strconv"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/mubtadiaat/app/config"
 )
 
 // Mapel merepresentasikan satu mata pelajaran pada sebuah kelas.
 // NamaMapel dipakai sebagai nama fann (الفنون), NamaKitab sebagai nama kitab (الكتب الدراسية).
 type Mapel struct {
-	ID            int    `json:"id"`
-	TingkatanID   int    `json:"tingkatan_id"`
-	KelasID       int    `json:"kelas_id"`
-	NamaMapel     string `json:"nama_mapel"`
-	NamaKitab     string `json:"nama_kitab"`
-	NamaIndo      string `json:"nama_indo"`
-	Kategori      string `json:"kategori"`
-	Urutan        int    `json:"urutan"`
-	AktifKuartal  []int  `json:"aktif_kuartal"`
+	ID           int    `json:"id"`
+	TingkatanID  int    `json:"tingkatan_id"`
+	KelasID      int    `json:"kelas_id"`
+	NamaMapel    string `json:"nama_mapel"`
+	NamaKitab    string `json:"nama_kitab"`
+	NamaIndo     string `json:"nama_indo"`
+	Kategori     string `json:"kategori"`
+	Urutan       int    `json:"urutan"`
+	AktifKuartal []int  `json:"aktif_kuartal"`
 }
 
 // GetMapelByKelas mengambil daftar mapel untuk satu kelas.
@@ -100,8 +98,10 @@ func CreateMapel(w http.ResponseWriter, r *http.Request) {
 }
 
 func UpdateMapel(w http.ResponseWriter, r *http.Request) {
-	idStr := chi.URLParam(r, "id")
-	id, _ := strconv.Atoi(idStr)
+	id, okID := parseIDParam(w, r, "id")
+	if !okID {
+		return
+	}
 
 	var m Mapel
 	if err := json.NewDecoder(r.Body).Decode(&m); err != nil {
@@ -140,8 +140,10 @@ func UpdateMapel(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteMapel(w http.ResponseWriter, r *http.Request) {
-	idStr := chi.URLParam(r, "id")
-	id, _ := strconv.Atoi(idStr)
+	id, okID := parseIDParam(w, r, "id")
+	if !okID {
+		return
+	}
 
 	_, err := config.DB.Exec(context.Background(), "DELETE FROM mata_pelajaran WHERE id=$1", id)
 	if err != nil {

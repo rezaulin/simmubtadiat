@@ -6,8 +6,8 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/mubtadiaat/app/models"
 	appMiddleware "github.com/mubtadiaat/app/middleware"
+	"github.com/mubtadiaat/app/models"
 )
 
 func GetPengajar(w http.ResponseWriter, r *http.Request) {
@@ -17,9 +17,18 @@ func GetPengajar(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	bagianID, _ := strconv.Atoi(r.URL.Query().Get("bagian_id"))
-	tingkatanID, _ := strconv.Atoi(r.URL.Query().Get("tingkatan_id"))
-	kelasID, _ := strconv.Atoi(r.URL.Query().Get("kelas_id"))
+	bagianID, okQ := parseIntQuery(w, r, "bagian_id")
+	if !okQ {
+		return
+	}
+	tingkatanID, okQ := parseIntQuery(w, r, "tingkatan_id")
+	if !okQ {
+		return
+	}
+	kelasID, okQ := parseIntQuery(w, r, "kelas_id")
+	if !okQ {
+		return
+	}
 
 	res, err := models.GetAllPengajar(r.Context(), user.Roles, user.PengajarID, bagianID, tingkatanID, kelasID)
 	if err != nil {
@@ -45,7 +54,10 @@ func CreatePengajar(w http.ResponseWriter, r *http.Request) {
 }
 
 func UpdatePengajar(w http.ResponseWriter, r *http.Request) {
-	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
+	id, okID := parseIDParam(w, r, "id")
+	if !okID {
+		return
+	}
 	var p models.Pengajar
 	if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -59,7 +71,10 @@ func UpdatePengajar(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeletePengajar(w http.ResponseWriter, r *http.Request) {
-	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
+	id, okID := parseIDParam(w, r, "id")
+	if !okID {
+		return
+	}
 	if err := models.DeletePengajar(r.Context(), id); err != nil {
 		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
@@ -92,7 +107,10 @@ func AssignDewanHarian(w http.ResponseWriter, r *http.Request) {
 }
 
 func UpdateDewanHarian(w http.ResponseWriter, r *http.Request) {
-	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
+	id, okID := parseIDParam(w, r, "id")
+	if !okID {
+		return
+	}
 	var dh models.DewanHarian
 	if err := json.NewDecoder(r.Body).Decode(&dh); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -106,7 +124,10 @@ func UpdateDewanHarian(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteDewanHarian(w http.ResponseWriter, r *http.Request) {
-	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
+	id, okID := parseIDParam(w, r, "id")
+	if !okID {
+		return
+	}
 	if err := models.DeleteDewanHarian(r.Context(), id); err != nil {
 		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
@@ -188,14 +209,14 @@ func GetPengajarByID(w http.ResponseWriter, r *http.Request) {
 
 func AssignMunawwib(w http.ResponseWriter, r *http.Request) {
 	var req struct {
-		BagianID   int   `json:"bagian_id"`
+		BagianID    int   `json:"bagian_id"`
 		PengajarIDs []int `json:"pengajar_ids"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	
+
 	err := models.AssignMunawwibs(r.Context(), req.BagianID, req.PengajarIDs)
 	if err != nil {
 		http.Error(w, internalError("", err), http.StatusInternalServerError)
@@ -213,7 +234,6 @@ func GetMunawwib(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, assignments)
 }
 
-
 func RemoveMunawwib(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		BagianID   int `json:"bagian_id"`
@@ -223,7 +243,7 @@ func RemoveMunawwib(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	
+
 	err := models.RemoveMunawwib(r.Context(), req.BagianID, req.PengajarID)
 	if err != nil {
 		http.Error(w, internalError("", err), http.StatusInternalServerError)
@@ -231,4 +251,3 @@ func RemoveMunawwib(w http.ResponseWriter, r *http.Request) {
 	}
 	writeJSON(w, map[string]string{"status": "success"})
 }
-

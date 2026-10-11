@@ -4,10 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"strconv"
 	"time"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/mubtadiaat/app/config"
 	appMiddleware "github.com/mubtadiaat/app/middleware"
 )
@@ -92,7 +90,10 @@ func CreateJadwal(w http.ResponseWriter, r *http.Request) {
 }
 
 func UpdateJadwal(w http.ResponseWriter, r *http.Request) {
-	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
+	id, okID := parseIDParam(w, r, "id")
+	if !okID {
+		return
+	}
 	var j JadwalPelajaran
 	if err := json.NewDecoder(r.Body).Decode(&j); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -110,7 +111,10 @@ func UpdateJadwal(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteJadwal(w http.ResponseWriter, r *http.Request) {
-	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
+	id, okID := parseIDParam(w, r, "id")
+	if !okID {
+		return
+	}
 	_, err := config.DB.Exec(context.Background(), "DELETE FROM jadwal_pelajaran WHERE id=$1", id)
 	if err != nil {
 		http.Error(w, internalError("", err), http.StatusInternalServerError)

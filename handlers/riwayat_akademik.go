@@ -1,6 +1,7 @@
 package handlers
 
-import (	"net/http"
+import (
+	"net/http"
 	"strconv"
 
 	"github.com/go-chi/chi/v5"

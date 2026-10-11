@@ -12,22 +12,22 @@ import (
 
 // templateHeaders adalah urutan kolom pada template impor santri.
 var templateHeaders = []string{
-	"NIK",             // wajib
-	"Stambuk",         // opsional
-	"NISN",            // opsional
-	"Nama",            // wajib
-	"Nama Wali",       // opsional
-	"Nama Ayah",       // opsional
-	"Nama Ibu",        // opsional
+	"NIK",                   // wajib
+	"Stambuk",               // opsional
+	"NISN",                  // opsional
+	"Nama",                  // wajib
+	"Nama Wali",             // opsional
+	"Nama Ayah",             // opsional
+	"Nama Ibu",              // opsional
 	"Tempat, Tanggal Lahir", // opsional (Misal: Surabaya, 12-10-2005)
-	"No HP Wali",      // opsional
-	"Provinsi",        // opsional (nama), harus sesuai referensi
-	"Kabupaten/Kota",  // opsional (nama), harus di dalam provinsi
-	"Kecamatan",       // opsional (nama), harus di dalam kabupaten
-	"Desa/Kelurahan",  // opsional (teks bebas)
-	"Alamat Tambahan", // opsional (jalan/RT/RW/dusun)
-	"Kamar",           // opsional (nama/nomor kamar asrama)
-	"Tahun Masuk",     // opsional (misal: 2024). Kosong = tahun saat input
+	"No HP Wali",            // opsional
+	"Provinsi",              // opsional (nama), harus sesuai referensi
+	"Kabupaten/Kota",        // opsional (nama), harus di dalam provinsi
+	"Kecamatan",             // opsional (nama), harus di dalam kabupaten
+	"Desa/Kelurahan",        // opsional (teks bebas)
+	"Alamat Tambahan",       // opsional (jalan/RT/RW/dusun)
+	"Kamar",                 // opsional (nama/nomor kamar asrama)
+	"Tahun Masuk",           // opsional (misal: 2024). Kosong = tahun saat input
 }
 
 // DownloadTemplateSantri menghasilkan file .xlsx template impor santri.
@@ -176,15 +176,15 @@ func ImportSantri(w http.ResponseWriter, r *http.Request) {
 		}
 
 		s := models.Santri{
-			NIK:          nik,
-			Nama:         nama,
+			NIK:  nik,
+			Nama: nama,
 		}
 		s.Stambuk = optStr(get(1))
 		s.NISN = optStr(get(2))
 		s.NamaWali = optStr(get(4))
 		s.NamaAyah = optStr(get(5))
 		s.NamaIbu = optStr(get(6))
-	
+
 		ttlInput := get(7)
 		if ttlInput != "" {
 			parts := strings.Split(ttlInput, ",")
@@ -192,12 +192,12 @@ func ImportSantri(w http.ResponseWriter, r *http.Request) {
 				tempat := strings.TrimSpace(parts[0])
 				s.TTLTempat = &tempat
 				tglStr := strings.TrimSpace(parts[1])
-				
+
 				// Coba beberapa format parse
 				var t time.Time
 				var err error
 				formats := []string{"02-01-2006", "2006-01-02", "02/01/2006"}
-				
+
 				for _, format := range formats {
 					t, err = time.Parse(format, tglStr)
 					if err == nil {
@@ -205,7 +205,7 @@ func ImportSantri(w http.ResponseWriter, r *http.Request) {
 						break
 					}
 				}
-				
+
 				if err != nil {
 					parseErrors = append(parseErrors, models.ImportRowError{
 						Baris: baris, Nama: nama, Pesan: "Format tanggal lahir tidak valid. Gunakan format DD-MM-YYYY atau YYYY-MM-DD.",

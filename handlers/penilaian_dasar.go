@@ -171,7 +171,7 @@ func BulkInputKhos(w http.ResponseWriter, r *http.Request) {
 // GenerateKhos triggers the calculation of Nilai Khos for a student's semester
 func GenerateKhos(w http.ResponseWriter, r *http.Request) {
 	var req struct {
-		SantriID int `json:"santri_id"`
+		SantriID    int    `json:"santri_id"`
 		Semester    int    `json:"semester"`
 		TahunAjaran string `json:"tahun_ajaran"`
 	}

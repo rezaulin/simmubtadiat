@@ -3,9 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
-	"strconv"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/mubtadiaat/app/models"
 )
 
@@ -54,8 +52,10 @@ func GetPenugasan(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeletePenugasan(w http.ResponseWriter, r *http.Request) {
-	idStr := chi.URLParam(r, "id")
-	id, _ := strconv.Atoi(idStr)
+	id, okID := parseIDParam(w, r, "id")
+	if !okID {
+		return
+	}
 
 	if err := models.DeletePengajarBagian(r.Context(), id); err != nil {
 		http.Error(w, internalError("", err), http.StatusInternalServerError)
