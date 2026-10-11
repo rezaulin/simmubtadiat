@@ -204,8 +204,7 @@
     'Tidak boleh disambang',
     'Tidak boleh keluar dari P3HM',
     'Tidak boleh menerima titipan',
-    'Tidak boleh menelpon',
-    'Tidak boleh menerima telepon'
+    'Tidak boleh menelpon'
   ];
   var KONSEK_KUARTAL_4 = ['Tidak boleh pulang'];
   var JENIS_TAKZIRAN = 'Setoran Nadhom';
