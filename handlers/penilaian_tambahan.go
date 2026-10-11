@@ -358,6 +358,25 @@ func judulKategoriEnum(k string) string {
 	return k
 }
 
+// konsekuensiExport — daftar poin konsekuensi OTOMATIS per kuartal untuk
+// file download (keputusan owner 2026-10-11). Nilai DB tidak dipakai: baris
+// lama berisi ceklis sebagian/NULL. Dipisah newline (bukan koma) supaya di
+// Excel tampil bernomor rapi per baris (kolom G sudah wrap).
+// K1–3 = 4 poin (poin "menerima telepon" dihapus 2026-10-11);
+// K4 = "Tidak boleh pulang".
+func konsekuensiExport(kuartal int) string {
+	if kuartal == 4 {
+		return "Tidak boleh pulang"
+	}
+	poin := []string{
+		"1. Tidak boleh disambang",
+		"2. Tidak boleh keluar dari P3HM",
+		"3. Tidak boleh menerima titipan",
+		"4. Tidak boleh menelpon",
+	}
+	return strings.Join(poin, "\n")
+}
+
 // ExportTambahan — GET /api/penilaian-tambahan/export?fitur=... (PIMPINAN ONLY).
 // Cek role dilakukan DI BACKEND (bukan cuma menyembunyikan tombol —
 // keputusan owner, pola ExportSantri/ExportPengajar).
@@ -442,16 +461,29 @@ func ExportTambahan(w http.ResponseWriter, r *http.Request) {
 		for i, b := range data {
 			rows = append(rows, []any{i + 1, b.Bagian, b.Nama, kuartal,
 				b.JumlahNilai, math.Round(b.Rata2*100) / 100,
-				// Jenis Takziran selalu "Setoran Nadhom" (permintaan owner
-				// 2026-10-03: tidak diisi manual). Nilai lama di DB tetap
-				// tersimpan, hanya tidak ditampilkan.
-				b.Konsekuensi, "Setoran Nadhom",
+				// Konsekuensi OTOMATIS per kuartal (keputusan owner
+				// 2026-10-11) — NILAI DB TIDAK DIPAKAI di export: baris
+				// lama berisi ceklis sebagian / NULL sehingga kolom penuh
+				// teks campur & tak terbaca (laporan Pak 2026-10-11).
+				// K1–3 = 4 poin; K4 = "Tidak boleh pulang".
+				konsekuensiExport(kuartal), "Setoran Nadhom",
 				yaTidak(b.DalamMasa), yaTidak(b.Selesai)})
 		}
-		tulis("Nilai Siswi di Bawah Rata² 4,4",
+		tulis(fmt.Sprintf("Nilai Siswi di Bawah Rata² 4,4 — Tahun Ajaran: %s", ta),
 			[]string{"No", "Bagian", "Nama Siswi", "Kuartal", "Jumlah Nilai",
 				"Rata-rata", "Konsekuensi", "Jenis Takziran",
 				"Dalam Masa Takziran", "Selesai Takziran"}, rows)
+		// Kolom Konsekuensi (G) multi-poin → wrap + tinggi baris otomatis
+		// supaya tak terpotong/terbaca satu baris panjang.
+		lebarG, _ := excelize.CoordinatesToCellName(7, len(rows)+2)
+		if stWrap, err := f.NewStyle(&excelize.Style{Alignment: &excelize.Alignment{
+			WrapText: true, Vertical: "top"}}); err == nil {
+			_ = f.SetCellStyle(sheet, "G3", lebarG, stWrap)
+		}
+		_ = f.SetColWidth(sheet, "G", "G", 42)
+		for i := 0; i < len(rows); i++ {
+			_ = f.SetRowHeight(sheet, i+3, 48)
+		}
 		namaFile = fmt.Sprintf("di-bawah-rata-%s.xlsx", ta)
 
 	case "juz-amma":
