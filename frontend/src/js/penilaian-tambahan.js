@@ -195,42 +195,34 @@
     s.className = 'br-status text-[11px] font-semibold ' + warna;
   }
 
-  // ── Konsekuensi: CHECKLIST multi-pilihan (permintaan owner 2026-10-03) ───
-  // Diganti dari input teks bebas → 6 ceklis. Nilai disimpan sebagai label
-  // terpilih dipisah kama (format lama "Tidak boleh disambang" persis opsi 1
-  // → data lama tetap cocok). Jenis Takziran semua baris OTOMATIS
-  // "Setoran Nadhom" — tidak diisi manual (owner 2026-10-03).
-  var OPSI_KONSEKUENSI = [
+  // ── Konsekuensi: OTOMATIS per kuartal (permintaan owner 2026-10-11) ──────
+  // Tidak dicentang manual lagi — semua baris langsung terisi otomatis
+  // (kayak Jenis Takziran). Kuartal 1–3: poin 1–5 ; Kuartal 4: hanya
+  // "Tidak boleh pulang". Pilihan user hanya: pilih nama → tandai
+  // Masa / Selesai Takziran (aksi massal).
+  var KONSEK_KUARTAL_13 = [
     'Tidak boleh disambang',
     'Tidak boleh keluar dari P3HM',
     'Tidak boleh menerima titipan',
     'Tidak boleh menelpon',
-    'Tidak boleh menerima telepon',
-    'Tidak boleh pulang'
+    'Tidak boleh menerima telepon'
   ];
+  var KONSEK_KUARTAL_4 = ['Tidak boleh pulang'];
   var JENIS_TAKZIRAN = 'Setoran Nadhom';
 
-  // Sel konsekuensi → 6 ceklis (tercentang mengikuti nilai tersimpan).
-  function kolomKonsekuensi(nilai, nonaktif) {
-    var terpilih = String(nilai || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean);
-    return '<td class="px-3 py-2 align-top"><div class="flex flex-col gap-1">' +
-      OPSI_KONSEKUENSI.map(function (lbl, idx) {
-        var cek = terpilih.indexOf(lbl) !== -1;
-        return '<label class="inline-flex items-start gap-1.5 text-[11px] leading-tight text-gray-700 dark:text-gray-200' +
-          (nonaktif ? '' : ' cursor-pointer') + '">' +
-          '<input type="checkbox" data-konsek="' + idx + '"' + (cek ? ' checked' : '') + nonaktif +
-          ' class="mt-0.5 w-3.5 h-3.5 accent-amber-600 shrink-0">' +
-          '<span>' + esc(lbl) + '</span></label>';
-      }).join('') +
-      '</div></td>';
+  function konsekuensiPoin(kuartal) {
+    return kuartal === 4 ? KONSEK_KUARTAL_4 : KONSEK_KUARTAL_13;
+  }
+  function konsekuensiOtomatis(kuartal) {
+    return konsekuensiPoin(kuartal).join(', ');
   }
 
-  // Ambil konsekuensi tercentang → string "A, B, C" utk backend.
-  function daftarKonsekuensi(tr) {
-    var kotak = tr.querySelectorAll('[data-konsek]:checked');
-    return Array.prototype.map.call(kotak, function (c) {
-      return OPSI_KONSEKUENSI[parseInt(c.dataset.konsek, 10)];
-    }).filter(Boolean).join(', ');
+  // Sel konsekuensi → daftar poin baca-saja (otomatis per kuartal).
+  function kolomKonsekuensi(kuartal) {
+    var poin = konsekuensiPoin(kuartal);
+    return '<td class="px-3 py-2 align-top"><ol class="list-decimal list-inside space-y-0.5 text-[11px] leading-tight text-gray-600 dark:text-gray-300">' +
+      poin.map(function (lbl) { return '<li>' + esc(lbl) + '</li>'; }).join('') +
+      '</ol></td>';
   }
 
   // Simpan SATU baris — DIANTRE per baris (bug 2026-10-03: 2 POST paralel saat
@@ -261,7 +253,7 @@
       items: [{
         santri_id: santriID,
         kuartal: kuartal,
-        konsekuensi: daftarKonsekuensi(tr),
+        konsekuensi: konsekuensiOtomatis(kuartal),
         jenis_takziran: JENIS_TAKZIRAN,
         dalam_masa: !!ambil('dalam_masa'),
         selesai: !!ambil('selesai')
@@ -317,6 +309,7 @@
     var edit = bolehEditTakziran();
     var nonaktif = edit ? '' : ' disabled';
     return jget('/api/penilaian-tambahan/bawah-rata?' + p.toString()).then(function (rows) {
+      var kuartal = parseInt($('br-kuartal').value, 10) || 1;
       var isi = rows.map(function (r, i) {
         var kolomTeks = function (kolom, nilai, tambahan) {
           return '<td class="px-3 py-2">' +
@@ -326,12 +319,15 @@
             '></td>';
         };
         return '<tr data-santri="' + r.santri_id + '">' +
+          '<td class="px-3 py-2 align-top text-center">' +
+            '<input type="checkbox" data-pilih' + (edit ? '' : ' disabled') +
+            ' class="w-4 h-4 accent-amber-600" title="Pilih ' + esc(r.nama) + '"></td>' +
           '<td class="px-3 py-2 text-gray-400">' + (i + 1) + '</td>' +
           '<td class="px-3 py-2 font-semibold text-gray-800 dark:text-gray-100 whitespace-nowrap">' + esc(r.nama) + '</td>' +
           '<td class="px-3 py-2 text-gray-600 dark:text-gray-300 whitespace-nowrap">' + esc(r.bagian) + '</td>' +
           '<td class="px-3 py-2 text-right">' + fmt(r.jumlah_nilai, 1) + '</td>' +
           '<td class="px-3 py-2 text-right font-bold text-red-500">' + fmt(r.rata2, 2) + '</td>' +
-          kolomKonsekuensi(r.konsekuensi, nonaktif) +
+          kolomKonsekuensi(kuartal) +
           kolomTeks('jenis_takziran', JENIS_TAKZIRAN, ' readonly') +
           '<td class="px-3 py-2 text-center"><input type="checkbox" data-kolom="dalam_masa"' + nonaktif +
           ' class="w-4 h-4 accent-amber-500" ' + (r.dalam_masa ? 'checked' : '') + '></td>' +
@@ -341,10 +337,84 @@
           '</tr>';
       }).join('');
       renderTabel(el,
-        ['No', 'Nama', 'Bagian', 'Jumlah Nilai', 'Rata-rata Nilai', 'Konsekuensi', 'Jenis Takziran', 'Dalam Masa Takziran', 'Selesai Melaksanakan Takziran'],
+        ['Pilih', 'No', 'Nama', 'Bagian', 'Jumlah Nilai', 'Rata-rata Nilai', 'Konsekuensi', 'Jenis Takziran', 'Dalam Masa Takziran', 'Selesai Melaksanakan Takziran'],
         isi,
         'Tidak ada siswi dengan rata-rata 4,4 ke bawah pada kuartal ini.');
-    }).catch(function (e) { el.innerHTML = errHTML(e); });
+      updateBulkBr();
+    }).catch(function (e) { el.innerHTML = errHTML(e); updateBulkBr(); });
+  }
+
+  // ── Aksi massal: pilih banyak nama → tandai Masa/Selesai Takziran ────────
+  // Permintaan owner 2026-10-11: konsekuensi sudah otomatis, yang dipilih
+  // cukup status takzirannya. POST per siswi terpilih (antre berurutan),
+  // lalu tabel di-refresh.
+  function updateBulkBr() {
+    var bar = $('br-bulk');
+    if (!bar) return;
+    var boxes = document.querySelectorAll('#br-table [data-pilih]');
+    var n = document.querySelectorAll('#br-table [data-pilih]:checked').length;
+    bar.classList.toggle('hidden', boxes.length === 0);
+    var cnt = $('br-bulk-count');
+    if (cnt) cnt.textContent = n + ' siswi dipilih';
+    var edit = bolehEditTakziran();
+    var semua = $('br-pilih-semua');
+    if (semua) {
+      semua.disabled = !edit;
+      if (boxes.length === 0) semua.checked = false;
+    }
+    ['br-bulk-masa', 'br-bulk-selesai'].forEach(function (id) {
+      var b = $(id);
+      if (b) b.disabled = !edit || n === 0;
+    });
+  }
+
+  // mode: 'masa' → dalam_masa=true, selesai=false ; 'selesai' → selesai=true,
+  // dalam_masa=false (sudah tidak dalam masa). Konsekuensi & jenis takziran
+  // ikut dikirim otomatis (backend melakukan upsert penuh).
+  function tandaiMassalBr(mode) {
+    if (!bolehEditTakziran()) return;
+    var boxes = Array.prototype.slice.call(document.querySelectorAll('#br-table [data-pilih]:checked'));
+    var baris = boxes.map(function (c) {
+      var tr = c.closest('tr');
+      return tr && tr.dataset.santri ? parseInt(tr.dataset.santri, 10) : 0;
+    }).filter(Boolean);
+    if (!baris.length) return;
+    var kuartal = parseInt($('br-kuartal').value, 10) || 1;
+    var info = $('br-bulk-info');
+    var label = mode === 'masa' ? 'Masa Takziran' : 'Selesai Takziran';
+    var i = 0, gagal = 0;
+    var langkah = function () {
+      if (i >= baris.length) {
+        if (info) info.textContent = '';
+        showToast(gagal ? gagal + ' siswi gagal disimpan' : baris.length + ' siswi ditandai ' + label,
+                  gagal ? 'error' : 'success');
+        loadBawahRata();   // refresh status + keanggotaan baris (filter dalam/selesai)
+        return;
+      }
+      if (info) info.textContent = 'Menyimpan ' + (i + 1) + '/' + baris.length + '…';
+      var id = baris[i++];
+      fetch('/api/penilaian-tambahan/bawah-rata/takziran', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tahun_ajaran: '',   // kosong → backend pakai tahun ajaran aktif
+          items: [{
+            santri_id: id,
+            kuartal: kuartal,
+            konsekuensi: konsekuensiOtomatis(kuartal),
+            jenis_takziran: JENIS_TAKZIRAN,
+            dalam_masa: mode === 'masa',
+            selesai: mode === 'selesai'
+          }]
+        })
+      }).then(function (res) {
+        if (!res.ok) { gagal++; }
+      }).catch(function () {
+        gagal++;
+      }).then(langkah);
+    };
+    langkah();
   }
 
   // ── Tab: Setoran Juz Amma ─────────────────────────────────────────────────
@@ -854,8 +924,10 @@
     if (brEl) {
       brEl.addEventListener('change', function (e) {
         var t = e.target;
-        // Terima input bertanda data-kolom DAN ceklis konsekuensi (data-konsek).
-        if (!t || !t.dataset || (!t.dataset.kolom && t.dataset.konsek === undefined)) return;
+        if (!t || !t.dataset) return;
+        // Checkbox pilih baris (aksi massal) → cukup update bar, jangan POST.
+        if (t.dataset.pilih !== undefined) { updateBulkBr(); return; }
+        if (!t.dataset.kolom) return;
         var tr = t.closest('tr');
         if (!tr || !tr.dataset.santri) return;
         // Checkbox memengaruhi keanggotaan baris saat filter aktif.
@@ -895,6 +967,19 @@
     var jaSudah = $('ja-bulk-sudah'), jaBelum = $('ja-bulk-belum');
     if (jaSudah) jaSudah.addEventListener('click', function () { tandaiMassal('selesai'); });
     if (jaBelum) jaBelum.addEventListener('click', function () { tandaiMassal('belum'); });
+
+    // Aksi massal Di Bawah Rata² (permintaan owner 2026-10-11): pilih nama →
+    // tandai Masa / Selesai Takziran sekaligus. Konsekuensi otomatis per kuartal.
+    var brSemua = $('br-pilih-semua');
+    if (brSemua) brSemua.addEventListener('change', function () {
+      document.querySelectorAll('#br-table [data-pilih]').forEach(function (c) {
+        if (!c.disabled) c.checked = brSemua.checked;
+      });
+      updateBulkBr();
+    });
+    var brMasa = $('br-bulk-masa'), brSelesai = $('br-bulk-selesai');
+    if (brMasa) brMasa.addEventListener('click', function () { tandaiMassalBr('masa'); });
+    if (brSelesai) brSelesai.addEventListener('click', function () { tandaiMassalBr('selesai'); });
 
     // Fase 4 — Nilai Kompetensi: checkbox pilih (aksi massal) + select hasil
     // → POST per baris.

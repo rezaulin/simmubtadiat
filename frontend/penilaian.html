@@ -331,6 +331,18 @@
             <button id="br-export" class="btn-tambahan bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl text-sm font-medium shadow-md col-span-2 sm:col-span-1" data-fitur="bawah-rata">📥 Download</button>
           </div>
         </div>
+        <!-- Aksi massal Di Bawah Rata² (permintaan owner 2026-10-11): konsekuensi
+             otomatis per kuartal — yang dipilih hanya Masa / Selesai Takziran.
+             Kontrol dirender selalu (disabled utk non-pimpinan) agar struktur stabil. -->
+        <div id="br-bulk" class="hidden mt-4 flex flex-wrap items-center gap-3 rounded-2xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/60 px-4 py-2.5 text-sm">
+          <label class="inline-flex items-center gap-2 font-medium text-gray-700 dark:text-gray-200 cursor-pointer select-none">
+            <input type="checkbox" id="br-pilih-semua" class="w-4 h-4 accent-amber-600"> Pilih Semua
+          </label>
+          <span id="br-bulk-count" class="text-gray-500 dark:text-gray-400">0 siswi dipilih</span>
+          <button id="br-bulk-masa" class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-xl text-xs font-semibold shadow-sm disabled:opacity-40 disabled:cursor-not-allowed">⏳ Tandai Masa Takziran</button>
+          <button id="br-bulk-selesai" class="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded-xl text-xs font-semibold shadow-sm disabled:opacity-40 disabled:cursor-not-allowed">✔ Tandai Selesai Takziran</button>
+          <span id="br-bulk-info" class="text-[11px] text-gray-400"></span>
+        </div>
         <div id="br-table" class="glass dark:bg-slate-800/80 rounded-2xl border border-gray-200 dark:border-slate-700 p-4 overflow-x-auto text-sm text-gray-500 dark:text-gray-400">
           Memuat…
         </div>
