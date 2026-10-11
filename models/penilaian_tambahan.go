@@ -289,7 +289,7 @@ func UpsertTakziran(ctx context.Context, tahunAjaran string, items []TakziranInp
 			it.SantriID, it.Kuartal, tahunAjaran,
 			it.Konsekuensi, it.JenisTakziran, it.DalamMasa, it.Selesai)
 		if err != nil {
-			return err
+			return serverErr(err)
 		}
 	}
 	return nil
@@ -555,14 +555,14 @@ func SaveJuzAmma(ctx context.Context, in JuzAmmaInput) error {
 			              updated_at = now()`,
 			in.SantriID, *in.SuratNo, *in.Setor,
 			deref(in.Evaluasi), deref(in.Status), in.TahunAjaran)
-		return err
+		return serverErr(err)
 	}
 	if in.Evaluasi == nil && in.Status == nil {
 		return errors.New("tidak ada data yang diubah")
 	}
 	// evaluasi/status bersifat per santri → pastikan semua baris surat ada.
 	if _, err := ensureSetoranRows(ctx, in.SantriID, in.TahunAjaran); err != nil {
-		return err
+		return serverErr(err)
 	}
 	// Bangun SET dinamis (bug fix 2026-10-02: "(belum)" = kirim '' → harus
 	// ME-RESET nilai jadi NULL; dulu '' diabaikan → pilihan lulus tetap melekat.
@@ -588,7 +588,7 @@ func SaveJuzAmma(ctx context.Context, in JuzAmmaInput) error {
 	q := "UPDATE setoran_juz_amma SET " + strings.Join(setClauses, ", ") +
 		" WHERE santri_id = $1 AND tahun_ajaran = $2"
 	_, err := config.DB.Exec(ctx, q, args...)
-	return err
+	return serverErr(err)
 }
 
 func deref(s *string) string {
@@ -838,7 +838,7 @@ func SaveKompetensi(ctx context.Context, in KompetensiInput) error {
 		LEFT JOIN tingkatan t ON t.id = b.tingkatan_id
 		WHERE s.id = $1`, in.SantriID).Scan(&tingkatan, &kelas)
 	if err != nil {
-		return err
+		return serverErr(err)
 	}
 	tn := ""
 	if tingkatan != nil {
@@ -872,7 +872,7 @@ func SaveKompetensi(ctx context.Context, in KompetensiInput) error {
 		ON CONFLICT (santri_id, kategori, tahun_ajaran)
 				DO UPDATE SET hasil = EXCLUDED.hasil, updated_at = now()`,
 		in.SantriID, in.Kategori, h, in.TahunAjaran)
-	return err
+	return serverErr(err)
 }
 
 // ─── Fase 5: akses wali santri (read-only data anaknya sendiri) ────────────

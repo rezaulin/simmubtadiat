@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -21,6 +22,10 @@ func MulaiPengabdian(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := models.MulaiPengabdian(r.Context(), req); err != nil {
+		if errors.Is(err, models.ErrServer) {
+			writeJSONError(w, internalError("mulai pengabdian", err), http.StatusInternalServerError)
+			return
+		}
 		writeJSONError(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -40,6 +45,10 @@ func SelesaiPengabdian(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := models.SelesaiPengabdian(r.Context(), req); err != nil {
+		if errors.Is(err, models.ErrServer) {
+			writeJSONError(w, internalError("selesai pengabdian", err), http.StatusInternalServerError)
+			return
+		}
 		writeJSONError(w, err.Error(), http.StatusBadRequest)
 		return
 	}

@@ -105,7 +105,7 @@ func InputAbsensiSesi(ctx context.Context, in SesiAbsensiInput, pengajarID *int,
 		 LIMIT 1`, tahunAjaran, in.Tanggal).Scan(&kuartalTgl); err == nil && kuartalTgl > 0 {
 		locked, err := IsSemesterLocked(ctx, tahunAjaran, SemesterDariKuartal(kuartalTgl))
 		if err != nil {
-			return err
+			return serverErr(err)
 		}
 		if locked {
 			return errors.New("absensi semester ini sudah terkunci")
@@ -162,7 +162,7 @@ func InputAbsensiSesi(ctx context.Context, in SesiAbsensiInput, pengajarID *int,
 
 	tx, err := config.DB.Begin(ctx)
 	if err != nil {
-		return err
+		return serverErr(err)
 	}
 	defer tx.Rollback(ctx)
 
@@ -177,19 +177,19 @@ func InputAbsensiSesi(ctx context.Context, in SesiAbsensiInput, pengajarID *int,
 		 RETURNING id`,
 		in.BagianID, in.JadwalID, in.MapelID, pengajarID, in.Tanggal, in.Pertemuan).Scan(&sesiID)
 	if err != nil {
-		return err
+		return serverErr(err)
 	}
 
 	// Ganti seluruh baris non-hadir sesi ini (mendukung koreksi/isi ulang).
 	if _, err = tx.Exec(ctx, `DELETE FROM absensi_perizinan WHERE sesi_id = $1`, sesiID); err != nil {
-		return err
+		return serverErr(err)
 	}
 	for _, d := range in.Data {
 		if _, err = tx.Exec(ctx,
 			`INSERT INTO absensi_perizinan (santri_id, tanggal, status, keterangan, pengajar_id, sesi_id)
 			 VALUES ($1, $2, $3, $4, $5, $6)`,
 			d.SantriID, in.Tanggal, d.Status, d.Keterangan, pengajarID, sesiID); err != nil {
-			return err
+			return serverErr(err)
 		}
 	}
 
@@ -203,26 +203,26 @@ func InputAbsensiSesi(ctx context.Context, in SesiAbsensiInput, pengajarID *int,
 	if err == nil && kuartalID > 0 {
 		rows, err := tx.Query(ctx, `SELECT id FROM santri WHERE bagian_id = $1`, in.BagianID)
 		if err != nil {
-			return err
+			return serverErr(err)
 		}
 		var santriIDs []int
 		for rows.Next() {
 			var sid int
 			if err := rows.Scan(&sid); err != nil {
 				rows.Close()
-				return err
+				return serverErr(err)
 			}
 			santriIDs = append(santriIDs, sid)
 		}
 		rows.Close()
 		for _, sid := range santriIDs {
 			if err := RecalculateRekapAbsensiTx(ctx, tx, kuartalID, sid); err != nil {
-				return err
+				return serverErr(err)
 			}
 		}
 	}
 
-	return tx.Commit(ctx)
+	return serverErr(tx.Commit(ctx))
 }
 
 // recalcRekapQuery menghitung jumlah PERTEMUAN per status untuk satu santri pada

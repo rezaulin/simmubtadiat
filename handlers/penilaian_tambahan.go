@@ -182,6 +182,12 @@ func SaveTakziran(w http.ResponseWriter, r *http.Request) {
 		req.TahunAjaran = models.GetTahunAjaranAktif(r.Context())
 	}
 	if err := models.UpsertTakziran(r.Context(), req.TahunAjaran, req.Items); err != nil {
+		// Error DB (ErrServer) → 500 generik + log; error domain
+		// ("data takziran tidak valid") tetap detail (temuan N1 2026-10-11).
+		if errors.Is(err, models.ErrServer) {
+			writeJSONError(w, internalError("simpan takziran", err), http.StatusInternalServerError)
+			return
+		}
 		writeJSONError(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -239,6 +245,10 @@ func SaveJuzAmma(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := models.SaveJuzAmma(r.Context(), req); err != nil {
+		if errors.Is(err, models.ErrServer) {
+			writeJSONError(w, internalError("simpan juz amma", err), http.StatusInternalServerError)
+			return
+		}
 		writeJSONError(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -302,6 +312,10 @@ func SaveKompetensi(w http.ResponseWriter, r *http.Request) {
 	if err := models.SaveKompetensi(r.Context(), req); err != nil {
 		if errors.Is(err, models.ErrKompetensiTidakBerlaku) {
 			writeJSONError(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		if errors.Is(err, models.ErrServer) {
+			writeJSONError(w, internalError("simpan kompetensi", err), http.StatusInternalServerError)
 			return
 		}
 		writeJSONError(w, err.Error(), http.StatusBadRequest)

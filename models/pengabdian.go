@@ -138,7 +138,7 @@ func GetKelasAkhirStatus(ctx context.Context, tx pgx.Tx, santriID int) (bool, er
 //  4. Tidak menyentuh tabel alumni.
 func MulaiPengabdian(ctx context.Context, in MulaiPengabdianInput) error {
 	if err := ValidateMulaiPengabdian(in); err != nil {
-		return err
+		return serverErr(err)
 	}
 
 	tempat := strings.TrimSpace(in.KhidmahTempat)
@@ -146,7 +146,7 @@ func MulaiPengabdian(ctx context.Context, in MulaiPengabdianInput) error {
 
 	tx, err := config.DB.Begin(ctx)
 	if err != nil {
-		return err
+		return serverErr(err)
 	}
 	defer tx.Rollback(ctx)
 
@@ -158,7 +158,7 @@ func MulaiPengabdian(ctx context.Context, in MulaiPengabdianInput) error {
 		     khidmah_tempat = $1, khidmah_mulai = $2, updated_at = NOW()
 		 WHERE id = $3 AND status = 'aktif'`, tempat, mulai, in.SantriID)
 	if err != nil {
-		return err
+		return serverErr(err)
 	}
 	if tag.RowsAffected() == 0 {
 		return errors.New("Santri tidak berstatus aktif")
@@ -170,10 +170,10 @@ func MulaiPengabdian(ctx context.Context, in MulaiPengabdianInput) error {
 		 SET tanggal_selesai = $1
 		 WHERE santri_id = $2 AND tanggal_selesai IS NULL`, mulai, in.SantriID)
 	if err != nil {
-		return err
+		return serverErr(err)
 	}
 
-	return tx.Commit(ctx)
+	return serverErr(tx.Commit(ctx))
 }
 
 // SelesaiPengabdian menjalankan transisi status santri dari `pengabdian` menjadi
@@ -186,14 +186,14 @@ func MulaiPengabdian(ctx context.Context, in MulaiPengabdianInput) error {
 //     khidmah_tempat santri; ON CONFLICT DO NOTHING agar idempoten.
 func SelesaiPengabdian(ctx context.Context, in SelesaiPengabdianInput) error {
 	if err := ValidateSelesaiPengabdian(in); err != nil {
-		return err
+		return serverErr(err)
 	}
 
 	selesai := strings.TrimSpace(in.KhidmahSelesai)
 
 	tx, err := config.DB.Begin(ctx)
 	if err != nil {
-		return err
+		return serverErr(err)
 	}
 	defer tx.Rollback(ctx)
 
@@ -221,10 +221,10 @@ func SelesaiPengabdian(ctx context.Context, in SelesaiPengabdianInput) error {
 		   tahun_lulus = COALESCE(alumni.tahun_lulus, EXCLUDED.tahun_lulus),
 		   updated_at = CURRENT_TIMESTAMP`, in.SantriID, tahunLulus)
 	if err != nil {
-		return err
+		return serverErr(err)
 	}
 
-	return tx.Commit(ctx)
+	return serverErr(tx.Commit(ctx))
 }
 
 // GetSantriPengabdian mengembalikan daftar santri berstatus `pengabdian` untuk

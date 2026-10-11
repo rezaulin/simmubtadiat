@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -61,6 +62,10 @@ func CreateCatatan(w http.ResponseWriter, r *http.Request) {
 	}
 	user, _ := r.Context().Value(appMiddleware.UserContextKey).(appMiddleware.UserSession)
 	if err := models.CreateCatatan(r.Context(), in, user.Roles, user.ID, user.PengajarID); err != nil {
+		if errors.Is(err, models.ErrServer) {
+			http.Error(w, internalError("buat catatan", err), http.StatusInternalServerError)
+			return
+		}
 		http.Error(w, err.Error(), http.StatusForbidden)
 		return
 	}
@@ -76,6 +81,10 @@ func DeleteCatatan(w http.ResponseWriter, r *http.Request) {
 	}
 	user, _ := r.Context().Value(appMiddleware.UserContextKey).(appMiddleware.UserSession)
 	if err := models.DeleteCatatan(r.Context(), id, user.Roles, user.ID); err != nil {
+		if errors.Is(err, models.ErrServer) {
+			http.Error(w, internalError("hapus catatan", err), http.StatusInternalServerError)
+			return
+		}
 		http.Error(w, err.Error(), http.StatusForbidden)
 		return
 	}

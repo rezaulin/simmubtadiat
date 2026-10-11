@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"github.com/mubtadiaat/app/middleware"
@@ -24,6 +25,11 @@ func InputAbsensi(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := models.InputAbsensiSesi(r.Context(), in, user.PengajarID, user.Roles); err != nil {
+		// Error DB → 500 generik; "akses ditolak"/validasi tetap 403 detail.
+		if errors.Is(err, models.ErrServer) {
+			http.Error(w, internalError("input absensi", err), http.StatusInternalServerError)
+			return
+		}
 		http.Error(w, err.Error(), http.StatusForbidden) // Return 403 for RBAC failures
 		return
 	}

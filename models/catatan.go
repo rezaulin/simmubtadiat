@@ -134,7 +134,7 @@ func CreateCatatan(ctx context.Context, in CatatanInput, roles []string, userID 
 		`INSERT INTO catatan_santri (santri_id, jenis, tanggal, kategori, deskripsi, tahun_ajaran, pengajar_id, user_id)
 		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
 		in.SantriID, in.Jenis, in.Tanggal, kategori, strings.TrimSpace(in.Deskripsi), ta, pengajarID, userID)
-	return err
+	return serverErr(err)
 }
 
 // GetCatatanBySantri mengembalikan catatan seorang santri (untuk detail).
@@ -313,7 +313,7 @@ func DeleteCatatan(ctx context.Context, id int, roles []string, userID int) erro
 	}
 
 	_, err := config.DB.Exec(ctx, "DELETE FROM catatan_santri WHERE id = $1", id)
-	return err
+	return serverErr(err)
 }
 
 // scanCatatan memindai baris untuk GetCatatanBySantri (tanpa kolom santri/bagian).
