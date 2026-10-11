@@ -97,6 +97,34 @@
 </head>
 <body class="bg-mesh min-h-screen flex items-center justify-center p-4">
 
+<!-- ===== SPLASH SCREEN (PWA app-like) ===== -->
+<div id="pwa-splash" style="position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#0E7C86;transition:opacity .4s ease,visibility .4s ease;">
+  <div style="width:110px;height:110px;border-radius:28px;background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 20px 60px rgba(0,0,0,.25);overflow:hidden;animation:pwaPop .5s cubic-bezier(.34,1.56,.64,1) both;">
+    <img src="/logo-v3.png" alt="Logo" style="width:100%;height:100%;object-fit:contain;padding:12px;">
+  </div>
+  <div style="margin-top:22px;color:#fff;font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:22px;letter-spacing:.5px;animation:pwaFade .6s .15s ease both;">Mubtadiat</div>
+  <div style="margin-top:6px;color:rgba(255,255,255,.75);font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:500;animation:pwaFade .6s .25s ease both;">Sistem Informasi Manajemen</div>
+  <div style="position:absolute;bottom:40px;width:34px;height:34px;border:3px solid rgba(255,255,255,.25);border-top-color:#fff;border-radius:50%;animation:pwaSpin .8s linear infinite;"></div>
+</div>
+<style>
+@keyframes pwaPop{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:scale(1)}}
+@keyframes pwaFade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pwaSpin{to{transform:rotate(360deg)}}
+</style>
+<script>
+(function(){
+  var s=document.getElementById('pwa-splash');
+  if(!s)return;
+  function hide(){s.style.opacity='0';s.style.visibility='hidden';setTimeout(function(){s.remove();},450);}
+  var min=new Promise(function(r){setTimeout(r,900);});
+  var load=new Promise(function(r){if(document.readyState==='complete')r();else window.addEventListener('load',r);});
+  Promise.all([min,load]).then(hide);
+  setTimeout(hide,4000);
+})();
+</script>
+<!-- ===== END SPLASH ===== -->
+
+
   <!-- Toggle Dark Mode Button -->
   <button id="theme-toggle" class="tap-target absolute top-4 right-4 p-2 rounded-full glass hover:scale-105 transition-transform" aria-label="Ganti tema">
     <svg id="theme-icon-dark" class="w-6 h-6 hidden text-accent-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
@@ -145,6 +173,21 @@
         Masuk Aplikasi
       </button>
     </form>
+
+    <!-- Tombol Pasang Aplikasi (muncul otomatis kalau HP mendukung) -->
+    <div id="install-app-wrap" class="hidden z-10">
+      <button id="btn-install-app" type="button"
+        class="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl
+               bg-white/70 dark:bg-slate-800/70 backdrop-blur-md
+               ring-1 ring-white/50 dark:ring-slate-700
+               text-sm font-semibold text-primary dark:text-accent-emerald
+               shadow-sm active:scale-[.98] transition-transform">
+        <i data-lucide="download" class="w-4 h-4"></i>
+        Pasang Aplikasi di HP
+      </button>
+      <p class="text-center text-xs text-gray-400 dark:text-gray-500 mt-2">Buka tanpa browser, seperti aplikasi biasa</p>
+    </div>
+
     
     <div class="text-center z-10 mt-2">
       <p class="text-xs text-gray-500 dark:text-gray-400">© 2026 Madrasah Hidayatul Mubtadiat. All rights reserved.</p>
@@ -279,5 +322,28 @@
       });
     }
   </script>
+
+<script>
+// ===== PWA Install Prompt =====
+(function(){
+  var deferredPrompt=null;
+  var wrap=document.getElementById('install-app-wrap');
+  var btn=document.getElementById('btn-install-app');
+  if(!wrap||!btn)return;
+  window.addEventListener('beforeinstallprompt',function(e){
+    e.preventDefault();
+    deferredPrompt=e;
+    wrap.classList.remove('hidden');
+  });
+  btn.addEventListener('click',async function(){
+    if(!deferredPrompt)return;
+    deferredPrompt.prompt();
+    try{ await deferredPrompt.userChoice; }catch(e){}
+    deferredPrompt=null;
+    wrap.classList.add('hidden');
+  });
+  window.addEventListener('appinstalled',function(){ wrap.classList.add('hidden'); });
+})();
+</script>
 </body>
 </html>
