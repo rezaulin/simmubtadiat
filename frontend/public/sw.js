@@ -1,9 +1,10 @@
-const CACHE_NAME = 'mubtadiaat-cache-v89';
+const CACHE_NAME = 'mubtadiaat-cache-v90';
 const urlsToCache = [
   '/',
   '/index.html',
   '/login.html',
-  '/logo-v3.png',
+  '/logo-v3-sm.png',
+  '/logo-v3.webp',
   '/favicon.svg',
   '/manifest.json'
 ];
