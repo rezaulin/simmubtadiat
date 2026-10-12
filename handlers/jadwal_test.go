@@ -20,7 +20,7 @@ type jadwalResponse struct {
 // fakeJadwalRow models a stored schedule row together with the pengajar that
 // owns it. The owning pengajar_id is NOT part of the public JadwalHariIni
 // payload; it exists only so the fake data source can reproduce the database's
-// `WHERE j.pengajar_id = $1 AND j.hari = $2` scoping that enforces RBAC.
+// penugasan-scoping (peran + pengajar + hari) yang menegakkan RBAC.
 type fakeJadwalRow struct {
 	pengajarID int
 	hari       string
@@ -29,7 +29,7 @@ type fakeJadwalRow struct {
 
 // newFakeFetcher returns a fetcher that behaves like the real SQL query: it
 // returns only the rows whose pengajar_id and hari match the arguments,
-// preserving insertion order (the query is ORDER BY jam_mulai). It also records
+// preserving insertion order (the query is ORDER BY hissoh). It also records
 // which pengajarID it was called with so tests can assert the handler passes
 // the session identity rather than any client-supplied value.
 func newFakeFetcher(rows []fakeJadwalRow, calledWith *int) func(context.Context, int, string) ([]JadwalHariIni, error) {
@@ -78,10 +78,10 @@ func callJadwalHariIni(t *testing.T, user appMiddleware.UserSession, rawQuery st
 func seedTwoTeachers() []fakeJadwalRow {
 	today := hariIndonesia[time.Now().Weekday()]
 	return []fakeJadwalRow{
-		{pengajarID: 1, hari: today, jadwal: JadwalHariIni{ID: 11, BagianID: 101, NamaBagian: "1A", MapelID: 201, NamaMapel: "Nahwu", Hari: today, JamMulai: "07:00", JamSelesai: "08:00"}},
-		{pengajarID: 2, hari: today, jadwal: JadwalHariIni{ID: 22, BagianID: 202, NamaBagian: "2B", MapelID: 202, NamaMapel: "Shorof", Hari: today, JamMulai: "07:30", JamSelesai: "08:30"}},
-		{pengajarID: 1, hari: today, jadwal: JadwalHariIni{ID: 13, BagianID: 103, NamaBagian: "1C", MapelID: 203, NamaMapel: "Fiqih", Hari: today, JamMulai: "09:00", JamSelesai: "10:00"}},
-		{pengajarID: 2, hari: today, jadwal: JadwalHariIni{ID: 24, BagianID: 204, NamaBagian: "2D", MapelID: 204, NamaMapel: "Tauhid", Hari: today, JamMulai: "10:00", JamSelesai: "11:00"}},
+		{pengajarID: 1, hari: today, jadwal: JadwalHariIni{ID: 11, BagianID: 101, NamaBagian: "1A", MapelID: 201, NamaMapel: "Nahwu", Hari: today, Hissoh: "ula", HissohLabel: "Hissoh Ula"}},
+		{pengajarID: 2, hari: today, jadwal: JadwalHariIni{ID: 22, BagianID: 202, NamaBagian: "2B", MapelID: 202, NamaMapel: "Shorof", Hari: today, Hissoh: "ula", HissohLabel: "Hissoh Ula"}},
+		{pengajarID: 1, hari: today, jadwal: JadwalHariIni{ID: 13, BagianID: 103, NamaBagian: "1C", MapelID: 203, NamaMapel: "Fiqih", Hari: today, Hissoh: "tsaniyah", HissohLabel: "Hissoh Tsaniyah"}},
+		{pengajarID: 2, hari: today, jadwal: JadwalHariIni{ID: 24, BagianID: 204, NamaBagian: "2D", MapelID: 204, NamaMapel: "Tauhid", Hari: today, Hissoh: "tsaniyah", HissohLabel: "Hissoh Tsaniyah"}},
 	}
 }
 

@@ -27,9 +27,11 @@ async function loadPertemuanSlots() {
         const res = await fetch(`/api/akademik/jadwal?bagian_id=${encodeURIComponent(bagianId)}`);
         const all = (await res.json()) || [];
         const hari = NAMA_HARI[new Date(tgl + 'T00:00:00').getDay()];
+        // Urut: Hissoh Ula dulu lalu Tsaniyah (fallback jam utk data lama).
+        const urutSlot = (j) => j.hissoh === 'ula' ? '1' : (j.hissoh === 'tsaniyah' ? '2' : String(j.jam_mulai || 'zz'));
         const slots = all
             .filter(j => j.hari === hari)
-            .sort((a, b) => String(a.jam_mulai || '').localeCompare(String(b.jam_mulai || '')));
+            .sort((a, b) => urutSlot(a).localeCompare(urutSlot(b)));
         if (slots.length === 0) {
             filterPertemuan.innerHTML = `<option value="">Tidak ada jadwal pada hari ${hari}</option>`;
             filterPertemuan.disabled = true;
@@ -40,7 +42,8 @@ async function loadPertemuanSlots() {
             const pertemuan = i + 1;
             const opt = document.createElement('option');
             opt.value = JSON.stringify({ jadwal_id: j.id, mapel_id: j.mapel_id, pertemuan });
-            opt.textContent = `Pertemuan ${pertemuan} · ${j.nama_mapel || 'Mapel'} (${j.jam_mulai || ''})`;
+            const slotTxt = j.hissoh_label || j.jam_mulai || '';
+            opt.textContent = `Pertemuan ${pertemuan} · ${j.nama_mapel || 'Mapel'} (${slotTxt})`;
             filterPertemuan.appendChild(opt);
         });
         filterPertemuan.disabled = false;
@@ -295,7 +298,8 @@ async function loadJadwalHariIni() {
 
         const chips = jadwal.map(j => {
             const label = `${j.nama_mapel} — ${j.nama_bagian}${j.kelas ? ' (' + j.kelas + ')' : ''}`;
-            const jam = j.jam_mulai ? `<span class="text-[10px] opacity-70">${j.jam_mulai}</span>` : '';
+            const slotTxt = j.hissoh_label || j.jam_mulai || '';
+            const jam = slotTxt ? `<span class="text-[10px] opacity-70">${slotTxt}</span>` : '';
             return `<button type="button" data-bagian="${j.bagian_id}"
                         class="jadwal-chip flex items-center gap-2 px-3 py-2 rounded-xl text-sm bg-primary/10 text-primary dark:bg-accent-emerald/20 dark:text-accent-emerald hover:bg-primary/20 dark:hover:bg-accent-emerald/30 transition-colors">
                         ${jam}<span class="font-medium">${label}</span>

@@ -49,6 +49,7 @@ func registerAkademikRoutes(r chi.Router) {
 		})
 
 		r.Get("/jadwal", handlers.GetJadwalByBagian)
+		r.Get("/jadwal-pengajar", handlers.GetJadwalPengajar)
 		r.Get("/jadwal-saya-hari-ini", handlers.GetJadwalSayaHariIni)
 	})
 	// Kalender

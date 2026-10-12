@@ -224,7 +224,7 @@ function buildAgendaIndex(kuartalList, jadwalHariIni, today, agendaList) {
   if (todayIso) {
     for (const j of normalizeJadwalList(jadwalHariIni)) {
       if (!j) continue;
-      const parts = [j.jam_mulai, j.nama_mapel, j.nama_bagian].filter(Boolean).map(String);
+      const parts = [j.hissoh_label || j.jam_mulai, j.nama_mapel, j.nama_bagian].filter(Boolean).map(String);
       const label = parts.length > 0 ? parts.join(' • ') : 'Jadwal mengajar';
       push(todayIso, 'jadwal', label);
     }
@@ -314,10 +314,18 @@ function formatAgendaRange(a) {
 // Pengurutan stabil menjaga urutan relatif entri dengan `jam_mulai` sama.
 // (Requirements 5.3)
 function sortJadwal(jadwalList) {
+  // Kunci urut: hissoh (Ula=1, Tsaniyah=2) untuk data baru; fallback ke
+  // jam_mulai ('HH:MM' leksikografis == kronologis) untuk data lama/tes.
+  const kunci = (e) => {
+    if (e && (e.hissoh === 'ula' || e.hissoh === 'tsaniyah')) {
+      return e.hissoh === 'ula' ? '1' : '2';
+    }
+    return e && e.jam_mulai != null ? String(e.jam_mulai) : '';
+  };
   const list = Array.isArray(jadwalList) ? jadwalList.slice() : [];
   return list.sort((a, b) => {
-    const ja = a && a.jam_mulai != null ? String(a.jam_mulai) : '';
-    const jb = b && b.jam_mulai != null ? String(b.jam_mulai) : '';
+    const ja = kunci(a);
+    const jb = kunci(b);
     if (ja < jb) return -1;
     if (ja > jb) return 1;
     return 0;
@@ -637,6 +645,12 @@ function renderJadwalCard(entry, today) {
   const esc = (v) => escapeHTML(v == null ? '' : String(v));
   const jamMulai = esc(j.jam_mulai);
   const jamSelesai = esc(j.jam_selesai);
+  // Slot tampil: Hissoh label bila ada; data lama tanpa hissoh → rentang jam.
+  const slotMarkup = j.hissoh_label
+    ? `<span data-hissoh>${esc(j.hissoh_label)}</span>`
+    : `<span data-jam-mulai>${jamMulai}</span>
+          <span class="text-gray-300 dark:text-slate-600">–</span>
+          <span data-jam-selesai>${jamSelesai}</span>`;
   const namaMapel = esc(j.nama_mapel);
   const namaBagian = esc(j.nama_bagian);
   const tingkatan = esc(j.tingkatan);
@@ -647,9 +661,7 @@ function renderJadwalCard(entry, today) {
     <a data-jadwal-card href="${href}" class="block bg-white dark:bg-slate-800 rounded-2xl p-4 border border-gray-100 dark:border-slate-700/60 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all">
       <div class="flex items-center justify-between gap-3">
         <div class="flex items-center gap-2 text-sm font-bold text-primary tabular-nums">
-          <span data-jam-mulai>${jamMulai}</span>
-          <span class="text-gray-300 dark:text-slate-600">–</span>
-          <span data-jam-selesai>${jamSelesai}</span>
+          ${slotMarkup}
         </div>
         <span data-tingkatan class="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary shrink-0">${tingkatan}</span>
       </div>

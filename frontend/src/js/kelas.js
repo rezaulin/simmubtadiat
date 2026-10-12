@@ -544,6 +544,7 @@ function switchTabKelola(tab) {
     btnJadwal.className = "pb-3 text-sm font-semibold border-b-2 border-primary text-primary transition-colors";
     contentKelolaJadwal.classList.remove('hidden');
     loadMapelForJadwal();
+    loadPengajar();
     loadJadwal();
   }
 }
@@ -738,32 +739,43 @@ window.keluarkanSantri = async function(santriId) {
   }
 }
 
-// --- JADWAL MGT ---
+// --- JADWAL MGT (v2: hissoh + peran; nama guru resolve dari penugasan) ---
+// Client request 2026-10-12: kitab (bukan fan), Hissoh Ula/Tsaniyah (bukan
+// jam), pengajar HANYA dari penugasan kelas ini, multi-kitab per slot.
 async function loadMapelForJadwal() {
   try {
     const bagianObj = cachedBagian.find(b => b.id === currentBagianId);
     if (!bagianObj) return;
-    
+
     const res = await fetch(`/api/akademik/mapel?tingkatan_id=${bagianObj.tingkatan_id}&kelas_id=${bagianObj.kelas_id}`);
     const data = await res.json();
-    selJadwalMapel.innerHTML = '<option value="">-- Pilih Mapel --</option>';
-    if(data) {
-      data.forEach(m => {
-        selJadwalMapel.innerHTML += `<option value="${m.id}">${m.nama_mapel}</option>`;
-      });
+    if (!data || data.length === 0) {
+      selJadwalMapel.innerHTML = '<span class="text-gray-400 text-xs">Belum ada kitab untuk kelas ini.</span>';
+      return;
     }
+    selJadwalMapel.innerHTML = data.map(m => {
+      const nama = (m.nama_kitab && String(m.nama_kitab).trim()) ? m.nama_kitab : m.nama_mapel;
+      return `<label class="flex items-center gap-2 text-xs cursor-pointer">
+        <input type="checkbox" class="jadwal-mapel-cb rounded" value="${m.id}"> <span>${nama}</span>
+      </label>`;
+    }).join('');
   } catch(err) {}
 }
 
+// Dropdown pengajar: HANYA mustahiq + munawwib penugasan bagian ini.
+// Value = peran (bukan id) — backend resolve nama terkini saat membaca.
 async function loadPengajar() {
   try {
-    const res = await fetch('/api/pengajar');
+    if (!currentBagianId) return;
+    const res = await fetch(`/api/akademik/jadwal-pengajar?bagian_id=${encodeURIComponent(currentBagianId)}`);
     const data = await res.json();
-    selJadwalPengajar.innerHTML = '<option value="">-- Kosongkan (Bila belum ada) --</option>';
-    if(data) {
-      data.forEach(p => {
-        selJadwalPengajar.innerHTML += `<option value="${p.id}">${p.nama}</option>`;
+    selJadwalPengajar.innerHTML = '<option value="">-- Pilih Guru --</option>';
+    if (Array.isArray(data) && data.length) {
+      data.forEach(o => {
+        selJadwalPengajar.innerHTML += `<option value="${o.peran}">${o.nama} (${o.peran})</option>`;
       });
+    } else {
+      selJadwalPengajar.innerHTML += '<option value="" disabled>Penugasan kelas ini belum ada</option>';
     }
   } catch(err) {}
 }
@@ -774,20 +786,22 @@ async function loadJadwal() {
     const res = await fetch(`/api/akademik/jadwal?bagian_id=${currentBagianId}`);
     const data = await res.json();
     if (!res.ok) throw new Error("Gagal memuat jadwal");
-    
+
     if (!data || data.length === 0) {
       tableKelolaJadwal.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">Belum ada jadwal.</td></tr>';
       return;
     }
-    
+
     let html = '';
     data.forEach(j => {
+        const kitab = j.nama_kitab || j.nama_mapel || '-';
+        const guru = j.nama_pengajar || '(kosong)';
         html += `
           <tr class="border-b border-gray-100 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
             <td data-label="Hari" class="px-4 py-3 font-semibold">${j.hari}</td>
-            <td data-label="Waktu" class="px-4 py-3">${j.jam_mulai.substring(0, 5)} - ${j.jam_selesai.substring(0, 5)} WIB</td>
-            <td data-label="Mata Pelajaran" class="px-4 py-3 font-medium text-gray-800 dark:text-gray-200">${j.nama_mapel}</td>
-            <td data-label="Pengajar" class="px-4 py-3">${j.nama_pengajar || '-'}</td>
+            <td data-label="Hissoh" class="px-4 py-3">${j.hissoh_label || j.hissoh}</td>
+            <td data-label="Kitab" class="px-4 py-3 font-medium text-gray-800 dark:text-gray-200">${kitab}</td>
+            <td data-label="Pengajar" class="px-4 py-3">${guru}</td>
             <td data-label="Aksi" class="px-4 py-3 text-center">
             <button onclick="hapusJadwal(${j.id})" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-1.5 rounded-lg transition-colors">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
@@ -806,26 +820,29 @@ formKelolaJadwal?.addEventListener('submit', async (e) => {
   e.preventDefault();
   const fd = new FormData(formKelolaJadwal);
   const data = Object.fromEntries(fd);
-  
+
+  const mapelIDs = [...selJadwalMapel.querySelectorAll('.jadwal-mapel-cb:checked')]
+    .map(cb => parseInt(cb.value));
+  if (!mapelIDs.length) { alert('Pilih dulu minimal satu kitab.'); return; }
+  if (!data.peran) { alert('Pilih pengajar dulu.'); return; }
+
   const payload = {
     bagian_id: currentBagianId,
-    mapel_id: parseInt(data.mapel_id),
     hari: data.hari,
-    jam_mulai: data.jam_mulai,
-    jam_selesai: data.jam_selesai
+    hissoh: data.hissoh,
+    peran: data.peran,
+    mapel_ids: mapelIDs
   };
-  if(data.pengajar_id) {
-    payload.pengajar_id = parseInt(data.pengajar_id);
-  }
-  
+
   try {
     const res = await fetch('/api/akademik/jadwal', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
-    if(!res.ok) throw new Error("Gagal menyimpan");
+    if(!res.ok) throw new Error(await res.text() || "Gagal menyimpan");
     formKelolaJadwal.reset();
+    selJadwalMapel.querySelectorAll('.jadwal-mapel-cb:checked').forEach(cb => { cb.checked = false; });
     loadJadwal();
   } catch (err) {
     alert(err.message);
