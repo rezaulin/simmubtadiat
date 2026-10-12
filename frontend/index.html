@@ -114,6 +114,7 @@
 (function(){
   var s=document.getElementById('pwa-splash');
   if(!s)return;
+  try{ if(sessionStorage.getItem('mubt-splash')){ s.remove(); return; } sessionStorage.setItem('mubt-splash','1'); }catch(e){}
   function hide(){s.style.opacity='0';s.style.visibility='hidden';setTimeout(function(){s.remove();},450);}
   var min=new Promise(function(r){setTimeout(r,900);});
   var load=new Promise(function(r){if(document.readyState==='complete')r();else window.addEventListener('load',r);});
