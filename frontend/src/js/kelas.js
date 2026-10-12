@@ -44,10 +44,6 @@ const tableKelolaMapel = document.getElementById('table-kelola-mapel');
 const titleKurikulum = document.getElementById('title-kurikulum');
 
 // Kelola Jadwal
-const formKelolaJadwal = document.getElementById('form-kelola-jadwal');
-const tableKelolaJadwal = document.getElementById('table-kelola-jadwal');
-const selJadwalMapel = document.getElementById('sel-jadwal-mapel');
-const selJadwalPengajar = document.getElementById('sel-jadwal-pengajar');
 
 // Kelola Santri
 const listAssignSantri = document.getElementById('list-assign-santri');
@@ -739,125 +735,228 @@ window.keluarkanSantri = async function(santriId) {
   }
 }
 
-// --- JADWAL MGT (v2: hissoh + peran; nama guru resolve dari penugasan) ---
-// Client request 2026-10-12: kitab (bukan fan), Hissoh Ula/Tsaniyah (bukan
-// jam), pengajar HANYA dari penugasan kelas ini, multi-kitab per slot.
+// --- JADWAL MGT v3: papan seminggu, sekali simpan (permintaan owner 2026-10-12) ---
+// Grid 6 hari x 2 hissoh. Semua editan disimpan lokal di `jadwalDraft`,
+// baru dikirim SEKALIGUS lewat PUT /jadwal-minggu (transaksi atomik).
+const JADWAL_HARI = ['Ahad', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Sabtu'];
+const JADWAL_HISSOH = [['ula', 'Hissoh Ula'], ['tsaniyah', 'Hissoh Tsaniyah']];
+let jadwalDraft = [];      // {hari, hissoh, peran, mapel_id, nama_kitab, nama_pengajar}
+let jadwalOrig = '';       // snapshot (stripped) utk indikator "Belum tersimpan"
+let jadwalMapel = [];      // kitab utk kelas ini
+let jadwalGuru = [];       // [{peran, pengajar_id, nama}] dari penugasan
+let jadwalSlot = null;     // slot aktif {hari, hissoh}
+
+const jadwalStrip = (e) => ({ hari: e.hari, hissoh: e.hissoh, peran: e.peran, mapel_id: e.mapel_id });
+const jadwalNamaKitab = (m) => (m.nama_kitab && String(m.nama_kitab).trim()) ? m.nama_kitab : m.nama_mapel;
+const jadwalHissohLabel = (h) => h === 'ula' ? 'Hissoh Ula' : 'Hissoh Tsaniyah';
+
+function jadwalUpdateDirty() {
+  const badge = document.getElementById('jadwal-dirty');
+  if (!badge) return;
+  const dirty = JSON.stringify(jadwalDraft.map(jadwalStrip)) !== jadwalOrig;
+  badge.classList.toggle('hidden', !dirty);
+}
+
 async function loadMapelForJadwal() {
   try {
     const bagianObj = cachedBagian.find(b => b.id === currentBagianId);
     if (!bagianObj) return;
-
     const res = await fetch(`/api/akademik/mapel?tingkatan_id=${bagianObj.tingkatan_id}&kelas_id=${bagianObj.kelas_id}`);
-    const data = await res.json();
-    if (!data || data.length === 0) {
-      selJadwalMapel.innerHTML = '<span class="text-gray-400 text-xs">Belum ada kitab untuk kelas ini.</span>';
-      return;
-    }
-    selJadwalMapel.innerHTML = data.map(m => {
-      const nama = (m.nama_kitab && String(m.nama_kitab).trim()) ? m.nama_kitab : m.nama_mapel;
-      return `<label class="flex items-center gap-2 text-xs cursor-pointer">
-        <input type="checkbox" class="jadwal-mapel-cb rounded" value="${m.id}"> <span>${nama}</span>
-      </label>`;
-    }).join('');
-  } catch(err) {}
+    jadwalMapel = (await res.json()) || [];
+    renderSlotMapel();
+  } catch(err) { jadwalMapel = []; }
 }
 
-// Dropdown pengajar: HANYA mustahiq + munawwib penugasan bagian ini.
-// Value = peran (bukan id) — backend resolve nama terkini saat membaca.
+// Dropdown guru HANYA dari penugasan bagian ini (mustahiq + munawwib).
 async function loadPengajar() {
   try {
-    if (!currentBagianId) return;
+    if (!currentBagianId) { jadwalGuru = []; return; }
     const res = await fetch(`/api/akademik/jadwal-pengajar?bagian_id=${encodeURIComponent(currentBagianId)}`);
-    const data = await res.json();
-    selJadwalPengajar.innerHTML = '<option value="">-- Pilih Guru --</option>';
-    if (Array.isArray(data) && data.length) {
-      data.forEach(o => {
-        selJadwalPengajar.innerHTML += `<option value="${o.peran}">${o.nama} (${o.peran})</option>`;
-      });
-    } else {
-      selJadwalPengajar.innerHTML += '<option value="" disabled>Penugasan kelas ini belum ada</option>';
-    }
-  } catch(err) {}
+    jadwalGuru = (await res.json()) || [];
+    renderSlotGuru();
+  } catch(err) { jadwalGuru = []; }
 }
 
 async function loadJadwal() {
-  tableKelolaJadwal.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">Memuat data...</td></tr>';
+  jadwalRenderGrid('memuat');
   try {
     const res = await fetch(`/api/akademik/jadwal?bagian_id=${currentBagianId}`);
     const data = await res.json();
-    if (!res.ok) throw new Error("Gagal memuat jadwal");
-
-    if (!data || data.length === 0) {
-      tableKelolaJadwal.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">Belum ada jadwal.</td></tr>';
-      return;
-    }
-
-    let html = '';
-    data.forEach(j => {
-        const kitab = j.nama_kitab || j.nama_mapel || '-';
-        const guru = j.nama_pengajar || '(kosong)';
-        html += `
-          <tr class="border-b border-gray-100 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
-            <td data-label="Hari" class="px-4 py-3 font-semibold">${j.hari}</td>
-            <td data-label="Hissoh" class="px-4 py-3">${j.hissoh_label || j.hissoh}</td>
-            <td data-label="Kitab" class="px-4 py-3 font-medium text-gray-800 dark:text-gray-200">${kitab}</td>
-            <td data-label="Pengajar" class="px-4 py-3">${guru}</td>
-            <td data-label="Aksi" class="px-4 py-3 text-center">
-            <button onclick="hapusJadwal(${j.id})" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-1.5 rounded-lg transition-colors">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-            </button>
-          </td>
-        </tr>
-      `;
-    });
-    tableKelolaJadwal.innerHTML = html;
+    if (!res.ok) throw new Error('Gagal memuat jadwal');
+    jadwalDraft = (data || []).map(j => ({
+      hari: j.hari, hissoh: j.hissoh, peran: j.peran, mapel_id: j.mapel_id,
+      nama_kitab: j.nama_kitab || j.nama_mapel || '-',
+      nama_pengajar: j.nama_pengajar || ''
+    }));
+    jadwalOrig = JSON.stringify(jadwalDraft.map(jadwalStrip));
+    jadwalRenderGrid();
+    jadwalUpdateDirty();
+    renderSlotList();
   } catch (err) {
-    tableKelolaJadwal.innerHTML = '<tr><td colspan="5" class="px-4 py-4 text-center text-red-500">Gagal memuat jadwal</td></tr>';
+    jadwalRenderGrid('gagal');
   }
 }
 
-formKelolaJadwal?.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const fd = new FormData(formKelolaJadwal);
-  const data = Object.fromEntries(fd);
+function jadwalRenderGrid(mode) {
+  const body = document.getElementById('jadwal-grid-body');
+  if (!body) return;
+  if (mode === 'memuat') {
+    body.innerHTML = '<tr><td colspan="7" class="text-center text-gray-500 py-8 text-xs">Memuat jadwal...</td></tr>';
+    return;
+  }
+  if (mode === 'gagal') {
+    body.innerHTML = '<tr><td colspan="7" class="text-center text-red-500 py-8 text-xs">Gagal memuat jadwal</td></tr>';
+    return;
+  }
+  let html = '';
+  for (const [hissoh, label] of JADWAL_HISSOH) {
+    html += `<tr><td class="text-xs font-bold text-gray-600 dark:text-gray-300 px-1 whitespace-nowrap align-top">${label}</td>`;
+    for (const hari of JADWAL_HARI) {
+      const items = jadwalDraft.map((e, i) => ({ e, i }))
+        .filter(x => x.e.hari === hari && x.e.hissoh === hissoh);
+      let inner = '';
+      if (items.length === 0) {
+        inner = '<span class="text-gray-300 dark:text-slate-600 text-xs">+ klik untuk isi</span>';
+      } else {
+        inner = items.map(x => {
+          const guru = x.e.nama_pengajar || '(kosong)';
+          return `<div class="flex items-center justify-between gap-1 text-[11px] leading-tight bg-primary/10 text-primary dark:bg-slate-700 dark:text-gray-200 rounded px-1.5 py-1 mb-1">
+            <span class="font-semibold truncate"><span class="font-arab">${x.e.nama_kitab}</span> <span class="font-normal opacity-70">&middot; ${guru}</span></span>
+            <button type="button" class="jadwal-del shrink-0 text-red-400 hover:text-red-600 font-bold px-0.5" data-entry="${x.i}" title="Hapus dari slot">&#10005;</button>
+          </div>`;
+        }).join('');
+      }
+      html += `<td class="jadwal-cell cursor-pointer border border-gray-200 dark:border-slate-700 rounded-lg p-1.5 align-top hover:border-primary/60 hover:bg-primary/5 transition-colors" data-hari="${hari}" data-hissoh="${hissoh}">${inner}</td>`;
+    }
+    html += '</tr>';
+  }
+  body.innerHTML = html;
+}
 
-  const mapelIDs = [...selJadwalMapel.querySelectorAll('.jadwal-mapel-cb:checked')]
-    .map(cb => parseInt(cb.value));
-  if (!mapelIDs.length) { alert('Pilih dulu minimal satu kitab.'); return; }
-  if (!data.peran) { alert('Pilih pengajar dulu.'); return; }
+function jadwalOpenSlot(hari, hissoh) {
+  jadwalSlot = { hari, hissoh };
+  const panel = document.getElementById('jadwal-slot-panel');
+  const title = document.getElementById('jadwal-slot-title');
+  if (!panel || !title) return;
+  title.textContent = `Isi Slot: ${hari} \u00b7 ${jadwalHissohLabel(hissoh)}`;
+  panel.classList.remove('hidden');
+  renderSlotGuru(); renderSlotMapel(); renderSlotList();
+}
 
-  const payload = {
-    bagian_id: currentBagianId,
-    hari: data.hari,
-    hissoh: data.hissoh,
-    peran: data.peran,
-    mapel_ids: mapelIDs
-  };
+function renderSlotGuru() {
+  const sel = document.getElementById('jadwal-slot-guru');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">-- Pilih Guru --</option>';
+  if (!jadwalGuru.length) {
+    sel.innerHTML += '<option value="" disabled>Penugasan kelas ini belum ada</option>';
+    return;
+  }
+  for (const g of jadwalGuru) {
+    sel.innerHTML += `<option value="${g.peran}">${g.nama} (${g.peran})</option>`;
+  }
+}
 
-  try {
-    const res = await fetch('/api/akademik/jadwal', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+function renderSlotMapel() {
+  const box = document.getElementById('jadwal-slot-mapel');
+  if (!box) return;
+  if (!jadwalMapel.length) {
+    box.innerHTML = '<span class="text-gray-400 text-xs">Belum ada kitab untuk kelas ini.</span>';
+    return;
+  }
+  box.innerHTML = jadwalMapel.map(m =>
+    `<label class="flex items-center gap-2 text-xs cursor-pointer">
+       <input type="checkbox" class="slot-mapel-cb rounded" value="${m.id}"> <span>${jadwalNamaKitab(m)}</span>
+     </label>`).join('');
+}
+
+function renderSlotList() {
+  const el = document.getElementById('jadwal-slot-list');
+  if (!el) return;
+  if (!jadwalSlot) { el.innerHTML = ''; return; }
+  const items = jadwalDraft.map((e, i) => ({ e, i }))
+    .filter(x => x.e.hari === jadwalSlot.hari && x.e.hissoh === jadwalSlot.hissoh);
+  if (!items.length) {
+    el.innerHTML = '<p class="text-xs text-gray-400">Slot ini masih kosong.</p>';
+    return;
+  }
+  el.innerHTML = items.map(x =>
+    `<div class="flex items-center justify-between gap-2 text-xs bg-gray-50 dark:bg-slate-700/50 rounded-lg px-3 py-2">
+       <span><b class="font-arab">${x.e.nama_kitab}</b> &mdash; ${x.e.nama_pengajar || '(kosong)'} <span class="text-gray-400">(${x.e.peran})</span></span>
+       <button type="button" class="jadwal-del text-red-400 hover:text-red-600 font-bold" data-entry="${x.i}">&#10005;</button>
+     </div>`).join('');
+}
+
+// Klik sel: buka panel slot. Klik &#10005;: hapus entry dari draft (belum tersimpan).
+document.getElementById('jadwal-grid-body')?.addEventListener('click', (ev) => {
+  const del = ev.target.closest('.jadwal-del');
+  if (del) {
+    ev.stopPropagation();
+    jadwalDraft.splice(parseInt(del.dataset.entry, 10), 1);
+    jadwalRenderGrid(); jadwalUpdateDirty(); renderSlotList();
+    return;
+  }
+  const cell = ev.target.closest('.jadwal-cell');
+  if (cell) jadwalOpenSlot(cell.dataset.hari, cell.dataset.hissoh);
+});
+document.getElementById('jadwal-slot-list')?.addEventListener('click', (ev) => {
+  const del = ev.target.closest('.jadwal-del');
+  if (!del) return;
+  jadwalDraft.splice(parseInt(del.dataset.entry, 10), 1);
+  jadwalRenderGrid(); jadwalUpdateDirty(); renderSlotList();
+});
+
+document.getElementById('btn-slot-close')?.addEventListener('click', () => {
+  document.getElementById('jadwal-slot-panel')?.classList.add('hidden');
+  jadwalSlot = null;
+});
+
+// Tambah kitab tercentang ke slot aktif (dedupe: slot+peran+kitab sama = skip).
+document.getElementById('btn-slot-add')?.addEventListener('click', () => {
+  if (!jadwalSlot) return;
+  const peran = document.getElementById('jadwal-slot-guru')?.value;
+  if (!peran) { alert('Pilih pengajar dulu.'); return; }
+  const checked = [...document.querySelectorAll('#jadwal-slot-mapel .slot-mapel-cb:checked')];
+  if (!checked.length) { alert('Centang minimal satu kitab.'); return; }
+  const guru = jadwalGuru.find(g => g.peran === peran);
+  let n = 0;
+  for (const cb of checked) {
+    const mid = parseInt(cb.value, 10);
+    const ada = jadwalDraft.some(e =>
+      e.hari === jadwalSlot.hari && e.hissoh === jadwalSlot.hissoh &&
+      e.peran === peran && e.mapel_id === mid);
+    if (ada) continue;
+    const m = jadwalMapel.find(x => x.id === mid);
+    jadwalDraft.push({
+      hari: jadwalSlot.hari, hissoh: jadwalSlot.hissoh, peran: peran, mapel_id: mid,
+      nama_kitab: m ? jadwalNamaKitab(m) : String(mid),
+      nama_pengajar: guru ? guru.nama : ''
     });
-    if(!res.ok) throw new Error(await res.text() || "Gagal menyimpan");
-    formKelolaJadwal.reset();
-    selJadwalMapel.querySelectorAll('.jadwal-mapel-cb:checked').forEach(cb => { cb.checked = false; });
-    loadJadwal();
+    n++;
+  }
+  checked.forEach(cb => { cb.checked = false; });
+  jadwalRenderGrid(); jadwalUpdateDirty(); renderSlotList();
+});
+
+// SEKALI SIMPAN untuk seluruh minggu — atomik di server (DELETE + INSERT dalam tx).
+document.getElementById('btn-jadwal-save')?.addEventListener('click', async () => {
+  if (!currentBagianId) return;
+  const btn = document.getElementById('btn-jadwal-save');
+  try {
+    const res = await fetch(`/api/akademik/jadwal-minggu?bagian_id=${encodeURIComponent(currentBagianId)}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ entries: jadwalDraft.map(jadwalStrip) })
+    });
+    if (!res.ok) throw new Error((await res.text()) || 'Gagal menyimpan');
+    await loadJadwal();
+    const lama = btn.textContent;
+    btn.textContent = 'Tersimpan \u2713';
+    setTimeout(() => { btn.textContent = lama; }, 1500);
   } catch (err) {
     alert(err.message);
   }
 });
-
-window.hapusJadwal = async function(id) {
-  if(!confirm("Hapus jadwal ini?")) return;
-  try {
-    await fetch(`/api/akademik/jadwal/${id}`, { method: 'DELETE' });
-    loadJadwal();
-  } catch(err) {
-    alert("Gagal menghapus");
-  }
-};
+document.getElementById('btn-jadwal-reload')?.addEventListener('click', () => loadJadwal());
 
 // ==========================================
 // 5. SETUP MASTER DATA

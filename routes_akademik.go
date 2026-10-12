@@ -44,6 +44,7 @@ func registerAkademikRoutes(r chi.Router) {
 		r.Group(func(r chi.Router) {
 			r.Use(appMiddleware.RequireRoles("pimpinan", "admin"))
 			r.Post("/jadwal", handlers.CreateJadwal)
+			r.Put("/jadwal-minggu", handlers.ReplaceJadwal)
 			r.Put("/jadwal/{id}", handlers.UpdateJadwal)
 			r.Delete("/jadwal/{id}", handlers.DeleteJadwal)
 		})

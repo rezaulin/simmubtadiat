@@ -3,7 +3,9 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/mubtadiaat/app/config"
@@ -248,6 +250,96 @@ func CreateJadwal(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	writeJSON(w, map[string]interface{}{"status": "success", "created": created})
+}
+
+// jadwalEntry — satu isi sel papan jadwal (kitab × peran pada hari+hissoh).
+type jadwalEntry struct {
+	Hari    string `json:"hari"`
+	Hissoh  string `json:"hissoh"`
+	Peran   string `json:"peran"`
+	MapelID int    `json:"mapel_id"`
+}
+
+// ReplaceJadwal — "Simpan Seminggu": ganti SELURUH jadwal satu bagian sekaligus.
+// Body: {"entries":[{hari,hissoh,peran,mapel_id},...]}. Transaksi atomik —
+// gagal di tengah berarti jadwal lama tetap utuh (gak setengah-setengah).
+// Route-nya di grup pimpinan/admin (sama dengan CRUD jadwal lain).
+func ReplaceJadwal(w http.ResponseWriter, r *http.Request) {
+	bagianID, err := strconv.Atoi(r.URL.Query().Get("bagian_id"))
+	if err != nil || bagianID <= 0 {
+		http.Error(w, "bagian_id is required", http.StatusBadRequest)
+		return
+	}
+	var req struct {
+		Entries []jadwalEntry `json:"entries"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Validasi semua baris dulu (tolak sebelum transaksi) + kumpul id mapel unik.
+	var mapelIDs []int
+	seen := map[int]bool{}
+	for i, e := range req.Entries {
+		if msg := validasiJadwal(e.Hari, e.Hissoh, e.Peran); msg != "" {
+			http.Error(w, fmt.Sprintf("baris %d: %s", i+1, msg), http.StatusBadRequest)
+			return
+		}
+		if e.MapelID <= 0 {
+			http.Error(w, fmt.Sprintf("baris %d: kitab wajib dipilih", i+1), http.StatusBadRequest)
+			return
+		}
+		if !seen[e.MapelID] {
+			seen[e.MapelID] = true
+			mapelIDs = append(mapelIDs, e.MapelID)
+		}
+	}
+	if len(mapelIDs) > 0 {
+		ok, err := mapelMilikBagian(context.Background(), bagianID, mapelIDs)
+		if err != nil {
+			http.Error(w, "bagian tidak ditemukan", http.StatusBadRequest)
+			return
+		}
+		if !ok {
+			http.Error(w, "ada kitab yang bukan milik kelas ini", http.StatusBadRequest)
+			return
+		}
+	}
+
+	ctx := context.Background()
+	tx, err := config.DB.Begin(ctx)
+	if err != nil {
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
+		return
+	}
+	defer tx.Rollback(ctx) // no-op setelah commit sukses
+
+	if _, err := tx.Exec(ctx,
+		`DELETE FROM jadwal_pelajaran WHERE bagian_id = $1`, bagianID); err != nil {
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
+		return
+	}
+	saved := 0
+	for _, e := range req.Entries {
+		tag, err := tx.Exec(ctx,
+			`INSERT INTO jadwal_pelajaran (bagian_id, hari, hissoh, mapel_id, peran)
+			 VALUES ($1, $2, $3, $4, $5)
+			 ON CONFLICT (bagian_id, hari, hissoh, mapel_id, peran) DO NOTHING`,
+			bagianID, e.Hari, e.Hissoh, e.MapelID, e.Peran)
+		if err != nil {
+			http.Error(w, internalError("", err), http.StatusInternalServerError)
+			return
+		}
+		if tag.RowsAffected() > 0 {
+			saved++
+		}
+	}
+	if err := tx.Commit(ctx); err != nil {
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
+		return
+	}
+	writeJSON(w, map[string]interface{}{"status": "success", "saved": saved})
 }
 
 func UpdateJadwal(w http.ResponseWriter, r *http.Request) {
