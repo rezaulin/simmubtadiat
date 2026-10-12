@@ -1,10 +1,11 @@
-const CACHE_NAME = 'mubtadiaat-cache-v90';
+const CACHE_NAME = 'mubtadiaat-cache-v91';
 const urlsToCache = [
   '/',
   '/index.html',
   '/login.html',
   '/logo-v3-sm.png',
   '/logo-v3.webp',
+  '/assets/lucide-1.55.0.min.js',
   '/favicon.svg',
   '/manifest.json'
 ];
