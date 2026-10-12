@@ -2,6 +2,8 @@ package models
 
 import (
 	"context"
+	"fmt"
+	"time"
 
 	"github.com/mubtadiaat/app/config"
 )
@@ -148,6 +150,110 @@ func GetDataHealthReport(ctx context.Context, tahunAjaran string) (DataHealthRep
 		})
 	}
 
+	// ── Watchdog pergantian tahun ajaran (semua penanggalan TETAP manual;
+	//    fungsi ini hanya "lampu merah" bila ada yang terlewat).
+	if err := cekPergantianTahun(ctx, &report); err != nil {
+		return report, err
+	}
+
 	report.AdaMasalah = len(report.Issues) > 0
 	return report, nil
+}
+
+// cekPergantianTahun menambahkan issue bila:
+//   R1 (bahaya)    — tanggal hari ini sudah TA baru tapi settings belum diganti
+//   R2 (perhatian) — hari ini jatuh di lubang/gap antar rentang kuartal
+//   R3 (perhatian) — TA depan mulai <=90 hari lagi tapi penugasan masih kosong
+//   R4 (perhatian) — pengingat manual Hijri: settings hilang / semester Hijri belum diisi
+//
+// Gaya-1 (manual + lampu merah): admin tetap yang memutuskan; di sini hanya
+// memastikan keputusan itu tidak terlewat tanpa sadar.
+func cekPergantianTahun(ctx context.Context, report *DataHealthReport) error {
+	// R1 — TA menurut tanggal hari ini (kalender) vs pin settings.
+	var taTgl, taSet *string
+	_ = config.DB.QueryRow(ctx,
+		`SELECT tahun_ajaran FROM kalender_kuartal
+		  WHERE CURRENT_DATE BETWEEN tgl_mulai AND tgl_selesai LIMIT 1`).Scan(&taTgl)
+	_ = config.DB.QueryRow(ctx,
+		`SELECT value FROM settings WHERE key='tahun_ajaran_aktif' AND value <> ''`).Scan(&taSet)
+
+	var adaKalender bool
+	_ = config.DB.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM kalender_kuartal)").Scan(&adaKalender)
+
+	switch {
+	case taTgl != nil && (taSet == nil || *taSet != *taTgl):
+		aktif := "(belum di-set)"
+		if taSet != nil {
+			aktif = *taSet
+		}
+		report.Issues = append(report.Issues, DataHealthIssue{
+			Kode:    "rollover-ta",
+			Judul:   "Tahun ajaran settings belum diganti",
+			Level:   "bahaya",
+			Deskripsi: fmt.Sprintf("Tanggal hari ini masuk TA %s menurut kalender, tapi settings masih %s. Absensi/jadwal/penugasan tetap menulis ke TA lama — ganti TA di Settings sebelum data nambah salah.", *taTgl, aktif),
+			Jumlah:  1,
+		})
+	case taTgl == nil && adaKalender:
+		// R2 — gap. TA aktif berkuasa dari settings; cukup peringatan lembut.
+		report.Issues = append(report.Issues, DataHealthIssue{
+			Kode:    "kalender-gap",
+			Judul:   "Hari ini di luar rentang kuartal (lubang kalender)",
+			Level:   "perhatian",
+			Deskripsi: fmt.Sprintf("TA aktif mengikuti settings: %s. Wajar kalau memang libur semester — coba cocokkan dengan kalender kuartal yang terisi.", GetTahunAjaranAktif(ctx)),
+			Jumlah:  1,
+		})
+	}
+
+	// R3 — penugasan TA depan (mulai <= 90 hari) masih kosong.
+	aktif := GetTahunAjaranAktif(ctx)
+	var depan string
+	var mulai time.Time
+	if err := config.DB.QueryRow(ctx,
+		`SELECT tahun_ajaran, MIN(tgl_mulai) FROM kalender_kuartal
+		  WHERE tgl_mulai > CURRENT_DATE AND tahun_ajaran <> $1
+		  GROUP BY tahun_ajaran ORDER BY MIN(tgl_mulai) LIMIT 1`, aktif).Scan(&depan, &mulai); err == nil {
+		if sisa := time.Until(mulai); sisa <= 90*24*time.Hour {
+			var n int
+			_ = config.DB.QueryRow(ctx,
+				`SELECT (SELECT COUNT(*) FROM mustahiq_bagian WHERE tahun_ajaran=$1)
+				      + (SELECT COUNT(*) FROM pengajar_bagian WHERE tahun_ajaran=$1)`,
+				depan).Scan(&n)
+			if n == 0 {
+				report.Issues = append(report.Issues, DataHealthIssue{
+					Kode:    "penugasan-depan",
+					Judul:   fmt.Sprintf("Penugasan TA %s belum ada", depan),
+					Level:   "perhatian",
+					Deskripsi: fmt.Sprintf("TA itu mulai %s (kurang dari 90 hari) tapi belum ada mustahiq/munawwib terdaftar — kalau dilewati, jadwal & penilaian TA baru kosong semua.", mulai.Format("02 Jan 2006")),
+					Jumlah:  1,
+				})
+			}
+		}
+	}
+
+	// R4 — pengingat manual Hijri (gak ada kalkulasi otomatis di sistem ini).
+	var nSemester int
+	_ = config.DB.QueryRow(ctx, "SELECT COUNT(*) FROM kalender_semester_hijri").Scan(&nSemester)
+	var hijriOK bool
+	_ = config.DB.QueryRow(ctx,
+		`SELECT EXISTS(SELECT 1 FROM settings WHERE key='tahun_hijri_aktif' AND value <> '')`).Scan(&hijriOK)
+	if nSemester == 0 || !hijriOK {
+		var sebab string
+		switch {
+		case nSemester == 0 && !hijriOK:
+			sebab = "tahun Hijri di settings hilang dan kalender semester Hijri masih kosong"
+		case nSemester == 0:
+			sebab = "kalender semester Hijri masih kosong"
+		default:
+			sebab = "tahun Hijri di settings hilang"
+		}
+		report.Issues = append(report.Issues, DataHealthIssue{
+			Kode:      "hijri-manual",
+			Judul:   "Kalender Hijri perlu diisi manual",
+			Level:     "perhatian",
+			Deskripsi: fmt.Sprintf("Sistem tidak menghitung bulan Hijri sendiri (ruk'yah manual), tapi %s. Isi di Settings/Kalender bila memang belum.", sebab),
+			Jumlah:    1,
+		})
+	}
+
+	return nil
 }

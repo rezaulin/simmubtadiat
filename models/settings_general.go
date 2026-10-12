@@ -22,12 +22,24 @@ func GetTahunAjaranAktif(ctx context.Context) string {
 		return ta
 	}
 
-	config.DB.QueryRow(ctx, "SELECT tahun_ajaran FROM kalender_kuartal ORDER BY tgl_selesai DESC LIMIT 1").Scan(&ta)
+	// TA yang SUDAH MULAI (tgl_mulai <= hari ini, yang paling baru mulai) —
+	// di lubang/gap kalender pun tetap TA yang sedang berjalan, bukan TA depan
+	// yang belum mulai (dulu: ORDER BY tgl_selesai DESC → TA depan keaktif duluan).
+	err = config.DB.QueryRow(ctx,
+		`SELECT tahun_ajaran FROM kalender_kuartal
+		 WHERE tgl_mulai <= CURRENT_DATE
+		 ORDER BY tgl_mulai DESC LIMIT 1`).Scan(&ta)
+	if err == nil && ta != "" {
+		return ta
+	}
+
+	// Kalender terlalu jauh ke depan (hari ini sebelum K1 pertama) → TA paling awal.
+	config.DB.QueryRow(ctx, "SELECT tahun_ajaran FROM kalender_kuartal ORDER BY tgl_mulai ASC LIMIT 1").Scan(&ta)
 	if ta != "" {
 		return ta
 	}
-	
-	// Absolute fallback
+
+	// Absolute fallback — HANYA saat DB benar-benar belum ada kalender (fresh install).
 	return "2026/2027"
 }
 
