@@ -513,7 +513,7 @@
             </div>
           </div>
 
-          <div class="overflow-x-auto -mx-2 px-2">
+          <div id="jadwal-table-wrap" class="overflow-x-auto -mx-2 px-2 hidden md:block">
             <table class="w-full text-sm border-separate border-spacing-1.5 min-w-[760px]">
               <thead>
                 <tr>
@@ -531,6 +531,8 @@
               </tbody>
             </table>
           </div>
+          <!-- HP: kartu per hari (diisi JS, hanya <768px). Desktop pakai tabel di atas. -->
+          <div id="jadwal-card-wrap" class="md:hidden"></div>
 
           <div id="jadwal-slot-panel" class="hidden mt-4 border-t border-gray-200 dark:border-slate-700 pt-4">
             <div class="flex items-center justify-between mb-3">
