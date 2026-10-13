@@ -25,20 +25,28 @@ CREATE TABLE IF NOT EXISTS absensi_manual_pengajar_bulanan (
 CREATE INDEX IF NOT EXISTS idx_absensi_manual_bln_pengajar
     ON absensi_manual_pengajar_bulanan(pengajar_id, tahun_ajaran);
 
-INSERT INTO absensi_manual_pengajar_bulanan
-    (pengajar_id, tahun_hijri, bulan_hijri, tahun_ajaran,
-     total_sakit, total_izin, total_alpha, total_hadir, semester,
-     created_at, updated_at)
-SELECT b.pengajar_id, b.tahun_hijri, b.bulan_hijri, b.tahun_ajaran,
-       b.total_sakit, b.total_izin, b.total_alpha, b.total_hadir, b.semester,
-       b.created_at, b.updated_at
-FROM absensi_manual_pengajar_bulanan_backup b
-WHERE NOT EXISTS (
-    SELECT 1 FROM absensi_manual_pengajar_bulanan a
-    WHERE a.pengajar_id = b.pengajar_id
-      AND a.tahun_hijri = b.tahun_hijri
-      AND a.bulan_hijri = b.bulan_hijri
-);
+-- Restore dari salinan _backup HANYA bila tabel backup itu ada.
+-- (Di install baru / database segar tabel _backup tidak ada → skip,
+--  supaya migrasi tetap sukses tanpa merusak instalasi fresh.)
+DO $$
+BEGIN
+    IF to_regclass('absensi_manual_pengajar_bulanan_backup') IS NOT NULL THEN
+        INSERT INTO absensi_manual_pengajar_bulanan
+            (pengajar_id, tahun_hijri, bulan_hijri, tahun_ajaran,
+             total_sakit, total_izin, total_alpha, total_hadir, semester,
+             created_at, updated_at)
+        SELECT b.pengajar_id, b.tahun_hijri, b.bulan_hijri, b.tahun_ajaran,
+               b.total_sakit, b.total_izin, b.total_alpha, b.total_hadir,
+               b.semester, b.created_at, b.updated_at
+        FROM absensi_manual_pengajar_bulanan_backup b
+        WHERE NOT EXISTS (
+            SELECT 1 FROM absensi_manual_pengajar_bulanan a
+            WHERE a.pengajar_id = b.pengajar_id
+              AND a.tahun_hijri = b.tahun_hijri
+              AND a.bulan_hijri = b.bulan_hijri
+        );
+    END IF;
+END $$;
 
 -- Catatan: tabel absensi manual milik TAHUN 2025/2026 ikut dipulihkan bila ada.
 -- (Hasil query: baris backup semuanya 2026/2027.)
