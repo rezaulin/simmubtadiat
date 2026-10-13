@@ -2,8 +2,10 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 
+	"github.com/jackc/pgx/v5"
 	appMiddleware "github.com/mubtadiaat/app/middleware"
 	"github.com/mubtadiaat/app/models"
 )
@@ -266,6 +268,11 @@ func GetPenilaianSpreadsheet(w http.ResponseWriter, r *http.Request) {
 
 	data, err := models.GetPenilaianSpreadsheet(r.Context(), bagianID, tahunAjaran)
 	if err != nil {
+		// Bagian tidak ada (id salah/hapus) = 404, bukan 500.
+		if errors.Is(err, pgx.ErrNoRows) {
+			writeJSONError(w, "Bagian tidak ditemukan", http.StatusNotFound)
+			return
+		}
 		writeJSONError(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}

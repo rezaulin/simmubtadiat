@@ -17,7 +17,7 @@ func GetPenilaianSpreadsheet(ctx context.Context, bagianID int, tahunAjaran stri
 	err := config.DB.QueryRow(ctx,
 		"SELECT kelas_id, tingkatan_id FROM bagian WHERE id = $1", bagianID).Scan(&kelasID, &tingkatanID)
 	if err != nil {
-		return nil, fmt.Errorf("gagal mendapatkan data bagian: %v", err)
+		return nil, fmt.Errorf("gagal mendapatkan data bagian: %w", err)
 	}
 
 	// 2. Fetch all mata_pelajaran for this kelas+tingkatan

@@ -1,8 +1,10 @@
 package handlers
 
 import (
+	"errors"
 	"net/http"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/mubtadiaat/app/config"
 	"github.com/mubtadiaat/app/middleware"
 	"github.com/mubtadiaat/app/models"
@@ -47,6 +49,11 @@ func GetRaport(w http.ResponseWriter, r *http.Request) {
 
 	res, err := models.GetRaportSantri(r.Context(), santriID, semester, tahunAjaran)
 	if err != nil {
+		// Santri tidak ada (id salah/hapus) = 404, bukan 500.
+		if errors.Is(err, pgx.ErrNoRows) {
+			http.Error(w, "Data santri tidak ditemukan", http.StatusNotFound)
+			return
+		}
 		http.Error(w, internalError("", err), http.StatusInternalServerError)
 		return
 	}
