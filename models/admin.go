@@ -484,7 +484,7 @@ type DynamicColumn struct {
 
 func GetDynamicColumns(ctx context.Context, tableName string) ([]DynamicColumn, error) {
 	rows, err := config.DB.Query(ctx, 
-		"SELECT id, table_name, col_key, col_label, col_type FROM dynamic_columns WHERE table_name = $1 ORDER BY id ASC", 
+		"SELECT id, target_table, column_key, column_label, column_type FROM dynamic_columns WHERE target_table = $1 ORDER BY id ASC", 
 		tableName)
 	if err != nil {
 		return nil, err
@@ -504,14 +504,14 @@ func GetDynamicColumns(ctx context.Context, tableName string) ([]DynamicColumn, 
 
 func CreateDynamicColumn(ctx context.Context, dc DynamicColumn) error {
 	_, err := config.DB.Exec(ctx,
-		`INSERT INTO dynamic_columns (table_name, col_key, col_label, col_type) VALUES ($1, $2, $3, $4)`,
+		`INSERT INTO dynamic_columns (target_table, column_key, column_label, column_type) VALUES ($1, $2, $3, $4)`,
 		dc.TableName, dc.ColKey, dc.ColLabel, dc.ColType)
 	return err
 }
 
 func UpdateDynamicColumn(ctx context.Context, id int, dc DynamicColumn) error {
 	_, err := config.DB.Exec(ctx,
-		`UPDATE dynamic_columns SET col_label=$1, col_type=$2 WHERE id=$3`,
+		`UPDATE dynamic_columns SET column_label=$1, column_type=$2 WHERE id=$3`,
 		dc.ColLabel, dc.ColType, id)
 	return err
 }

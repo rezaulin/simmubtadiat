@@ -2,9 +2,11 @@ package models
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/mubtadiaat/app/config"
 )
 
@@ -100,10 +102,15 @@ func UpsertMudirTandaTangan(ctx context.Context, tingkatanID int, dataURL string
 func GetRaportSettings(ctx context.Context) (RaportSettings, error) {
 	var s RaportSettings
 	err := config.DB.QueryRow(ctx,
-		`SELECT id, COALESCE(header_baris_1, ''), COALESCE(header_baris_2, ''), COALESCE(header_baris_3, ''), COALESCE(nama_kepala, ''), COALESCE(nip_kepala, ''), COALESCE(logo_url, '') 
+		`SELECT id, COALESCE(header_baris_1, ''), COALESCE(header_baris_2, ''), COALESCE(header_baris_3, ''), COALESCE(nama_kepala, ''), COALESCE(nip_kepala, ''), COALESCE(logo_url, ''), COALESCE(urutan_kolom_identitas::text, '[]') 
 		 FROM rapot_settings 
 		 ORDER BY id DESC LIMIT 1`).
-		Scan(&s.ID, &s.HeaderBaris1, &s.HeaderBaris2, &s.HeaderBaris3, &s.NamaKepala, &s.NIPKepala, &s.LogoURL)
+		Scan(&s.ID, &s.HeaderBaris1, &s.HeaderBaris2, &s.HeaderBaris3, &s.NamaKepala, &s.NIPKepala, &s.LogoURL, &s.UrutanKolomIdentitas)
+	// Tabel kosong (fresh install / belum pernah disimpan) = balikan default, bukan 500.
+	if errors.Is(err, pgx.ErrNoRows) {
+		s.UrutanKolomIdentitas = "[]"
+		return s, nil
+	}
 	return s, err
 }
 
