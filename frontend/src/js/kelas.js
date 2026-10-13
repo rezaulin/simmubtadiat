@@ -745,6 +745,7 @@ let jadwalOrig = '';       // snapshot (stripped) utk indikator "Belum tersimpan
 let jadwalMapel = [];      // kitab utk kelas ini
 let jadwalGuru = [];       // [{peran, pengajar_id, nama}] dari penugasan
 let jadwalSlot = null;     // slot aktif {hari, hissoh}
+let jadwalActiveDay = null; // hari aktif di tab HP (default Ahad)
 
 const jadwalStrip = (e) => ({ hari: e.hari, hissoh: e.hissoh, peran: e.peran, mapel_id: e.mapel_id });
 const jadwalNamaKitab = (m) => (m.nama_kitab && String(m.nama_kitab).trim()) ? m.nama_kitab : m.nama_mapel;
@@ -814,37 +815,46 @@ function jadwalRenderGrid(mode) {
     return;
   }
 
-  // HP (<768px): kartu per hari — 6 kartu, tiap kartu 2 hissoh. Tanpa geser samping.
+  // HP (<768px): tab hari. Cuma 1 hari tampil sekaligus. Nol geser samping.
   if (isMobile && cardWrap) {
-    let mhtml = '';
+    if (!jadwalActiveDay) jadwalActiveDay = JADWAL_HARI[0];
+    // Baris tab hari (scroll horizontal halus kalau sempit, tapi tetap 1 baris).
+    let tabs = '<div class="jadwal-day-tabs -mx-1 px-1 mb-3 flex gap-1.5 overflow-x-auto pb-1">';
     for (const hari of JADWAL_HARI) {
-      let slotHtml = '';
-      for (const [hissoh, label] of JADWAL_HISSOH) {
-        const items = jadwalDraft.map((e, i) => ({ e, i }))
-          .filter(x => x.e.hari === hari && x.e.hissoh === hissoh);
-        let inner;
-        if (items.length === 0) {
-          inner = '<span class="text-gray-300 dark:text-slate-600 text-xs">+ klik untuk isi</span>';
-        } else {
-          inner = items.map(x => {
-            const guru = x.e.nama_pengajar || '(kosong)';
-            return `<div class="flex items-center justify-between gap-1 text-[11px] leading-tight bg-primary/10 text-primary dark:bg-slate-700 dark:text-gray-200 rounded px-1.5 py-1 mb-1">
-              <span class="font-semibold truncate"><span class="font-arab">${x.e.nama_kitab}</span> <span class="font-normal opacity-70">&middot; ${guru}</span></span>
-              <button type="button" class="jadwal-del shrink-0 text-red-400 hover:text-red-600 font-bold px-2 py-1" data-entry="${x.i}" title="Hapus dari slot">&#10005;</button>
-            </div>`;
-          }).join('');
-        }
-        slotHtml += `<div class="mb-2">
-          <div class="text-[11px] font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">${label}</div>
-          <div class="jadwal-cell cursor-pointer border border-gray-200 dark:border-slate-700 rounded-lg p-2 min-h-[44px] hover:border-primary/60 hover:bg-primary/5 transition-colors" data-hari="${hari}" data-hissoh="${hissoh}">${inner}</div>
-        </div>`;
+      const on = hari === jadwalActiveDay;
+      tabs += `<button type="button" class="jadwal-day-tab shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${on
+        ? 'bg-primary text-white border-primary shadow-sm'
+        : 'bg-white dark:bg-slate-700 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-slate-600'}" data-day="${hari}">${hari}</button>`;
+    }
+    tabs += '</div>';
+
+    // Kartu hanya untuk hari aktif — 2 hissoh.
+    const hari = jadwalActiveDay;
+    let slotHtml = '';
+    for (const [hissoh, label] of JADWAL_HISSOH) {
+      const items = jadwalDraft.map((e, i) => ({ e, i }))
+        .filter(x => x.e.hari === hari && x.e.hissoh === hissoh);
+      let inner;
+      if (items.length === 0) {
+        inner = '<span class="text-gray-300 dark:text-slate-600 text-xs">+ klik untuk isi</span>';
+      } else {
+        inner = items.map(x => {
+          const guru = x.e.nama_pengajar || '(kosong)';
+          return `<div class="flex items-center justify-between gap-1 text-[11px] leading-tight bg-primary/10 text-primary dark:bg-slate-700 dark:text-gray-200 rounded px-1.5 py-1 mb-1">
+            <span class="font-semibold truncate"><span class="font-arab">${x.e.nama_kitab}</span> <span class="font-normal opacity-70">&middot; ${guru}</span></span>
+            <button type="button" class="jadwal-del shrink-0 text-red-400 hover:text-red-600 font-bold px-2 py-1" data-entry="${x.i}" title="Hapus dari slot">&#10005;</button>
+          </div>`;
+        }).join('');
       }
-      mhtml += `<div class="mb-3 border border-gray-200 dark:border-slate-700 rounded-xl overflow-hidden">
-        <div class="bg-gray-50 dark:bg-slate-700/50 px-3 py-2 text-xs font-bold uppercase tracking-wide text-gray-700 dark:text-gray-200">${hari}</div>
-        <div class="p-2">${slotHtml}</div>
+      slotHtml += `<div class="mb-2">
+        <div class="text-[11px] font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">${label}</div>
+        <div class="jadwal-cell cursor-pointer border border-gray-200 dark:border-slate-700 rounded-lg p-2 min-h-[44px] hover:border-primary/60 hover:bg-primary/5 transition-colors" data-hari="${hari}" data-hissoh="${hissoh}">${inner}</div>
       </div>`;
     }
-    cardWrap.innerHTML = mhtml;
+    cardWrap.innerHTML = `${tabs}<div class="border border-gray-200 dark:border-slate-700 rounded-xl overflow-hidden">
+      <div class="bg-gray-50 dark:bg-slate-700/50 px-3 py-2 text-xs font-bold uppercase tracking-wide text-gray-700 dark:text-gray-200">${hari}</div>
+      <div class="p-2">${slotHtml}</div>
+    </div>`;
     body.innerHTML = ''; // tabel kosong, disembunyikan CSS di HP
     return;
   }
@@ -932,6 +942,13 @@ function renderSlotList() {
 // Klik sel: buka panel slot. Klik &#10005;: hapus entry dari draft (belum tersimpan).
 // Handler sama dipasang di dua wadah: #jadwal-grid-body (desktop) & #jadwal-card-wrap (HP).
 function jadwalGridClickHandler(ev) {
+  // Klik tab hari (HP): ganti hari aktif, render ulang.
+  const tab = ev.target.closest('.jadwal-day-tab');
+  if (tab) {
+    jadwalActiveDay = tab.dataset.day;
+    jadwalRenderGrid();
+    return;
+  }
   const del = ev.target.closest('.jadwal-del');
   if (del) {
     ev.stopPropagation();
