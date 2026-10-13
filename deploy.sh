@@ -113,9 +113,9 @@ fi
 log "Build & menjalankan container (app + PostgreSQL)... (bisa beberapa menit)"
 docker compose up -d --build
 
-log "Menunggu aplikasi sehat di 127.0.0.1:8080 ..."
+log "Menunggu aplikasi sehat di 127.0.0.1:8090 ..."
 for i in $(seq 1 60); do
-  if curl -fsS http://127.0.0.1:8080/api/health >/dev/null 2>&1; then
+  if curl -fsS http://127.0.0.1:8090/api/health >/dev/null 2>&1; then
     log "Aplikasi sehat."; break
   fi
   sleep 3
@@ -158,7 +158,7 @@ server {
     client_max_body_size 10m;
 
     location / {
-        proxy_pass http://127.0.0.1:8080;
+        proxy_pass http://127.0.0.1:8090;
         proxy_http_version 1.1;
         proxy_set_header Host              \$host;
         proxy_set_header X-Real-IP         \$remote_addr;
