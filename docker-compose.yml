@@ -8,8 +8,8 @@ services:
     environment:
       - DB_HOST=db
       - DB_PORT=5432
-      - DB_USER=${DB_USER:-mubtadiaat}
-      - DB_PASS=${DB_PASS:-mubtadiaat_secret}
+      - DB_USER=${APP_DB_USER:-mubtadiaat}
+      - DB_PASS=${APP_DB_PASS:-mubtadiaat_secret}
       - DB_NAME=${DB_NAME:-mubtadiaat_db}
       - JWT_SECRET=${JWT_SECRET:?JWT_SECRET must be set in .env}
       # Seed akun pimpinan awal (dipakai migrate-runner saat start bila belum ada admin).

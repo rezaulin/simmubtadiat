@@ -59,6 +59,7 @@ func main() {
 		// Protected Routes
 		r.Group(func(r chi.Router) {
 			r.Use(appMiddleware.RequireAuth)
+			r.Use(appMiddleware.ActivityLog)
 			r.Use(appMiddleware.CSRFProtect)
 
 			// Logout wajib lewat CSRF — sebelumnya di luar group (CSRF logout).
