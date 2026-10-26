@@ -12,10 +12,15 @@ function cacheBustPlugin() {
   return {
     name: 'html-cache-bust',
     transformIndexHtml(html) {
-      return html.replace(
-        /(src|href)(=["'])\/assets\/([^"']+\.(js|css))/g,
+      const busted = html.replace(
+        /(src|href)(=["'])\/assets\/([^"']+\.((js|css)))/g,
         `$1$2/assets/$3?v=${ts}`
       );
+      // Preload latar hero (perf 27 Okt): gambar dipasang oleh JS setelah
+      // dashboard dibangun, di HP tampil terlambat. Preload mengunduhnya
+      // sejak awal dokumen sehingga latar langsung ada saat dipasang.
+      const pre = '<link rel="preload" href="/hero-pattern.jpg" as="image" fetchpriority="high">';
+      return busted.includes('</head>') ? busted.replace('</head>', pre + '</head>') : busted;
     }
   };
 }
