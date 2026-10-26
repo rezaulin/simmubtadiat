@@ -24,6 +24,15 @@ func writeJSON(w http.ResponseWriter, v interface{}) {
 	enc.Encode(v)
 }
 
+// limitBody membatasi ukuran request body (anti JSON bomb / upload raksasa).
+// 64 MB cukup untuk template Excel dan foto terbesar di aplikasi ini.
+func limitBody(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		r.Body = http.MaxBytesReader(w, r.Body, 64<<20)
+		next.ServeHTTP(w, r)
+	})
+}
+
 func main() {
 	// Initialize Database
 	config.ConnectDB()
@@ -31,6 +40,7 @@ func main() {
 	r := chi.NewRouter()
 
 	r.Use(appMiddleware.SecurityHeaders)
+	r.Use(limitBody)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
@@ -143,7 +153,18 @@ func main() {
 	}()
 
 	log.Printf("Server is running on port %s", port)
-	if err := http.ListenAndServe(":"+port, r); err != nil {
+	// Benteng: timeout koneksi + batas ukuran body (27 Okt 2026)
+	// Cegah Slowloris (koneksi lambat memakan sumber) dan body raksasa (JSON bomb).
+	srv := &http.Server{
+		Addr:              ":" + port,
+		Handler:           r,
+		ReadHeaderTimeout: 10 * time.Second,  	// header lambat = putus cepat
+		ReadTimeout:       60 * time.Second,  	// upload 64MB masih muat di jaringan biasa
+		WriteTimeout:      60 * time.Second,  	// respon tidak menggantung
+		IdleTimeout:       120 * time.Second, 	// keep-alive rproxy tetap dihidupkan
+		MaxHeaderBytes:    1 << 20,
+	}
+	if err := srv.ListenAndServe(); err != nil {
 		log.Fatalf("Server failed to start: %v", err)
 	}
 }

@@ -6,7 +6,6 @@ import (
 	"log"
 	"net"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/mubtadiaat/app/config"
@@ -34,28 +33,13 @@ func (r *statusRecorder) WriteHeader(code int) {
 	r.ResponseWriter.WriteHeader(code)
 }
 
-// requestIP menormalkan IP klien: X-Forwarded-For hop pertama (di depan
-// Cloudflare), lalu CF-Connecting-IP, lalu RemoteAddr. Nilai tak valid
-// (header palsu dsb.) ditolak ParseIP → pemanggil menulis NULL.
+// requestIP menormalkan IP klien untuk kolom inet activity_log (27 Okt 2026).
+// Sumber tunggal = clientIP() dari security.go (package sama):
+// CF-Connecting-IP diprioritaskan (ditimpa Cloudflare, tak bisa dipalsukan),
+// lalu X-Forwarded-For, lalu RemoteAddr. Nilai tak valid -> ditulis NULL.
 func requestIP(r *http.Request) (string, bool) {
-	candidates := make([]string, 0, 3)
-	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
-		for _, part := range strings.Split(xff, ",") {
-			candidates = append(candidates, strings.TrimSpace(part))
-		}
-	}
-	if cf := r.Header.Get("CF-Connecting-IP"); cf != "" {
-		candidates = append(candidates, strings.TrimSpace(cf))
-	}
-	if host, _, err := net.SplitHostPort(r.RemoteAddr); err == nil {
-		candidates = append(candidates, host)
-	} else {
-		candidates = append(candidates, r.RemoteAddr)
-	}
-	for _, c := range candidates {
-		if ip := net.ParseIP(c); ip != nil {
-			return c, true
-		}
+	if ip := clientIP(r); ip != "" && net.ParseIP(ip) != nil {
+		return ip, true
 	}
 	return "", false
 }
