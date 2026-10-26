@@ -1,6 +1,7 @@
 package main
 
 import (
+	"strings"
 	"context"
 	"encoding/json"
 	"log"
@@ -112,8 +113,34 @@ func main() {
 		// request while still allowing the browser to use local copy when
 		// the server responds 304.
 		w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
-		w.Header().Set("Pragma", "no-cache")
-		w.Header().Set("Expires", "0")
+		// Kebijakan cache berlapis (perf-audit 2026-10-27: navigasi antar
+		// halaman mengunduh ulang ~1MB karena semua berkas no-cache). Detail:
+		//  - /assets/*.js|*.css : nama ber-hash (Vite) -> cache 1 tahun immutable
+		//  - gambar/ikon/font   -> cache 7 hari (ganti gambar = ganti nama/purge CF)
+		//  - HTML, /sw.js, root, fallback SPA -> tetap no-cache (menu dan hak
+		//    akses per peran tertulis di HTML; harus selalu segar)
+		ext := strings.ToLower(filepath.Ext(r.URL.Path))
+		isHashedAsset := strings.HasPrefix(r.URL.Path, "/assets/") &&
+			(ext == ".js" || ext == ".css")
+		isBinaryAsset := ext == ".jpg" || ext == ".jpeg" || ext == ".png" ||
+			ext == ".webp" || ext == ".svg" || ext == ".ico" ||
+			ext == ".woff" || ext == ".woff2" || ext == ".ttf" || ext == ".otf" ||
+			ext == ".mp4"
+
+		switch {
+		case isHashedAsset:
+			w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+			w.Header().Del("Pragma")
+			w.Header().Del("Expires")
+		case isBinaryAsset:
+			w.Header().Set("Cache-Control", "public, max-age=604800")
+			w.Header().Del("Pragma")
+			w.Header().Del("Expires")
+		default:
+			w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+			w.Header().Set("Pragma", "no-cache")
+			w.Header().Set("Expires", "0")
+		}
 
 		if _, err := os.Stat(filePath); os.IsNotExist(err) || r.URL.Path == "/" {
 			w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
