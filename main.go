@@ -34,6 +34,34 @@ func limitBody(next http.Handler) http.Handler {
 	})
 }
 
+// isScannerPath melaporkan apakah path adalah pola umum bot scanner atau
+// berkas internal yang tidak boleh dilayani. Dipakai di catch-all SPA agar
+// permintaan seperti /.git/config, /error_log, atau /wp-login.php dibalas 404
+// (bukan index.html 28KB yang membuat scanner mengira endpoint itu ada).
+func isScannerPath(p string) bool {
+	// Dotfile / dotdir: /.git, /.env, /.aws, /.ssh, dst. Aplikasi ini tidak
+	// pernah menyajikan path yang salah satu segmennya diawali titik.
+	for _, seg := range strings.Split(strings.Trim(p, "/"), "/") {
+		if strings.HasPrefix(seg, ".") && seg != "" {
+			return true
+		}
+	}
+
+	// Nama berkas scanner umum (tanpa ekstensi, jadi tidak tertangkap
+	// pengecekan ekstensi). Dicocokkan pada segmen terakhir.
+	base := strings.ToLower(filepath.Base(p))
+	switch base {
+	case "error_log", "error.log", "debug.log", "access.log",
+		"wp-login", "wp-admin", "wp-config", "xmlrpc",
+		"config", "credentials", "id_rsa", "authorized_keys",
+		"phpinfo", "info", "server-status", "shell", "cmd",
+		"backup", "dump", "database", "db":
+		return true
+	}
+
+	return false
+}
+
 func main() {
 	// Initialize Database
 	config.ConnectDB()
@@ -142,11 +170,42 @@ func main() {
 			w.Header().Set("Expires", "0")
 		}
 
-		if _, err := os.Stat(filePath); os.IsNotExist(err) || r.URL.Path == "/" {
+		// Root path selalu layani SPA (index.html).
+		if r.URL.Path == "/" {
 			w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
 			w.Header().Set("Pragma", "no-cache")
 			w.Header().Set("Expires", "0")
 			http.ServeFile(w, r, filepath.Join(filesDir, "index.html"))
+			return
+		}
+
+		// Pola bot scanner / berkas internal -> 404 langsung, sebelum
+		// fallback SPA. Cegah /.git/config, /error_log, /wp-login.php
+		// dibalas index.html 28KB (boros bandwidth + false positive).
+		if isScannerPath(r.URL.Path) {
+			http.NotFound(w, r)
+			return
+		}
+
+		if _, err := os.Stat(filePath); os.IsNotExist(err) {
+			// Berkas fisik tidak ada. Bedakan dua kasus:
+			//
+			//  1. Path TANPA ekstensi (mis. /santri, /penilaian) -> route SPA.
+			//     Layani index.html supaya router sisi klien menanganinya.
+			//
+			//  2. Path DENGAN ekstensi (mis. /admin/config.php, /.env,
+			//     /_layouts/15/error.aspx, /robots.txt, /favicon.ico) -> bukan
+			//     route SPA. Balas 404 kosong. Sebelumnya semua path ini
+			//     dibalas 200 + index.html 28KB sehingga bot scanner mengira
+			//     endpoint ada dan terus membanjiri server (boros bandwidth).
+			if ext == "" {
+				w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+				w.Header().Set("Pragma", "no-cache")
+				w.Header().Set("Expires", "0")
+				http.ServeFile(w, r, filepath.Join(filesDir, "index.html"))
+				return
+			}
+			http.NotFound(w, r)
 			return
 		}
 
