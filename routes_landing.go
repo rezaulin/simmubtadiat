@@ -1,0 +1,24 @@
+package main
+
+import (
+	"github.com/go-chi/chi/v5"
+	"github.com/mubtadiaat/app/handlers"
+	appMiddleware "github.com/mubtadiaat/app/middleware"
+)
+
+// registerLandingRoutes: admin CMS landing page (khusus pimpinan).
+// Dipanggil di dalam group RequireAuth + CSRF + RequirePasswordChanged,
+// jadi semua route berada di bawah /api/landing/admin/... .
+func registerLandingRoutes(r chi.Router) {
+	r.Route("/landing/admin", func(r chi.Router) {
+		r.Use(appMiddleware.RequireRoles("pimpinan"))
+
+		r.Get("/sections", handlers.AdminListSections)
+		r.Post("/sections", handlers.AdminCreateSection)
+		r.Put("/sections/{id}", handlers.AdminUpdateSection)
+		r.Delete("/sections/{id}", handlers.AdminDeleteSection)
+
+		r.Get("/settings", handlers.AdminGetSettings)
+		r.Put("/settings", handlers.AdminUpdateSettings)
+	})
+}

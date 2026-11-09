@@ -15,6 +15,7 @@ import (
 	"github.com/mubtadiaat/app/config"
 	"github.com/mubtadiaat/app/handlers"
 	appMiddleware "github.com/mubtadiaat/app/middleware"
+	"github.com/mubtadiaat/app/models"
 )
 
 // writeJSON encodes v as JSON without HTML-escaping ' (apostrophe).
@@ -66,12 +67,31 @@ func main() {
 	// Initialize Database
 	config.ConnectDB()
 
+	// Cache landing (subdomain -> slug, settings situs): muat saat boot,
+	// refresh tiap 5 menit, dan setelah admin menyimpan.
+	models.RefreshLandingCache()
+	go func() {
+		for range time.Tick(5 * time.Minute) {
+			models.RefreshLandingCache()
+		}
+	}()
+
 	r := chi.NewRouter()
 
 	r.Use(appMiddleware.SecurityHeaders)
 	r.Use(limitBody)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
+
+	// Landing CMS: routing berdasarkan Host header (subdomain section).
+	// v1: apex tetap melayani SIM; app.<apex> = SIM (target APK native);
+	// <slug>.<apex>/ = halaman CMS section; <slug>.<apex>/aset -> static.
+	landingApex := os.Getenv("LANDING_APEX_DOMAIN")
+	if landingApex == "" {
+		landingApex = "reviewtechno.me"
+	}
+	handlers.SetLandingApex(landingApex)
+	r.Use(appMiddleware.HostRouter(landingApex, models.LookupSubdomain, handlers.ServeSectionBySubdomain))
 
 	// NoCache Middleware to prevent browser caching API responses
 	noCache := func(next http.Handler) http.Handler {
@@ -89,6 +109,9 @@ func main() {
 		r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 			w.Write([]byte("OK"))
 		})
+		// Landing CMS - publik (tanpa auth)
+		r.Get("/landing/sections", handlers.APILandingSections)
+		r.Get("/landing/settings", handlers.APILandingSettings)
 		// Public Routes (rate limited)
 		r.Group(func(r chi.Router) {
 			r.Use(appMiddleware.RateLimitLogin)
@@ -121,9 +144,16 @@ func main() {
 				registerCatatanRoutes(r)
 				registerAlumniRoutes(r)
 				registerUtilRoutes(r)
+				registerLandingRoutes(r)
 			}) // <-- Close r.Group for RequirePasswordChanged
 		})
 	}) // <-- Close /api route
+
+	// Landing CMS - halaman publik (HTML server-rendered).
+	// /landing = pratinjau beranda (hero + daftar section + footer);
+	// /p/{slug} = URL kanonik section (subdomain adalah alias).
+	r.Get("/landing", handlers.LandingHome)
+	r.Get("/p/{slug}", handlers.ServeSectionBySlug)
 
 	// Serve Static Files (Frontend)
 	workDir, _ := os.Getwd()

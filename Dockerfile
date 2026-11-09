@@ -38,6 +38,7 @@ COPY --from=frontend-builder /app/public/dist ./public/dist
 # Berkas migrasi + baseline + entrypoint (untuk auto-migrate saat container start)
 COPY migrations ./migrations
 COPY db ./db
+COPY templates ./templates
 COPY docker-entrypoint.sh .
 RUN chmod +x docker-entrypoint.sh
 

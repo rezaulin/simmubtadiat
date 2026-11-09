@@ -1,0 +1,21 @@
+{{template "base" .}}
+{{define "content"}}
+<section class="hero">
+  <div class="wrap">
+    <span class="badge">Pesantren</span>
+    <h1>{{.SiteName}}</h1>
+    <p>{{index .Settings "site_tagline"}}</p>
+  </div>
+</section>
+<div class="wrap">
+  <div class="cards">
+    {{range .Sections}}
+    <a class="card" href="https://{{$.Apex}}/p/{{.Slug}}">
+      <h3>{{.Judul}}</h3>
+      <p>{{.MetaDescription}}</p>
+      <span class="go">Selengkapnya &rarr;</span>
+    </a>
+    {{end}}
+  </div>
+</div>
+{{end}}
