@@ -1,13 +1,16 @@
 {{template "base" .}}
 {{define "content"}}
-<section class="hero arabesque">
+<section class="hero">
   <div class="wrap">
     <span class="badge">Pesantren</span>
     <h1>{{.SiteName}}</h1>
+    <span class="orn" aria-hidden="true"><i></i></span>
     <p>{{index .Settings "site_tagline"}}</p>
     <div class="hero-cta">
-      <a class="btn-sm btn-ghost" href="/p/pendaftaran">Pendaftaran Santri Baru</a>
+      <a class="btn-sm btn-gold" href="/p/pendaftaran">Pendaftaran Santri Baru</a>
+      <a class="btn-sm btn-ghost" href="/p/sejarah">Profil Pesantren</a>
     </div>
+    <span class="meta">Sejak 1373 H &middot; Lirboyo, Kediri</span>
   </div>
 </section>
 
