@@ -24,6 +24,25 @@ var landingFuncs = template.FuncMap{
 	"add1": func(i int) int { return i + 1 },
 	// sub1 — nomor halaman sebelumnya di paginasi berita.
 	"sub1": func(i int) int { return i - 1 },
+	// menuLabel — label pendek untuk menu header. Judul lengkap terlalu panjang
+	// untuk bar horizontal ("Visi, Misi & Masayikh" -> "Pengasuh").
+	"menuLabel": func(slug, judul string) string {
+		switch strings.ToLower(slug) {
+		case "sejarah":
+			return "Profil"
+		case "pengasuh":
+			return "Pengasuh"
+		case "pendidikan":
+			return "Pendidikan"
+		case "fasilitas":
+			return "Fasilitas"
+		case "prestasi":
+			return "Prestasi"
+		case "pendaftaran":
+			return "Pendaftaran"
+		}
+		return judul
+	},
 	// ringkas — potong deskripsi kartu di batas kata, jangan potong tengah kata.
 	"ringkas": func(s string, n int) string {
 		r := []rune(s)
