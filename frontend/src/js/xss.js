@@ -87,7 +87,7 @@ window.isPimpinanRole = function(roles) {
 // Every page's synchronous head-guard MUST embed a list identical to this one.
 // See design.md → Data Models → MenuAccess for the canonical values.
 const MENU_ACCESS = {
-  pimpinan: ['/index.html', '/santri.html', '/perpindahan.html', '/kelas.html', '/penilaian.html', '/absensi-manual.html', '/rapot.html', '/pengajar.html', '/dewan-harian.html', '/arsip.html', '/alumni.html', '/rekap.html', '/catatan.html', '/settings.html', '/pengajar-purna.html'],
+  pimpinan: ['/index.html', '/santri.html', '/perpindahan.html', '/kelas.html', '/penilaian.html', '/absensi-manual.html', '/rapot.html', '/pengajar.html', '/dewan-harian.html', '/arsip.html', '/alumni.html', '/rekap.html', '/catatan.html', '/settings.html', '/pengajar-purna.html', '/landing.html'],
   admin: ['/index.html', '/santri.html', '/pengajar.html', '/pengajar-purna.html', '/alumni.html', '/dewan-harian.html', '/settings.html'],
   mufatish: ['/index.html', '/santri.html', '/penilaian.html', '/absensi-manual.html', '/pengajar.html', '/arsip.html', '/rekap.html', '/catatan.html'],
   mustahiq: ['/index.html', '/santri.html', '/penilaian.html', '/rekap.html', '/catatan.html', '/pengajar.html', '/arsip.html'],

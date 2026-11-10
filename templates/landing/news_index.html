@@ -1,0 +1,57 @@
+{{template "base" .}}
+{{define "content"}}
+<section class="page-head arabesque">
+  <div class="wrap">
+    <div class="crumb"><a href="/">Beranda</a> / Berita</div>
+    <h1>Berita Pesantren</h1>
+    <div class="underline"></div>
+  </div>
+</section>
+
+<section class="news-wrap">
+  <div class="wrap">
+
+    <div class="chips">
+      <a class="chip{{if not .NewsKategori}} on{{end}}" href="/berita">Semua</a>
+      {{range .NewsKategoriList}}
+      <a class="chip{{if .Active}} on{{end}}" href="/berita?kategori={{.Key}}">{{.Label}}</a>
+      {{end}}
+    </div>
+
+    {{if .NewsList}}
+    <div class="newsgrid newsgrid-list">
+      {{range .NewsList}}
+      <a class="newscard" href="/berita/{{.Slug}}">
+        {{if .CoverURL}}<span class="newscard-img"><img src="{{.CoverURL}}" alt="{{.Judul}}" loading="lazy"></span>{{end}}
+        <span class="newscard-txt">
+          <span class="newskat">{{.KategoriLabel}}</span>
+          <h3>{{.Judul}}</h3>
+          {{if .Ringkasan}}<p>{{ringkas .Ringkasan 120}}</p>{{end}}
+          <span class="newsdate">{{.Tanggal}}</span>
+        </span>
+      </a>
+      {{end}}
+    </div>
+
+    {{if gt .NewsPages 1}}
+    <nav class="pager">
+      {{if gt .NewsPage 1}}
+      <a class="pager-btn" href="/berita?{{if .NewsKategori}}kategori={{.NewsKategori}}&amp;{{end}}page={{sub1 .NewsPage}}">&larr; Sebelumnya</a>
+      {{end}}
+      <span class="pager-info">Halaman {{.NewsPage}} dari {{.NewsPages}}</span>
+      {{if lt .NewsPage .NewsPages}}
+      <a class="pager-btn" href="/berita?{{if .NewsKategori}}kategori={{.NewsKategori}}&amp;{{end}}page={{add1 .NewsPage}}">Berikutnya &rarr;</a>
+      {{end}}
+    </nav>
+    {{end}}
+
+    {{else}}
+    <div class="news-empty">
+      <p>Belum ada berita yang dipublikasikan.</p>
+      <a class="btn-sm btn-gold" href="/">Kembali ke beranda</a>
+    </div>
+    {{end}}
+
+  </div>
+</section>
+{{end}}

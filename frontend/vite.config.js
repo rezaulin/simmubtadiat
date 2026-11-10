@@ -54,6 +54,7 @@ export default defineConfig({
         rapot: resolve(__dirname, 'rapot.html'),
         rekap: resolve(__dirname, 'rekap.html'),
         settings: resolve(__dirname, 'settings.html'),
+        landing: resolve(__dirname, 'landing.html'),
         changePassword: resolve(__dirname, 'change-password.html'),
         profilSantri: resolve(__dirname, 'profil-santri.html'),
         catatan: resolve(__dirname, 'catatan.html'),

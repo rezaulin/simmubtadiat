@@ -20,5 +20,16 @@ func registerLandingRoutes(r chi.Router) {
 
 		r.Get("/settings", handlers.AdminGetSettings)
 		r.Put("/settings", handlers.AdminUpdateSettings)
+
+		// Foto: upload, daftar, hapus (dipakai tombol Upload + galeri di panel).
+		r.Post("/upload", handlers.AdminUploadLandingImage)
+		r.Get("/images", handlers.AdminListLandingImages)
+		r.Delete("/images/{name}", handlers.AdminDeleteLandingImage)
+
+		// Berita pesantren (beranda + /berita). CRUD penuh dari panel.
+		r.Get("/news", handlers.AdminListNews)
+		r.Post("/news", handlers.AdminCreateNews)
+		r.Put("/news/{id}", handlers.AdminUpdateNews)
+		r.Delete("/news/{id}", handlers.AdminDeleteNews)
 	})
 }

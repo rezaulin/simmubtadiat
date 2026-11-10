@@ -91,7 +91,7 @@ func main() {
 		landingApex = "reviewtechno.me"
 	}
 	handlers.SetLandingApex(landingApex)
-	r.Use(appMiddleware.HostRouter(landingApex, models.LookupSubdomain, handlers.ServeSectionBySubdomain))
+	r.Use(appMiddleware.HostRouter(landingApex, models.LookupSubdomain, handlers.ServeSectionBySubdomain, handlers.LandingHome))
 
 	// NoCache Middleware to prevent browser caching API responses
 	noCache := func(next http.Handler) http.Handler {
@@ -112,6 +112,8 @@ func main() {
 		// Landing CMS - publik (tanpa auth)
 		r.Get("/landing/sections", handlers.APILandingSections)
 		r.Get("/landing/settings", handlers.APILandingSettings)
+		r.Get("/landing/news", handlers.APILandingNews)
+		r.Get("/landing/news/{slug}", handlers.APILandingNewsDetail)
 		// Public Routes (rate limited)
 		r.Group(func(r chi.Router) {
 			r.Use(appMiddleware.RateLimitLogin)
@@ -154,6 +156,9 @@ func main() {
 	// /p/{slug} = URL kanonik section (subdomain adalah alias).
 	r.Get("/landing", handlers.LandingHome)
 	r.Get("/p/{slug}", handlers.ServeSectionBySlug)
+	// Berita pesantren: daftar + detail (portal, server-rendered).
+	r.Get("/berita", handlers.NewsIndex)
+	r.Get("/berita/{slug}", handlers.NewsDetail)
 
 	// Serve Static Files (Frontend)
 	workDir, _ := os.Getwd()
@@ -217,6 +222,16 @@ func main() {
 			return
 		}
 
+		// Panel landing (/landing.html) hanya untuk user login. Shell-nya
+		// statis tanpa data (API tetap 401), tapi jangan disajikan ke anonim
+		// maupun bot scanner — arahkan ke halaman login.
+		if r.URL.Path == "/landing.html" {
+			if _, cerr := r.Cookie("session_id"); cerr != nil {
+				http.Redirect(w, r, "/login.html", http.StatusFound)
+				return
+			}
+		}
+
 		if _, err := os.Stat(filePath); os.IsNotExist(err) {
 			// Berkas fisik tidak ada. Bedakan dua kasus:
 			//
@@ -237,6 +252,17 @@ func main() {
 			}
 			http.NotFound(w, r)
 			return
+		}
+
+		// Tolak directory listing (audit 9 Nov 2026): http.FileServer
+		// menampilkan daftar berkas untuk direktori tanpa index.html, jadi
+		// /uploads/landing/ dan /media/landing/ bisa diintip lewat browser.
+		// Direktori yang punya index.html (root SPA) tetap dilayani normal.
+		if fi, ferr := os.Stat(filePath); ferr == nil && fi.IsDir() {
+			if _, ierr := os.Stat(filepath.Join(filePath, "index.html")); ierr != nil {
+				http.NotFound(w, r)
+				return
+			}
 		}
 
 		http.FileServer(http.Dir(filesDir)).ServeHTTP(w, r)

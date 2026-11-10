@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log"
+	"regexp"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -115,21 +116,56 @@ func init() {
 	p := bluemonday.UGCPolicy()
 	// Quill menyimpan alignment/size pada atribut class (ql-align-center),
 	// bukan style — class di-allow, style tidak.
-	p.AllowAttrs("class").Globally()
+	// class dibatasi ke kelas yang dipakai konten landing: cap (caption),
+	// tall (foto portrait), dan kelas alignment/size/indent Quill. Dulu
+	// Globally() -> kelas CSS aplikasi bisa dipakai memalsukan tampilan
+	// (mis. tombol atau menu palsu di dalam artikel).
+	p.AllowAttrs("class").Matching(regexp.MustCompile(`^(cap|tall|ql-align-(center|right|justify)|ql-size-(small|large|huge)|ql-indent-[1-8])$`)).Globally()
 	// Elemen & atribut yang dibutuhkan editor + konten pesantren.
 	p.AllowElements("h1", "h2", "h3", "h4", "h5", "h6",
 		"table", "thead", "tbody", "tfoot", "tr", "th", "td",
 		"blockquote", "hr", "span", "figure", "figcaption", "pre", "code")
-	p.AllowAttrs("src", "alt", "width", "height").OnElements("img")
+	// src gambar wajib path lokal ("/media/...", "/uploads/..."). URL luar
+	// ditolak: gambar dari host lain membocorkan IP pengunjung (tracking
+	// pixel) dan isinya bisa diganti pemiliknya kapan saja. Foto masuk lewat
+	// tombol Upload di panel. "//host" ikut tertolak karena bukan "/x".
+	p.AllowAttrs("src").Matching(regexp.MustCompile(`^/[^/\s][^\s]*$`)).OnElements("img")
+	p.AllowAttrs("alt", "width", "height").OnElements("img")
 	p.AllowAttrs("colspan", "rowspan").OnElements("td", "th")
 	htmlSanitizer = p
 }
 
+// imgTagRe / imgSrcRe — dipakai membersihkan <img> setelah bluemonday.
+// Catatan penting (10 Nov 2026): UGCPolicy sudah memanggil AllowImages()
+// yang mengizinkan src apa pun, dan aturan Matching() tambahan TIDAK
+// mempersempit aturan itu (kebijakan per elemen+atribut digabung, bukan
+// diganti). Karena itu whitelist src lokal harus dijalankan sebagai pass
+// terpisah setelah sanitasi, bukan lewat p.AllowAttrs().Matching().
+var (
+	imgTagRe    = regexp.MustCompile(`(?is)<img\b[^>]*>`)
+	imgSrcRe    = regexp.MustCompile(`(?i)\bsrc\s*=\s*"([^"]*)"`)
+	imgSrcLokal = regexp.MustCompile(`^/[^/\s][^\s]*$`)
+)
+
+// stripGambarLuar — buang <img> yang src-nya bukan path lokal
+// ("/media/...", "/uploads/..."). URL dari host lain membocorkan IP
+// pengunjung (tracking pixel) dan isinya bisa diganti pemiliknya.
+func stripGambarLuar(html string) string {
+	return imgTagRe.ReplaceAllStringFunc(html, func(tag string) string {
+		m := imgSrcRe.FindStringSubmatch(tag)
+		if m == nil || !imgSrcLokal.MatchString(m[1]) {
+			return ""
+		}
+		return tag
+	})
+}
+
 // SanitizeLandingHTML — bersihkan HTML dari editor (bluemonday UGCPolicy +
-// allowlist di atas). Dipanggil saat simpan DAN saat render (defense in
-// depth: konten yang ditulis lewat jalur lain tetap aman saat tampil).
+// allowlist di atas, lalu whitelist src gambar). Dipanggil saat simpan DAN
+// saat render (defense in depth: konten yang ditulis lewat jalur lain tetap
+// aman saat tampil).
 func SanitizeLandingHTML(html string) string {
-	return htmlSanitizer.Sanitize(html)
+	return stripGambarLuar(htmlSanitizer.Sanitize(html))
 }
 
 // ---- Query ----

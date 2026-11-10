@@ -1,9 +1,19 @@
 {{template "base" .}}
 {{define "content"}}
-<article class="section-page">
+<section class="page-head lattice">
   <div class="wrap">
+    <div class="crumb"><a href="/">Beranda</a> &nbsp;/&nbsp; {{.Judul}}</div>
     <h1>{{.Judul}}</h1>
-    <div class="prose">{{.KontenHTML}}</div>
+    <div class="underline"></div>
+  </div>
+</section>
+
+<article class="article">
+  <div class="wrap">
+    <div class="body prose">
+      {{if .KontenHTML}}{{.KontenHTML}}{{else}}<p>Konten halaman ini belum diisi.</p>{{end}}
+    </div>
+    <a class="back" href="/">&larr; Kembali ke beranda</a>
   </div>
 </article>
 {{end}}
