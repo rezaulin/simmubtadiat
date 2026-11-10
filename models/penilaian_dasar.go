@@ -76,7 +76,9 @@ type NilaiKhosInput struct {
 }
 
 // BulkInputNilaiKhos menyimpan atau memperbarui nilai Khos (Nilai Raport) secara manual.
-func BulkInputNilaiKhos(ctx context.Context, inputs []NilaiKhosInput, tahunAjaran string) error {
+// userID dicatat sebagai manual_by (jejak audit). Baris yang ditulis di sini
+// ditandai is_manual = true sehingga TIDAK ditimpa GenerateNilaiKhos.
+func BulkInputNilaiKhos(ctx context.Context, inputs []NilaiKhosInput, tahunAjaran string, userID int) error {
 	tx, err := config.DB.Begin(ctx)
 	if err != nil {
 		return err
@@ -93,18 +95,50 @@ func BulkInputNilaiKhos(ctx context.Context, inputs []NilaiKhosInput, tahunAjara
 			return fmt.Errorf("nilai raport %.2f untuk mapel id %d tidak valid. Harus antara 4 dan 9", input.Nilai, input.MapelID)
 		}
 
+		var manualBy interface{}
+		if userID > 0 {
+			manualBy = userID
+		}
+
 		_, err := tx.Exec(ctx,
-			`INSERT INTO nilai_khos (santri_id, mapel_id, semester, tahun_ajaran, nilai_akhir)
-			 VALUES ($1, $2, $3, $4, $5)
+			`INSERT INTO nilai_khos (santri_id, mapel_id, semester, tahun_ajaran, nilai_akhir, is_manual, manual_by, manual_at)
+			 VALUES ($1, $2, $3, $4, $5, true, $6, CURRENT_TIMESTAMP)
 			 ON CONFLICT (santri_id, mapel_id, semester, tahun_ajaran)
-			 DO UPDATE SET nilai_akhir = EXCLUDED.nilai_akhir, updated_at = CURRENT_TIMESTAMP`,
-			input.SantriID, input.MapelID, input.Semester, tahunAjaran, input.Nilai)
+			 DO UPDATE SET nilai_akhir = EXCLUDED.nilai_akhir,
+			               is_manual = true,
+			               manual_by = EXCLUDED.manual_by,
+			               manual_at = CURRENT_TIMESTAMP,
+			               updated_at = CURRENT_TIMESTAMP`,
+			input.SantriID, input.MapelID, input.Semester, tahunAjaran, input.Nilai, manualBy)
 		if err != nil {
 			return err
 		}
 	}
 
 	return tx.Commit(ctx)
+}
+
+// ResetKhosManual melepas penanda is_manual untuk satu bagian + semester,
+// lalu pemanggil menjalankan GenerateNilaiKhosBulk supaya nilai dihitung
+// ulang dari rumus. Mengembalikan jumlah sel yang dilepas.
+func ResetKhosManual(ctx context.Context, bagianID, semester int, tahunAjaran string) (int64, error) {
+	tag, err := config.DB.Exec(ctx,
+		`UPDATE nilai_khos nk
+		    SET is_manual = false,
+		        manual_by = NULL,
+		        manual_at = NULL,
+		        updated_at = CURRENT_TIMESTAMP
+		   FROM santri s
+		  WHERE s.id = nk.santri_id
+		    AND s.bagian_id = $1
+		    AND nk.tahun_ajaran = $2
+		    AND nk.semester = $3
+		    AND nk.is_manual = true`,
+		bagianID, tahunAjaran, semester)
+	if err != nil {
+		return 0, err
+	}
+	return tag.RowsAffected(), nil
 }
 
 // GenerateNilaiKhos calculates Nilai Khos for a semester.
@@ -341,7 +375,8 @@ func GenerateNilaiKhos(ctx context.Context, santriID int, semester int, tahunAja
 			`INSERT INTO nilai_khos (santri_id, mapel_id, semester, tahun_ajaran, nilai_akhir)
 			 VALUES ($1, $2, $3, $4, $5)
 			 ON CONFLICT (santri_id, mapel_id, semester, tahun_ajaran)
-			 DO UPDATE SET nilai_akhir = EXCLUDED.nilai_akhir, updated_at = CURRENT_TIMESTAMP`,
+			 DO UPDATE SET nilai_akhir = EXCLUDED.nilai_akhir, updated_at = CURRENT_TIMESTAMP
+			 WHERE nilai_khos.is_manual = false`,
 			santriID, mk.MapelID, semester, tahunAjaran, finalKhos)
 
 		if err != nil {

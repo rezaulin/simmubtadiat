@@ -130,8 +130,13 @@ func GetPenilaianSpreadsheet(ctx context.Context, bagianID int, tahunAjaran stri
 	nilaiKhos := map[string]map[string]float64{
 		"1": {}, "2": {},
 	}
+	// Peta sel yang diedit manual (is_manual) — dipakai frontend untuk menandai
+	// sel (latar amber) supaya guru tahu nilai itu tidak ikut hitung otomatis.
+	nilaiKhosManual := map[string]map[string]bool{
+		"1": {}, "2": {},
+	}
 	rowsKhos, err := config.DB.Query(ctx,
-		`SELECT santri_id, mapel_id, semester, nilai_akhir
+		`SELECT santri_id, mapel_id, semester, nilai_akhir, is_manual
 		 FROM nilai_khos
 		 WHERE santri_id = ANY($1) AND tahun_ajaran = $2`,
 		santriIDs, tahunAjaran)
@@ -143,12 +148,16 @@ func GetPenilaianSpreadsheet(ctx context.Context, bagianID int, tahunAjaran stri
 	for rowsKhos.Next() {
 		var santriID, mapelID, semester int
 		var nilaiAkhir float64
-		if err := rowsKhos.Scan(&santriID, &mapelID, &semester, &nilaiAkhir); err != nil {
+		var isManual bool
+		if err := rowsKhos.Scan(&santriID, &mapelID, &semester, &nilaiAkhir, &isManual); err != nil {
 			return nil, err
 		}
 		key := strconv.Itoa(santriID) + "_" + strconv.Itoa(mapelID)
 		s := strconv.Itoa(semester)
 		nilaiKhos[s][key] = nilaiAkhir
+		if isManual {
+			nilaiKhosManual[s][key] = true
+		}
 	}
 
 	// 6. Fetch nilai_bayan for these santri + tahun_ajaran
@@ -257,6 +266,7 @@ func GetPenilaianSpreadsheet(ctx context.Context, bagianID int, tahunAjaran stri
 		"santri":         santriList,
 		"nilai_kuartal":  nilaiKuartal,
 		"nilai_khos":     nilaiKhos,
+		"nilai_khos_manual": nilaiKhosManual,
 		"nilai_bayan":    nilaiBayan,
 		"absensi":        absensi,
 		"absensi_bayan":  absensiBayan,

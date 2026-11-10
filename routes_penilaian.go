@@ -15,6 +15,8 @@ func registerPenilaianRoutes(r chi.Router) {
 			r.Use(appMiddleware.RequireRoles("pimpinan", "admin", "mustahiq", "tim_rapot"))
 			r.Post("/kuartal", handlers.BulkInputKuartal)
 			r.Post("/khos", handlers.BulkInputKhos)
+			// Lepas penanda manual + hitung ulang dari rumus (pimpinan/admin/tim_rapot).
+			r.Post("/khos/reset", handlers.ResetKhosManual)
 			r.Post("/bayan", handlers.BulkInputBayan)
 			r.Post("/generate-khos", handlers.GenerateKhos)
 			// Bulk: seluruh bagian sekaligus — dipanggil frontend otomatis

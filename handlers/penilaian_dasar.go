@@ -157,16 +157,128 @@ func BulkInputKuartal(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, map[string]string{"status": "success", "message": "Nilai Kuartal berhasil disimpan"})
 }
 
-// BulkInputKhos — DIKUNCI (permintaan owner 2026-10-03).
-// Tabel nilai raport pada menu Penilaian dikunci: tidak ada akses ubah manual.
-// Nilai Khos HANYA dihasilkan GenerateNilaiKhos (otomatis dari nilai kuartal +
-// koreksi absensi). Endpoint ini sengaja menolak semua tulisan manual —
-// pola sama dgn BulkInputBayan (Al-Bayan dikunci).
+// BulkInputKhos menyimpan nilai raport (khos) yang DIEDIT MANUAL oleh guru.
+//
+// Edit manual dihidupkan kembali atas permintaan owner 2026-11-10. Logika
+// penilaian TIDAK diubah: GenerateNilaiKhos tetap jalan lebih dulu (otomatis
+// dari nilai kuartal + koreksi absensi), lalu nilai yang diedit manual dikirim
+// SESUDAHNYA sehingga menimpa hasil otomatis pada sel tersebut.
 func BulkInputKhos(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusForbidden)
-	writeJSON(w, map[string]string{
-		"message": "Nilai raport dikunci. Nilai hanya dihitung otomatis dari nilai kuartal dan absensi.",
+	var req []models.NilaiKhosInput
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if len(req) == 0 {
+		writeJSON(w, map[string]string{"status": "success", "message": "tidak ada nilai raport manual"})
+		return
+	}
+
+	// Cakupan mustahiq: pastikan semua santri berada di kelas/tingkatannya.
+	sids := make([]int, 0, len(req))
+	for _, it := range req {
+		sids = append(sids, it.SantriID)
+	}
+	if penilaianScopeGuardSantriEdit(w, r, sids) {
+		return
+	}
+
+	tahunAjaran := r.URL.Query().Get("tahun_ajaran")
+	if tahunAjaran == "" {
+		tahunAjaran = models.GetTahunAjaranAktif(r.Context())
+	}
+
+	// Enforcement kunci: tolak bila semester sudah TERKUNCI (pola sama dgn kuartal).
+	semesterDicek := map[int]bool{}
+	for _, it := range req {
+		if semesterDicek[it.Semester] {
+			continue
+		}
+		semesterDicek[it.Semester] = true
+		locked, err := models.IsSemesterLocked(r.Context(), tahunAjaran, it.Semester)
+		if err != nil {
+			http.Error(w, internalError("", err), http.StatusInternalServerError)
+			return
+		}
+		if locked {
+			http.Error(w, "nilai semester ini sudah terkunci", http.StatusForbidden)
+			return
+		}
+	}
+
+	user, _ := r.Context().Value(appMiddleware.UserContextKey).(appMiddleware.UserSession)
+
+	if err := models.BulkInputNilaiKhos(r.Context(), req, tahunAjaran, user.ID); err != nil {
+		http.Error(w, internalError("", err), http.StatusBadRequest)
+		return
+	}
+
+	writeJSON(w, map[string]string{"status": "success", "message": "Nilai raport manual berhasil disimpan"})
+}
+
+// ResetKhosManual melepas semua nilai raport yang diedit manual pada satu
+// bagian + semester, lalu menghitung ulang dari rumus (GenerateNilaiKhosBulk).
+// Dipakai tombol "Hitung Ulang Raport". Rumus penilaian tidak berubah.
+func ResetKhosManual(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		BagianID    int    `json:"bagian_id"`
+		Semester    int    `json:"semester"`
+		TahunAjaran string `json:"tahun_ajaran"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if req.BagianID == 0 || (req.Semester != 1 && req.Semester != 2) {
+		http.Error(w, "bagian_id dan semester (1/2) wajib diisi", http.StatusBadRequest)
+		return
+	}
+
+	// Hanya pimpinan/admin/tim_rapot — reset menyentuh nilai final satu bagian.
+	user, _ := r.Context().Value(appMiddleware.UserContextKey).(appMiddleware.UserSession)
+	allowed := false
+	for _, role := range user.Roles {
+		if role == "pimpinan" || role == "admin" || role == "tim_rapot" {
+			allowed = true
+			break
+		}
+	}
+	if !allowed {
+		writeJSONError(w, "Hanya pimpinan/admin/tim rapot yang boleh menghitung ulang nilai raport", http.StatusForbidden)
+		return
+	}
+
+	tahunAjaran := req.TahunAjaran
+	if tahunAjaran == "" {
+		tahunAjaran = models.GetTahunAjaranAktif(r.Context())
+	}
+
+	locked, err := models.IsSemesterLocked(r.Context(), tahunAjaran, req.Semester)
+	if err != nil {
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
+		return
+	}
+	if locked {
+		http.Error(w, "nilai semester ini sudah terkunci", http.StatusForbidden)
+		return
+	}
+
+	n, err := models.ResetKhosManual(r.Context(), req.BagianID, req.Semester, tahunAjaran)
+	if err != nil {
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
+		return
+	}
+
+	if _, err := models.GenerateNilaiKhosBulk(r.Context(), req.BagianID, tahunAjaran); err != nil {
+		http.Error(w, internalError("", err), http.StatusInternalServerError)
+		return
+	}
+
+	writeJSON(w, map[string]interface{}{
+		"status":  "success",
+		"message": "Nilai raport dihitung ulang dari rumus",
+		"dilepas": n,
 	})
 }
 

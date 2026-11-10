@@ -300,6 +300,7 @@ function renderSpreadsheet() {
   }
 
   const { mapels, santri, nilai_kuartal, nilai_khos, nilai_bayan, absensi, absensi_bayan } = currentData;
+  const khosManual = currentData.nilai_khos_manual || { '1': {}, '2': {} };
   if (santri.length === 0) {
     container.innerHTML = '<p class="text-center text-gray-500 dark:text-gray-400 py-4">Tidak ada santri di bagian ini.</p>';
     return;
@@ -319,13 +320,13 @@ function renderSpreadsheet() {
   // Section 2: Ujian Smt Ganjil (K2)
   html += renderSection('UJIAN SEMESTER GANJIL', mapels, santri, nilai_kuartal['2'], 2, canEdit);
   // Section 3: Raport Semester 1 (Nilai Khos)
-  html += renderRaportSection('NILAI RAPORT SEMESTER 1', mapels, santri, nilai_khos['1'], absensi['1'], 1, canEdit);
+  html += renderRaportSection('NILAI RAPORT SEMESTER 1', mapels, santri, nilai_khos['1'], absensi['1'], 1, canEdit, khosManual['1'] || {});
   // Section 4: Tamrin K3
   html += renderSection('TAMRIN KUARTAL 3', mapels, santri, nilai_kuartal['3'], 3, canEdit);
   // Section 5: Ujian Smt Genap (K4)
   html += renderSection('UJIAN SEMESTER GENAP', mapels, santri, nilai_kuartal['4'], 4, canEdit);
   // Section 6: Raport Semester 2
-  html += renderRaportSection('NILAI RAPORT SEMESTER 2', mapels, santri, nilai_khos['2'], absensi['2'], 2, canEdit);
+  html += renderRaportSection('NILAI RAPORT SEMESTER 2', mapels, santri, nilai_khos['2'], absensi['2'], 2, canEdit, khosManual['2'] || {});
   // Section 7: Al-Bayan — DIKUNCI (read-only, selalu dihitung otomatis)
   html += renderBayanSection(santri, nilai_khos, nilai_bayan, absensi_bayan, mapels.length);
 
@@ -352,6 +353,7 @@ function renderSpreadsheet() {
     html += '</div>';
   }
   if (canEdit) {
+    html += '<button id="btn-reset-khos" title="Lepas semua nilai raport yang diedit manual di bagian ini, lalu hitung ulang dari rumus" class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-xl text-xs font-medium shadow-md">Hitung Ulang Raport</button>';
     html += '<button id="btn-save-all" class="bg-primary hover:bg-primary-hover text-white px-6 py-2 rounded-xl text-sm font-medium shadow-md">Simpan Semua Nilai</button>';
   }
   html += '</div>';
@@ -378,6 +380,8 @@ function renderSpreadsheet() {
 
   // Wire save button
   document.getElementById('btn-save-all')?.addEventListener('click', saveAll);
+  // Wire tombol hitung ulang raport (lepas penanda manual bagian ini).
+  document.getElementById('btn-reset-khos')?.addEventListener('click', resetKhosManual);
 
   // Wire export buttons
   container.querySelectorAll('.btn-export').forEach(btn => {
@@ -400,6 +404,8 @@ function renderSpreadsheet() {
   container.querySelectorAll('input[data-khos-sem]').forEach(inp => {
     inp.addEventListener('input', () => {
       dirtyKhos.add(`${inp.dataset.s}_${inp.dataset.m}_${inp.dataset.khosSem}`);
+      // Tandai langsung di layar sebagai nilai manual (amber) sebelum disimpan.
+      inp.classList.add('bg-amber-100', 'dark:bg-amber-900/40', 'ring-1', 'ring-inset', 'ring-amber-400');
     });
   });
 
@@ -770,7 +776,7 @@ function refreshRendahMarks() {
   });
 }
 
-function renderRaportSection(title, mapels, santri, khosMap, absensiMap, semester, canEdit) {
+function renderRaportSection(title, mapels, santri, khosMap, absensiMap, semester, canEdit, manualMap) {
   // DIKUNCI (permintaan owner 2026-10-03): tabel nilai raport selalu read-only,
   // tidak ada akses ubah manual. Nilai Khos hanya dihasilkan otomatis backend
   // (GenerateNilaiKhos) dari nilai kuartal + koreksi absensi. canEdit tetap
@@ -830,12 +836,15 @@ function renderRaportSection(title, mapels, santri, khosMap, absensiMap, semeste
       } else if (!canEdit) {
         html += `<td class="px-0 py-0 border border-indigo-200 dark:border-indigo-800 text-center bg-gray-50 dark:bg-slate-800"><input type="text" disabled data-nilai-display value="${valDisplay}" class="w-full text-center text-xs font-semibold text-gray-600 dark:text-gray-300 py-1 bg-transparent border-0 outline-none"></td>`;
       } else {
-        // DIKUNCI: selalu disabled — sama utk semua role/flag can_edit_nilai.
-        // atribut data-khos-sem DIPERTAHANKAN supaya recalcRaportAkhlaq (live
-        // Akhlaq dari input kuartal) tetap bisa menulis nilai ke sel ini.
-        // disabled → event 'input' tak pernah firing → dirtyKhos kosong →
-        // saveAll tak pernah mengirim override manual ke /api/penilaian/khos.
-        html += `<td class="px-0 py-0 border border-indigo-200 dark:border-indigo-800 text-center"><input type="text" disabled data-khos-sem="${semester}" data-s="${s.id}" data-m="${m.id}" data-nilai-display value="${valDisplay}" class="w-full text-center text-xs font-semibold text-gray-600 dark:text-gray-300 py-1 bg-transparent border-0 outline-none cursor-not-allowed"></td>`;
+        // EDIT MANUAL DIAKTIFKAN (owner 2026-11-10): sel raport bisa diketik.
+        // Nilai yang diedit masuk dirtyKhos -> dikirim ke /api/penilaian/khos
+        // saat Simpan Semua. Backend menandai is_manual=true sehingga nilai ini
+        // TIDAK ditimpa GenerateNilaiKhos pada simpan berikutnya.
+        // Sel bertanda manual diberi latar amber + garis tepi supaya terlihat.
+        const isManual = !!(manualMap && manualMap[`${s.id}_${m.id}`]);
+        const manualCls = isManual ? 'bg-amber-100 dark:bg-amber-900/40 ring-1 ring-inset ring-amber-400' : '';
+        const manualTitle = isManual ? ' title="Diedit manual — tidak ikut hitung otomatis. Tekan Hitung Ulang Raport untuk melepas."' : '';
+        html += `<td class="px-0 py-0 border border-indigo-200 dark:border-indigo-800 text-center"><input type="text" inputmode="numeric" data-khos-sem="${semester}" data-s="${s.id}" data-m="${m.id}" data-nilai-display value="${valDisplay}"${manualTitle} class="w-full text-center text-xs font-semibold text-gray-700 dark:text-gray-200 py-1 border-0 outline-none rounded ${manualCls} bg-transparent focus:bg-amber-50 dark:focus:bg-amber-900/40 focus:ring-1 focus:ring-amber-500"></td>`;
       }
     });
     const sumStr = count > 0 ? (Number.isInteger(jumlah) ? String(jumlah) : String(Math.round(jumlah * 10) / 10)) : '-';
@@ -979,6 +988,47 @@ function abbreviate(name) {
 }
 
 // === SAVE ALL ===
+// Hitung Ulang Raport: lepas semua penanda manual pada bagian + semester ini,
+// lalu backend menghitung ulang dari rumus (nilai kuartal + koreksi absensi).
+async function resetKhosManual() {
+  const bagianId = selBagian.value;
+  if (!bagianId || !currentData) return;
+  if (!confirm('Hitung ulang nilai raport dari rumus?\n\nSemua nilai raport yang diedit manual di bagian ini akan DILEPAS dan ditimpa hasil hitung otomatis.')) return;
+  if (!(await guardTahunAjaranSebelumSimpan())) return;
+
+  const btn = document.getElementById('btn-reset-khos');
+  if (btn) { btn.disabled = true; btn.textContent = 'Menghitung...'; }
+
+  try {
+    let dilepas = 0;
+    for (const sem of [1, 2]) {
+      const res = await fetch('/api/penilaian/khos/reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bagian_id: parseInt(bagianId), semester: sem, tahun_ajaran: tahunAjaran })
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        throw new Error(d.message || d || 'Gagal menghitung ulang raport');
+      }
+      const d = await res.json().catch(() => ({}));
+      dilepas += d.dilepas || 0;
+    }
+
+    const res2 = await fetch(`/api/penilaian/spreadsheet?bagian_id=${bagianId}&tahun_ajaran=${encodeURIComponent(tahunAjaran)}`);
+    if (res2.ok) {
+      currentData = await res2.json();
+      renderSpreadsheet();
+    }
+    alert(`Selesai. ${dilepas} nilai manual dilepas, raport dihitung ulang dari rumus.`);
+  } catch (err) {
+    alert(err.message || 'Gagal menghitung ulang raport');
+  } finally {
+    const b = document.getElementById('btn-reset-khos');
+    if (b) { b.disabled = false; b.textContent = 'Hitung Ulang Raport'; }
+  }
+}
+
 async function saveAll() {
   const bagianId = selBagian.value;
   if (!bagianId || !currentData) return;
