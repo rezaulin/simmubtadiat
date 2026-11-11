@@ -15,6 +15,7 @@ import (
 	"github.com/mubtadiaat/app/config"
 	"github.com/mubtadiaat/app/handlers"
 	appMiddleware "github.com/mubtadiaat/app/middleware"
+	"github.com/mubtadiaat/app/models"
 )
 
 // writeJSON encodes v as JSON without HTML-escaping ' (apostrophe).
@@ -66,12 +67,31 @@ func main() {
 	// Initialize Database
 	config.ConnectDB()
 
+	// Cache landing (subdomain -> slug, settings situs): muat saat boot,
+	// refresh tiap 5 menit, dan setelah admin menyimpan.
+	models.RefreshLandingCache()
+	go func() {
+		for range time.Tick(5 * time.Minute) {
+			models.RefreshLandingCache()
+		}
+	}()
+
 	r := chi.NewRouter()
 
 	r.Use(appMiddleware.SecurityHeaders)
 	r.Use(limitBody)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
+
+	// Landing CMS: routing berdasarkan Host header (subdomain section).
+	// v1: apex tetap melayani SIM; app.<apex> = SIM (target APK native);
+	// <slug>.<apex>/ = halaman CMS section; <slug>.<apex>/aset -> static.
+	landingApex := os.Getenv("LANDING_APEX_DOMAIN")
+	if landingApex == "" {
+		landingApex = "reviewtechno.me"
+	}
+	handlers.SetLandingApex(landingApex)
+	r.Use(appMiddleware.HostRouter(landingApex, models.LookupSubdomain, handlers.ServeSectionBySubdomain, handlers.LandingHome))
 
 	// NoCache Middleware to prevent browser caching API responses
 	noCache := func(next http.Handler) http.Handler {
@@ -89,6 +109,11 @@ func main() {
 		r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 			w.Write([]byte("OK"))
 		})
+		// Landing CMS - publik (tanpa auth)
+		r.Get("/landing/sections", handlers.APILandingSections)
+		r.Get("/landing/settings", handlers.APILandingSettings)
+		r.Get("/landing/news", handlers.APILandingNews)
+		r.Get("/landing/news/{slug}", handlers.APILandingNewsDetail)
 		// Public Routes (rate limited)
 		r.Group(func(r chi.Router) {
 			r.Use(appMiddleware.RateLimitLogin)
@@ -121,9 +146,19 @@ func main() {
 				registerCatatanRoutes(r)
 				registerAlumniRoutes(r)
 				registerUtilRoutes(r)
+				registerLandingRoutes(r)
 			}) // <-- Close r.Group for RequirePasswordChanged
 		})
 	}) // <-- Close /api route
+
+	// Landing CMS - halaman publik (HTML server-rendered).
+	// /landing = pratinjau beranda (hero + daftar section + footer);
+	// /p/{slug} = URL kanonik section (subdomain adalah alias).
+	r.Get("/landing", handlers.LandingHome)
+	r.Get("/p/{slug}", handlers.ServeSectionBySlug)
+	// Berita pesantren: daftar + detail (portal, server-rendered).
+	r.Get("/berita", handlers.NewsIndex)
+	r.Get("/berita/{slug}", handlers.NewsDetail)
 
 	// Serve Static Files (Frontend)
 	workDir, _ := os.Getwd()
@@ -187,6 +222,16 @@ func main() {
 			return
 		}
 
+		// Panel landing (/landing.html) hanya untuk user login. Shell-nya
+		// statis tanpa data (API tetap 401), tapi jangan disajikan ke anonim
+		// maupun bot scanner — arahkan ke halaman login.
+		if r.URL.Path == "/landing.html" {
+			if _, cerr := r.Cookie("session_id"); cerr != nil {
+				http.Redirect(w, r, "/login.html", http.StatusFound)
+				return
+			}
+		}
+
 		if _, err := os.Stat(filePath); os.IsNotExist(err) {
 			// Berkas fisik tidak ada. Bedakan dua kasus:
 			//
@@ -207,6 +252,17 @@ func main() {
 			}
 			http.NotFound(w, r)
 			return
+		}
+
+		// Tolak directory listing (audit 9 Nov 2026): http.FileServer
+		// menampilkan daftar berkas untuk direktori tanpa index.html, jadi
+		// /uploads/landing/ dan /media/landing/ bisa diintip lewat browser.
+		// Direktori yang punya index.html (root SPA) tetap dilayani normal.
+		if fi, ferr := os.Stat(filePath); ferr == nil && fi.IsDir() {
+			if _, ierr := os.Stat(filepath.Join(filePath, "index.html")); ierr != nil {
+				http.NotFound(w, r)
+				return
+			}
 		}
 
 		http.FileServer(http.Dir(filesDir)).ServeHTTP(w, r)

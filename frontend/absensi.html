@@ -79,7 +79,7 @@
           // CANONICAL menuAccess — MUST stay set-equal to MENU_ACCESS in
           // frontend/src/js/xss.js for every role (see design.md Property 2).
                     var menuAccess = {
-            pimpinan: ['/index.html', '/santri.html', '/perpindahan.html', '/kelas.html', '/penilaian.html', '/absensi-manual.html', '/rapot.html', '/pengajar.html', '/dewan-harian.html', '/arsip.html', '/alumni.html', '/rekap.html', '/catatan.html', '/settings.html', '/pengajar-purna.html'],
+            pimpinan: ['/index.html', '/santri.html', '/perpindahan.html', '/kelas.html', '/penilaian.html', '/absensi-manual.html', '/rapot.html', '/pengajar.html', '/dewan-harian.html', '/arsip.html', '/alumni.html', '/rekap.html', '/catatan.html', '/settings.html', '/pengajar-purna.html', '/landing.html'],
             admin: ['/index.html', '/santri.html', '/pengajar.html', '/pengajar-purna.html', '/alumni.html', '/dewan-harian.html'],
             mufatish: ['/index.html', '/santri.html', '/kelas.html', '/penilaian.html', '/absensi-manual.html', '/pengajar.html', '/arsip.html', '/rekap.html', '/catatan.html'],
             mustahiq: ['/index.html', '/santri.html', '/penilaian.html', '/rekap.html', '/catatan.html', '/pengajar.html', '/arsip.html'],
@@ -119,7 +119,7 @@
           }
           if (allowed.length === 0) allowed = menuAccess[savedRole] || [];
           var css = '';
-          var allLinks = ['/index.html', '/santri.html', '/perpindahan.html', '/kelas.html', '/penilaian.html', '/absensi-manual.html', '/rapot.html', '/pengajar.html', '/dewan-harian.html', '/arsip.html', '/alumni.html', '/rekap.html', '/catatan.html', '/settings.html', '/pengajar-purna.html'];
+          var allLinks = ['/index.html', '/santri.html', '/perpindahan.html', '/kelas.html', '/penilaian.html', '/absensi-manual.html', '/rapot.html', '/pengajar.html', '/dewan-harian.html', '/arsip.html', '/alumni.html', '/rekap.html', '/catatan.html', '/settings.html', '/pengajar-purna.html', '/landing.html'];
           
           for (var i = 0; i < allLinks.length; i++) {
             if (allowed.indexOf(allLinks[i]) === -1) {
@@ -231,6 +231,10 @@
         <a href="/settings.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
           <i data-lucide="settings" class="w-5 h-5"></i>
           Pengaturan
+        </a>
+        <a href="/landing.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+          <i data-lucide="layout-template" class="w-5 h-5"></i>
+          Landing Page
         </a>
       </nav>
       

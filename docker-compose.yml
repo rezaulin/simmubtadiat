@@ -11,6 +11,8 @@ services:
       - DB_USER=${APP_DB_USER:-mubtadiaat}
       - DB_PASS=${APP_DB_PASS:-mubtadiaat_secret}
       - DB_NAME=${DB_NAME:-mubtadiaat_db}
+      # Domain apex untuk landing CMS (subdomain section).
+      - LANDING_APEX_DOMAIN=${LANDING_APEX_DOMAIN:-reviewtechno.me}
       - JWT_SECRET=${JWT_SECRET:?JWT_SECRET must be set in .env}
       # Seed akun pimpinan awal (dipakai migrate-runner saat start bila belum ada admin).
       - SEED_ADMIN_USERNAME=${SEED_ADMIN_USERNAME:-admin}

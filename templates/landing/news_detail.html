@@ -1,0 +1,46 @@
+{{template "base" .}}
+{{define "content"}}
+{{with .NewsDetail}}
+<section class="page-head arabesque">
+  <div class="wrap">
+    <div class="crumb"><a href="/">Beranda</a> / <a href="/berita">Berita</a> / {{.KategoriLabel}}</div>
+    <h1>{{.Judul}}</h1>
+    <div class="newsmeta">
+      <span class="newskat">{{.KategoriLabel}}</span>
+      <time datetime="{{.TanggalISO}}">{{.Tanggal}}</time>
+    </div>
+    <div class="underline"></div>
+  </div>
+</section>
+
+<article class="article">
+  <div class="wrap">
+    <div class="article-narrow">
+      {{if .CoverURL}}<figure class="news-cover"><img src="{{.CoverURL}}" alt="{{.Judul}}"></figure>{{end}}
+      <div class="prose">{{.KontenHTML}}</div>
+      <a class="back" href="/berita">&larr; Semua berita</a>
+    </div>
+  </div>
+</article>
+{{end}}
+
+{{if .NewsList}}
+<section class="news-wrap">
+  <div class="wrap article-narrow">
+    <div class="newsblock-head"><h2>Berita lainnya</h2><a href="/berita">Semua berita &rarr;</a></div>
+    <div class="newsgrid newsgrid-list cols-{{len .NewsList}}">
+      {{range .NewsList}}
+      <a class="newscard" href="/berita/{{.Slug}}">
+        {{if .CoverURL}}<span class="newscard-img"><img src="{{.CoverURL}}" alt="{{.Judul}}" loading="lazy"></span>{{end}}
+        <span class="newscard-txt">
+          <span class="newskat">{{.KategoriLabel}}</span>
+          <h3>{{.Judul}}</h3>
+          <span class="newsdate">{{.Tanggal}}</span>
+        </span>
+      </a>
+      {{end}}
+    </div>
+  </div>
+</section>
+{{end}}
+{{end}}

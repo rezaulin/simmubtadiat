@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="color-scheme" content="light dark">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Landing Page - SIM Mubtadiat</title>
+
+  <!-- Lucide Icons -->
+  <script src="/assets/lucide-1.55.0.min.js"></script>
+
+  <link rel="stylesheet" href="./style.css">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0E7C86">
+  <link rel="apple-touch-icon" href="/apple-touch-icon-v6.png">
+  <script type="module" src="/src/js/csrf.js"></script>
+  <script type="module" src="/src/js/xss.js"></script>
+
+<script>
+    (function() {
+      try {
+        var savedRole = localStorage.getItem('user_role');
+        if (savedRole) {
+          // CANONICAL menuAccess — MUST stay set-equal to MENU_ACCESS in
+          // frontend/src/js/xss.js for every role (see design.md Property 2).
+                    var menuAccess = {
+            pimpinan: ['/index.html', '/santri.html', '/perpindahan.html', '/kelas.html', '/penilaian.html', '/absensi-manual.html', '/rapot.html', '/pengajar.html', '/dewan-harian.html', '/arsip.html', '/alumni.html', '/rekap.html', '/catatan.html', '/settings.html', '/pengajar-purna.html', '/landing.html'],
+            admin: ['/index.html', '/santri.html', '/pengajar.html', '/pengajar-purna.html', '/alumni.html', '/dewan-harian.html'],
+            mufatish: ['/index.html', '/santri.html', '/kelas.html', '/penilaian.html', '/absensi-manual.html', '/pengajar.html', '/arsip.html', '/rekap.html', '/catatan.html'],
+            mustahiq: ['/index.html', '/santri.html', '/penilaian.html', '/rekap.html', '/catatan.html', '/pengajar.html', '/arsip.html'],
+            muroqib: ['/index.html', '/santri.html', '/absensi-manual.html', '/catatan.html', '/rekap.html'],
+            tim_rapot: ['/index.html', '/santri.html', '/penilaian.html', '/rapot.html', '/rekap.html'],
+            keamanan: ['/index.html', '/santri.html', '/arsip.html', '/alumni.html', '/catatan.html', '/pengajar-purna.html'],
+            wali_santri: ['/index.html']
+          };
+          var savedRoles = localStorage.getItem('user_roles');
+          var allowed = [];
+          if (savedRoles) {
+            try {
+              var parsedRoles = JSON.parse(savedRoles);
+              for (var j = 0; j < parsedRoles.length; j++) {
+                var r = parsedRoles[j];
+                if (menuAccess[r]) {
+                  for (var k = 0; k < menuAccess[r].length; k++) {
+                    if (allowed.indexOf(menuAccess[r][k]) === -1) allowed.push(menuAccess[r][k]);
+                  }
+                }
+              }
+              // Menu kombinasi (AND) - Opsi C: Dewan Harian HANYA utk ganda
+              // Mustahiq + Keamanan (tunggal tidak dapat).
+              var menuCombo = [{ roles: ['mustahiq', 'keamanan'], menus: ['/dewan-harian.html'] }];
+              for (var ci = 0; ci < menuCombo.length; ci++) {
+                var comboOk = true;
+                for (var cj = 0; cj < menuCombo[ci].roles.length; cj++) {
+                  if (parsedRoles.indexOf(menuCombo[ci].roles[cj]) === -1) { comboOk = false; break; }
+                }
+                if (comboOk) {
+                  for (var cm = 0; cm < menuCombo[ci].menus.length; cm++) {
+                    if (allowed.indexOf(menuCombo[ci].menus[cm]) === -1) allowed.push(menuCombo[ci].menus[cm]);
+                  }
+                }
+              }
+            } catch(e) {}
+          }
+          if (allowed.length === 0) allowed = menuAccess[savedRole] || [];
+          var css = '';
+          var allLinks = ['/index.html', '/santri.html', '/perpindahan.html', '/kelas.html', '/penilaian.html', '/absensi-manual.html', '/rapot.html', '/pengajar.html', '/dewan-harian.html', '/arsip.html', '/alumni.html', '/rekap.html', '/catatan.html', '/settings.html', '/pengajar-purna.html', '/landing.html'];
+          
+          for (var i = 0; i < allLinks.length; i++) {
+            if (allowed.indexOf(allLinks[i]) === -1) {
+              css += 'aside nav a[href="' + allLinks[i] + '"] { display: none !important; }\n';
+            }
+          }
+          if (css) {
+            var style = document.createElement('style');
+            style.textContent = css;
+            document.head.appendChild(style);
+          }
+        }
+      } catch(e) {}
+    })();
+  </script>
+  <style>
+    .tool-btn {
+      padding: 0.25rem 0.5rem; border-radius: 0.5rem; font-size: 0.75rem;
+      font-weight: 600; color: #374151; transition: background-color .15s;
+    }
+    .dark .tool-btn { color: #e5e7eb; }
+    .tool-btn:hover { background: rgba(0,0,0,.06); }
+    .dark .tool-btn:hover { background: rgba(255,255,255,.08); }
+    #f-konten:empty:before { content: attr(data-placeholder); color: #9ca3af; }
+    #f-konten h2 { font-size: 1.25rem; font-weight: 700; margin: .6rem 0 .4rem; }
+    #f-konten h3 { font-size: 1.05rem; font-weight: 700; margin: .5rem 0 .3rem; }
+    #f-konten p { margin: .4rem 0; }
+    #f-konten ul { list-style: disc; padding-left: 1.25rem; margin: .4rem 0; }
+    #f-konten ol { list-style: decimal; padding-left: 1.25rem; margin: .4rem 0; }
+    #f-konten a { color: #0E7C86; text-decoration: underline; }
+    #f-konten img { max-width: 100%; border-radius: .5rem; margin: .5rem 0; }
+    #f-konten blockquote { border-left: 3px solid #0E7C86; padding-left: .75rem; color: #4b5563; margin: .5rem 0; }
+    #n-konten:empty:before { content: attr(data-placeholder); color: #9ca3af; }
+    #n-konten h2 { font-size: 1.25rem; font-weight: 700; margin: .6rem 0 .4rem; }
+    #n-konten h3 { font-size: 1.05rem; font-weight: 700; margin: .5rem 0 .3rem; }
+    #n-konten p { margin: .4rem 0; }
+    #n-konten ul { list-style: disc; padding-left: 1.25rem; margin: .4rem 0; }
+    #n-konten ol { list-style: decimal; padding-left: 1.25rem; margin: .4rem 0; }
+    #n-konten a { color: #0E7C86; text-decoration: underline; }
+    #n-konten img { max-width: 100%; border-radius: .5rem; margin: .5rem 0; }
+    #n-konten blockquote { border-left: 3px solid #0E7C86; padding-left: .75rem; color: #4b5563; margin: .5rem 0; }
+  </style>
+</head>
+<body class="bg-gray-50 dark:bg-slate-900 transition-colors duration-300">
+
+<!-- ==================== DESKTOP SIDEBAR ==================== -->
+  <!-- Sidebar / Navigation -->
+    <aside id="app-sidebar" class="flex flex-col w-64 fixed inset-y-0 left-0 bg-white dark:bg-slate-800 border-r border-gray-100 dark:border-slate-700/60 z-[70] transition-transform duration-300 transform -translate-x-full md:translate-x-0 shadow-[4px_0_24px_rgba(0,0,0,0.02)] print:hidden">
+    <!-- Close button (Mobile only) -->
+    <button id="btn-close-sidebar" class="tap-target md:hidden absolute top-4 right-4 p-2 bg-gray-50 dark:bg-slate-700 rounded-xl text-gray-600 dark:text-gray-400 hover:text-gray-700" aria-label="Tutup menu">
+      <i data-lucide="x" class="w-5 h-5"></i>
+    </button>
+    
+      <!-- Logo Area -->
+      <div class="h-20 flex items-center px-6 border-b border-gray-100 dark:border-slate-700/60">
+        <div class="flex items-center gap-3 cursor-pointer" onclick="window.location.href='/index.html'">
+          <div class="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-md shadow-primary/20 ring-1 ring-gray-100 dark:ring-slate-700 overflow-hidden shrink-0">
+            <img src="/logo-v3.png" alt="Logo Madrasah Hidayatul Mubtadiat" class="w-full h-full object-contain p-0.5">
+          </div>
+          <div class="leading-tight">
+            <span class="block font-bold text-gray-800 dark:text-white tracking-tight text-base">Mubtadiat</span>
+            <span class="block text-[11px] text-gray-400 dark:text-gray-500 font-medium">Manajemen Sistem</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Nav Links -->
+      <nav class="flex-1 overflow-y-auto p-4 flex flex-col gap-1 custom-scrollbar">
+        <!-- UTAMA -->
+        <p class="text-[10px] font-bold text-gray-400 dark:text-gray-500 mb-2 mt-2 px-3 tracking-widest uppercase">Utama</p>
+        <a href="/index.html" class="bg-indigo-50/80 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400 font-semibold flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors">
+          <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+          Dashboard
+        </a>
+        <a href="/santri.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+          <i data-lucide="users" class="w-5 h-5"></i>
+          Data Santri
+        </a>
+        <a href="/perpindahan.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+          <i data-lucide="arrow-left-right" class="w-5 h-5"></i>
+          Perubahan Status
+        </a>
+        <a href="/kelas.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+          <i data-lucide="school" class="w-5 h-5"></i>
+          Data Kelas
+        </a>
+
+        <!-- AKADEMIK -->
+        <p class="text-[10px] font-bold text-gray-400 dark:text-gray-500 mb-2 mt-4 px-3 tracking-widest uppercase">Akademik</p>
+        <a href="/penilaian.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+          <i data-lucide="file-check-2" class="w-5 h-5"></i>
+          Penilaian
+        </a>
+        
+        <a href="/absensi-manual.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+          <i data-lucide="calendar-check" class="w-5 h-5"></i>
+          Absensi Manual
+        </a>
+        <a href="/rapot.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+          <i data-lucide="book-open-check" class="w-5 h-5"></i>
+          Raport
+        </a>
+
+        <!-- DATABASE & ARSIP -->
+        <p class="text-[10px] font-bold text-gray-400 dark:text-gray-500 mb-2 mt-4 px-3 tracking-widest uppercase">Database & Arsip</p>
+        <a href="/pengajar.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+          <i data-lucide="graduation-cap" class="w-5 h-5"></i>
+          Pengajar
+        </a>
+        <a href="/dewan-harian.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+          <i data-lucide="briefcase" class="w-5 h-5"></i>
+          Dewan Harian
+        </a>
+        <a href="/arsip.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+          <i data-lucide="archive" class="w-5 h-5"></i>
+          Arsip & Keluar
+        </a>
+        <a href="/alumni.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+          <i data-lucide="medal" class="w-5 h-5"></i>
+          Alumni
+        </a>
+        <a href="/pengajar-purna.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+          <i data-lucide="history" class="w-5 h-5"></i>
+          Pengajar Purna
+        </a>
+
+        <!-- LAINNYA -->
+        <p class="text-[10px] font-bold text-gray-400 dark:text-gray-500 mb-2 mt-4 px-3 tracking-widest uppercase">Lainnya</p>
+        <a href="/rekap.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+          <i data-lucide="table" class="w-5 h-5"></i>
+          Rekap
+        </a>
+        <a href="/catatan.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+          <i data-lucide="shield-alert" class="w-5 h-5"></i>
+          Pelanggaran &amp; Prestasi
+        </a>
+        <a href="/settings.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+          <i data-lucide="settings" class="w-5 h-5"></i>
+          Pengaturan
+        </a>
+        <a href="/landing.html" class="text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-800 dark:hover:bg-slate-700/50 dark:hover:text-gray-200 font-medium flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+          <i data-lucide="layout-template" class="w-5 h-5"></i>
+          Landing Page
+        </a>
+      </nav>
+      
+      <!-- User Profile / Logout -->
+      <div class="p-4 border-t border-gray-100 dark:border-slate-700/60 bg-gray-50/50 dark:bg-slate-800/50">
+        <button id="logout-btn-desktop" class="w-full flex items-center gap-3 px-3 py-2.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-colors text-left font-medium">
+          <i data-lucide="log-out" class="w-5 h-5"></i>
+          Keluar
+        
+      </div>
+    </aside>
+
+  <!-- ==================== SIDEBAR BACKDROP (mobile only) ==================== -->
+  <div id="sidebar-backdrop" class="hidden md:hidden fixed inset-0 bg-gray-900/50 dark:bg-black/60 backdrop-blur-sm z-[65]"></div>
+
+  <main class="md:ml-64 min-h-screen pb-24 md:pb-8">
+
+    <!-- MOBILE TOP BAR -->
+    <header class="md:hidden h-16 bg-white/80 backdrop-blur-md dark:bg-slate-800/80 border-b border-gray-100 dark:border-slate-700 flex items-center justify-between px-4 sticky top-0 z-40">
+      <button id="btn-open-sidebar" class="tap-target p-2 -ml-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors" aria-label="Buka menu">
+        <i data-lucide="menu" class="w-5 h-5 text-gray-700 dark:text-gray-200"></i>
+      </button>
+      <button id="theme-toggle-mobile" class="tap-target p-2 -mr-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors" aria-label="Ganti tema">
+        <i data-lucide="moon" class="w-5 h-5 text-gray-700 dark:text-gray-200"></i>
+      </button>
+    </header>
+
+    <!-- CONTENT HEADER -->
+    <div class="px-4 py-4 md:px-6 md:py-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div>
+        <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Landing Page</h2>
+        <p class="text-sm text-gray-500 dark:text-gray-400">Kelola halaman publik pesantren: section, subdomain, dan identitas situs.</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <a href="/landing" target="_blank" rel="noopener" class="px-3 py-2 rounded-xl text-sm font-medium bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 flex items-center gap-2">
+          <i data-lucide="external-link" class="w-4 h-4"></i>Pratinjau
+        </a>
+        <button id="btn-new-section" class="px-4 py-2 rounded-xl text-sm font-semibold bg-primary hover:bg-primary-hover text-white shadow-sm flex items-center gap-2">
+          <i data-lucide="plus" class="w-4 h-4"></i>Halaman Baru
+        </button>
+      </div>
+    </div>
+
+    <div class="px-4 md:px-6 pb-24">
+
+      <!-- TABS -->
+      <div class="flex gap-1 p-1 rounded-2xl bg-gray-100 dark:bg-slate-800 w-full sm:w-fit mb-4">
+        <button type="button" data-tab="sections" class="tab-btn flex-1 sm:flex-none px-4 py-2 rounded-xl text-sm font-semibold bg-white dark:bg-slate-700 text-gray-800 dark:text-white shadow-sm transition-all">Halaman</button>
+        <button type="button" data-tab="settings" class="tab-btn flex-1 sm:flex-none px-4 py-2 rounded-xl text-sm font-semibold text-gray-500 dark:text-gray-400 transition-all">Identitas Situs</button>
+        <button type="button" data-tab="news" class="tab-btn flex-1 sm:flex-none px-4 py-2 rounded-xl text-sm font-semibold text-gray-500 dark:text-gray-400 transition-all">Berita</button>
+      </div>
+
+      <!-- PANEL: SECTIONS -->
+      <div id="panel-sections">
+        <div id="section-list" class="grid grid-cols-1 xl:grid-cols-2 gap-4"></div>
+        <div id="section-empty" class="hidden glass dark:bg-slate-800/80 rounded-3xl border border-gray-200 dark:border-slate-700 p-8 text-center text-sm text-gray-500 dark:text-gray-400">
+          Belum ada halaman. Klik <b>Halaman Baru</b> untuk membuat.
+        </div>
+      </div>
+
+      <!-- PANEL: SETTINGS -->
+      <div id="panel-settings" class="hidden">
+        <div class="glass dark:bg-slate-800/80 rounded-3xl border border-gray-200 dark:border-slate-700 p-4 md:p-6">
+          <div id="settings-groups" class="flex flex-col gap-7"></div>
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3 mt-7 pt-5 border-t border-gray-100 dark:border-slate-700">
+            <span id="settings-status" class="text-sm text-gray-500 dark:text-gray-400 sm:mr-auto"></span>
+            <button id="btn-save-settings" class="bg-primary hover:bg-primary-hover text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-sm transition-colors">Simpan Pengaturan</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANEL: BERITA -->
+      <div id="panel-news" class="hidden">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <p class="text-sm text-gray-500 dark:text-gray-400">Berita tampil di beranda (1 utama + 3 kartu) dan di halaman <span class="font-mono">/berita</span>.</p>
+          <button id="btn-new-news" class="px-4 py-2 rounded-xl text-sm font-semibold bg-primary hover:bg-primary-hover text-white shadow-sm flex items-center justify-center gap-2">
+            <i data-lucide="plus" class="w-4 h-4"></i>Berita Baru
+          </button>
+        </div>
+        <div id="news-list" class="grid grid-cols-1 xl:grid-cols-2 gap-4"></div>
+        <div id="news-empty" class="hidden glass dark:bg-slate-800/80 rounded-3xl border border-gray-200 dark:border-slate-700 p-8 text-center text-sm text-gray-500 dark:text-gray-400">
+          Belum ada berita. Klik <b>Berita Baru</b> untuk menulis.
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ==================== MOBILE BOTTOM NAV + FAB ==================== -->
+  <!-- CANONICAL Bottom_Nav block — replicate verbatim across covered pages. -->
+  <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl dark:bg-slate-900/90 border-t border-gray-100 dark:border-slate-800 z-50 px-2 py-2 pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.02)]">
+    <div class="flex justify-between items-center relative h-14 w-full">
+      
+      <a href="/index.html" data-nav class="w-1/5 flex flex-col items-center gap-1 text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+        <i data-lucide="home" class="w-5 h-5"></i>
+        <span class="text-[10px] font-bold">Beranda</span>
+      </a>
+      
+      <a href="/santri.html" data-nav class="w-1/5 flex flex-col items-center gap-1 text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+        <i data-lucide="users" class="w-5 h-5"></i>
+        <span class="text-[10px] font-semibold">Santri</span>
+      </a>
+
+      <!-- Spacer khusus FAB agar tidak overlap -->
+      <div class="w-1/5 h-full pointer-events-none"></div>
+
+      <!-- FLOATING ACTION BUTTON (FAB) -->
+      <div class="absolute left-1/2 -translate-x-1/2 -top-6">
+        <button id="btn-mobile-search" class="tap-target w-[52px] h-[52px] bg-gradient-to-tr from-primary to-hero-to rounded-full flex items-center justify-center text-white shadow-[0_8px_20px_rgba(14,124,134,0.3)] active:scale-95 transition-transform border-[3px] border-white dark:border-slate-900" aria-label="Cari">
+          <i data-lucide="search" class="w-5 h-5"></i>
+        
+      </div>
+
+      <a href="/absensi-manual.html" data-nav class="w-1/5 flex flex-col items-center gap-1 text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+        <i data-lucide="clipboard-check" class="w-5 h-5"></i>
+        <span class="text-[10px] font-semibold">Absen</span>
+      </a>
+
+      <a href="/penilaian.html" data-nav class="w-1/5 flex flex-col items-center gap-1 text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+        <i data-lucide="file-check-2" class="w-5 h-5"></i>
+        <span class="text-[10px] font-semibold">Nilai</span>
+      </a>
+      
+    </div>
+  </nav>
+  </main>
+
+  <!-- ==================== EDITOR MODAL ==================== -->
+  <div id="editor-modal" class="hidden fixed inset-0 z-[80]">
+    <div id="editor-overlay" class="absolute inset-0 bg-gray-900/60 dark:bg-black/70 backdrop-blur-sm"></div>
+    <div class="relative h-full w-full overflow-y-auto p-4 md:p-8">
+      <div class="glass dark:bg-slate-800 w-full max-w-3xl mx-auto rounded-3xl border border-gray-200 dark:border-slate-700 p-5 md:p-6 my-4">
+        <div class="flex items-start justify-between gap-3 mb-5">
+          <div>
+            <h3 id="editor-title" class="text-lg font-bold text-gray-800 dark:text-white">Halaman Baru</h3>
+            <p class="text-xs text-gray-500 dark:text-gray-400">Konten disimpan sebagai HTML dan dibersihkan otomatis di server.</p>
+          </div>
+          <button type="button" id="editor-close" class="p-2 rounded-xl text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors" aria-label="Tutup">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+
+        <form id="editor-form" class="flex flex-col gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="flex flex-col gap-1">
+              <label class="text-xs font-semibold text-gray-500 dark:text-gray-400">Judul Halaman *</label>
+              <input type="text" id="f-judul" required class="glass-input px-3 py-2 rounded-lg text-sm w-full" placeholder="Profil &amp; Sejarah">
+            </div>
+            <div class="flex flex-col gap-1">
+              <label class="text-xs font-semibold text-gray-500 dark:text-gray-400">Slug (URL) *</label>
+              <input type="text" id="f-slug" required pattern="[a-z0-9][a-z0-9\-]*" class="glass-input px-3 py-2 rounded-lg text-sm w-full" placeholder="sejarah">
+              <span class="text-[10px] text-gray-400">huruf kecil, angka, tanda hubung. URL: /p/slug</span>
+            </div>
+            <div class="flex flex-col gap-1">
+              <label class="text-xs font-semibold text-gray-500 dark:text-gray-400">Subdomain</label>
+              <input type="text" id="f-subdomain" pattern="[a-z0-9][a-z0-9\-]*" class="glass-input px-3 py-2 rounded-lg text-sm w-full" placeholder="sejarah">
+              <span class="text-[10px] text-gray-400">opsional &mdash; kosongkan bila hanya lewat /p/slug</span>
+            </div>
+            <div class="flex flex-col gap-1">
+              <label class="text-xs font-semibold text-gray-500 dark:text-gray-400">Urutan</label>
+              <input type="number" id="f-urutan" min="0" step="1" value="0" class="glass-input px-3 py-2 rounded-lg text-sm w-full">
+            </div>
+          </div>
+
+          <div class="flex flex-wrap gap-4 items-center py-1">
+            <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+              <input type="checkbox" id="f-publish" class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"> Publikasikan
+            </label>
+            <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+              <input type="checkbox" id="f-menu" class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"> Tampilkan di menu landing
+            </label>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="flex flex-col gap-1">
+              <label class="text-xs font-semibold text-gray-500 dark:text-gray-400">Meta Title (SEO)</label>
+              <input type="text" id="f-meta-title" class="glass-input px-3 py-2 rounded-lg text-sm w-full" placeholder="Kosongkan = pakai judul">
+            </div>
+            <div class="flex flex-col gap-1">
+              <label class="text-xs font-semibold text-gray-500 dark:text-gray-400">OG Image URL</label>
+              <input type="url" id="f-og" class="glass-input px-3 py-2 rounded-lg text-sm w-full" placeholder="https://.../gambar.jpg">
+            </div>
+          </div>
+          <div class="flex flex-col gap-1">
+            <label class="text-xs font-semibold text-gray-500 dark:text-gray-400">Meta Description (SEO)</label>
+            <textarea id="f-meta-desc" rows="2" class="glass-input px-3 py-2 rounded-lg text-sm w-full" placeholder="Ringkasan halaman untuk mesin pencari"></textarea>
+          </div>
+
+          <div class="flex flex-col gap-1">
+            <div class="flex items-center justify-between gap-2">
+              <label class="text-xs font-semibold text-gray-500 dark:text-gray-400">Konten Halaman</label>
+              <button type="button" id="btn-toggle-source" class="text-xs font-medium text-primary hover:underline">Sumber HTML</button>
+            </div>
+            <div id="editor-toolbar" class="flex flex-wrap items-center gap-1 p-1.5 rounded-xl bg-gray-50 dark:bg-slate-900/60 border border-gray-200 dark:border-slate-700">
+              <button type="button" data-cmd="formatBlock:h2" class="tool-btn" title="Judul besar">H2</button>
+              <button type="button" data-cmd="formatBlock:h3" class="tool-btn" title="Sub judul">H3</button>
+              <button type="button" data-cmd="formatBlock:p" class="tool-btn" title="Paragraf">P</button>
+              <span class="w-px h-5 bg-gray-200 dark:bg-slate-700 mx-1"></span>
+              <button type="button" data-cmd="bold" class="tool-btn font-bold" title="Tebal">B</button>
+              <button type="button" data-cmd="italic" class="tool-btn italic" title="Miring">I</button>
+              <button type="button" data-cmd="underline" class="tool-btn underline" title="Garis bawah">U</button>
+              <span class="w-px h-5 bg-gray-200 dark:bg-slate-700 mx-1"></span>
+              <button type="button" data-cmd="insertUnorderedList" class="tool-btn" title="Daftar">&#8226; Daftar</button>
+              <button type="button" data-cmd="insertOrderedList" class="tool-btn" title="Daftar bernomor">1. Daftar</button>
+              <span class="w-px h-5 bg-gray-200 dark:bg-slate-700 mx-1"></span>
+              <button type="button" data-cmd="createLink" class="tool-btn" title="Tautan">Link</button>
+              <button type="button" data-cmd="insertImage" class="tool-btn" title="Gambar">Gambar</button>
+              <button type="button" id="btn-upload-foto" class="tool-btn" title="Upload foto dari komputer/HP">Upload</button>
+              <button type="button" id="btn-galeri-foto" class="tool-btn" title="Pilih foto dari galeri">Galeri</button>
+              <button type="button" data-cmd="removeFormat" class="tool-btn" title="Hapus format">Bersihkan</button>
+            </div>
+            <input type="file" id="file-foto" accept="image/jpeg,image/png,image/webp" class="hidden">
+            <div id="f-konten" contenteditable="true" class="glass-input rounded-xl px-3 py-3 text-sm min-h-[280px] max-h-[520px] overflow-y-auto" data-placeholder="Tulis konten halaman di sini..."></div>
+            <textarea id="f-konten-src" rows="14" class="hidden glass-input px-3 py-2 rounded-xl text-sm w-full font-mono"></textarea>
+          </div>
+
+          <div id="editor-error" class="hidden text-sm text-red-500 bg-red-50 dark:bg-red-900/30 p-2.5 rounded-lg"></div>
+
+          <div class="flex flex-col sm:flex-row sm:items-center gap-3 pt-2">
+            <a id="editor-preview" href="/landing" target="_blank" rel="noopener" class="hidden sm:flex items-center gap-2 text-sm font-medium text-primary hover:underline">
+              <i data-lucide="external-link" class="w-4 h-4"></i>Lihat halaman
+            </a>
+            <div class="flex justify-end gap-3 sm:ml-auto">
+              <button type="button" id="editor-cancel" class="px-4 py-2 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">Batal</button>
+              <button type="submit" id="editor-save" class="bg-primary hover:bg-primary-hover text-white px-5 py-2 rounded-xl text-sm font-semibold shadow-sm transition-colors">Simpan</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== NEWS MODAL ==================== -->
+  <div id="news-modal" class="hidden fixed inset-0 z-[82]">
+    <div id="news-overlay" class="absolute inset-0 bg-gray-900/60 dark:bg-black/70 backdrop-blur-sm"></div>
+    <div class="relative h-full w-full overflow-y-auto p-4 md:p-8">
+      <div class="glass dark:bg-slate-800 w-full max-w-3xl mx-auto rounded-3xl border border-gray-200 dark:border-slate-700 p-5 md:p-6 my-4">
+        <div class="flex items-start justify-between gap-3 mb-5">
+          <div>
+            <h3 id="news-title" class="text-lg font-bold text-gray-800 dark:text-white">Berita Baru</h3>
+            <p class="text-xs text-gray-500 dark:text-gray-400">Isi berita disimpan sebagai HTML dan dibersihkan otomatis di server.</p>
+          </div>
+          <button type="button" id="news-close" class="p-2 rounded-xl text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors" aria-label="Tutup">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+
+        <form id="news-form" class="flex flex-col gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="flex flex-col gap-1">
+              <label class="text-xs font-semibold text-gray-500 dark:text-gray-400">Judul Berita *</label>
+              <input type="text" id="n-judul" required class="glass-input px-3 py-2 rounded-lg text-sm w-full" placeholder="Pendaftaran Gelombang 2 Dibuka">
+            </div>
+            <div class="flex flex-col gap-1">
+              <label class="text-xs font-semibold text-gray-500 dark:text-gray-400">Slug (URL) *</label>
+              <input type="text" id="n-slug" required pattern="[a-z0-9][a-z0-9\-]*" class="glass-input px-3 py-2 rounded-lg text-sm w-full" placeholder="pendaftaran-gelombang-2">
+              <span class="text-[10px] text-gray-400">huruf kecil, angka, tanda hubung. URL: /berita/slug</span>
+            </div>
+            <div class="flex flex-col gap-1">
+              <label class="text-xs font-semibold text-gray-500 dark:text-gray-400">Kategori</label>
+              <select id="n-kategori" class="glass-input px-3 py-2 rounded-lg text-sm w-full">
+                <option value="pengumuman">Pengumuman</option>
+                <option value="kegiatan" selected>Kegiatan</option>
+                <option value="prestasi">Prestasi</option>
+                <option value="artikel">Artikel</option>
+              </select>
+            </div>
+            <div class="flex flex-col gap-1">
+              <label class="text-xs font-semibold text-gray-500 dark:text-gray-400">Tanggal Terbit</label>
+              <input type="date" id="n-tanggal" class="glass-input px-3 py-2 rounded-lg text-sm w-full">
+            </div>
+          </div>
+
+          <div class="flex flex-wrap gap-4 items-center py-1">
+            <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+              <input type="checkbox" id="n-publish" class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"> Publikasikan
+            </label>
+            <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+              <input type="checkbox" id="n-headline" class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"> Jadikan berita utama di beranda
+            </label>
+          </div>
+
+          <div class="flex flex-col gap-1">
+            <label class="text-xs font-semibold text-gray-500 dark:text-gray-400">Ringkasan (tampil di kartu beranda)</label>
+            <textarea id="n-ringkasan" rows="2" maxlength="400" class="glass-input px-3 py-2 rounded-lg text-sm w-full" placeholder="Satu-dua kalimat inti berita"></textarea>
+          </div>
+
+          <div class="flex flex-col gap-1">
+            <label class="text-xs font-semibold text-gray-500 dark:text-gray-400">Foto Cover</label>
+            <div class="flex flex-col sm:flex-row gap-2">
+              <input type="text" id="n-cover" class="glass-input px-3 py-2 rounded-lg text-sm w-full font-mono" placeholder="/uploads/landing/foto.jpg">
+              <button type="button" id="n-pick-cover" class="tool-btn border border-gray-200 dark:border-slate-600 px-3 py-2 shrink-0">Galeri</button>
+              <button type="button" id="n-upload-cover" class="tool-btn border border-gray-200 dark:border-slate-600 px-3 py-2 shrink-0">Upload</button>
+              <button type="button" id="n-clear-cover" class="tool-btn border border-gray-200 dark:border-slate-600 px-3 py-2 shrink-0">Kosongkan</button>
+            </div>
+            <img id="n-cover-prev" class="hidden mt-2 rounded-xl max-h-40 w-auto" alt="Pratinjau cover">
+            <input type="file" id="n-file" accept="image/jpeg,image/png,image/webp" class="hidden">
+          </div>
+
+          <div class="flex flex-col gap-1">
+            <div class="flex items-center justify-between gap-2">
+              <label class="text-xs font-semibold text-gray-500 dark:text-gray-400">Isi Berita</label>
+              <button type="button" id="n-toggle-source" class="text-xs font-medium text-primary hover:underline">Sumber HTML</button>
+            </div>
+            <div id="n-toolbar" class="flex flex-wrap items-center gap-1 p-1.5 rounded-xl bg-gray-50 dark:bg-slate-900/60 border border-gray-200 dark:border-slate-700">
+              <button type="button" data-ncmd="formatBlock:h2" class="tool-btn" title="Judul besar">H2</button>
+              <button type="button" data-ncmd="formatBlock:h3" class="tool-btn" title="Sub judul">H3</button>
+              <button type="button" data-ncmd="formatBlock:p" class="tool-btn" title="Paragraf">P</button>
+              <span class="w-px h-5 bg-gray-200 dark:bg-slate-700 mx-1"></span>
+              <button type="button" data-ncmd="bold" class="tool-btn font-bold" title="Tebal">B</button>
+              <button type="button" data-ncmd="italic" class="tool-btn italic" title="Miring">I</button>
+              <button type="button" data-ncmd="underline" class="tool-btn underline" title="Garis bawah">U</button>
+              <span class="w-px h-5 bg-gray-200 dark:bg-slate-700 mx-1"></span>
+              <button type="button" data-ncmd="insertUnorderedList" class="tool-btn" title="Daftar">&#8226; Daftar</button>
+              <button type="button" data-ncmd="insertOrderedList" class="tool-btn" title="Daftar bernomor">1. Daftar</button>
+              <span class="w-px h-5 bg-gray-200 dark:bg-slate-700 mx-1"></span>
+              <button type="button" data-ncmd="createLink" class="tool-btn" title="Tautan">Link</button>
+              <button type="button" id="n-galeri" class="tool-btn" title="Sisipkan foto dari galeri">Galeri</button>
+              <button type="button" data-ncmd="removeFormat" class="tool-btn" title="Hapus format">Bersihkan</button>
+            </div>
+            <div id="n-konten" contenteditable="true" class="glass-input rounded-xl px-3 py-3 text-sm min-h-[240px] max-h-[480px] overflow-y-auto" data-placeholder="Tulis isi berita di sini..."></div>
+            <textarea id="n-konten-src" rows="12" class="hidden glass-input px-3 py-2 rounded-xl text-sm w-full font-mono"></textarea>
+          </div>
+
+          <div id="news-error" class="hidden text-sm text-red-500 bg-red-50 dark:bg-red-900/30 p-2.5 rounded-lg"></div>
+
+          <div class="flex flex-col sm:flex-row sm:items-center gap-3 pt-2">
+            <a id="news-preview" href="/berita" target="_blank" rel="noopener" class="hidden sm:flex items-center gap-2 text-sm font-medium text-primary hover:underline">
+              <i data-lucide="external-link" class="w-4 h-4"></i>Lihat berita
+            </a>
+            <div class="flex justify-end gap-3 sm:ml-auto">
+              <button type="button" id="news-cancel" class="px-4 py-2 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">Batal</button>
+              <button type="submit" id="news-save" class="bg-primary hover:bg-primary-hover text-white px-5 py-2 rounded-xl text-sm font-semibold shadow-sm transition-colors">Simpan</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div id="gallery-modal" class="hidden fixed inset-0 z-[85]">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" id="gallery-overlay"></div>
+    <div class="relative h-full flex items-end sm:items-center justify-center p-3 sm:p-6">
+      <div class="w-full max-w-3xl bg-white dark:bg-slate-800 rounded-2xl shadow-2xl flex flex-col max-h-[85vh]">
+        <div class="flex items-start justify-between gap-3 px-4 py-3 border-b border-gray-200 dark:border-slate-700">
+          <div>
+            <h3 class="font-semibold text-gray-800 dark:text-white text-sm">Galeri Foto</h3>
+            <p class="text-xs text-gray-500 dark:text-gray-400">Klik foto untuk menyisipkan ke konten.</p>
+          </div>
+          <button type="button" id="gallery-close" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-500" title="Tutup">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+        <div id="gallery-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-2 p-3 overflow-y-auto"></div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./src/js/landing.js"></script>
+
+  <script>
+    // Initialize Lucide Icons
+    if (typeof lucide !== 'undefined') {
+      lucide.createIcons();
+    }
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(err => {
+          console.log('SW registration failed: ', err);
+        });
+      });
+    }
+  </script>
+
+  <script>
+    // Sidebar mobile, tema, logout — halaman ini tidak memuat main.js.
+    (function () {
+      var sb = document.getElementById('app-sidebar');
+      var bd = document.getElementById('sidebar-backdrop');
+      function openSidebar() { if (sb) sb.classList.remove('-translate-x-full'); if (bd) bd.classList.remove('hidden'); }
+      function closeSidebar() { if (sb) sb.classList.add('-translate-x-full'); if (bd) bd.classList.add('hidden'); }
+      var ob = document.getElementById('btn-open-sidebar'); if (ob) ob.addEventListener('click', openSidebar);
+      var cb = document.getElementById('btn-close-sidebar'); if (cb) cb.addEventListener('click', closeSidebar);
+      if (bd) bd.addEventListener('click', closeSidebar);
+
+      function applyTheme(t) {
+        var dark = t === 'dark';
+        document.documentElement.classList.toggle('dark', dark);
+        document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
+        localStorage.setItem('theme', t);
+      }
+      var savedTheme = localStorage.getItem('theme');
+      if (savedTheme) applyTheme(savedTheme);
+      else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) applyTheme('dark');
+      ['theme-toggle-mobile', 'theme-toggle-desktop'].forEach(function (id) {
+        var b = document.getElementById(id);
+        if (!b) return;
+        b.addEventListener('click', function () {
+          applyTheme(document.documentElement.classList.contains('dark') ? 'light' : 'dark');
+        });
+      });
+
+      var lo = document.getElementById('logout-btn-desktop');
+      if (lo) lo.addEventListener('click', async function () {
+        try { await fetch('/api/logout', { method: 'POST' }); } catch (e) {}
+        localStorage.removeItem('user_role'); localStorage.removeItem('user_roles');
+        window.location.href = '/login.html';
+      });
+    })();
+  </script>
+</body>
+</html>
